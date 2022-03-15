@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+src/ds-caselaw-marklogic-client/Client.py
+src/ds-caselaw-marklogic-client/__init__.py
+src/ds_caselaw_marklogic_api_client.egg-info/PKG-INFO
+src/ds_caselaw_marklogic_api_client.egg-info/SOURCES.txt
+src/ds_caselaw_marklogic_api_client.egg-info/dependency_links.txt
+src/ds_caselaw_marklogic_api_client.egg-info/top_level.txt
