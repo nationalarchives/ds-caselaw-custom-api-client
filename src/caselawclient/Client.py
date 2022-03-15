@@ -177,7 +177,7 @@ class MarklogicApiClient:
         page=1,
     ) -> requests.Response:
         xquery_path = os.path.join(
-            ROOT_DIR, "judgments", "xquery", "search.xqy"
+            ROOT_DIR, "xquery", "search.xqy"
         )
         vars = f'{{"court":"{str(court or "")}","judge":"{str(judge or "")}",\
         "page":{page},"page-size":{RESULTS_PER_PAGE},"q":"{str(q or "")}","party":"{str(party or "")}",\
