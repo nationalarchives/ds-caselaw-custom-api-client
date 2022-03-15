@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: ds-caselaw-marklogic-api-client
-Version: 0.0.3
+Version: 0.0.5
 Summary: An API client for interacting with the Caselaw Marklogic instance
 Home-page: https://github.com/nationalarchives/ds-caselaw-custom-api-client
 Author: The National Archives

@@ -4,6 +4,10 @@ pyproject.toml
 setup.cfg
 src/caselawclient/Client.py
 src/caselawclient/__init__.py
+src/caselawclient/xquery/is-published.xqy
+src/caselawclient/xquery/publish.xqy
+src/caselawclient/xquery/search.xqy
+src/caselawclient/xquery/xslt.xqy
 src/ds_caselaw_marklogic_api_client.egg-info/PKG-INFO
 src/ds_caselaw_marklogic_api_client.egg-info/SOURCES.txt
 src/ds_caselaw_marklogic_api_client.egg-info/dependency_links.txt
