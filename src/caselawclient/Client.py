@@ -187,7 +187,7 @@ class MarklogicApiClient:
 
     def eval_xslt(self, judgment_uri) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "judgments", "xquery", "xslt.xqy")
+        xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt.xqy")
 
         return self.eval(
             xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="application/xml"
@@ -196,7 +196,7 @@ class MarklogicApiClient:
     def publish_document(self, judgment_uri, published=False):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "judgments", "xquery", "publish.xqy"
+            ROOT_DIR, "xquery", "publish.xqy"
         )
         published_value = "true" if published else "false"
         return self.eval(
@@ -208,7 +208,7 @@ class MarklogicApiClient:
     def is_document_published(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "judgments", "xquery", "is-published.xqy"
+            ROOT_DIR, "xquery", "is-published.xqy"
         )
 
         response = self.eval(
