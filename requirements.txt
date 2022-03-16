@@ -1,6 +1,6 @@
 certifi==2021.10.8
 charset-normalizer==2.0.12
-environ==1.0
+django-environ==0.8.1
 idna==3.3
 lxml==4.8.0
 requests==2.27.1
