@@ -116,17 +116,31 @@ class MarklogicApiClient:
     ) -> requests.Response:
         return self.make_request("POST", path, headers, data)
 
-    def get_judgment_xml(self, uri: str) -> str:
-        headers = {"Accept": "text/xml"}
-        return self.GET(f"LATEST/documents/?uri=/{uri.lstrip('/')}.xml", headers).text
-
-    def get_judgments_index(self, page: str) -> requests.Response:
-        start = (int(page) - 1) * RESULTS_PER_PAGE + 1
-        headers = {"Accept": "multipart/mixed"}
-        return self.GET(
-            f"LATEST/search/?view=results&start={start}&pageLength={RESULTS_PER_PAGE}",
-            headers,
+    def get_judgment_xml(self, judgment_uri, show_unpublished=False) -> str:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_judgment.xqy"
         )
+
+        response = self.eval(
+            xquery_path,
+            vars=f'{{"uri":"{uri}", "show_unpublished":{str(show_unpublished).lower()}}}',
+            accept_header="application/xml",
+        )
+        multipart_data = decoder.MultipartDecoder.from_response(response)
+        return multipart_data.parts[0].text
+
+    def get_judgment_name(self, judgment_uri) -> str:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_metadata_name.xqy"
+        )
+
+        response = self.eval(
+            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="application/xml"
+        )
+        multipart_data = decoder.MultipartDecoder.from_response(response)
+        return multipart_data.parts[0].text
 
     def save_judgment_xml(self, uri: str, judgment_xml: Element) -> requests.Response:
         xml = etree.tostring(judgment_xml)
@@ -136,14 +150,6 @@ class MarklogicApiClient:
             f"LATEST/documents?uri=/{uri.lstrip('/')}.xml",
             headers=headers,
             body=xml,
-        )
-
-    def basic_search(self, query: str, page: str) -> requests.Response:
-        start = (int(page) - 1) * RESULTS_PER_PAGE + 1
-        headers = {"Accept": "text/xml"}
-        return self.GET(
-            f"LATEST/search/?start={start}&q={query}&pageLength={RESULTS_PER_PAGE}",
-            headers,
         )
 
     def eval(
@@ -185,12 +191,13 @@ class MarklogicApiClient:
 
         return self.eval(xquery_path, vars)
 
-    def eval_xslt(self, judgment_uri) -> requests.Response:
+    def eval_xslt(self, judgment_uri, show_unpublished=False) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt.xqy")
+        xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
 
         return self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="application/xml"
+            xquery_path, vars=f'{{"uri":"{uri}","show_unpublished":{str(show_unpublished).lower()}}}',
+            accept_header="application/xml"
         )
 
     def publish_document(self, judgment_uri, published=False):
