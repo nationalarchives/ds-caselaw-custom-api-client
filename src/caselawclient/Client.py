@@ -259,6 +259,32 @@ class MarklogicApiClient:
         xml = etree.fromstring(content)
         return xml.text == "true"
 
+    def supplemental_document(self, judgment_uri, supplemental=False):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "supplemental.xqy"
+        )
+        supplemental_value = "true" if supplemental else "false"
+        return self.eval(
+            xquery_path,
+            vars=f'{{"uri":"{uri}","supplemental":"{supplemental_value}"}}',
+            accept_header="application/xml",
+        )
+
+    def is_document_supplemental(self, judgment_uri):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "is-supplemented.xqy"
+        )
+
+        response = self.eval(
+            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="multipart/mixed"
+        )
+
+        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        xml = etree.fromstring(content)
+        return xml.text == "true"
+
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST"),
