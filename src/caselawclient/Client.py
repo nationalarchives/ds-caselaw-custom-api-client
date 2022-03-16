@@ -175,13 +175,15 @@ class MarklogicApiClient:
         date_from=None,
         date_to=None,
         page=1,
+        show_unpublished=False,
     ) -> requests.Response:
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "search.xqy"
         )
         vars = f'{{"court":"{str(court or "")}","judge":"{str(judge or "")}",\
         "page":{page},"page-size":{RESULTS_PER_PAGE},"q":"{str(q or "")}","party":"{str(party or "")}",\
-        "order":"{str(order or "")}","from":"{str(date_from or "")}","to":"{str(date_to or "")}"}}'
+        "order":"{str(order or "")}","from":"{str(date_from or "")}","to":"{str(date_to or "")}",\
+        "show_unpublished":{str(show_unpublished).lower()}}}'
 
         return self.eval(xquery_path, vars)
 
