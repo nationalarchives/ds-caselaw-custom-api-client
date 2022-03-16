@@ -127,6 +127,9 @@ class MarklogicApiClient:
             vars=f'{{"uri":"{uri}", "show_unpublished":{str(show_unpublished).lower()}}}',
             accept_header="application/xml",
         )
+        if not response.text:
+            return ''
+
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data.parts[0].text
 
@@ -222,9 +225,11 @@ class MarklogicApiClient:
             xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="multipart/mixed"
         )
 
+        if not response.text:
+            return False
+
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
-        xml = etree.fromstring(content)
-        return xml.text == "true"
+        return content == "true"
 
 
 api_client = MarklogicApiClient(
