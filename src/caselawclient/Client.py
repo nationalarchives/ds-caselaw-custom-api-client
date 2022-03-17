@@ -205,7 +205,7 @@ class MarklogicApiClient:
             accept_header="application/xml"
         )
 
-    def publish_document(self, judgment_uri, published=False):
+    def set_published(self, judgment_uri, published=False):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "publish.xqy"
@@ -217,7 +217,7 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def is_document_published(self, judgment_uri):
+    def get_published(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "is-published.xqy"
@@ -233,7 +233,7 @@ class MarklogicApiClient:
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         return content == "true"
 
-    def contains_sensitive_material(self, judgment_uri, sensitive=False):
+    def set_sensitive(self, judgment_uri, sensitive=False):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "sensitive.xqy"
@@ -245,7 +245,7 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def is_document_sensitive(self, judgment_uri):
+    def get_sensitive(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "is-sensitive.xqy"
@@ -259,7 +259,7 @@ class MarklogicApiClient:
         xml = etree.fromstring(content)
         return xml.text == "true"
 
-    def supplemental_document(self, judgment_uri, supplemental=False):
+    def set_supplemental(self, judgment_uri, supplemental=False):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "supplemental.xqy"
@@ -271,7 +271,7 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def is_document_supplemental(self, judgment_uri):
+    def get_supplemental(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "is-supplemented.xqy"
