@@ -84,11 +84,10 @@ to main alone will **not** trigger a release to PyPI.
 To create a release:
 
 0. Update the version number in `setup.cfg`
-1. Create a branch release/xxx
+1. Create a branch `release/v{major}.{minor}.{patch}`
 2. Update changelog for the release
 3. Commit and push
 4. Open a PR from that branch to main
 5. Get approval on the PR
-6. Tag the HEAD of the PR release-xxx and push the tag
+6. Tag the HEAD of the PR `v{major}.{minor}.{patch}` and push the tag
 7. Merge the PR to main and push
-
