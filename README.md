@@ -13,7 +13,7 @@ pip install ds-caselaw-marklogic-api-client
 
 or in your projects `requirements.txt` with:
 ```text
-ds-caselaw-marklogic-api-client~=1.0.0
+ds-caselaw-marklogic-api-client~=2.0.0
 ```
 
 ### Using the client
