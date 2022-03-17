@@ -205,17 +205,26 @@ class MarklogicApiClient:
             accept_header="application/xml"
         )
 
-    def set_published(self, judgment_uri, published=False):
+    def set_boolean_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "publish.xqy"
+            ROOT_DIR, "xquery", "{name}.xqy"
         )
-        published_value = "true" if published else "false"
+        string_value = "true" if value else "false"
         return self.eval(
             xquery_path,
-            vars=f'{{"uri":"{uri}","published":"{published_value}"}}',
+            vars=f'{{"uri":"{uri}","{name}":"{string_value}"}}',
             accept_header="application/xml",
         )
+
+    def set_published(self, judgment_uri, published=False):
+        return set_boolean_property(self, judgment_uri, "published", published)
+
+    def set_sensitive(self, judgment_uri, sensitive=False):
+        return set_boolean_property(self, judgment_uri, "sensitive", sensitive)
+
+    def set_supplemental(self, judgment_uri, supplemental=False):
+        return set_boolean_property(self, judgment_uri, "supplemental", supplemental)
 
     def get_published(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
@@ -233,17 +242,7 @@ class MarklogicApiClient:
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         return content == "true"
 
-    def set_sensitive(self, judgment_uri, sensitive=False):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "sensitive.xqy"
-        )
-        sensitive_value = "true" if sensitive else "false"
-        return self.eval(
-            xquery_path,
-            vars=f'{{"uri":"{uri}","sensitive":"{sensitive_value}"}}',
-            accept_header="application/xml",
-        )
+
 
     def get_sensitive(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
@@ -259,17 +258,6 @@ class MarklogicApiClient:
         xml = etree.fromstring(content)
         return xml.text == "true"
 
-    def set_supplemental(self, judgment_uri, supplemental=False):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "supplemental.xqy"
-        )
-        supplemental_value = "true" if supplemental else "false"
-        return self.eval(
-            xquery_path,
-            vars=f'{{"uri":"{uri}","supplemental":"{supplemental_value}"}}',
-            accept_header="application/xml",
-        )
 
     def get_supplemental(self, judgment_uri):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
