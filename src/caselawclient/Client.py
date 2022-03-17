@@ -208,12 +208,12 @@ class MarklogicApiClient:
     def set_boolean_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "{name}.xqy"
+            ROOT_DIR, "xquery", "set_property.xqy"
         )
         string_value = "true" if value else "false"
         return self.eval(
             xquery_path,
-            vars=f'{{"uri":"{uri}","{name}":"{string_value}"}}',
+            vars=f'{{"uri":"{uri}","value":"{string_value}","name":"{name}"}}',
             accept_header="application/xml",
         )
 
