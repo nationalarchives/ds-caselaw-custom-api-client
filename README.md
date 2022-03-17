@@ -4,6 +4,56 @@ This is an API Client for connecting to Marklogic for The National Archive's Cas
 
 This package is published on PyPI: https://pypi.org/project/ds-caselaw-marklogic-api-client/
 
+## Usage
+
+Include the API client in your project using PIP:
+```bash
+pip install ds-caselaw-marklogic-api-client
+```
+
+or in your projects `requirements.txt` with:
+```text
+ds-caselaw-marklogic-api-client~=1.0.0
+```
+
+### Using the client
+
+The client expects the following environment variables to be set or defined in a `.env` file:
+
+```bash
+MARKLOGIC_HOST
+MARKLOGIC_USER
+MARKLOGIC_PASSWORD
+MARKLOGIC_USE_HTTPS # Optional, defaults to False
+```
+
+Then import `api_client` from `caselawclient.Client`:
+
+```python
+from caselawclient.Client import api_client
+```
+
+`api_client` is the default client for interacting with Marklogic, however `Client` also exports some exception classes:
+```python
+MarklogicAPIError
+MarklogicBadRequestError
+MarklogicUnauthorizedError
+MarklogicNotPermittedError
+MarklogicResourceNotFoundError
+MarklogicCommunicationError
+```
+
+### XML Tools
+There is also a small set of xml helper tools that provide some common functionality for dealing with xml:
+
+```python
+from caselawclient import xml_tools
+
+xml_tools.get_metadata_name_value(xml)
+xml_toosl.get_metadata_name_element(xml)
+xml_tools.get_search_matches(element)
+```
+
 ## Making changes
 
 When making a change, update the [changelog](CHANGELOG.md) using the
