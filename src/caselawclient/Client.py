@@ -217,19 +217,10 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def set_published(self, judgment_uri, published=False):
-        return set_boolean_property(self, judgment_uri, "published", published)
-
-    def set_sensitive(self, judgment_uri, sensitive=False):
-        return set_boolean_property(self, judgment_uri, "sensitive", sensitive)
-
-    def set_supplemental(self, judgment_uri, supplemental=False):
-        return set_boolean_property(self, judgment_uri, "supplemental", supplemental)
-
-    def get_published(self, judgment_uri):
+    def get_boolean_property(self, judgment_uri, name):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "is-published.xqy"
+            ROOT_DIR, "xquery", "is-{name}.xqy"
         )
 
         response = self.eval(
@@ -242,36 +233,23 @@ class MarklogicApiClient:
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         return content == "true"
 
+    def set_published(self, judgment_uri, published=False):
+        return set_boolean_property(self, judgment_uri, "published", published)
 
+    def set_sensitive(self, judgment_uri, sensitive=False):
+        return set_boolean_property(self, judgment_uri, "sensitive", sensitive)
+
+    def set_supplemental(self, judgment_uri, supplemental=False):
+        return set_boolean_property(self, judgment_uri, "supplemental", supplemental)
+
+    def get_published(self, judgment_uri):
+        return get_boolean_property(self, judgment_uri, "published")
 
     def get_sensitive(self, judgment_uri):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "is-sensitive.xqy"
-        )
-
-        response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="multipart/mixed"
-        )
-
-        content = decoder.MultipartDecoder.from_response(response).parts[0].text
-        xml = etree.fromstring(content)
-        return xml.text == "true"
-
+        return get_boolean_property(self, judgment_uri, "sensitive")
 
     def get_supplemental(self, judgment_uri):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "is-supplemented.xqy"
-        )
-
-        response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="multipart/mixed"
-        )
-
-        content = decoder.MultipartDecoder.from_response(response).parts[0].text
-        xml = etree.fromstring(content)
-        return xml.text == "true"
+        return get_boolean_property(self, judgment_uri, "supplemental")
 
 
 api_client = MarklogicApiClient(
