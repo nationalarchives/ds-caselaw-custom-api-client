@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 2.0.0]
+- Refactored property accessor methods
+- BREAKING CHANGE `is_document_published` changed to `get_published` and `publish_document` changed to `set_published`.
+
 ## [Release 1.0.5]
 - Initial tagged release
 

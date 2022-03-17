@@ -205,26 +205,27 @@ class MarklogicApiClient:
             accept_header="application/xml"
         )
 
-    def publish_document(self, judgment_uri, published=False):
+    def set_boolean_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "publish.xqy"
+            ROOT_DIR, "xquery", "set_property.xqy"
         )
-        published_value = "true" if published else "false"
+        string_value = "true" if value else "false"
         return self.eval(
             xquery_path,
-            vars=f'{{"uri":"{uri}","published":"{published_value}"}}',
+            vars=f'{{"uri":"{uri}","value":"{string_value}","name":"{name}"}}',
             accept_header="application/xml",
         )
 
-    def is_document_published(self, judgment_uri):
+    def get_boolean_property(self, judgment_uri, name):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "is-published.xqy"
+            ROOT_DIR, "xquery", "get_property.xqy"
         )
 
         response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="multipart/mixed"
+            xquery_path, vars=f'{{"uri":"{uri}","name":"{name}"}}',
+            accept_header="multipart/mixed"
         )
 
         if not response.text:
@@ -232,6 +233,24 @@ class MarklogicApiClient:
 
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         return content == "true"
+
+    def set_published(self, judgment_uri, published=False):
+        return set_boolean_property(self, judgment_uri, "published", published)
+
+    def set_sensitive(self, judgment_uri, sensitive=False):
+        return set_boolean_property(self, judgment_uri, "sensitive", sensitive)
+
+    def set_supplemental(self, judgment_uri, supplemental=False):
+        return set_boolean_property(self, judgment_uri, "supplemental", supplemental)
+
+    def get_published(self, judgment_uri):
+        return get_boolean_property(self, judgment_uri, "published")
+
+    def get_sensitive(self, judgment_uri):
+        return get_boolean_property(self, judgment_uri, "sensitive")
+
+    def get_supplemental(self, judgment_uri):
+        return get_boolean_property(self, judgment_uri, "supplemental")
 
 
 api_client = MarklogicApiClient(
