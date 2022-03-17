@@ -33,7 +33,20 @@ Then import `api_client` from `caselawclient.Client`:
 from caselawclient.Client import api_client
 ```
 
-`api_client` is the default client for interacting with Marklogic, however `Client` also exports some exception classes:
+Alternatively, you can import the base class and instantiate it with different credentials:
+
+```python
+from caselawclient.Client import MarklogicApiClient
+
+client = MarklogicApiClient(
+    host="",
+    username="",
+    password="",
+    use_https=False,
+)
+```
+
+`Client` also exports some exception classes:
 ```python
 MarklogicAPIError
 MarklogicBadRequestError
