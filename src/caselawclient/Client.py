@@ -61,13 +61,13 @@ class MarklogicApiClient:
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
 
-    def _raise_for_status(cls, response: requests.Response) -> None:
+    def _raise_for_status(self, response: requests.Response) -> None:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
-            new_error_class = cls.http_error_classes.get(
-                status_code, cls.default_http_error_class
+            new_error_class = self.http_error_classes.get(
+                status_code, self.default_http_error_class
             )
             try:
                 response_body = json.dumps(response.json(), indent=4)
@@ -189,10 +189,18 @@ class MarklogicApiClient:
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "search.xqy"
         )
-        vars = f'{{"court":"{str(court or "")}","judge":"{str(judge or "")}",\
-        "page":{page},"page-size":{RESULTS_PER_PAGE},"q":"{str(q or "")}","party":"{str(party or "")}",\
-        "order":"{str(order or "")}","from":"{str(date_from or "")}","to":"{str(date_to or "")}",\
-        "show_unpublished":{str(show_unpublished).lower()}}}'
+        vars = json.dumps({
+            "court": str(court or ""),
+            "judge": str(judge or ""),
+            "page": page,
+            "page-size": RESULTS_PER_PAGE,
+            "q": str(q or ""),
+            "party": str(party or ""),
+            "order": str(order or ""),
+            "from": str(date_from or ""),
+            "to": str(date_to or ""),
+            "show_unpublished": str(show_unpublished).lower(),
+        })
 
         return self.eval(xquery_path, vars)
 
@@ -200,10 +208,11 @@ class MarklogicApiClient:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
 
-        return self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}","show_unpublished":{str(show_unpublished).lower()}}}',
-            accept_header="application/xml"
-        )
+        vars = json.dumps({
+            "uri": uri,
+            "show_unpublished": str(show_unpublished).lower()
+        })
+        return self.eval(xquery_path, vars=vars, accept_header="application/xml")
 
     def set_boolean_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
@@ -211,9 +220,14 @@ class MarklogicApiClient:
             ROOT_DIR, "xquery", "set_property.xqy"
         )
         string_value = "true" if value else "false"
+        vars = json.dumps({
+            "uri": uri,
+            "value": string_value,
+            "name": name,
+        })
         return self.eval(
             xquery_path,
-            vars=f'{{"uri":"{uri}","value":"{string_value}","name":"{name}"}}',
+            vars=vars,
             accept_header="application/xml",
         )
 
@@ -235,22 +249,22 @@ class MarklogicApiClient:
         return content == "true"
 
     def set_published(self, judgment_uri, published=False):
-        return set_boolean_property(self, judgment_uri, "published", published)
+        return self.set_boolean_property(judgment_uri, "published", published)
 
     def set_sensitive(self, judgment_uri, sensitive=False):
-        return set_boolean_property(self, judgment_uri, "sensitive", sensitive)
+        return self.set_boolean_property(judgment_uri, "sensitive", sensitive)
 
     def set_supplemental(self, judgment_uri, supplemental=False):
-        return set_boolean_property(self, judgment_uri, "supplemental", supplemental)
+        return self.set_boolean_property(judgment_uri, "supplemental", supplemental)
 
     def get_published(self, judgment_uri):
-        return get_boolean_property(self, judgment_uri, "published")
+        return self.get_boolean_property(judgment_uri, "published")
 
     def get_sensitive(self, judgment_uri):
-        return get_boolean_property(self, judgment_uri, "sensitive")
+        return self.get_boolean_property(judgment_uri, "sensitive")
 
     def get_supplemental(self, judgment_uri):
-        return get_boolean_property(self, judgment_uri, "supplemental")
+        return self.get_boolean_property(judgment_uri, "supplemental")
 
 
 api_client = MarklogicApiClient(
