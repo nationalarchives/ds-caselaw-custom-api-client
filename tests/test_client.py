@@ -3,6 +3,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
+import lxml.etree
 from lxml import etree
 
 from src.caselawclient.Client import MarklogicApiClient, RESULTS_PER_PAGE, ROOT_DIR
@@ -167,14 +168,21 @@ class ApiClientTest(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_save_judgment_xml(self):
-        api_client = MarklogicApiClient("a", "b", "c", True)
-        with patch.object(api_client, 'make_request'):
-            uri = "/ewca/civ/2004/632"
-            xml = etree.fromstring("<root></root>")
-            api_client.save_judgment_xml(uri, xml)
-            api_client.make_request.assert_called_with(
-                "PUT",
-                "LATEST/documents?uri=/ewca/civ/2004/632.xml",
-                headers={"Accept": "text/xml", "Content-type": "application/xml"},
-                body=b"<root/>",
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            judgment_str = '<root>My updated judgment</root>'
+            judgment_xml = etree.fromstring(judgment_str)
+            expected_vars = {
+                'uri': '/ewca/civ/2004/632.xml',
+                'judgment': judgment_str,
+                'annotation':''
+            }
+            client.save_judgment_xml(uri, judgment_xml)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'update_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
             )
