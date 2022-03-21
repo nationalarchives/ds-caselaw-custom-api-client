@@ -186,3 +186,37 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_get_judgment_version(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            version = '3'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml',
+                'version':'3'
+            }
+            client.get_judgment_version(uri, version)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'get_judgment_version.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_list_judgment_versions(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml'
+            }
+            client.list_judgment_versions(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'list_judgment_versions.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )

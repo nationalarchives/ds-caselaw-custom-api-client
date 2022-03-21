@@ -164,6 +164,21 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "list_judgment_versions.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
     def eval(
         self, xquery_path, vars, database="Judgments", accept_header="multipart/mixed"
     ):
