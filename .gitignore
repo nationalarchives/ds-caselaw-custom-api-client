@@ -2,3 +2,6 @@
 dist
 venv
 *.egg-info
+.env
+tests/__pycache__/
+src/caselawclient/__pycache__/
