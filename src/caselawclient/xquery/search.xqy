@@ -1,6 +1,7 @@
 xquery version "1.0-ml";
 
 import module namespace search = "http://marklogic.com/appservices/search" at "/MarkLogic/appservices/search/search.xqy";
+import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls.xqy";
 declare namespace akn = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0";
 declare namespace uk = "https://caselaw.nationalarchives.gov.uk";
 
@@ -55,7 +56,7 @@ let $query6 := if (empty($from_date)) then () else cts:path-range-query('akn:FRB
 let $query7 := if (empty($to_date)) then () else cts:path-range-query('akn:FRBRWork/akn:FRBRdate/@date', '<=', $to_date)
 let $query8 := if ($show_unpublished) then () else cts:properties-fragment-query(cts:element-value-query(fn:QName("", "published"), "true"))
 
-let $queries := ( $query1, $query2, $query4, $query5, $query6, $query7, $query8 )
+let $queries := ( $query1, $query2, $query4, $query5, $query6, $query7, $query8, dls:documents-query() )
 let $query := cts:and-query($queries)
 
 let $show-snippets as xs:boolean := exists(( $query1, $query2, $query5 ))
