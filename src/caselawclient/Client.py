@@ -164,6 +164,25 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def insert_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
+        xml = etree.tostring(judgment_xml)
+
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "insert_judgment.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "judgment": xml.decode("utf-8") ,
+            "annotation": ""
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
     def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(

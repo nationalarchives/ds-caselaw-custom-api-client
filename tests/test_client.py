@@ -187,6 +187,26 @@ class ApiClientTest(unittest.TestCase):
                 accept_header="application/xml"
             )
 
+    def test_insert_judgment_xml(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            judgment_str = '<root>My new judgment</root>'
+            judgment_xml = etree.fromstring(judgment_str)
+            expected_vars = {
+                'uri': '/ewca/civ/2004/632.xml',
+                'judgment': judgment_str,
+                'annotation':''
+            }
+            client.insert_judgment_xml(uri, judgment_xml)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'insert_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
     def test_get_judgment_version(self):
         client = MarklogicApiClient("", "", "", False)
 
