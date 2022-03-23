@@ -70,6 +70,7 @@ class ApiClientTest(unittest.TestCase):
             uri = "/judgment/uri"
             expected_vars = {
                 "uri": "/judgment/uri.xml",
+                "version_uri": None,
                 "show_unpublished": "true",
             }
             client.eval_xslt(uri, show_unpublished=True)
