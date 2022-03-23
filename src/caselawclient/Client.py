@@ -198,6 +198,36 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def checkout_judgment(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "checkout_judgment.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def checkin_judgment(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "checkin_judgment.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
     def get_judgment_version(self, judgment_uri: str, version: int) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
