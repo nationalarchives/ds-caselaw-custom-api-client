@@ -3,6 +3,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
+import lxml.etree
 from lxml import etree
 
 from src.caselawclient.Client import MarklogicApiClient, RESULTS_PER_PAGE, ROOT_DIR
@@ -69,6 +70,7 @@ class ApiClientTest(unittest.TestCase):
             uri = "/judgment/uri"
             expected_vars = {
                 "uri": "/judgment/uri.xml",
+                "version_uri": None,
                 "show_unpublished": "true",
             }
             client.eval_xslt(uri, show_unpublished=True)
@@ -167,14 +169,107 @@ class ApiClientTest(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_save_judgment_xml(self):
-        api_client = MarklogicApiClient("a", "b", "c", True)
-        with patch.object(api_client, 'make_request'):
-            uri = "/ewca/civ/2004/632"
-            xml = etree.fromstring("<root></root>")
-            api_client.save_judgment_xml(uri, xml)
-            api_client.make_request.assert_called_with(
-                "PUT",
-                "LATEST/documents?uri=/ewca/civ/2004/632.xml",
-                headers={"Accept": "text/xml", "Content-type": "application/xml"},
-                body=b"<root/>",
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            judgment_str = '<root>My updated judgment</root>'
+            judgment_xml = etree.fromstring(judgment_str)
+            expected_vars = {
+                'uri': '/ewca/civ/2004/632.xml',
+                'judgment': judgment_str,
+                'annotation':''
+            }
+            client.save_judgment_xml(uri, judgment_xml)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'update_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_insert_judgment_xml(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            judgment_str = '<root>My new judgment</root>'
+            judgment_xml = etree.fromstring(judgment_str)
+            expected_vars = {
+                'uri': '/ewca/civ/2004/632.xml',
+                'judgment': judgment_str,
+                'annotation':''
+            }
+            client.insert_judgment_xml(uri, judgment_xml)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'insert_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_get_judgment_version(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            version = '3'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml',
+                'version':'3'
+            }
+            client.get_judgment_version(uri, version)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'get_judgment_version.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_list_judgment_versions(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml'
+            }
+            client.list_judgment_versions(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'list_judgment_versions.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_checkout_judgment(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml'
+            }
+            client.checkout_judgment(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'checkout_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_checkin_judgment(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            expected_vars = {
+                'uri':'/ewca/civ/2004/632.xml'
+            }
+            client.checkin_judgment(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'checkin_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
             )

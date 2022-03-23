@@ -116,15 +116,22 @@ class MarklogicApiClient:
     ) -> requests.Response:
         return self.make_request("POST", path, headers, data)
 
-    def get_judgment_xml(self, judgment_uri, show_unpublished=False) -> str:
+    def get_judgment_xml(self, judgment_uri, version_uri=None, show_unpublished=False) -> str:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
+        if version_uri:
+            version_uri = f"/{version_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "get_judgment.xqy"
         )
+        vars = {
+            "uri": uri,
+            "version_uri": version_uri,
+            "show_unpublished": str(show_unpublished).lower()
+        }
 
         response = self.eval(
             xquery_path,
-            vars=f'{{"uri":"{uri}", "show_unpublished":{str(show_unpublished).lower()}}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         if not response.text:
@@ -145,14 +152,103 @@ class MarklogicApiClient:
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data.parts[0].text
 
-    def save_judgment_xml(self, uri: str, judgment_xml: Element) -> requests.Response:
+    def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
         xml = etree.tostring(judgment_xml)
-        headers = {"Accept": "text/xml", "Content-type": "application/xml"}
-        return self.make_request(
-            "PUT",
-            f"LATEST/documents?uri=/{uri.lstrip('/')}.xml",
-            headers=headers,
-            body=xml,
+
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "update_judgment.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "judgment": xml.decode("utf-8") ,
+            "annotation": ""
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def insert_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
+        xml = etree.tostring(judgment_xml)
+
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "insert_judgment.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "judgment": xml.decode("utf-8") ,
+            "annotation": ""
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "list_judgment_versions.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def checkout_judgment(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "checkout_judgment.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def checkin_judgment(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "checkin_judgment.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def get_judgment_version(self, judgment_uri: str, version: int) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_judgment_version.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "version": str(version)
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
         )
 
     def eval(
@@ -204,12 +300,15 @@ class MarklogicApiClient:
 
         return self.eval(xquery_path, vars)
 
-    def eval_xslt(self, judgment_uri, show_unpublished=False) -> requests.Response:
+    def eval_xslt(self, judgment_uri, version_uri=None, show_unpublished=False) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
+        if version_uri:
+            version_uri = f"/{version_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
 
         vars = json.dumps({
             "uri": uri,
+            "version_uri": version_uri,
             "show_unpublished": str(show_unpublished).lower()
         })
         return self.eval(xquery_path, vars=vars, accept_header="application/xml")
