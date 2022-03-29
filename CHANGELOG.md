@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 2.1.1]
+- Fix intermittently failing XSLT transforms
+
 ## [Release 2.1.0]
 - Refactor save_judgment_xml to use the eval endpoint, so that we can introduce versioning via na XQuery.
 - List all versions of a managed judgment
@@ -26,7 +29,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/relese-2.1.0...HEAD
+[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/relese-2.1.1...HEAD
+[Release 2.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.0...release-2.1.1
 [Release 2.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.0.1...release-2.1.0
 [release 2.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.0.0...release-2.0.1
 [release 2.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-1.0.5...release-2.0.0
