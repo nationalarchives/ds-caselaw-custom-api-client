@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 2.1.2]
 - Add a new anonymised content flag
 
 ## [Release 2.1.1]
@@ -30,7 +32,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/relese-2.1.1...HEAD
+[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/relese-2.1.2...HEAD
+[Release 2.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.1...release-2.1.2
 [Release 2.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.0...release-2.1.1
 [Release 2.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.0.1...release-2.1.0
 [release 2.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.0.0...release-2.0.1
