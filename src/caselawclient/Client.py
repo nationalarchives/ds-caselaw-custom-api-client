@@ -356,6 +356,9 @@ class MarklogicApiClient:
     def set_supplemental(self, judgment_uri, supplemental=False):
         return self.set_boolean_property(judgment_uri, "supplemental", supplemental)
 
+    def set_anonymised(self, judgment_uri, anonymised=False):
+        return self.set_boolean_property(judgment_uri, "anonymised", anonymised)
+
     def get_published(self, judgment_uri):
         return self.get_boolean_property(judgment_uri, "published")
 
@@ -364,6 +367,9 @@ class MarklogicApiClient:
 
     def get_supplemental(self, judgment_uri):
         return self.get_boolean_property(judgment_uri, "supplemental")
+
+    def get_anonymised(self, judgment_uri):
+        return self.get_boolean_property(judgment_uri, "anonymised")
 
 
 api_client = MarklogicApiClient(

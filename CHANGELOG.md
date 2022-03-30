@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Add a new anonymised content flag
 
 ## [Release 2.1.1]
 - Fix intermittently failing XSLT transforms
