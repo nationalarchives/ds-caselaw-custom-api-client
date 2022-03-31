@@ -2,9 +2,7 @@ import json
 import os
 import unittest
 from unittest.mock import MagicMock, patch
-
-import lxml.etree
-from lxml import etree
+from xml.etree import ElementTree
 
 from src.caselawclient.Client import MarklogicApiClient, RESULTS_PER_PAGE, ROOT_DIR
 
@@ -174,7 +172,7 @@ class ApiClientTest(unittest.TestCase):
         with patch.object(client, 'eval'):
             uri = '/ewca/civ/2004/632'
             judgment_str = '<root>My updated judgment</root>'
-            judgment_xml = etree.fromstring(judgment_str)
+            judgment_xml = ElementTree.fromstring(judgment_str)
             expected_vars = {
                 'uri': '/ewca/civ/2004/632.xml',
                 'judgment': judgment_str,
@@ -194,7 +192,7 @@ class ApiClientTest(unittest.TestCase):
         with patch.object(client, 'eval'):
             uri = '/ewca/civ/2004/632'
             judgment_str = '<root>My new judgment</root>'
-            judgment_xml = etree.fromstring(judgment_str)
+            judgment_xml = ElementTree.fromstring(judgment_str)
             expected_vars = {
                 'uri': '/ewca/civ/2004/632.xml',
                 'judgment': judgment_str,
