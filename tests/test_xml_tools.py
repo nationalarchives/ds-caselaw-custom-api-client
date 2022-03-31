@@ -134,6 +134,82 @@ class XmlToolsTests(unittest.TestCase):
             JudgmentMissingMetadataError, xml_tools.get_metadata_name_element, xml
         )
 
+    def test_judgment_date_value_success(self):
+        xml_string = """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment name="judgment" contains="originalVersion">
+                    <meta>
+                        <identification source="#tna">
+                            <FRBRWork>
+                                <FRBRdate date="2022-03-10" name="judgment"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        xml = etree.fromstring(xml_string)
+        result = xml_tools.get_judgment_date_value(xml)
+        self.assertEqual(result, "2022-03-10")
+
+    def test_judgment_date_value_failure(self):
+        xml_string = """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment name="judgment" contains="originalVersion">
+                    <meta>
+                        <identification source="#tna">
+                            <FRBRWork>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        xml = etree.fromstring(xml_string)
+        self.assertRaises(
+            JudgmentMissingMetadataError, xml_tools.get_metadata_name_value, xml
+        )
+
+    def test_judgment_date_element_success(self):
+        xml_string = """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment name="judgment" contains="originalVersion">
+                    <meta>
+                        <identification source="#tna">
+                            <FRBRWork>
+                                <FRBRdate date="2022-03-10" name="judgment"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        xml = etree.fromstring(xml_string)
+        result = xml_tools.get_judgment_date_element(xml)
+        self.assertEqual(
+            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
+        )
+        self.assertEqual(result.attrib, {"date": "2022-03-10", "name": "judgment"})
+
+    def test_judgment_date_element_failure(self):
+        xml_string = """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment name="judgment" contains="originalVersion">
+                    <meta>
+                        <identification source="#tna">
+                            <FRBRWork>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        xml = etree.fromstring(xml_string)
+        self.assertRaises(
+            JudgmentMissingMetadataError, xml_tools.get_judgment_date_element, xml
+        )
+
+
     def test_search_matches(self):
         xml_string = """
             <search:result index="11" xmlns:search="http://marklogic.com/appservices/search"
