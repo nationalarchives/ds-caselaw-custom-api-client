@@ -7,4 +7,4 @@ declare variable $judgment as xs:string external;
 
 let $judgment_xml := xdmp:unquote($judgment)
 
-return dls:insert-and-manage($uri, fn:true(), $judgment_xml)
+return dls:document-insert-and-manage($uri, fn:true(), $judgment_xml)
