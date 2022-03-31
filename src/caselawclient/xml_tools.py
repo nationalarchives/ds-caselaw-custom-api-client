@@ -13,10 +13,9 @@ def get_metadata_name_value(xml: ElementTree) -> str:
     name = get_metadata_name_element(xml)
     return name.attrib["value"]
 
-
-def get_metadata_name_element(xml: ElementTree) -> Element:
+def get_element(xml: ElementTree, xpath) -> Element:
     name = xml.find(
-        ".//akn:FRBRname",
+        xpath,
         namespaces=akn_namespace,
     )
 
@@ -25,6 +24,8 @@ def get_metadata_name_element(xml: ElementTree) -> Element:
 
     return name
 
+def get_metadata_name_element(xml) -> Element:
+    return get_element(xml, ".//akn:FRBRname")
 
 def get_search_matches(element: ElementTree) -> [str]:
     nodes = element.findall(".//search:match", namespaces=search_namespace)
