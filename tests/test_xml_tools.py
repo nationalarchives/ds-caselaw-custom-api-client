@@ -33,7 +33,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_name_value(xml)
         self.assertEqual(result, "[2022] EWHC 482 (QB)")
 
@@ -47,7 +47,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_neutral_citation_name_value, xml
         )
@@ -63,7 +63,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_element(xml)
         self.assertEqual(
             result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}cite"
@@ -80,7 +80,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_neutral_citation_element, xml
         )
@@ -148,7 +148,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_value(xml)
         self.assertEqual(result, "2022-03-10")
 
@@ -165,7 +165,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_metadata_name_value, xml
         )
@@ -184,7 +184,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_element(xml)
         self.assertEqual(
             result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
@@ -204,7 +204,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_judgment_date_element, xml
         )
@@ -220,7 +220,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_value(xml)
         self.assertEqual(result, "EWHC-QBD")
 
@@ -234,7 +234,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_court_value, xml
         )
@@ -250,7 +250,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_element(xml)
         self.assertEqual(
             result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}court"
@@ -267,7 +267,7 @@ class XmlToolsTests(unittest.TestCase):
                 <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
             </proprietary>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_court_element, xml
         )

@@ -24,11 +24,14 @@ def get_element(xml: ElementTree, xpath) -> Element:
 
     return name
 
+def get_neutral_citation_name_value(xml) -> str:
+    return get_neutral_citation_element(xml).text
+
 def get_judgment_date_value(xml) -> str:
-    return get_element(xml, "//akn:FRBRWork/akn:FRBRdate/@date")
+    return get_judgment_date_element(xml).attrib["date"]
 
 def get_court_value(xml) -> str:
-    return get_element(xml, "//uk:court/text()")
+    return get_court_element(xml).text
 
 def get_metadata_name_element(xml) -> Element:
     return get_element(xml, ".//akn:FRBRname")
@@ -37,10 +40,10 @@ def get_neutral_citation_element(xml) -> Element:
     return get_element(xml, ".//uk:cite")
 
 def get_judgment_date_element(xml) -> Element:
-    return get_element(xml, "//akn:FRBRWork/akn:FRBRdate")
+    return get_element(xml, ".//akn:FRBRWork/akn:FRBRdate")
 
 def get_court_element(xml) -> Element:
-    return get_element(xml, "//uk:court")
+    return get_element(xml, ".//uk:court")
 
 def get_search_matches(element: ElementTree) -> [str]:
     nodes = element.findall(".//search:match", namespaces=search_namespace)
