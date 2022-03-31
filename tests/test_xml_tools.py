@@ -209,6 +209,68 @@ class XmlToolsTests(unittest.TestCase):
             JudgmentMissingMetadataError, xml_tools.get_judgment_date_element, xml
         )
 
+    def test_court_value_success(self):
+        xml_string = """
+            <proprietary source="#" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <uk:court>EWHC-QBD</uk:court>
+                <uk:year>2022</uk:year>
+                <uk:number>482</uk:number>
+                <uk:cite>[2022] EWHC 482 (QB)</uk:cite>
+                <uk:parser>0.3.1</uk:parser>
+                <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
+            </proprietary>
+        """
+        xml = etree.fromstring(xml_string)
+        result = xml_tools.get_court_value(xml)
+        self.assertEqual(result, "EWHC-QBD")
+
+    def test_court_value_failure(self):
+        xml_string = """
+            <proprietary source="#" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <uk:year>2022</uk:year>
+                <uk:number>482</uk:number>
+                <uk:cite>[2022] EWHC 482 (QB)</uk:cite>
+                <uk:parser>0.3.1</uk:parser>
+                <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
+            </proprietary>
+        """
+        xml = etree.fromstring(xml_string)
+        self.assertRaises(
+            JudgmentMissingMetadataError, xml_tools.get_court_value, xml
+        )
+
+    def test_court_element_success(self):
+        xml_string = """
+            <proprietary source="#" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <uk:court>EWHC-QBD</uk:court>
+                <uk:year>2022</uk:year>
+                <uk:number>482</uk:number>
+                <uk:cite>[2022] EWHC 482 (QB)</uk:cite>
+                <uk:parser>0.3.1</uk:parser>
+                <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
+            </proprietary>
+        """
+        xml = etree.fromstring(xml_string)
+        result = xml_tools.get_court_element(xml)
+        self.assertEqual(
+            result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}court"
+        )
+        self.assertEqual(result.text, "EWHC-QBD")
+
+    def test_court_element_failure(self):
+        xml_string = """
+            <proprietary source="#" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <uk:year>2022</uk:year>
+                <uk:number>482</uk:number>
+                <uk:cite>[2022] EWHC 482 (QB)</uk:cite>
+                <uk:parser>0.3.1</uk:parser>
+                <uk:hash>39c1eb4656a3a382a9b6f5627a07d9069048c91eec20ee13c724e16738a89bd2</uk:hash>
+            </proprietary>
+        """
+        xml = etree.fromstring(xml_string)
+        self.assertRaises(
+            JudgmentMissingMetadataError, xml_tools.get_court_element, xml
+        )
 
     def test_search_matches(self):
         xml_string = """
