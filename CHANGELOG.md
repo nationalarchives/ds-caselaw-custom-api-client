@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 3.0.1]
+- Fix insert_document xquery to call the document-insert-and-manage function
+
 ## [Release 3.0.0]
 - Replace LXML with standard library xml for wider compatibility and reduced build times
 
@@ -35,7 +38,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.0...HEAD
+[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.1...HEAD
+[Release 3.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.0..release-3.0.1
 [Release 3.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.2...release-3.0.0
 [Release 2.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.1...release-2.1.2
 [Release 2.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.0...release-2.1.1
