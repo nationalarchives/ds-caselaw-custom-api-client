@@ -2,12 +2,13 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
+from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
 import requests
-from lxml import etree
-from lxml.etree import Element
 from requests.auth import HTTPBasicAuth
 from requests_toolbelt.multipart import decoder
+
 import environ
 
 env = environ.Env()
@@ -153,7 +154,7 @@ class MarklogicApiClient:
         return multipart_data.parts[0].text
 
     def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
-        xml = etree.tostring(judgment_xml)
+        xml = ElementTree.tostring(judgment_xml)
 
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
@@ -172,7 +173,7 @@ class MarklogicApiClient:
         )
 
     def insert_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
-        xml = etree.tostring(judgment_xml)
+        xml = ElementTree.tostring(judgment_xml)
 
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(

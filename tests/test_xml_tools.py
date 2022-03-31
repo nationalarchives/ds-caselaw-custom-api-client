@@ -1,6 +1,5 @@
 import unittest
-
-from lxml import etree
+import xml.etree.ElementTree as ET
 
 import src.caselawclient.xml_tools as xml_tools
 from src.caselawclient.xml_tools import JudgmentMissingMetadataError
@@ -19,7 +18,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_value(xml)
         self.assertEqual(result, "My Judgment Name")
 
@@ -33,7 +32,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_metadata_name_value, xml
         )
@@ -50,7 +49,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_element(xml)
         self.assertEqual(
             result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
@@ -67,7 +66,7 @@ class XmlToolsTests(unittest.TestCase):
                 </judgment>
             </akomaNtoso>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         self.assertRaises(
             JudgmentMissingMetadataError, xml_tools.get_metadata_name_element, xml
         )
@@ -88,6 +87,6 @@ class XmlToolsTests(unittest.TestCase):
                 </search:snippet>
             </search:result>
         """
-        xml = etree.fromstring(xml_string)
+        xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_search_matches(xml)
         self.assertEqual(result, ["HH Judge Anthony Thornton QC"])
