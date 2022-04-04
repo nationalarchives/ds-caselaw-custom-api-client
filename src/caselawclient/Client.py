@@ -314,10 +314,47 @@ class MarklogicApiClient:
         })
         return self.eval(xquery_path, vars=vars, accept_header="application/xml")
 
-    def set_boolean_property(self, judgment_uri, name, value):
+    def get_property(self, judgment_uri, name):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_property.xqy"
+        )
+        vars = json.dumps({
+            "uri": uri,
+            "name": name,
+        })
+        response = self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
+        if not response.text:
+            return ""
+
+        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        return content
+
+    def set_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "set_property.xqy"
+        )
+        vars = json.dumps({
+            "uri": uri,
+            "value": value,
+            "name": name,
+        })
+        return self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
+    def set_boolean_property(self, judgment_uri, name, value):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "set_boolean_property.xqy"
         )
         string_value = "true" if value else "false"
         vars = json.dumps({
@@ -332,20 +369,7 @@ class MarklogicApiClient:
         )
 
     def get_boolean_property(self, judgment_uri, name):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "get_property.xqy"
-        )
-
-        response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}","name":"{name}"}}',
-            accept_header="multipart/mixed"
-        )
-
-        if not response.text:
-            return False
-
-        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        content = self.get_property(judgment_uri, name)
         return content == "true"
 
     def set_published(self, judgment_uri, published=False):

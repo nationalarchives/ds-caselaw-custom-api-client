@@ -6,6 +6,6 @@ declare variable $uri as xs:string external;
 declare variable $value as xs:string external;
 declare variable $name as xs:string external;
 
-let $props := ( element {$name}{$value} )
+let $props := ( element {$name}{xs:boolean($value)} )
 
 return dls:document-set-property($uri, $props)

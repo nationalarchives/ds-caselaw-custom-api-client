@@ -92,7 +92,7 @@ class ApiClientTest(unittest.TestCase):
             client.set_boolean_property(uri, name="my-property", value="true")
 
             client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "set_property.xqy"),
+                os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
@@ -110,7 +110,7 @@ class ApiClientTest(unittest.TestCase):
             client.set_boolean_property(uri, name="my-property", value=False)
 
             client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "set_property.xqy"),
+                os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
@@ -268,6 +268,50 @@ class ApiClientTest(unittest.TestCase):
 
             client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, 'xquery', 'checkin_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_get_property(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            client.eval.return_value.text = 'my-content'
+            client.eval.return_value.headers = {'content-type': 'multipart/mixed; boundary=595658fa1db1aa98'}
+            client.eval.return_value.content = b'\r\n--595658fa1db1aa98\r\n' \
+                                               b'Content-Type: text/plain\r\n' \
+                                               b'X-Primitive: text()\r\n' \
+                                               b'X-URI: /ewca/civ/2004/632.xml\r\n' \
+                                               b'X-Path: /prop:properties/published/text()\r\n' \
+                                               b'\r\nmy-content\r\n' \
+                                               b'--595658fa1db1aa98--\r\n'
+            result = client.get_property("/judgment/uri", "my-property")
+
+            self.assertEqual("my-content", result)
+
+    def test_get_unset_property(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            client.eval.return_value.text = ''
+            result = client.get_property("/judgment/uri", "my-property")
+
+            self.assertEqual("", result)
+
+    def test_set_property(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "/judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+                "value": "my-value",
+                "name": "my-property"
+            }
+            client.set_property(uri, name="my-property", value="my-value")
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "set_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
