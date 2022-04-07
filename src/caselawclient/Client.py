@@ -282,7 +282,23 @@ class MarklogicApiClient:
         date_to=None,
         page=1,
         show_unpublished=False,
+        only_unpublished=False
     ) -> requests.Response:
+        """
+        Performs a search on the entire document set.
+
+        :param q:
+        :param court:
+        :param judge:
+        :param party:
+        :param order:
+        :param date_from:
+        :param date_to:
+        :param page:
+        :param show_unpublished: If True, both published and unpublished documents will be returned
+        :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
+        :return:
+        """
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "search.xqy"
         )
@@ -297,6 +313,7 @@ class MarklogicApiClient:
             "from": str(date_from or ""),
             "to": str(date_to or ""),
             "show_unpublished": str(show_unpublished).lower(),
+            "only_unpublished": str(only_unpublished).lower(),
         })
 
         return self.eval(xquery_path, vars)

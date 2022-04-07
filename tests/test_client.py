@@ -53,7 +53,8 @@ class ApiClientTest(unittest.TestCase):
                 "order": "",
                 "from": "",
                 "to": "",
-                "show_unpublished": "false"
+                "show_unpublished": "false",
+                "only_unpublished": "false"
             }
 
             client.eval.assert_called_with(
