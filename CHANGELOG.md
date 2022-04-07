@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 3.2.0]
+- Add flag to advanced_search to enable filtering out published documents from the search
+
 ## [Release 3.1.0]
 - Add function to get and set text properties on a document
 
@@ -41,7 +44,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.1.0...HEAD
+[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.2.0...HEAD
+[Release 3.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.1.1..release-3.2.0
 [Release 3.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.1..release-3.1.0
 [Release 3.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.0..release-3.0.1
 [Release 3.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-2.1.2...release-3.0.0
