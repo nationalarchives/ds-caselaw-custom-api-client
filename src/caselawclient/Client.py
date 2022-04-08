@@ -253,7 +253,7 @@ class MarklogicApiClient:
         )
 
     def eval(
-        self, xquery_path, vars, database="Judgments", accept_header="multipart/mixed"
+        self, xquery_path, vars, accept_header="multipart/mixed"
     ):
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
@@ -263,7 +263,24 @@ class MarklogicApiClient:
             "xquery": Path(xquery_path).read_text(),
             "vars": vars,
         }
-        path = f"LATEST/eval?database={database}"
+        path = f"LATEST/eval"
+        response = self.session.request(
+            "POST", url=self._path_to_request_url(path), headers=headers, data=data
+        )
+        # Raise relevant exception for an erroneous response
+        self._raise_for_status(response)
+        return response
+
+    def invoke(self, module, vars, accept_header="multipart/mixed"):
+        headers = {
+            "Content-type": "application/x-www-form-urlencoded",
+            "Accept": accept_header,
+        }
+        data = {
+            "module": module,
+            "vars": vars,
+        }
+        path = f"LATEST/invoke"
         response = self.session.request(
             "POST", url=self._path_to_request_url(path), headers=headers, data=data
         )
@@ -299,9 +316,7 @@ class MarklogicApiClient:
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
         :return:
         """
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "search.xqy"
-        )
+        module = '/judgments/search/search.xqy' # as stored on Marklogic
         vars = json.dumps({
             "court": str(court or ""),
             "judge": str(judge or ""),
@@ -316,7 +331,7 @@ class MarklogicApiClient:
             "only_unpublished": str(only_unpublished).lower(),
         })
 
-        return self.eval(xquery_path, vars)
+        return self.invoke(module, vars)
 
     def eval_xslt(self, judgment_uri, version_uri=None, show_unpublished=False) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"

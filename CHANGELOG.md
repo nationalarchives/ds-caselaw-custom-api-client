@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 - Parameterize the location of images in the XSLT transformation
+- Use the `invoke` endpoint, and the `search.xqy` stored on Marklogic, to search
+- Remove the `database` parameter in `eval`, it's not required; the db associated with the REST server is used
 
 ## [Release 3.2.0]
 - Add flag to advanced_search to enable filtering out published documents from the search
