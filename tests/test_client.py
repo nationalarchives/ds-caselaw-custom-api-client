@@ -71,6 +71,7 @@ class ApiClientTest(unittest.TestCase):
                 "uri": "/judgment/uri.xml",
                 "version_uri": None,
                 "show_unpublished": "true",
+                "img_location": ""
             }
             client.eval_xslt(uri, show_unpublished=True)
 

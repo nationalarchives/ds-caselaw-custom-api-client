@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Parameterize the location of images in the XSLT transformation
 
 ## [Release 3.2.0]
 - Add flag to advanced_search to enable filtering out published documents from the search
