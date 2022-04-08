@@ -323,11 +323,16 @@ class MarklogicApiClient:
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
+        if os.getenv('XSLT_IMAGE_LOCATION'):
+            image_location = os.getenv('XSLT_IMAGE_LOCATION')
+        else:
+            image_location = ""
 
         vars = json.dumps({
             "uri": uri,
             "version_uri": version_uri,
-            "show_unpublished": str(show_unpublished).lower()
+            "show_unpublished": str(show_unpublished).lower(),
+            "img_location": image_location
         })
         return self.eval(xquery_path, vars=vars, accept_header="application/xml")
 
