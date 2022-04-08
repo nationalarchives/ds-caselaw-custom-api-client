@@ -16,11 +16,11 @@ class ApiClientTest(unittest.TestCase):
         client = MarklogicApiClient("", "", "", False)
         client.session.request = MagicMock()
 
-        client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}', database="mockdatabase")
+        client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
         client.session.request.assert_called_with(
             "POST",
-            url=client._path_to_request_url("LATEST/eval?database=mockdatabase"),
+            url=client._path_to_request_url("LATEST/eval"),
             headers={
                 "Content-type": "application/x-www-form-urlencoded",
                 "Accept": "multipart/mixed"

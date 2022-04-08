@@ -253,7 +253,7 @@ class MarklogicApiClient:
         )
 
     def eval(
-        self, xquery_path, vars, database="Judgments", accept_header="multipart/mixed"
+        self, xquery_path, vars, accept_header="multipart/mixed"
     ):
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
@@ -263,7 +263,7 @@ class MarklogicApiClient:
             "xquery": Path(xquery_path).read_text(),
             "vars": vars,
         }
-        path = f"LATEST/eval?database={database}"
+        path = f"LATEST/eval"
         response = self.session.request(
             "POST", url=self._path_to_request_url(path), headers=headers, data=data
         )
