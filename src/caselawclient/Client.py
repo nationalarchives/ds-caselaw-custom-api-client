@@ -253,8 +253,10 @@ class MarklogicApiClient:
         )
 
     def eval(
-        self, xquery_path, vars, database="Judgments", accept_header="multipart/mixed"
+        self, xquery_path, vars, database=None, accept_header="multipart/mixed"
     ):
+        if not database:
+            database = os.getenv('DATABASE_NAME')
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
