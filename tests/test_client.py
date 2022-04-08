@@ -34,7 +34,7 @@ class ApiClientTest(unittest.TestCase):
     def test_advanced_search(self):
         client = MarklogicApiClient("", "", "", False)
 
-        with patch.object(client, 'eval'):
+        with patch.object(client, 'invoke'):
             client.advanced_search(
                 q="my-query",
                 court="ewhc",
@@ -57,8 +57,8 @@ class ApiClientTest(unittest.TestCase):
                 "only_unpublished": "false"
             }
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "search.xqy"),
+            client.invoke.assert_called_with(
+                '/judgments/search/search.xqy',
                 json.dumps(expected_vars)
             )
 
