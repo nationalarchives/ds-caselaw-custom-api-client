@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 4.0.0]
 - Parameterize the location of images in the XSLT transformation
 - Use the `invoke` endpoint, and the `search.xqy` stored on Marklogic, to search
 - Remove the `database` parameter in `eval`, it's not required; the db associated with the REST server is used
@@ -47,7 +49,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.2.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...HEAD
+[Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...3.2.0
 [Release 3.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.1.1..release-3.2.0
 [Release 3.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.1..release-3.1.0
 [Release 3.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.0..release-3.0.1
