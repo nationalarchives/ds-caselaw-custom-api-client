@@ -62,3 +62,8 @@ def get_search_matches(element: ElementTree) -> [str]:
         text = ElementTree.tostring(node, method="text", encoding="UTF-8")
         results.append(text.decode("UTF-8").strip())
     return results
+
+
+def get_error_code(xml_content: str) -> str:
+    xml = ElementTree.fromstring(xml_content)
+    return xml.find('message-code', namespaces={"": "http://marklogic.com/xdmp/error"}).text
