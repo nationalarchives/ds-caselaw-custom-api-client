@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.1.0]
+- Use error code from eval response body to throw MarklogicResourceNotFound errors
+
 ## [Release 4.0.0]
 - Parameterize the location of images in the XSLT transformation
 - Use the `invoke` endpoint, and the `search.xqy` stored on Marklogic, to search
@@ -50,6 +53,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Initial tagged release
 
 [Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...HEAD
+[Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...4.0.0
 [Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...3.2.0
 [Release 3.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.1.1..release-3.2.0
 [Release 3.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.1..release-3.1.0
