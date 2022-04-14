@@ -291,3 +291,18 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_search_matches(xml)
         self.assertEqual(result, ["HH Judge Anthony Thornton QC"])
+
+    def test_get_error_code(self):
+        xml_string = """
+        <error-response xmlns="http://marklogic.com/xdmp/error">
+            <status-code>500</status-code>
+            <status>Internal Server Error</status>
+            <message-code>XDMP-DOCNOTFOUND</message-code>
+            <message>XDMP-DOCNOTFOUND: xdmp:document-get-properties("/a/fake/judgment/.xml", fn:QName("","published")) -- Document not found</message>
+            <message-detail>
+                <message-title>Document not found</message-title>
+            </message-detail>
+        </error-response>
+        """
+        result = xml_tools.get_error_code(xml_string)
+        self.assertEqual(result, "XDMP-DOCNOTFOUND")

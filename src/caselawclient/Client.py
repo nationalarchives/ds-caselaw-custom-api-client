@@ -8,8 +8,9 @@ from xml.etree.ElementTree import Element
 import requests
 from requests.auth import HTTPBasicAuth
 from requests_toolbelt.multipart import decoder
-
 import environ
+
+from . import xml_tools
 
 env = environ.Env()
 RESULTS_PER_PAGE = 10
@@ -48,6 +49,10 @@ class MarklogicApiClient:
         403: MarklogicNotPermittedError,
         404: MarklogicResourceNotFoundError,
     }
+    error_code_classes = {
+        'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError
+    }
+
     default_http_error_class = MarklogicCommunicationError
 
     def __init__(self, host: str, username: str, password: str, use_https: bool):
@@ -74,6 +79,15 @@ class MarklogicApiClient:
                 response_body = json.dumps(response.json(), indent=4)
             except requests.JSONDecodeError:
                 response_body = response.content
+
+            if new_error_class == self.default_http_error_class:
+                # Attempt to decode the error code from the response
+                error_code = xml_tools.get_error_code(response.content.decode('utf-8'))
+
+                new_error_class = self.error_code_classes.get(
+                    error_code, self.default_http_error_class
+                )
+
             new_exception = new_error_class(
                 "{}. Response body:\n{}".format(e, response_body)
             )
