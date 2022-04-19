@@ -308,6 +308,8 @@ class MarklogicApiClient:
         court=None,
         judge=None,
         party=None,
+        neutral_citation=None,
+        specific_keyword=None,
         order=None,
         date_from=None,
         date_to=None,
@@ -322,6 +324,8 @@ class MarklogicApiClient:
         :param court:
         :param judge:
         :param party:
+        :param neutral_citation:
+        :param specific_keyword:
         :param order:
         :param date_from:
         :param date_to:
@@ -338,6 +342,8 @@ class MarklogicApiClient:
             "page-size": RESULTS_PER_PAGE,
             "q": str(q or ""),
             "party": str(party or ""),
+            "neutral_citation": str(neutral_citation or ""),
+            "specific_keyword": str(specific_keyword or ""),
             "order": str(order or ""),
             "from": str(date_from or ""),
             "to": str(date_to or ""),

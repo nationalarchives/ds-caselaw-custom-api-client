@@ -50,6 +50,8 @@ class ApiClientTest(unittest.TestCase):
                 "page-size": RESULTS_PER_PAGE,
                 "q": "my-query",
                 "party": "a party",
+                "neutral_citation": "",
+                "specific_keyword": "",
                 "order": "",
                 "from": "",
                 "to": "",
