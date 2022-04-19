@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.2.0]
+- Add neutral citation and specific keyword search parameters to advanced search
+
 ## [Release 4.1.0]
 - Use error code from eval response body to throw MarklogicResourceNotFound errors
 
@@ -52,8 +55,9 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...HEAD
-[Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...4.0.0
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...HEAD
+[Release 4.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.2.0...4.1.0
+[Release 4.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...4.0.0
 [Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...3.2.0
 [Release 3.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.1.1..release-3.2.0
 [Release 3.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-3.0.1..release-3.1.0
