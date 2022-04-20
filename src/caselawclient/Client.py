@@ -94,6 +94,9 @@ class MarklogicApiClient:
             new_exception.response = response
             raise new_exception
 
+    def _format_uri(self, uri):
+        return f"/{uri.lstrip('/')}.xml"
+
     def prepare_request_kwargs(
         self, method: str, path: str, body=None, data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -372,7 +375,7 @@ class MarklogicApiClient:
         return self.eval(xquery_path, vars=vars, accept_header="application/xml")
 
     def get_property(self, judgment_uri, name):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        uri = self._format_uri(judgment_uri)
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "get_property.xqy"
         )
@@ -452,6 +455,26 @@ class MarklogicApiClient:
 
     def get_anonymised(self, judgment_uri):
         return self.get_boolean_property(judgment_uri, "anonymised")
+
+    def get_last_modified(self, judgment_uri):
+        uri = self._format_uri(judgment_uri)
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_last_modified.xqy"
+        )
+        vars = json.dumps({
+            "uri": uri,
+        })
+        response = self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
+        if not response.text:
+            return ""
+
+        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        return content
 
 
 api_client = MarklogicApiClient(
