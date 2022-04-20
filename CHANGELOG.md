@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.3.0]
+- Add function to retrieve the last time a document or it's properties was updated
+
 ## [Release 4.2.0]
 - Add neutral citation and specific keyword search parameters to advanced search
 
@@ -55,7 +58,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.3.0...HEAD
+[Release 4.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.3.0...4.2.0
 [Release 4.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.2.0...4.1.0
 [Release 4.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...4.0.0
 [Release 4.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.0.0...3.2.0
