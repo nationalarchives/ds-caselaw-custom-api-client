@@ -2,8 +2,6 @@ import unittest
 import xml.etree.ElementTree as ET
 
 import src.caselawclient.xml_tools as xml_tools
-from src.caselawclient.xml_tools import JudgmentMissingMetadataError
-
 
 class XmlToolsTests(unittest.TestCase):
     def test_metadata_name_value_success(self):
@@ -48,9 +46,8 @@ class XmlToolsTests(unittest.TestCase):
             </proprietary>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_neutral_citation_name_value, xml
-        )
+        result = xml_tools.get_neutral_citation_name_value(xml)
+        self.assertEqual(result, None)
 
     def test_neutral_citation_element_success(self):
         xml_string = """
@@ -81,9 +78,8 @@ class XmlToolsTests(unittest.TestCase):
             </proprietary>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_neutral_citation_element, xml
-        )
+        result = xml_tools.get_neutral_citation_element(xml)
+        self.assertEqual(result.text, None)
 
     def test_metadata_name_value_failure(self):
         xml_string = """
@@ -96,9 +92,8 @@ class XmlToolsTests(unittest.TestCase):
             </akomaNtoso>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_metadata_name_value, xml
-        )
+        result = xml_tools.get_metadata_name_value(xml)
+        self.assertEqual(result, "")
 
     def test_metadata_name_element_success(self):
         xml_string = """
@@ -130,9 +125,11 @@ class XmlToolsTests(unittest.TestCase):
             </akomaNtoso>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_metadata_name_element, xml
+        result = xml_tools.get_metadata_name_element(xml)
+        self.assertEqual(
+            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
         )
+        self.assertEqual(result.attrib, {"value": ""})
 
     def test_judgment_date_value_success(self):
         xml_string = """
@@ -166,9 +163,8 @@ class XmlToolsTests(unittest.TestCase):
             </akomaNtoso>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_metadata_name_value, xml
-        )
+        result = xml_tools.get_judgment_date_value(xml)
+        self.assertEqual(result, "")
 
     def test_judgment_date_element_success(self):
         xml_string = """
@@ -205,9 +201,11 @@ class XmlToolsTests(unittest.TestCase):
             </akomaNtoso>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_judgment_date_element, xml
+        result = xml_tools.get_judgment_date_element(xml)
+        self.assertEqual(
+            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
         )
+        self.assertEqual(result.attrib, {"date": "", "name": "judgment"})
 
     def test_court_value_success(self):
         xml_string = """
@@ -235,9 +233,8 @@ class XmlToolsTests(unittest.TestCase):
             </proprietary>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_court_value, xml
-        )
+        result = xml_tools.get_court_value(xml)
+        self.assertEqual(result, None)
 
     def test_court_element_success(self):
         xml_string = """
@@ -268,9 +265,11 @@ class XmlToolsTests(unittest.TestCase):
             </proprietary>
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
-        self.assertRaises(
-            JudgmentMissingMetadataError, xml_tools.get_court_element, xml
+        result = xml_tools.get_court_element(xml)
+        self.assertEqual(
+            result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}court"
         )
+        self.assertEqual(result.text, None)
 
     def test_search_matches(self):
         xml_string = """

@@ -167,6 +167,9 @@ class MarklogicApiClient:
         response = self.eval(
             xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="application/xml"
         )
+        if not response.text:
+            return ''
+
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data.parts[0].text
 
