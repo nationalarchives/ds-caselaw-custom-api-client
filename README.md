@@ -63,7 +63,7 @@ There is also a small set of xml helper tools that provide some common functiona
 from caselawclient import xml_tools
 
 xml_tools.get_metadata_name_value(xml)
-xml_toosl.get_metadata_name_element(xml)
+xml_tools.get_metadata_name_element(xml)
 xml_tools.get_search_matches(element)
 ```
 

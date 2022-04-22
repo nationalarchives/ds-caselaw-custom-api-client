@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- If an element doesn't exist in a document, `xml_tools.get_element` tries to return an empty element with the same
+  name as the desired element.
 
 ## [Release 4.3.0]
 - Add function to retrieve the last time a document or it's properties was updated
