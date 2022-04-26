@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 4.5.0]
 - Allow metadata elements (name, date, court and citation) to be edited in the XML via XQuery, not by deserialising and
   serialising the XML in the implementing client code.
 
@@ -64,7 +66,9 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.3.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.0...HEAD
+[Release 4.5.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.0...4.4.0
+[Release 4.4.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.4.0...4.3.0
 [Release 4.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.3.0...4.2.0
 [Release 4.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.2.0...4.1.0
 [Release 4.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.1.0...4.0.0
