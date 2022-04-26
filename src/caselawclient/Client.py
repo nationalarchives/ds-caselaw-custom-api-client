@@ -173,6 +173,17 @@ class MarklogicApiClient:
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data.parts[0].text
 
+    def set_judgment_name(self, judgment_uri, content):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "set_metadata_name.xqy"
+        )
+
+        response = self.eval(
+            xquery_path, vars=f'{{"uri":"{uri}", "content":"{content}"}}', accept_header="application/xml"
+        )
+        return response
+
     def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
         xml = ElementTree.tostring(judgment_xml)
 
