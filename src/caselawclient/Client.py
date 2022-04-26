@@ -184,6 +184,17 @@ class MarklogicApiClient:
         )
         return response
 
+    def set_judgment_date(self, judgment_uri, content):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "set_metadata_date.xqy"
+        )
+
+        response = self.eval(
+            xquery_path, vars=f'{{"uri":"{uri}", "content":"{content}"}}', accept_header="application/xml"
+        )
+        return response
+
     def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
         xml = ElementTree.tostring(judgment_xml)
 
