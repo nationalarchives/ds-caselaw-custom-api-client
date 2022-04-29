@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 4.5.2]
 - Create a new `akn:FRBRname` node for the judgment metadata name, if one does not exist
 
 ## [Release 4.5.1]
@@ -70,7 +72,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.2...HEAD
+[Release 4.5.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.2...4.5.1
 [Release 4.5.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.1...4.5.0
 [Release 4.5.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.0...4.4.0
 [Release 4.4.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.4.0...4.3.0
