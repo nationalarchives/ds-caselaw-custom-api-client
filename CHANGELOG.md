@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Create a new `akn:FRBRname` node for the judgment metadata name, if one does not exist
 
 ## [Release 4.5.1]
 - Patch release to update `setup.cfg`, which was missed from v4.5.0
