@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.5.4]
+- Adds a new `delete_judgment` endpoint, for deleting a judgment from marklogic
+
 ## [Release 4.5.3]
 - Create a new `akn:FRBRdate`, `uk:cite` and `uk:court` nodes for the judgment metadata, if they do not exist
 
@@ -75,7 +78,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.3...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.4...HEAD
+[Release 4.5.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.4...4.5.3
 [Release 4.5.3]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.3...4.5.2
 [Release 4.5.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.2...4.5.1
 [Release 4.5.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.1...4.5.0
