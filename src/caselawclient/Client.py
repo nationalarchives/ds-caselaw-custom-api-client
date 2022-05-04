@@ -523,6 +523,20 @@ class MarklogicApiClient:
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         return content
 
+    def delete_judgment(self, judgment_uri):
+        uri = self._format_uri(judgment_uri)
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "delete_judgment.xqy"
+        )
+        vars = json.dumps({
+            "uri": uri
+        })
+        self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST"),
