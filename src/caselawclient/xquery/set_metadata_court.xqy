@@ -5,6 +5,14 @@ declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn";
 declare variable $uri as xs:string external;
 declare variable $content as xs:string external;
 
-xdmp:node-replace(
-document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court,
-<uk:court>{$content}</uk:court>)
+if (fn:boolean(
+cts:search(doc($uri),
+cts:element-query(xs:QName('uk:court'),cts:and-query(()))))) then
+    xdmp:node-replace(
+    document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court,
+    <uk:court>{$content}</uk:court>)
+else
+    xdmp:node-insert-child(
+      document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary,
+      <uk:court>{$content}</uk:court>
+    )
