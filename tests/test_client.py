@@ -319,3 +319,19 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_delete_document(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "/judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+            }
+            client.delete_judgment(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
