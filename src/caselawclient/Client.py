@@ -364,6 +364,7 @@ class MarklogicApiClient:
         date_from=None,
         date_to=None,
         page=1,
+        page_size=RESULTS_PER_PAGE,
         show_unpublished=False,
         only_unpublished=False
     ) -> requests.Response:
@@ -380,6 +381,7 @@ class MarklogicApiClient:
         :param date_from:
         :param date_to:
         :param page:
+        :param page_size:
         :param show_unpublished: If True, both published and unpublished documents will be returned
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
         :return:
@@ -389,7 +391,7 @@ class MarklogicApiClient:
             "court": str(court or ""),
             "judge": str(judge or ""),
             "page": page,
-            "page-size": RESULTS_PER_PAGE,
+            "page-size": int(page_size),
             "q": str(q or ""),
             "party": str(party or ""),
             "neutral_citation": str(neutral_citation or ""),
