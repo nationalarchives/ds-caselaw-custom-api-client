@@ -41,13 +41,14 @@ class ApiClientTest(unittest.TestCase):
                 judge="a. judge",
                 party="a party",
                 page=2,
+                page_size=20
             )
 
             expected_vars = {
                 "court": "ewhc",
                 "judge": "a. judge",
                 "page": 2,
-                "page-size": RESULTS_PER_PAGE,
+                "page-size": 20,
                 "q": "my-query",
                 "party": "a party",
                 "neutral_citation": "",
