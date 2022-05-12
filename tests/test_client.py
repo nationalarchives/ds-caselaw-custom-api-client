@@ -65,7 +65,7 @@ class ApiClientTest(unittest.TestCase):
                 json.dumps(expected_vars)
             )
 
-    def test_eval_xslt(self):
+    def test_eval_xslt_with_default(self):
         client = MarklogicApiClient("", "", "", False)
 
         with patch.object(client, 'eval'):
@@ -74,9 +74,30 @@ class ApiClientTest(unittest.TestCase):
                 "uri": "/judgment/uri.xml",
                 "version_uri": None,
                 "show_unpublished": "true",
-                "img_location": ""
+                "img_location": "",
+                "xsl_filename": "judgment2.xsl"
             }
             client.eval_xslt(uri, show_unpublished=True)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header='application/xml'
+            )
+
+    def test_eval_xslt_with_filename(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "/judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+                "version_uri": None,
+                "show_unpublished": "true",
+                "img_location": "",
+                "xsl_filename": "judgment0.xsl"
+            }
+            client.eval_xslt(uri, show_unpublished=True, xsl_filename="judgment0.xsl")
 
             client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"),
