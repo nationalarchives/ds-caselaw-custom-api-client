@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Allow the xsl filename used in the judgment transformation to vary. We have two xsls available in Marklogic -
+  `judgment2` (the accessible version) and `judgment0` (the "as handed down" version). Add two helper methods
+  `accessible_judgment_transformation()` and `original_judgment_transformation()` to call these transformations without
+  specifying the xsl filename.
 
 ## [Release 4.5.4]
 - Adds a new `delete_judgment` endpoint, for deleting a judgment from marklogic

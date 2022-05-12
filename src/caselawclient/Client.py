@@ -403,7 +403,7 @@ class MarklogicApiClient:
 
         return self.invoke(module, vars)
 
-    def eval_xslt(self, judgment_uri, version_uri=None, show_unpublished=False) -> requests.Response:
+    def eval_xslt(self, judgment_uri, version_uri=None, show_unpublished=False, xsl_filename="judgment2.xsl") -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
@@ -417,9 +417,16 @@ class MarklogicApiClient:
             "uri": uri,
             "version_uri": version_uri,
             "show_unpublished": str(show_unpublished).lower(),
-            "img_location": image_location
+            "img_location": image_location,
+            "xsl_filename": xsl_filename
         })
         return self.eval(xquery_path, vars=vars, accept_header="application/xml")
+
+    def accessible_judgment_transformation(self, judgment_uri, version_uri=None, show_unpublished=False):
+        return self.eval_xslt(judgment_uri, version_uri, show_unpublished, xsl_filename="judgment2.xsl")
+
+    def original_judgment_transformation(self, judgment_uri, version_uri=None, show_unpublished=False):
+        return self.eval_xslt(judgment_uri, version_uri, show_unpublished, xsl_filename="judgment0.xsl")
 
     def get_property(self, judgment_uri, name):
         uri = self._format_uri(judgment_uri)
