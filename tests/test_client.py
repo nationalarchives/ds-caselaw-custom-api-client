@@ -357,3 +357,21 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_copy_judgment(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            old_uri = "/judgment/old_uri"
+            new_uri = "/judgment/new_uri"
+            expected_vars = {
+                "old_uri": "/judgment/old_uri.xml",
+                "new_uri": "/judgment/new_uri.xml",
+            }
+            client.copy_judgment(old_uri, new_uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "copy_judgment.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
