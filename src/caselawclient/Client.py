@@ -546,6 +546,23 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def copy_judgment(self, old, new):
+        old_uri = self._format_uri(old)
+        new_uri = self._format_uri(new)
+
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "copy_judgment.xqy"
+        )
+        vars = json.dumps({
+            "old_uri": old_uri,
+            "new_uri": new_uri,
+        })
+        return self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST"),
