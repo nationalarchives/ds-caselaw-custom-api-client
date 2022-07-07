@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- Change the behaviour of 'last-modified' dates to use prop:last-modified rather than xdmp:document-timestamp
+
 ## [Release 4.6.0]
 - Allow the xsl filename used in the judgment transformation to vary. We have two xsls available in Marklogic -
   `judgment2` (the accessible version) and `judgment0` (the "as handed down" version). Add two helper methods
