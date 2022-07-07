@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Change the XQuery delete method from xdmp:document-delete to dls:document-delete
 
 ## [Release 4.6.0]
 - Allow the xsl filename used in the judgment transformation to vary. We have two xsls available in Marklogic -
