@@ -217,6 +217,21 @@ class MarklogicApiClient:
         )
         return response
 
+    def set_judgment_this_uri(self, judgment_uri):
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        content_with_id = f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
+        content_without_id = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
+        content_with_xml = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
+
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"
+        )
+
+        response = self.eval(
+            xquery_path, vars=f'{{"uri": "{uri}", "content_with_id": "{content_with_id}", "content_without_id": "{content_without_id}", "content_with_xml": "{content_with_xml}"}}', accept_header="application/xml"
+        )
+        return response
+
     def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
         xml = ElementTree.tostring(judgment_xml)
 
