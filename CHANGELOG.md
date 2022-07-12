@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Unreleased]
+## [Release 4.6.1]
 
 - Change the behaviour of 'last-modified' dates to use prop:last-modified rather than xdmp:document-timestamp
 
@@ -87,7 +87,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.1...HEAD
+[Release 4.6.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.1...4.6.0
 [Release 4.6.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.0...4.5.4
 [Release 4.5.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.4...4.5.3
 [Release 4.5.3]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.3...4.5.2
