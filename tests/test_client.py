@@ -375,3 +375,41 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_set_internal_uri_leading_slash(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "/judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+                "content_with_id": "https://caselaw.nationalarchives.gov.uk/id/judgment/uri",
+                "content_without_id": "https://caselaw.nationalarchives.gov.uk/judgment/uri",
+                "content_with_xml": "https://caselaw.nationalarchives.gov.uk/judgment/uri/data.xml",
+            }
+            client.set_judgment_this_uri(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_set_internal_uri_no_leading_slash(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "judgment/uri"
+            expected_vars = {
+                "uri":"/judgment/uri.xml",
+                "content_with_id": "https://caselaw.nationalarchives.gov.uk/id/judgment/uri",
+                "content_without_id": "https://caselaw.nationalarchives.gov.uk/judgment/uri",
+                "content_with_xml": "https://caselaw.nationalarchives.gov.uk/judgment/uri/data.xml",
+            }
+            client.set_judgment_this_uri(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
