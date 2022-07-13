@@ -67,6 +67,15 @@ xml_tools.get_metadata_name_element(xml)
 xml_tools.get_search_matches(element)
 ```
 
+## Testing
+
+To run the test suite:
+
+```bash
+pip install -r requirements.txt
+python -m unittest discover -s tests
+```
+
 ## Making changes
 
 When making a change, update the [changelog](CHANGELOG.md) using the
