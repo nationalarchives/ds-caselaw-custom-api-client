@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
-- Change the XQuery delete method from xdmp:document-delete to dls:document-delete
 
+## [Release 4.7.0]
+- Change the XQuery delete method from xdmp:document-delete to dls:document-delete
 - Change the behaviour of 'last-modified' dates to use prop:last-modified rather than xdmp:document-timestamp
+- Set the judgment's internal URI (`FRBRthis` and `FRBRuri` nodes)
 
 ## [Release 4.6.0]
 - Allow the xsl filename used in the judgment transformation to vary. We have two xsls available in Marklogic -
