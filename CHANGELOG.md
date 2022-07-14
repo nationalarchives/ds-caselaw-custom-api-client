@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.7.1]
+- Fix a typo in setting the internal URI of a judgment
+
 ## [Release 4.7.0]
 - Change the XQuery delete method from xdmp:document-delete to dls:document-delete
 - Change the behaviour of 'last-modified' dates to use prop:last-modified rather than xdmp:document-timestamp
