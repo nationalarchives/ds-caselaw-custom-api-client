@@ -305,3 +305,23 @@ class XmlToolsTests(unittest.TestCase):
         """
         result = xml_tools.get_error_code(xml_string)
         self.assertEqual(result, "XDMP-DOCNOTFOUND")
+
+    def test_get_error_code_missing_message(self):
+        xml_string = """
+        <error-response xmlns="http://marklogic.com/xdmp/error">
+            <status-code>500</status-code>
+            <status>Internal Server Error</status>
+        </error-response>
+        """
+        result = xml_tools.get_error_code(xml_string)
+        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")
+
+    def test_get_error_code_xml_empty_string(self):
+        xml_string = ""
+        result = xml_tools.get_error_code(xml_string)
+        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")
+
+    def test_get_error_code_xml_none(self):
+        xml_string = None
+        result = xml_tools.get_error_code(xml_string)
+        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")

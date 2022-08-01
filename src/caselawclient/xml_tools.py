@@ -1,5 +1,5 @@
 from xml.etree import ElementTree
-from xml.etree.ElementTree import Element
+from xml.etree.ElementTree import Element, ParseError
 
 akn_uk_namespaces = {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
                      "uk": "https://caselaw.nationalarchives.gov.uk/akn"}
@@ -85,5 +85,8 @@ def get_search_matches(element: ElementTree) -> [str]:
 
 
 def get_error_code(xml_content: str) -> str:
-    xml = ElementTree.fromstring(xml_content)
-    return xml.find('message-code', namespaces={"": "http://marklogic.com/xdmp/error"}).text
+    try:
+        xml = ElementTree.fromstring(xml_content)
+        return xml.find('message-code', namespaces={"": "http://marklogic.com/xdmp/error"}).text
+    except (ParseError, TypeError, AttributeError):
+        return "Unknown error, Marklogic returned a null or empty response"
