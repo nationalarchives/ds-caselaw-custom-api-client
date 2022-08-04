@@ -596,8 +596,8 @@ class MarklogicApiClient:
 
 
 api_client = MarklogicApiClient(
-    host=env("MARKLOGIC_HOST"),
-    username=env("MARKLOGIC_USER"),
-    password=env("MARKLOGIC_PASSWORD"),
+    host=env("MARKLOGIC_HOST", default=None),
+    username=env("MARKLOGIC_USER", default=None),
+    password=env("MARKLOGIC_PASSWORD", default=None),
     use_https=env("MARKLOGIC_USE_HTTPS", default=False),
 )
