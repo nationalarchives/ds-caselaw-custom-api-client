@@ -300,13 +300,14 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def checkout_judgment(self, judgment_uri: str) -> requests.Response:
+    def checkout_judgment(self, judgment_uri: str, annotation="") -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "checkout_judgment.xqy"
         )
         vars = {
-            "uri": uri
+            "uri": uri,
+            "annotation": annotation,
         }
 
         return self.eval(

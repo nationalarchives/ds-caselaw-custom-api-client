@@ -272,10 +272,12 @@ class ApiClientTest(unittest.TestCase):
 
         with patch.object(client, 'eval'):
             uri = '/ewca/civ/2004/632'
+            annotation = "locked by A KITTEN"
             expected_vars = {
-                'uri':'/ewca/civ/2004/632.xml'
+                'uri':'/ewca/civ/2004/632.xml',
+                'annotation': 'locked by A KITTEN'
             }
-            client.checkout_judgment(uri)
+            client.checkout_judgment(uri, annotation)
 
             client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, 'xquery', 'checkout_judgment.xqy'),
