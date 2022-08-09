@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 from pathlib import Path
 from typing import Any, Dict, Optional
 from xml.etree import ElementTree
@@ -185,13 +186,18 @@ class MarklogicApiClient:
         return response
 
     def set_judgment_date(self, judgment_uri, content):
+        warnings.warn("set_judgment_date() is deprecated, use set_judgment_work_expression_date()",
+                      DeprecationWarning, stacklevel=2)
+        return self.set_judgment_work_expression_date(judgment_uri, content)
+
+    def set_judgment_work_expression_date(self, judgment_uri, content):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "set_metadata_date.xqy"
+            ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"
         )
 
         response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}", "content":"{content}"}}', accept_header="application/xml"
+            xquery_path, vars=f'{{"uri": "{uri}", "content": "{content}"}}', accept_header="application/xml"
         )
         return response
 

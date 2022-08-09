@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+import warnings
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
@@ -410,6 +411,43 @@ class ApiClientTest(unittest.TestCase):
 
             client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_set_judgment_date_warn(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(warnings, 'warn'), patch.object(client, 'eval'):
+                uri = "judgment/uri"
+                content = "2022-01-01"
+                expected_vars = {
+                    "uri": "/judgment/uri.xml",
+                    "content": "2022-01-01"
+                }
+                client.set_judgment_date(uri, content)
+
+                warnings.warn.assert_called()
+                client.eval.assert_called_with(
+                    os.path.join(ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"),
+                    vars=json.dumps(expected_vars),
+                    accept_header="application/xml"
+        )
+
+    def test_set_judgment_date_work_expression(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "judgment/uri"
+            content = "2022-01-01"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+                "content": "2022-01-01"
+            }
+            client.set_judgment_work_expression_date(uri, content)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
