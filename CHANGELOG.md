@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 4.8.0]
 - Gracefully handle a null, empty or unexpected error response from Marklogic 
+- Rename set_judgment_date to set_judgment_work_expression_date
+- Update the FRBRWork and FRBRExpression dates and @name attributes
 
 ## [Release 4.7.1]
 - Fix a typo in setting the internal URI of a judgment
@@ -94,7 +98,10 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.8.0...HEAD
+[Release 4.8.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.8.0...4.7.1
+[Release 4.7.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.7.0...4.7.1
+[Release 4.7.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.7.0...4.6.0
 [Release 4.6.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.6.0...4.5.4
 [Release 4.5.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.4...4.5.3
 [Release 4.5.3]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/release-4.5.3...4.5.2
