@@ -453,3 +453,43 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_get_checkout_status(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = "judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml"
+            }
+            client.get_judgment_checkout_status(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_get_checkout_status_message(self):
+        response_text = """
+        <dls:checkout xmlns:dls="http://marklogic.com/xdmp/dls">
+            <dls:document-uri>/ukpc/2022/17.xml</dls:document-uri>
+            <dls:annotation>locked by a kitten</dls:annotation>
+            <dls:timeout>0</dls:timeout>
+            <dls:timestamp>1660210484</dls:timestamp>
+            <sec:user-id xmlns:sec="http://marklogic.com/xdmp/security">10853946559473170020</sec:user-id>
+        </dls:checkout>
+        """
+
+        with patch.object(MarklogicApiClient, 'eval', return_value=MagicMock(text=response_text)) as mock_method:
+            client = MarklogicApiClient("","","",False)
+            result = client.get_judgment_checkout_status_message("/ewca/2002/2")
+            assert result == "locked by a kitten"
+
+    def test_get_checkout_status_message_empty(self):
+        response_text = ""
+
+        with patch.object(MarklogicApiClient, 'eval', return_value=MagicMock(text=response_text)) as mock_method:
+            client = MarklogicApiClient("", "", "", False)
+            result = client.get_judgment_checkout_status_message("/ewca/2002/2")
+            assert result == "Not locked"

@@ -333,6 +333,29 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def get_judgment_checkout_status(self, judgment_uri: str) -> requests.Response:
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy"
+        )
+        vars = {
+            "uri": uri
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def get_judgment_checkout_status_message(self, judgment_uri: str) -> str:
+        response = self.get_judgment_checkout_status(judgment_uri)
+        if response.text == "":
+            return "Not locked"
+        response_xml = ElementTree.fromstring(response.text)
+        return response_xml.find("dls:annotation", namespaces={"dls": "http://marklogic.com/xdmp/dls"}).text
+
+
     def get_judgment_version(self, judgment_uri: str, version: int) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
