@@ -37,9 +37,16 @@ class MarklogicNotPermittedError(MarklogicAPIError):
 class MarklogicResourceNotFoundError(MarklogicAPIError):
     pass
 
+class MarklogicResourceLockedError(MarklogicAPIError):
+    pass
+
+class MarklogicResourceUnmanagedError(MarklogicAPIError):
+    """Note: this exception may be raised if a document doesn't exist"""
+    pass
 
 class MarklogicCommunicationError(MarklogicAPIError):
     pass
+
 
 
 class MarklogicApiClient:
@@ -51,7 +58,9 @@ class MarklogicApiClient:
         404: MarklogicResourceNotFoundError,
     }
     error_code_classes = {
-        'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError
+        'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError,
+        'XDMP-LOCKCONFLICT': MarklogicResourceLockedError,
+        'DLS-UNMANAGED': MarklogicResourceUnmanagedError,
     }
 
     default_http_error_class = MarklogicCommunicationError
@@ -291,13 +300,14 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def checkout_judgment(self, judgment_uri: str) -> requests.Response:
+    def checkout_judgment(self, judgment_uri: str, annotation="") -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "checkout_judgment.xqy"
         )
         vars = {
-            "uri": uri
+            "uri": uri,
+            "annotation": annotation,
         }
 
         return self.eval(
@@ -586,8 +596,8 @@ class MarklogicApiClient:
 
 
 api_client = MarklogicApiClient(
-    host=env("MARKLOGIC_HOST"),
-    username=env("MARKLOGIC_USER"),
-    password=env("MARKLOGIC_PASSWORD"),
+    host=env("MARKLOGIC_HOST", default=None),
+    username=env("MARKLOGIC_USER", default=None),
+    password=env("MARKLOGIC_PASSWORD", default=None),
     use_https=env("MARKLOGIC_USE_HTTPS", default=False),
 )
