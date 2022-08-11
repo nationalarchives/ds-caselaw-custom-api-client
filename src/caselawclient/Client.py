@@ -37,16 +37,18 @@ class MarklogicNotPermittedError(MarklogicAPIError):
 class MarklogicResourceNotFoundError(MarklogicAPIError):
     pass
 
+
 class MarklogicResourceLockedError(MarklogicAPIError):
     pass
+
 
 class MarklogicResourceUnmanagedError(MarklogicAPIError):
     """Note: this exception may be raised if a document doesn't exist"""
     pass
 
+
 class MarklogicCommunicationError(MarklogicAPIError):
     pass
-
 
 
 class MarklogicApiClient:
