@@ -1,6 +1,7 @@
 import json
 import os
 import warnings
+from datetime import datetime, timedelta, time
 from pathlib import Path
 from typing import Any, Dict, Optional
 from xml.etree import ElementTree
@@ -302,7 +303,7 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def checkout_judgment(self, judgment_uri: str, annotation="") -> requests.Response:
+    def checkout_judgment(self, judgment_uri: str, annotation="", expires_at_midnight=False) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(
             ROOT_DIR, "xquery", "checkout_judgment.xqy"
@@ -311,6 +312,10 @@ class MarklogicApiClient:
             "uri": uri,
             "annotation": annotation,
         }
+
+        if expires_at_midnight:
+            timeout = self.calculate_seconds_until_midnight()
+            vars["timeout"] = timeout
 
         return self.eval(
             xquery_path,
@@ -618,6 +623,18 @@ class MarklogicApiClient:
             vars=vars,
             accept_header="application/xml",
         )
+
+    def calculate_seconds_until_midnight(self, now=None):
+        """
+        Get timedelta until end of day on the datetime passed, or current time.
+        https://stackoverflow.com/questions/45986035/seconds-until-end-of-day-in-python
+        """
+        if not now:
+            now = datetime.now()
+        tomorrow = now + timedelta(days=1)
+        difference = datetime.combine(tomorrow, time.min) - now
+
+        return difference.seconds
 
 
 api_client = MarklogicApiClient(

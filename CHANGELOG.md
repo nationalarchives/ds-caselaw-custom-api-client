@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Unreleased]
 - Add optional annotation parameter to `checkout_judgment` method
 - Add method to get the lock/checkout status of a judgment
+- Judgment checkout may optionally expire at midnight
 
 ## [Release 4.8.0]
 - Gracefully handle a null, empty or unexpected error response from Marklogic 
