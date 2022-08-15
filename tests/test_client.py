@@ -276,7 +276,8 @@ class ApiClientTest(unittest.TestCase):
             annotation = "locked by A KITTEN"
             expected_vars = {
                 'uri':'/ewca/civ/2004/632.xml',
-                'annotation': 'locked by A KITTEN'
+                'annotation': 'locked by A KITTEN',
+                'timeout': -1
             }
             client.checkout_judgment(uri, annotation)
 

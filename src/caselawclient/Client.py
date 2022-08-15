@@ -317,6 +317,8 @@ class MarklogicApiClient:
         if expires_at_midnight:
             timeout = self.calculate_seconds_until_midnight()
             vars["timeout"] = timeout
+        else:
+            vars["timeout"] = -1
 
         return self.eval(
             xquery_path,
