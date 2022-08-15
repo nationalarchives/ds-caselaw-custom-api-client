@@ -356,11 +356,15 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def get_judgment_checkout_status_message(self, judgment_uri: str) -> str:
+    def get_judgment_checkout_status_message(self, judgment_uri: str):
+        """Return the annotation of the lock or `None` if there is no lock."""
         response = self.get_judgment_checkout_status(judgment_uri)
-        if response.text == "":
-            return "Not locked"
-        response_xml = ElementTree.fromstring(response.text)
+        if not response.content:
+            return None
+        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        if content == "":
+            return None
+        response_xml = ElementTree.fromstring(content)
         return response_xml.find("dls:annotation", namespaces={"dls": "http://marklogic.com/xdmp/dls"}).text
 
 
