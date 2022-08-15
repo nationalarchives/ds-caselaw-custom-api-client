@@ -2,6 +2,7 @@ import json
 import os
 import unittest
 import warnings
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
@@ -285,6 +286,27 @@ class ApiClientTest(unittest.TestCase):
                 accept_header="application/xml"
             )
 
+    def test_checkout_judgment_with_timeout(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            with patch.object(client, 'calculate_seconds_until_midnight', return_value=3600):
+                uri = '/ewca/civ/2004/632'
+                annotation = "locked by A KITTEN"
+                expires_at_midnight = True
+                expected_vars = {
+                    'uri': '/ewca/civ/2004/632.xml',
+                    'annotation': 'locked by A KITTEN',
+                    'timeout': 3600,
+                }
+                client.checkout_judgment(uri, annotation, expires_at_midnight)
+
+                client.eval.assert_called_with(
+                    os.path.join(ROOT_DIR, 'xquery', 'checkout_judgment.xqy'),
+                    vars=json.dumps(expected_vars),
+                    accept_header="application/xml"
+                )
+
     def test_checkin_judgment(self):
         client = MarklogicApiClient("", "", "", False)
 
@@ -493,3 +515,10 @@ class ApiClientTest(unittest.TestCase):
             client = MarklogicApiClient("", "", "", False)
             result = client.get_judgment_checkout_status_message("/ewca/2002/2")
             assert result == "Not locked"
+
+    def test_calculate_seconds_until_midnight(self):
+        client = MarklogicApiClient("", "", "", False)
+        dt = datetime.strptime("2020-01-01 23:00", "%Y-%m-%d %H:%M") # 1 hour until midnight
+        result = client.calculate_seconds_until_midnight(dt)
+        expected_result = 3600 # 1 hour in seconds
+        self.assertEqual(result, expected_result)
