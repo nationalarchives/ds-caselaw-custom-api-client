@@ -276,7 +276,8 @@ class ApiClientTest(unittest.TestCase):
             annotation = "locked by A KITTEN"
             expected_vars = {
                 'uri':'/ewca/civ/2004/632.xml',
-                'annotation': 'locked by A KITTEN'
+                'annotation': 'locked by A KITTEN',
+                'timeout': -1
             }
             client.checkout_judgment(uri, annotation)
 
@@ -493,28 +494,39 @@ class ApiClientTest(unittest.TestCase):
             )
 
     def test_get_checkout_status_message(self):
-        response_text = """
-        <dls:checkout xmlns:dls="http://marklogic.com/xdmp/dls">
-            <dls:document-uri>/ukpc/2022/17.xml</dls:document-uri>
-            <dls:annotation>locked by a kitten</dls:annotation>
-            <dls:timeout>0</dls:timeout>
-            <dls:timestamp>1660210484</dls:timestamp>
-            <sec:user-id xmlns:sec="http://marklogic.com/xdmp/security">10853946559473170020</sec:user-id>
-        </dls:checkout>
-        """
+        client = MarklogicApiClient("", "", "", False)
 
-        with patch.object(MarklogicApiClient, 'eval', return_value=MagicMock(text=response_text)) as mock_method:
-            client = MarklogicApiClient("","","",False)
+        with patch.object(MarklogicApiClient, 'eval') as mock_method:
+            client.eval.return_value.text = 'true'
+            client.eval.return_value.headers = {'content-type': 'multipart/mixed; boundary=595658fa1db1aa98'}
+            client.eval.return_value.content = b'\r\n--595658fa1db1aa98\r\n' \
+                                               b'Content-Type: application/xml\r\n' \
+                                               b'X-Primitive: element()\r\n' \
+                                               b'X-Path: /*\r\n\r\n' \
+                                               b'<dls:checkout xmlns:dls="http://marklogic.com/xdmp/dls">'\
+                                               b'<dls:document-uri>/ukpc/2022/17.xml</dls:document-uri>'\
+                                               b'<dls:annotation>locked by a kitten</dls:annotation>'\
+                                               b'<dls:timeout>0</dls:timeout>'\
+                                               b'<dls:timestamp>1660210484</dls:timestamp>'\
+                                               b'<sec:user-id xmlns:sec="http://marklogic.com/xdmp/security">10853946559473170020</sec:user-id>'\
+                                               b'</dls:checkout>\r\n' \
+                                               b'--595658fa1db1aa98--\r\n'
             result = client.get_judgment_checkout_status_message("/ewca/2002/2")
             assert result == "locked by a kitten"
 
     def test_get_checkout_status_message_empty(self):
-        response_text = ""
-
-        with patch.object(MarklogicApiClient, 'eval', return_value=MagicMock(text=response_text)) as mock_method:
-            client = MarklogicApiClient("", "", "", False)
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(MarklogicApiClient, 'eval') as mock_method:
+            client.eval.return_value.text = 'true'
+            client.eval.return_value.headers = {'content-type': 'multipart/mixed; boundary=595658fa1db1aa98'}
+            client.eval.return_value.content = b'\r\n--595658fa1db1aa98\r\n' \
+                                               b'Content-Type: application/xml\r\n' \
+                                               b'X-Primitive: element()\r\n' \
+                                               b'X-Path: /*\r\n\r\n' \
+                                               b'\r\n' \
+                                               b'--595658fa1db1aa98--\r\n'
             result = client.get_judgment_checkout_status_message("/ewca/2002/2")
-            assert result == "Not locked"
+            assert result is None
 
     def test_calculate_seconds_until_midnight(self):
         client = MarklogicApiClient("", "", "", False)
