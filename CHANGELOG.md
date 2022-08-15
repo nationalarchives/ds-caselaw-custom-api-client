@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 4.9.1]
+- Fix: add external declaration to XQuery parameter
+- Bump version of requests to 2.28.1
+- Raise error if unpublished document is not returned
+- Use -1 as value meaning 'lock forever' in checkout_judgment
+- Return none if the judgment is not locked, rather than an empty string
+
 ## [Release 4.9.0]
 - Add optional annotation parameter to `checkout_judgment` method
 - Add method to get the lock/checkout status of a judgment
@@ -103,7 +110,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...HEAD
+[Release 4.9.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...v4.9.0
 [Release 4.9.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.0...v4.8.0
 [Release 4.8.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.8.0...v4.7.1
 [Release 4.7.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.7.0...v4.7.1
