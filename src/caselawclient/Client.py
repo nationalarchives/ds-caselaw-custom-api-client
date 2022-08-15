@@ -165,8 +165,9 @@ class MarklogicApiClient:
             vars=json.dumps(vars),
             accept_header="application/xml",
         )
+
         if not response.text:
-            return ''
+            raise MarklogicNotPermittedError("The document is not published and show_unpublished was not set")
 
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data.parts[0].text
