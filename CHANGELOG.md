@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- Add user_has_privilege method & XQuery to check if a user has a privilege
 
 ## [Release 4.9.1]
 - Fix: add external declaration to XQuery parameter

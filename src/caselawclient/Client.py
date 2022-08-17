@@ -64,6 +64,7 @@ class MarklogicApiClient:
         'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError,
         'XDMP-LOCKCONFLICT': MarklogicResourceLockedError,
         'DLS-UNMANAGED': MarklogicResourceUnmanagedError,
+        'SEC-PRIVDNE': MarklogicNotPermittedError,
     }
 
     default_http_error_class = MarklogicCommunicationError
@@ -624,6 +625,21 @@ class MarklogicApiClient:
         vars = json.dumps({
             "old_uri": old_uri,
             "new_uri": new_uri,
+        })
+        return self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
+    def user_has_privilege(self, username, privilege_uri, privilege_action):
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "user_has_privilege.xqy"
+        )
+        vars = json.dumps({
+            "user": username,
+            "privilege_uri": privilege_uri,
+            "privilege_action": privilege_action
         })
         return self.eval(
             xquery_path,
