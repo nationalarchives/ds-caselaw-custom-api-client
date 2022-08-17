@@ -647,6 +647,14 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def user_can_view_unpublished_judgments(self, username):
+        check_privilege = self.user_has_privilege(
+            username,
+            "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
+            "execute"
+        )
+        return check_privilege.text.lower() == "true"
+
     def calculate_seconds_until_midnight(self, now=None):
         """
         Get timedelta until end of day on the datetime passed, or current time.

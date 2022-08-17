@@ -554,3 +554,21 @@ class ApiClientTest(unittest.TestCase):
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
+
+    def test_user_can_view_unpublished_judgments_true(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval') as _mock_method:
+            client.eval.return_value.text = 'true'
+
+            result = client.user_can_view_unpublished_judgments("laura")
+            self.assertEqual(result, True)
+
+    def test_user_can_view_unpublished_judgments_false(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval') as _mock_method:
+            client.eval.return_value.text = 'false'
+
+            result = client.user_can_view_unpublished_judgments("laura")
+            self.assertEqual(result, False)

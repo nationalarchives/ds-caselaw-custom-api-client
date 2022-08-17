@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 - Add user_has_privilege method & XQuery to check if a user has a privilege
+- Use `user_has_privilege` to check if a user can see unpublished documents
 
 ## [Release 4.9.1]
 - Fix: add external declaration to XQuery parameter
