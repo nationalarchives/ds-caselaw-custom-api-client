@@ -47,6 +47,11 @@ class MarklogicResourceUnmanagedError(MarklogicAPIError):
     """Note: this exception may be raised if a document doesn't exist"""
     pass
 
+class MarklogicResourceNotCheckedOutError(MarklogicAPIError):
+    pass
+
+class MarklogicCheckoutConflictError(MarklogicAPIError):
+    pass
 
 class MarklogicCommunicationError(MarklogicAPIError):
     pass
@@ -64,6 +69,8 @@ class MarklogicApiClient:
         'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError,
         'XDMP-LOCKCONFLICT': MarklogicResourceLockedError,
         'DLS-UNMANAGED': MarklogicResourceUnmanagedError,
+        'DLS-NOTCHECKEDOUT': MarklogicResourceNotCheckedOutError,
+        'DLS-CHECKOUTCONFLICT': MarklogicCheckoutConflictError,
         'SEC-PRIVDNE': MarklogicNotPermittedError,
     }
 
@@ -252,7 +259,27 @@ class MarklogicApiClient:
         )
         return response
 
-    def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
+    def save_locked_judgment_xml(self, judgment_uri: str, judgment_xml: bytes, annotation=None) -> requests.Response:
+        """assumes the judgment is already locked, does not unlock/check in
+        note this version assumes the XML is raw bytes, rather than a tree..."""
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "update_locked_judgment.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "judgment": judgment_xml.decode("utf-8") ,
+            "annotation": annotation or "edited by save_judgment_xml"
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element, annotation=None) -> requests.Response:
+        """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
 
         uri = f"/{judgment_uri.lstrip('/')}.xml"
@@ -262,7 +289,7 @@ class MarklogicApiClient:
         vars = {
             "uri": uri,
             "judgment": xml.decode("utf-8") ,
-            "annotation": ""
+            "annotation": annotation or "edited by save_judgment_xml"
         }
 
         return self.eval(
