@@ -183,6 +183,8 @@ class MarklogicApiClient:
         self, judgment_uri, version_uri=None, show_unpublished=False
     ) -> str:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
+        if not self.user_can_view_unpublished_judgments(self.username):
+            show_unpublished = False
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(ROOT_DIR, "xquery", "get_judgment.xqy")
@@ -500,7 +502,10 @@ class MarklogicApiClient:
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
         :return:
         """
+
         module = "/judgments/search/search.xqy"  # as stored on Marklogic
+        if not self.user_can_view_unpublished_judgments(self.username):
+            show_unpublished = False
         vars = json.dumps(
             {
                 "court": str(court or ""),
@@ -536,6 +541,9 @@ class MarklogicApiClient:
             image_location = os.getenv("XSLT_IMAGE_LOCATION")
         else:
             image_location = ""
+
+        if not self.user_can_view_unpublished_judgments(self.username):
+            show_unpublished = False
 
         vars = json.dumps(
             {
