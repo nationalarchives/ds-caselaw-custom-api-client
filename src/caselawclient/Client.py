@@ -183,8 +183,7 @@ class MarklogicApiClient:
         self, judgment_uri, version_uri=None, show_unpublished=False
     ) -> str:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
-        if not self.user_can_view_unpublished_judgments(self.username):
-            show_unpublished = False
+        show_unpublished = self.verify_show_unpublished(show_unpublished)
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
         xquery_path = os.path.join(ROOT_DIR, "xquery", "get_judgment.xqy")
@@ -502,10 +501,8 @@ class MarklogicApiClient:
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
         :return:
         """
-
         module = "/judgments/search/search.xqy"  # as stored on Marklogic
-        if not self.user_can_view_unpublished_judgments(self.username):
-            show_unpublished = False
+        show_unpublished = self.verify_show_unpublished(show_unpublished)
         vars = json.dumps(
             {
                 "court": str(court or ""),
@@ -523,7 +520,6 @@ class MarklogicApiClient:
                 "only_unpublished": str(only_unpublished).lower(),
             }
         )
-
         return self.invoke(module, vars)
 
     def eval_xslt(
@@ -542,8 +538,7 @@ class MarklogicApiClient:
         else:
             image_location = ""
 
-        if not self.user_can_view_unpublished_judgments(self.username):
-            show_unpublished = False
+        show_unpublished = self.verify_show_unpublished(show_unpublished)
 
         vars = json.dumps(
             {
@@ -734,6 +729,15 @@ class MarklogicApiClient:
 
         return difference.seconds
 
+
+    def verify_show_unpublished(self, show_unpublished):
+        if not self.user_can_view_unpublished_judgments(self.username) and show_unpublished:
+            # The user cannot view unpublished judgments but is requesting to see them
+            logging.warning(
+                f"User {self.username} is attempting to view unpublished judgments but does not have that privilege."
+            )
+            return False
+        return show_unpublished
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST", default=None),

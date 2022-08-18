@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import unittest
 import warnings
@@ -105,40 +106,44 @@ class ApiClientTest(unittest.TestCase):
                 )
 
     def test_advanced_search_user_cannot_view_unpublished_but_show_unpublished_is_true(self):
+        """The user is not permitted to see unpublished judgments but is attempting to view them
+        Set `show_unpublished` to false and log a warning"""
         client = MarklogicApiClient("", "", "", False)
 
         with patch.object(client, 'invoke'):
             with patch.object(client, 'user_can_view_unpublished_judgments', return_value=False):
-                client.advanced_search(
-                    q="my-query",
-                    court="ewhc",
-                    judge="a. judge",
-                    party="a party",
-                    page=2,
-                    page_size=20,
-                    show_unpublished=True
-                )
+                with patch.object(logging, "warning") as mock_logging:
+                    client.advanced_search(
+                        q="my-query",
+                        court="ewhc",
+                        judge="a. judge",
+                        party="a party",
+                        page=2,
+                        page_size=20,
+                        show_unpublished=True
+                    )
 
-                expected_vars = {
-                    "court": "ewhc",
-                    "judge": "a. judge",
-                    "page": 2,
-                    "page-size": 20,
-                    "q": "my-query",
-                    "party": "a party",
-                    "neutral_citation": "",
-                    "specific_keyword": "",
-                    "order": "",
-                    "from": "",
-                    "to": "",
-                    "show_unpublished": "false",
-                    "only_unpublished": "false"
-                }
+                    expected_vars = {
+                        "court": "ewhc",
+                        "judge": "a. judge",
+                        "page": 2,
+                        "page-size": 20,
+                        "q": "my-query",
+                        "party": "a party",
+                        "neutral_citation": "",
+                        "specific_keyword": "",
+                        "order": "",
+                        "from": "",
+                        "to": "",
+                        "show_unpublished": "false",
+                        "only_unpublished": "false"
+                    }
 
-                client.invoke.assert_called_with(
-                    '/judgments/search/search.xqy',
-                    json.dumps(expected_vars)
-                )
+                    client.invoke.assert_called_with(
+                        '/judgments/search/search.xqy',
+                        json.dumps(expected_vars)
+                    )
+                    mock_logging.assert_called()
 
     def test_eval_xslt_with_default_and_user_can_view_unpublished(self):
         client = MarklogicApiClient("", "", "", False)
@@ -162,25 +167,29 @@ class ApiClientTest(unittest.TestCase):
                 )
 
     def test_eval_xslt_with_default_and_user_cannot_view_unpublished(self):
+        """The user is not permitted to see unpublished judgments but is attempting to view them
+        Set `show_unpublished` to false and log a warning"""
         client = MarklogicApiClient("", "", "", False)
 
         with patch.object(client, 'eval'):
             with patch.object(client, 'user_can_view_unpublished_judgments', return_value=False):
-                uri = "/judgment/uri"
-                expected_vars = {
-                    "uri": "/judgment/uri.xml",
-                    "version_uri": None,
-                    "show_unpublished": "false",
-                    "img_location": "",
-                    "xsl_filename": "judgment2.xsl"
-                }
-                client.eval_xslt(uri, show_unpublished=True)
+                with patch.object(logging, "warning") as mock_logging:
+                    uri = "/judgment/uri"
+                    expected_vars = {
+                        "uri": "/judgment/uri.xml",
+                        "version_uri": None,
+                        "show_unpublished": "false",
+                        "img_location": "",
+                        "xsl_filename": "judgment2.xsl"
+                    }
+                    client.eval_xslt(uri, show_unpublished=True)
 
-                client.eval.assert_called_with(
-                    os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"),
-                    vars=json.dumps(expected_vars),
-                    accept_header='application/xml'
-                )
+                    client.eval.assert_called_with(
+                        os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"),
+                        vars=json.dumps(expected_vars),
+                        accept_header='application/xml'
+                    )
+                    mock_logging.assert_called()
 
     def test_eval_xslt_with_filename(self):
         client = MarklogicApiClient("", "", "", False)
@@ -702,4 +711,35 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = "false"
 
             result = client.user_can_view_unpublished_judgments("laura")
+            self.assertEqual(result, False)
+
+    def test_verify_show_unpublished_user_cannot_view_unpublished_and_show_unpublished_true(self):
+        # User cannot view unpublished but is asking to view unpublished judgments
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client, "user_can_view_unpublished_judgments", return_value=False):
+            with patch.object(logging, "warning") as mock_logger:
+                result = client.verify_show_unpublished(True)
+                self.assertEqual(result, False)
+                # Check the logger was called
+                mock_logger.assert_called()
+
+    def test_verify_show_unpublished_user_cannot_view_unpublished_and_show_unpublished_false(self):
+        # User cannot view unpublished and is not asking to view unpublished judgments
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client, "user_can_view_unpublished_judgments", return_value=False):
+            result = client.verify_show_unpublished(False)
+            self.assertEqual(result, False)
+
+    def test_verify_show_unpublished_user_can_view_unpublished_and_show_unpublished_true(self):
+        # User can view unpublished and is asking to view unpublished judgments
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
+            result = client.verify_show_unpublished(True)
+            self.assertEqual(result, True)
+
+    def test_verify_show_unpublished_user_can_view_unpublished_and_show_unpublished_false(self):
+        # User can view unpublished but is NOT asking to view unpublished judgments
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
+            result = client.verify_show_unpublished(False)
             self.assertEqual(result, False)
