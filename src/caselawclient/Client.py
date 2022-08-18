@@ -64,6 +64,7 @@ class MarklogicApiClient:
         'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError,
         'XDMP-LOCKCONFLICT': MarklogicResourceLockedError,
         'DLS-UNMANAGED': MarklogicResourceUnmanagedError,
+        'SEC-PRIVDNE': MarklogicNotPermittedError,
     }
 
     default_http_error_class = MarklogicCommunicationError
@@ -630,6 +631,29 @@ class MarklogicApiClient:
             vars=vars,
             accept_header="application/xml",
         )
+
+    def user_has_privilege(self, username, privilege_uri, privilege_action):
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "user_has_privilege.xqy"
+        )
+        vars = json.dumps({
+            "user": username,
+            "privilege_uri": privilege_uri,
+            "privilege_action": privilege_action
+        })
+        return self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
+    def user_can_view_unpublished_judgments(self, username):
+        check_privilege = self.user_has_privilege(
+            username,
+            "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
+            "execute"
+        )
+        return check_privilege.text.lower() == "true"
 
     def calculate_seconds_until_midnight(self, now=None):
         """
