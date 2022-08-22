@@ -20,37 +20,52 @@ ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 class MarklogicAPIError(requests.HTTPError):
-    pass
+    status_code = 500
+    default_message = "An error occurred, and we didn't recognise it."
 
 
 class MarklogicBadRequestError(MarklogicAPIError):
-    pass
+    status_code = 400
+    default_message = "Marklogic did not understand the request that was made."
 
 
 class MarklogicUnauthorizedError(MarklogicAPIError):
-    pass
+    status_code = 401
+    default_message = "Your credentials are not valid, or you did not provide any by basic authentication"
 
 
 class MarklogicNotPermittedError(MarklogicAPIError):
-    pass
+    status_code = 403
+    default_message = "Your credentials are valid, but you are not allowed to do that."
 
 
 class MarklogicResourceNotFoundError(MarklogicAPIError):
-    pass
+    status_code = 404
+    default_message = "No resource with that name could be found."
 
 
 class MarklogicResourceLockedError(MarklogicAPIError):
-    pass
+    status_code = 409
+    default_message = "The resource is locked by another user, so you cannot change it."
 
 
 class MarklogicResourceUnmanagedError(MarklogicAPIError):
-    """Note: this exception may be raised if a document doesn't exist"""
-    pass
+    """Note: this exception may be raised if a document doesn't exist,
+    since all documents should be managed."""
+    status_code = 404
+    default_message = "The resource isn't managed. It probably doesn't exist, and if it does, that's a problem. Please report it."
 
+class MarklogicResourceNotCheckedOutError(MarklogicAPIError):
+    status_code = 409
+    default_message = "The resource is not checked out by anyone, but that request needed a checkout first."
+
+class MarklogicCheckoutConflictError(MarklogicAPIError):
+    status_code = 409
+    default_message = "The resource is checked out by another user."
 
 class MarklogicCommunicationError(MarklogicAPIError):
-    pass
-
+    status_code = 500
+    default_message = "Something unexpected happened when communicating with the Marklogic server."
 
 class MarklogicApiClient:
 
@@ -64,6 +79,8 @@ class MarklogicApiClient:
         'XDMP-DOCNOTFOUND': MarklogicResourceNotFoundError,
         'XDMP-LOCKCONFLICT': MarklogicResourceLockedError,
         'DLS-UNMANAGED': MarklogicResourceUnmanagedError,
+        'DLS-NOTCHECKEDOUT': MarklogicResourceNotCheckedOutError,
+        'DLS-CHECKOUTCONFLICT': MarklogicCheckoutConflictError,
         'SEC-PRIVDNE': MarklogicNotPermittedError,
     }
 
@@ -252,7 +269,27 @@ class MarklogicApiClient:
         )
         return response
 
-    def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element) -> requests.Response:
+    def save_locked_judgment_xml(self, judgment_uri: str, judgment_xml: bytes, annotation=None) -> requests.Response:
+        """assumes the judgment is already locked, does not unlock/check in
+        note this version assumes the XML is raw bytes, rather than a tree..."""
+        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        xquery_path = os.path.join(
+            ROOT_DIR, "xquery", "update_locked_judgment.xqy"
+        )
+        vars = {
+            "uri": uri,
+            "judgment": judgment_xml.decode("utf-8") ,
+            "annotation": annotation or "edited by save_judgment_xml"
+        }
+
+        return self.eval(
+            xquery_path,
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
+
+    def save_judgment_xml(self, judgment_uri: str, judgment_xml: Element, annotation=None) -> requests.Response:
+        """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
 
         uri = f"/{judgment_uri.lstrip('/')}.xml"
@@ -262,7 +299,7 @@ class MarklogicApiClient:
         vars = {
             "uri": uri,
             "judgment": xml.decode("utf-8") ,
-            "annotation": ""
+            "annotation": annotation or "edited by save_judgment_xml"
         }
 
         return self.eval(

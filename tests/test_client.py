@@ -204,12 +204,32 @@ class ApiClientTest(unittest.TestCase):
             expected_vars = {
                 'uri': '/ewca/civ/2004/632.xml',
                 'judgment': judgment_str,
-                'annotation':''
+                'annotation': 'my annotation',
             }
-            client.save_judgment_xml(uri, judgment_xml)
+            client.save_judgment_xml(uri, judgment_xml, "my annotation")
 
             client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, 'xquery', 'update_judgment.xqy'),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml"
+            )
+
+    def test_save_locked_judgment_xml(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, 'eval'):
+            uri = '/ewca/civ/2004/632'
+            judgment_str = '<root>My updated judgment</root>'
+            judgment_xml = judgment_str.encode('utf-8')
+            expected_vars = {
+                'uri': '/ewca/civ/2004/632.xml',
+                'judgment': judgment_str,
+                'annotation': 'my annotation',
+            }
+            client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, 'xquery', 'update_locked_judgment.xqy'),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml"
             )
