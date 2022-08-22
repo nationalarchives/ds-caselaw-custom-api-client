@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Unreleased]
+## [Release 4.9.2]
 - Add user_has_privilege method & XQuery to check if a user has a privilege
 - Use `user_has_privilege` to check if a user can see unpublished documents
+- Move error message codes and messages into this client
+- New errors handled from Marklogic
+- New function to save XML for a locked judgment
 
 ## [Release 4.9.1]
 - Fix: add external declaration to XQuery parameter
@@ -21,7 +24,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Judgment checkout may optionally expire at midnight
 
 ## [Release 4.8.0]
-- Gracefully handle a null, empty or unexpected error response from Marklogic 
+- Gracefully handle a null, empty or unexpected error response from Marklogic
 - Rename set_judgment_date to set_judgment_work_expression_date
 - Update the FRBRWork and FRBRExpression dates and @name attributes
 
@@ -112,7 +115,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.2...HEAD
+[Release 4.9.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.2...v4.9.1
 [Release 4.9.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...v4.9.0
 [Release 4.9.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.0...v4.8.0
 [Release 4.8.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.8.0...v4.7.1
