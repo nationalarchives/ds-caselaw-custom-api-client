@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
 from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+import pytest as pytest
 
 
 class ApiClientTest(unittest.TestCase):
@@ -255,7 +256,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = ""
             result = client.get_boolean_property("/judgment/uri", "my-property")
 
-            self.assertFalse(result)
+            assert result == False
 
     def test_get_boolean_property(self):
         client = MarklogicApiClient("", "", "", False)
@@ -276,7 +277,7 @@ class ApiClientTest(unittest.TestCase):
             )
             result = client.get_boolean_property("/judgment/uri", "my-property")
 
-            self.assertTrue(result)
+            assert result == True
 
     def test_get_judgment_xml(self):
         client = MarklogicApiClient("", "", "", False)
@@ -300,14 +301,12 @@ class ApiClientTest(unittest.TestCase):
 
             result = client.get_judgment_xml("/judgment/uri")
 
-            expected = (
-                '<?xml version="1.0" encoding="UTF-8"?>\n'
-                '<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">\n'
-                '<judgment name="judgment" contains="originalVersion">\n'
-                "</judgment>\n"
-                "</akomaNtoso>"
-            )
-            self.assertEqual(result, expected)
+            expected = '<?xml version="1.0" encoding="UTF-8"?>\n' \
+                        '<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">\n' \
+                        '<judgment name="judgment" contains="originalVersion">\n' \
+                        '</judgment>\n' \
+                        '</akomaNtoso>'
+            assert result == expected
 
     def test_save_judgment_xml(self):
         client = MarklogicApiClient("", "", "", False)
@@ -473,7 +472,7 @@ class ApiClientTest(unittest.TestCase):
             )
             result = client.get_property("/judgment/uri", "my-property")
 
-            self.assertEqual("my-content", result)
+            assert "my-content" == result
 
     def test_get_unset_property(self):
         client = MarklogicApiClient("", "", "", False)
@@ -482,7 +481,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = ""
             result = client.get_property("/judgment/uri", "my-property")
 
-            self.assertEqual("", result)
+            assert "" == result
 
     def test_set_property(self):
         client = MarklogicApiClient("", "", "", False)
@@ -672,8 +671,8 @@ class ApiClientTest(unittest.TestCase):
             "2020-01-01 23:00", "%Y-%m-%d %H:%M"
         )  # 1 hour until midnight
         result = client.calculate_seconds_until_midnight(dt)
-        expected_result = 3600  # 1 hour in seconds
-        self.assertEqual(result, expected_result)
+        expected_result = 3600 # 1 hour in seconds
+        assert result == expected_result
 
     def test_user_has_privilege(self):
         client = MarklogicApiClient("", "", "", False)
@@ -702,7 +701,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = "true"
 
             result = client.user_can_view_unpublished_judgments("laura")
-            self.assertEqual(result, True)
+            assert result == True
 
     def test_user_can_view_unpublished_judgments_false(self):
         client = MarklogicApiClient("", "", "", False)
@@ -711,7 +710,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = "false"
 
             result = client.user_can_view_unpublished_judgments("laura")
-            self.assertEqual(result, False)
+            assert result == False
 
     def test_verify_show_unpublished_user_cannot_view_unpublished_and_show_unpublished_true(self):
         # User cannot view unpublished but is asking to view unpublished judgments
@@ -719,7 +718,7 @@ class ApiClientTest(unittest.TestCase):
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=False):
             with patch.object(logging, "warning") as mock_logger:
                 result = client.verify_show_unpublished(True)
-                self.assertEqual(result, False)
+                assert result == False
                 # Check the logger was called
                 mock_logger.assert_called()
 
@@ -735,11 +734,11 @@ class ApiClientTest(unittest.TestCase):
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
             result = client.verify_show_unpublished(True)
-            self.assertEqual(result, True)
+            assert result == True
 
     def test_verify_show_unpublished_user_can_view_unpublished_and_show_unpublished_false(self):
         # User can view unpublished but is NOT asking to view unpublished judgments
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
             result = client.verify_show_unpublished(False)
-            self.assertEqual(result, False)
+            assert result == False

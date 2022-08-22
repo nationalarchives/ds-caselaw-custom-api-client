@@ -73,7 +73,7 @@ To run the test suite:
 
 ```bash
 pip install -r requirements.txt
-python -m unittest discover -s tests
+python -m pytest
 ```
 
 ## Making changes

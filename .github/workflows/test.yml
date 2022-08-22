@@ -32,4 +32,4 @@ jobs:
         with:
           python-version: 3.9
       - run: pip install -r requirements.txt
-      - run: python -m unittest discover -s tests
+      - run: python -m pytest
