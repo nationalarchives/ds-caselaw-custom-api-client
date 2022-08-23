@@ -694,6 +694,20 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def break_checkout(self, judgment_uri):
+        uri = self._format_uri(judgment_uri)
+        xquery_path = os.path.join(ROOT_DIR, "xquery", "break_judgment_checkout.xqy")
+        vars = json.dumps(
+            {
+                "uri": uri,
+            }
+        )
+        return self.eval(
+            xquery_path,
+            vars=vars,
+            accept_header="application/xml",
+        )
+
     def user_has_privilege(self, username, privilege_uri, privilege_action):
         xquery_path = os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
         vars = json.dumps(
