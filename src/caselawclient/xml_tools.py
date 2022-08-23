@@ -37,7 +37,7 @@ def get_element(
 
     if name is None:
         element = ElementTree.Element(
-            ElementTree.QName(element_namespace, element_name)
+            ElementTree.QName(element_namespace, element_name)  # type: ignore
         )
         if has_value_attribute:
             element.set("value", "")
@@ -73,7 +73,7 @@ def get_judgment_date_element(xml) -> Element:
     )
 
     if name is None:
-        element = ElementTree.Element(ElementTree.QName(akn_namespace_uri, "FRBRdate"))
+        element = ElementTree.Element(ElementTree.QName(akn_namespace_uri, "FRBRdate"))  # type: ignore
         element.set("date", "")
         element.set("name", "judgment")
 
@@ -95,9 +95,11 @@ def get_search_matches(element: Element) -> List[str]:
     return results
 
 
-def get_error_code(xml_content: str) -> str:
+def get_error_code(xml_content: str):
     try:
         xml = ElementTree.fromstring(xml_content)
-        return xml.find('message-code', namespaces={"": "http://marklogic.com/xdmp/error"}).text
+        return xml.find(
+            "message-code", namespaces={"": "http://marklogic.com/xdmp/error"}
+        ).text  # type: ignore
     except (ParseError, TypeError, AttributeError):
         return "Unknown error, Marklogic returned a null or empty response"

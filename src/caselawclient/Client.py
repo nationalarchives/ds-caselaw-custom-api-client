@@ -146,7 +146,7 @@ class MarklogicApiClient:
         if data is not None:
             data = {k: v for k, v in data.items() if v is not None}
             if method == "GET":
-                kwargs["params"] = data
+                kwargs["params"] = data  # type: ignore
             else:
                 kwargs["data"] = json.dumps(data)
         if body is not None:
@@ -162,19 +162,19 @@ class MarklogicApiClient:
         data: Dict[str, Any] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
-        self.session.headers = headers
+        self.session.headers = headers  # type: ignore
         response = self.session.request(method, **kwargs)
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
         return response
 
     def GET(self, path: str, headers: Dict[str, Any], **data: Any) -> requests.Response:
-        return self.make_request("GET", path, headers, data)
+        return self.make_request("GET", path, headers, data)  # type: ignore
 
     def POST(
         self, path: str, headers: Dict[str, Any], **data: Any
     ) -> requests.Response:
-        return self.make_request("POST", path, headers, data)
+        return self.make_request("POST", path, headers, data)  # type: ignore
 
     def get_judgment_xml(
         self, judgment_uri, version_uri=None, show_unpublished=False
