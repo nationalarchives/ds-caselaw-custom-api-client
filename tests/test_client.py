@@ -146,7 +146,7 @@ class ApiClientTest(unittest.TestCase):
                     )
                     mock_logging.assert_called()
 
-    def test_eval_xslt_with_default_and_user_can_view_unpublished(self):
+    def test_eval_xslt_user_can_view_unpublished(self):
         client = MarklogicApiClient("", "", "", False)
 
         with patch.object(client, 'eval'):
@@ -167,7 +167,7 @@ class ApiClientTest(unittest.TestCase):
                     accept_header='application/xml'
                 )
 
-    def test_eval_xslt_with_default_and_user_cannot_view_unpublished(self):
+    def test_eval_xslt_user_cannot_view_unpublished(self):
         """The user is not permitted to see unpublished judgments but is attempting to view them
         Set `show_unpublished` to false and log a warning"""
         client = MarklogicApiClient("", "", "", False)
@@ -712,7 +712,10 @@ class ApiClientTest(unittest.TestCase):
             result = client.user_can_view_unpublished_judgments("laura")
             assert result == False
 
-    def test_verify_show_unpublished_user_cannot_view_unpublished_and_show_unpublished_true(self):
+class TestVerifyShowUnpublished(unittest.TestCase):
+    # Test `verify_show_unpublished` with users who can/cannot see unpublished judgments
+    # and with them asking for unpublished judgments or not
+    def test_hide_published_if_unauthorised_and_user_asks_for_unpublished(self):
         # User cannot view unpublished but is asking to view unpublished judgments
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=False):
@@ -722,21 +725,21 @@ class ApiClientTest(unittest.TestCase):
                 # Check the logger was called
                 mock_logger.assert_called()
 
-    def test_verify_show_unpublished_user_cannot_view_unpublished_and_show_unpublished_false(self):
+    def test_hide_unpublished_if_unauthorised_and_does_not_ask_for_unpublished(self):
         # User cannot view unpublished and is not asking to view unpublished judgments
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=False):
             result = client.verify_show_unpublished(False)
             self.assertEqual(result, False)
 
-    def test_verify_show_unpublished_user_can_view_unpublished_and_show_unpublished_true(self):
+    def test_show_unpublished_if_authorised_and_asks_for_unpublished(self):
         # User can view unpublished and is asking to view unpublished judgments
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
             result = client.verify_show_unpublished(True)
             assert result == True
 
-    def test_verify_show_unpublished_user_can_view_unpublished_and_show_unpublished_false(self):
+    def test_hide_unpublished_if_authorised_and_does_not_ask_for_unpublished(self):
         # User can view unpublished but is NOT asking to view unpublished judgments
         client = MarklogicApiClient("", "", "", False)
         with patch.object(client, "user_can_view_unpublished_judgments", return_value=True):
