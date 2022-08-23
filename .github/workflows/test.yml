@@ -3,6 +3,21 @@ name: Run unit tests
 on: push
 
 jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4.1.0
+        with:
+          python-version: "3.9"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.0
   test:
     env:
       MARKLOGIC_HOST: ""
