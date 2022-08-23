@@ -1,8 +1,11 @@
+from typing import List
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, ParseError
 
-akn_uk_namespaces = {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-                     "uk": "https://caselaw.nationalarchives.gov.uk/akn"}
+akn_uk_namespaces = {
+    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+}
 akn_namespace_uri = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
 uk_namespace_uri = "https://caselaw.nationalarchives.gov.uk/akn"
 search_namespace = {"search": "http://marklogic.com/appservices/search"}
@@ -12,7 +15,7 @@ class JudgmentMissingMetadataError(IndexError):
     pass
 
 
-def get_metadata_name_value(xml: ElementTree) -> str:
+def get_metadata_name_value(xml: Element) -> str:
     name = get_metadata_name_element(xml)
     value = name.attrib["value"]
     if value is None:
@@ -20,14 +23,22 @@ def get_metadata_name_value(xml: ElementTree) -> str:
     return value
 
 
-def get_element(xml: ElementTree, xpath, element_name="FRBRname", element_namespace=akn_namespace_uri, has_value_attribute=True) -> Element:
+def get_element(
+    xml: Element,
+    xpath,
+    element_name="FRBRname",
+    element_namespace=akn_namespace_uri,
+    has_value_attribute=True,
+) -> Element:
     name = xml.find(
         xpath,
         namespaces=akn_uk_namespaces,
     )
 
     if name is None:
-        element = ElementTree.Element(ElementTree.QName(element_namespace, element_name))
+        element = ElementTree.Element(
+            ElementTree.QName(element_namespace, element_name)
+        )
         if has_value_attribute:
             element.set("value", "")
         return element
@@ -35,15 +46,15 @@ def get_element(xml: ElementTree, xpath, element_name="FRBRname", element_namesp
     return name
 
 
-def get_neutral_citation_name_value(xml) -> str:
+def get_neutral_citation_name_value(xml):
     return get_neutral_citation_element(xml).text
 
 
-def get_judgment_date_value(xml) -> str:
+def get_judgment_date_value(xml):
     return get_judgment_date_element(xml).attrib["date"]
 
 
-def get_court_value(xml) -> str:
+def get_court_value(xml):
     return get_court_element(xml).text
 
 
@@ -75,7 +86,7 @@ def get_court_element(xml) -> Element:
     return get_element(xml, ".//uk:court", "court", uk_namespace_uri, False)
 
 
-def get_search_matches(element: ElementTree) -> [str]:
+def get_search_matches(element: Element) -> List[str]:
     nodes = element.findall(".//search:match", namespaces=search_namespace)
     results = []
     for node in nodes:
