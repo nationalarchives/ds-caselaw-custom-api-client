@@ -120,7 +120,7 @@ class MarklogicApiClient:
             try:
                 response_body = json.dumps(response.json(), indent=4)
             except requests.JSONDecodeError:
-                response_body = response.content
+                response_body = response.text
 
             if new_error_class == self.default_http_error_class:
                 # Attempt to decode the error code from the response
@@ -159,7 +159,7 @@ class MarklogicApiClient:
         path: str,
         headers: Dict[str, Any],
         body: str = None,
-        data: Dict[str, Any] = None,
+        data: Optional[Dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
         self.session.headers = headers  # type: ignore
