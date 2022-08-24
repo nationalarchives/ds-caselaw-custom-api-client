@@ -30,6 +30,7 @@ repos:
     rev: v0.971  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
+        additional_dependencies: [types-requests]
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
