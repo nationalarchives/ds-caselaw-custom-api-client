@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import warnings
 from datetime import datetime, time, timedelta
@@ -169,11 +170,13 @@ class MarklogicApiClient:
         return response
 
     def GET(self, path: str, headers: Dict[str, Any], **data: Any) -> requests.Response:
+        logging.warning("GET() is deprecated, use eval() or invoke()")
         return self.make_request("GET", path, headers, data)  # type: ignore
 
     def POST(
         self, path: str, headers: Dict[str, Any], **data: Any
     ) -> requests.Response:
+        logging.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
     def get_judgment_xml(
