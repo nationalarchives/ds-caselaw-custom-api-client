@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 
 import src.caselawclient.xml_tools as xml_tools
 
+
 class XmlToolsTests(unittest.TestCase):
     def test_metadata_name_value_success(self):
         xml_string = """
@@ -297,7 +298,11 @@ class XmlToolsTests(unittest.TestCase):
             <status-code>500</status-code>
             <status>Internal Server Error</status>
             <message-code>XDMP-DOCNOTFOUND</message-code>
-            <message>XDMP-DOCNOTFOUND: xdmp:document-get-properties("/a/fake/judgment/.xml", fn:QName("","published")) -- Document not found</message>
+            <message>
+                XDMP-DOCNOTFOUND:
+                xdmp:document-get-properties("/a/fake/judgment/.xml", fn:QName("","published"))
+                 -- Document not found
+            </message>
             <message-detail>
                 <message-title>Document not found</message-title>
             </message-detail>
@@ -314,14 +319,20 @@ class XmlToolsTests(unittest.TestCase):
         </error-response>
         """
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")
+        self.assertEqual(
+            result, "Unknown error, Marklogic returned a null or empty response"
+        )
 
     def test_get_error_code_xml_empty_string(self):
         xml_string = ""
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")
+        self.assertEqual(
+            result, "Unknown error, Marklogic returned a null or empty response"
+        )
 
     def test_get_error_code_xml_none(self):
         xml_string = None
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(result, "Unknown error, Marklogic returned a null or empty response")
+        self.assertEqual(
+            result, "Unknown error, Marklogic returned a null or empty response"
+        )
