@@ -272,7 +272,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = ""
             result = client.get_boolean_property("/judgment/uri", "my-property")
 
-            assert result == False
+            assert result is False
 
     def test_get_boolean_property(self):
         client = MarklogicApiClient("", "", "", False)
@@ -293,7 +293,7 @@ class ApiClientTest(unittest.TestCase):
             )
             result = client.get_boolean_property("/judgment/uri", "my-property")
 
-            assert result == True
+            assert result is True
 
     def test_get_judgment_xml(self):
         client = MarklogicApiClient("", "", "", False)
@@ -719,7 +719,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = "true"
 
             result = client.user_can_view_unpublished_judgments("laura")
-            assert result == True
+            assert result is True
 
     def test_user_can_view_unpublished_judgments_false(self):
         client = MarklogicApiClient("", "", "", False)
@@ -728,7 +728,7 @@ class ApiClientTest(unittest.TestCase):
             client.eval.return_value.text = "false"
 
             result = client.user_can_view_unpublished_judgments("laura")
-            assert result == False
+            assert result is False
 
 
 class TestVerifyShowUnpublished(unittest.TestCase):
@@ -742,7 +742,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
         ):
             with patch.object(logging, "warning") as mock_logger:
                 result = client.verify_show_unpublished(True)
-                assert result == False
+                assert result is False
                 # Check the logger was called
                 mock_logger.assert_called()
 
@@ -762,7 +762,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
             client, "user_can_view_unpublished_judgments", return_value=True
         ):
             result = client.verify_show_unpublished(True)
-            assert result == True
+            assert result is True
 
     def test_hide_unpublished_if_authorised_and_does_not_ask_for_unpublished(self):
         # User can view unpublished but is NOT asking to view unpublished judgments
@@ -771,4 +771,4 @@ class TestVerifyShowUnpublished(unittest.TestCase):
             client, "user_can_view_unpublished_judgments", return_value=True
         ):
             result = client.verify_show_unpublished(False)
-            assert result == False
+            assert result is False
