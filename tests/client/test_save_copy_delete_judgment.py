@@ -22,11 +22,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             client.save_judgment_xml(uri, judgment_xml, "my annotation")
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "update_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "update_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_save_locked_judgment_xml(self):
         client = MarklogicApiClient("", "", "", False)
@@ -42,11 +41,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_insert_judgment_xml(self):
         client = MarklogicApiClient("", "", "", False)
@@ -62,11 +60,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             client.insert_judgment_xml(uri, judgment_xml)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "insert_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "insert_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_delete_document(self):
         client = MarklogicApiClient("", "", "", False)
@@ -78,11 +75,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             client.delete_judgment(uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_copy_judgment(self):
         client = MarklogicApiClient("", "", "", False)
@@ -96,8 +92,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             client.copy_judgment(old_uri, new_uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "copy_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "copy_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

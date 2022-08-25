@@ -21,11 +21,10 @@ class TestUserPrivileges(unittest.TestCase):
             }
             client.user_has_privilege(user, privilege_uri, privilege_action)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_user_can_view_unpublished_judgments_true(self):
         client = MarklogicApiClient("", "", "", False)

@@ -47,11 +47,10 @@ class TestGetJudgment(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml", "version": "3"}
             client.get_judgment_version(uri, version)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_list_judgment_versions(self):
         client = MarklogicApiClient("", "", "", False)
@@ -61,8 +60,7 @@ class TestGetJudgment(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             client.list_judgment_versions(uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

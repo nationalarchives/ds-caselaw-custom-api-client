@@ -44,11 +44,10 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 }
                 client.checkout_judgment(uri, annotation, expires_at_midnight)
 
-                client.eval.assert_called_with(
-                    os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"),
-                    vars=json.dumps(expected_vars),
-                    accept_header="application/xml",
+                assert client.eval.call_args.args[0] == (
+                    os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy")
                 )
+                assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_checkin_judgment(self):
         client = MarklogicApiClient("", "", "", False)
@@ -58,11 +57,10 @@ class TestGetCheckoutStatus(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             client.checkin_judgment(uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_get_checkout_status(self):
         client = MarklogicApiClient("", "", "", False)
@@ -72,11 +70,10 @@ class TestGetCheckoutStatus(unittest.TestCase):
             expected_vars = {"uri": "/judgment/uri.xml"}
             client.get_judgment_checkout_status(uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_get_checkout_status_message(self):
         client = MarklogicApiClient("", "", "", False)

@@ -154,11 +154,10 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             }
             client.set_judgment_this_uri(uri)
 
-            client.eval.assert_called_with(
-                os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+            assert client.eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy")
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_set_judgment_date_warn(self):
         client = MarklogicApiClient("", "", "", False)
@@ -170,13 +169,12 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             client.set_judgment_date(uri, content)
 
             assert mock_warn.call_args.kwargs == {"stacklevel": 2}
-            client.eval.assert_called_with(
+            assert client.eval.call_args.args[0] == (
                 os.path.join(
                     ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"
-                ),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+                )
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_set_judgment_date_work_expression(self):
         client = MarklogicApiClient("", "", "", False)
@@ -187,10 +185,9 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             expected_vars = {"uri": "/judgment/uri.xml", "content": "2022-01-01"}
             client.set_judgment_work_expression_date(uri, content)
 
-            client.eval.assert_called_with(
+            assert client.eval.call_args.args[0] == (
                 os.path.join(
                     ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"
-                ),
-                vars=json.dumps(expected_vars),
-                accept_header="application/xml",
+                )
             )
+            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
