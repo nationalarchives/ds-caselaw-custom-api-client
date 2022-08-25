@@ -8,10 +8,11 @@ from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestGetCheckoutStatus(unittest.TestCase):
-    def test_checkout_judgment(self):
-        client = MarklogicApiClient("", "", "", False)
+    def setUp(self):
+        self.client = MarklogicApiClient("", "", "", False)
 
-        with patch.object(client, "eval"):
+    def test_checkout_judgment(self):
+        with patch.object(self.client, "eval"):
             uri = "/ewca/civ/2004/632"
             annotation = "locked by A KITTEN"
             expected_vars = {
@@ -19,20 +20,18 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 "annotation": "locked by A KITTEN",
                 "timeout": -1,
             }
-            client.checkout_judgment(uri, annotation)
+            self.client.checkout_judgment(uri, annotation)
 
-            client.eval.assert_called_with(
+            self.client.eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
             )
 
     def test_checkout_judgment_with_timeout(self):
-        client = MarklogicApiClient("", "", "", False)
-
-        with patch.object(client, "eval"):
+        with patch.object(self.client, "eval"):
             with patch.object(
-                client, "calculate_seconds_until_midnight", return_value=3600
+                self.client, "calculate_seconds_until_midnight", return_value=3600
             ):
                 uri = "/ewca/civ/2004/632"
                 annotation = "locked by A KITTEN"
@@ -42,48 +41,48 @@ class TestGetCheckoutStatus(unittest.TestCase):
                     "annotation": "locked by A KITTEN",
                     "timeout": 3600,
                 }
-                client.checkout_judgment(uri, annotation, expires_at_midnight)
+                self.client.checkout_judgment(uri, annotation, expires_at_midnight)
 
-                assert client.eval.call_args.args[0] == (
+                assert self.client.eval.call_args.args[0] == (
                     os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy")
                 )
-                assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+                assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                    expected_vars
+                )
 
     def test_checkin_judgment(self):
-        client = MarklogicApiClient("", "", "", False)
-
-        with patch.object(client, "eval"):
+        with patch.object(self.client, "eval"):
             uri = "/ewca/civ/2004/632"
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
-            client.checkin_judgment(uri)
+            self.client.checkin_judgment(uri)
 
-            assert client.eval.call_args.args[0] == (
+            assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy")
             )
-            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                expected_vars
+            )
 
     def test_get_checkout_status(self):
-        client = MarklogicApiClient("", "", "", False)
-
-        with patch.object(client, "eval"):
+        with patch.object(self.client, "eval"):
             uri = "judgment/uri"
             expected_vars = {"uri": "/judgment/uri.xml"}
-            client.get_judgment_checkout_status(uri)
+            self.client.get_judgment_checkout_status(uri)
 
-            assert client.eval.call_args.args[0] == (
+            assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy")
             )
-            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                expected_vars
+            )
 
     def test_get_checkout_status_message(self):
-        client = MarklogicApiClient("", "", "", False)
-
         with patch.object(MarklogicApiClient, "eval"):
-            client.eval.return_value.text = "true"
-            client.eval.return_value.headers = {
+            self.client.eval.return_value.text = "true"
+            self.client.eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            client.eval.return_value.content = (
+            self.client.eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"Content-Type: application/xml\r\n"
                 b"X-Primitive: element()\r\n"
@@ -97,17 +96,16 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 b"</dls:checkout>\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = client.get_judgment_checkout_status_message("/ewca/2002/2")
+            result = self.client.get_judgment_checkout_status_message("/ewca/2002/2")
             assert result == "locked by a kitten"
 
     def test_get_checkout_status_message_empty(self):
-        client = MarklogicApiClient("", "", "", False)
         with patch.object(MarklogicApiClient, "eval"):
-            client.eval.return_value.text = "true"
-            client.eval.return_value.headers = {
+            self.client.eval.return_value.text = "true"
+            self.client.eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            client.eval.return_value.content = (
+            self.client.eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"Content-Type: application/xml\r\n"
                 b"X-Primitive: element()\r\n"
@@ -115,14 +113,13 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 b"\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = client.get_judgment_checkout_status_message("/ewca/2002/2")
+            result = self.client.get_judgment_checkout_status_message("/ewca/2002/2")
             assert result is None
 
     def test_calculate_seconds_until_midnight(self):
-        client = MarklogicApiClient("", "", "", False)
         dt = datetime.strptime(
             "2020-01-01 23:00", "%Y-%m-%d %H:%M"
         )  # 1 hour until midnight
-        result = client.calculate_seconds_until_midnight(dt)
+        result = self.client.calculate_seconds_until_midnight(dt)
         expected_result = 3600  # 1 hour in seconds
         assert result == expected_result

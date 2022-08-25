@@ -7,15 +7,16 @@ from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestGetJudgment(unittest.TestCase):
-    def test_get_judgment_xml(self):
-        client = MarklogicApiClient("", "", "", False)
+    def setUp(self):
+        self.client = MarklogicApiClient("", "", "", False)
 
-        with patch.object(client, "eval"):
-            client.eval.return_value.text = "true"
-            client.eval.return_value.headers = {
+    def test_get_judgment_xml(self):
+        with patch.object(self.client, "eval"):
+            self.client.eval.return_value.text = "true"
+            self.client.eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            client.eval.return_value.content = (
+            self.client.eval.return_value.content = (
                 b"\r\n--6bfe89fc4493c0e3\r\n"
                 b"Content-Type: application/xml\r\n"
                 b"X-Primitive: document-node()\r\n"
@@ -27,7 +28,7 @@ class TestGetJudgment(unittest.TestCase):
                 b"</akomaNtoso>"
             )
 
-            result = client.get_judgment_xml("/judgment/uri")
+            result = self.client.get_judgment_xml("/judgment/uri")
 
             expected = (
                 '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -39,28 +40,28 @@ class TestGetJudgment(unittest.TestCase):
             assert result == expected
 
     def test_get_judgment_version(self):
-        client = MarklogicApiClient("", "", "", False)
-
-        with patch.object(client, "eval"):
+        with patch.object(self.client, "eval"):
             uri = "/ewca/civ/2004/632"
             version = "3"
             expected_vars = {"uri": "/ewca/civ/2004/632.xml", "version": "3"}
-            client.get_judgment_version(uri, version)
+            self.client.get_judgment_version(uri, version)
 
-            assert client.eval.call_args.args[0] == (
+            assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy")
             )
-            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                expected_vars
+            )
 
     def test_list_judgment_versions(self):
-        client = MarklogicApiClient("", "", "", False)
-
-        with patch.object(client, "eval"):
+        with patch.object(self.client, "eval"):
             uri = "/ewca/civ/2004/632"
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
-            client.list_judgment_versions(uri)
+            self.client.list_judgment_versions(uri)
 
-            assert client.eval.call_args.args[0] == (
+            assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy")
             )
-            assert client.eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                expected_vars
+            )

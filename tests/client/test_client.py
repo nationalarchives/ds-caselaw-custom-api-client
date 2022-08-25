@@ -5,19 +5,21 @@ from src.caselawclient.Client import MarklogicApiClient
 
 
 class ApiClientTest(unittest.TestCase):
+    def setUp(self):
+        self.client = MarklogicApiClient("", "", "", False)
+
     @patch("src.caselawclient.Client.Path")
     def test_eval_calls_request(self, MockPath):
         mock_path_instance = MockPath.return_value
         mock_path_instance.read_text.return_value = "mock-query"
 
-        client = MarklogicApiClient("", "", "", False)
-        client.session.request = MagicMock()
+        self.client.session.request = MagicMock()
 
-        client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
+        self.client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
-        client.session.request.assert_called_with(
+        self.client.session.request.assert_called_with(
             "POST",
-            url=client._path_to_request_url("LATEST/eval"),
+            url=self.client._path_to_request_url("LATEST/eval"),
             headers={
                 "Content-type": "application/x-www-form-urlencoded",
                 "Accept": "multipart/mixed",
@@ -30,14 +32,13 @@ class ApiClientTest(unittest.TestCase):
         mock_path_instance = MockPath.return_value
         mock_path_instance.read_text.return_value = "mock-query"
 
-        client = MarklogicApiClient("", "", "", False)
-        client.session.request = MagicMock()
+        self.client.session.request = MagicMock()
 
-        client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
+        self.client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
-        client.session.request.assert_called_with(
+        self.client.session.request.assert_called_with(
             "POST",
-            url=client._path_to_request_url("LATEST/invoke"),
+            url=self.client._path_to_request_url("LATEST/invoke"),
             headers={
                 "Content-type": "application/x-www-form-urlencoded",
                 "Accept": "multipart/mixed",
