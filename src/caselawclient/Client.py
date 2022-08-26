@@ -18,6 +18,7 @@ from . import xml_tools
 env = environ.Env()
 RESULTS_PER_PAGE = 10
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
+DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
 class MarklogicAPIError(requests.HTTPError):
@@ -527,7 +528,7 @@ class MarklogicApiClient:
         judgment_uri,
         version_uri=None,
         show_unpublished=False,
-        xsl_filename="accessible-html.xsl",
+        xsl_filename=DEFAULT_XSL_TRANSFORM,
     ) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         if version_uri:
@@ -555,7 +556,10 @@ class MarklogicApiClient:
         self, judgment_uri, version_uri=None, show_unpublished=False
     ):
         return self.eval_xslt(
-            judgment_uri, version_uri, show_unpublished, xsl_filename="accessible-html.xsl"
+            judgment_uri,
+            version_uri,
+            show_unpublished,
+            xsl_filename=DEFAULT_XSL_TRANSFORM,
         )
 
     def original_judgment_transformation(
