@@ -22,7 +22,7 @@ class TestEvalXslt(unittest.TestCase):
                     "version_uri": None,
                     "show_unpublished": "true",
                     "img_location": "",
-                    "xsl_filename": "judgment2.xsl",
+                    "xsl_filename": "accessible-html.xsl",
                 }
                 self.client.eval_xslt(uri, show_unpublished=True)
 
@@ -47,7 +47,7 @@ class TestEvalXslt(unittest.TestCase):
                         "version_uri": None,
                         "show_unpublished": "false",
                         "img_location": "",
-                        "xsl_filename": "judgment2.xsl",
+                        "xsl_filename": "accessible-html.xsl",
                     }
                     self.client.eval_xslt(uri, show_unpublished=True)
 
@@ -70,10 +70,10 @@ class TestEvalXslt(unittest.TestCase):
                     "version_uri": None,
                     "show_unpublished": "true",
                     "img_location": "",
-                    "xsl_filename": "judgment0.xsl",
+                    "xsl_filename": "as-handed-down.xsl",
                 }
                 self.client.eval_xslt(
-                    uri, show_unpublished=True, xsl_filename="judgment0.xsl"
+                    uri, show_unpublished=True, xsl_filename="as-handed-down.xsl"
                 )
 
                 assert self.client.eval.call_args.args[0] == (
