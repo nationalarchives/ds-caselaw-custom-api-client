@@ -4,5 +4,7 @@ venv
 *.egg-info
 .env
 tests/__pycache__/
+tests/client/__pycache__/
+tests/xml_tools/__pycache__/
 src/caselawclient/__pycache__/
 /build
