@@ -123,3 +123,19 @@ class TestGetCheckoutStatus(unittest.TestCase):
         result = self.client.calculate_seconds_until_midnight(dt)
         expected_result = 3600  # 1 hour in seconds
         assert result == expected_result
+
+    def test_break_judgment_checkout(self):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, "eval"):
+            uri = "judgment/uri"
+            expected_vars = {
+                "uri": "/judgment/uri.xml",
+            }
+            client.break_checkout(uri)
+
+            client.eval.assert_called_with(
+                os.path.join(ROOT_DIR, "xquery", "break_judgment_checkout.xqy"),
+                vars=json.dumps(expected_vars),
+                accept_header="application/xml",
+            )
