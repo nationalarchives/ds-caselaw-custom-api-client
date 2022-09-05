@@ -137,8 +137,22 @@ class MarklogicApiClient:
             new_exception.response = response
             raise new_exception
 
-    def _format_uri(self, uri):
-        return f"/{uri.lstrip('/')}.xml"
+    def _format_uri_for_marklogic(self, uri):
+        """
+        Marklogic requiores a document URI that begins with a slash `/` and ends in `.xml`.
+        This method ensures any URI passed into the client matches this format.
+        """
+        return f"/{uri.lstrip('/').rstrip('/')}.xml"
+
+    def _xquery_path(self, xquery_file_name):
+        return os.path.join(ROOT_DIR, "xquery", xquery_file_name)
+
+    def _send_to_eval(self, vars, xquery_file_name):
+        return self.eval(
+            self._xquery_path(xquery_file_name),
+            vars=json.dumps(vars),
+            accept_header="application/xml",
+        )
 
     def prepare_request_kwargs(
         self, method: str, path: str, body=None, data: Optional[Dict[str, Any]] = None
@@ -182,22 +196,17 @@ class MarklogicApiClient:
     def get_judgment_xml(
         self, judgment_uri, version_uri=None, show_unpublished=False
     ) -> str:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        uri = self._format_uri_for_marklogic(judgment_uri)
         show_unpublished = self.verify_show_unpublished(show_unpublished)
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_judgment.xqy")
         vars = {
             "uri": uri,
             "version_uri": version_uri,
             "show_unpublished": str(show_unpublished).lower(),
         }
 
-        response = self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        response = self._send_to_eval(vars, "get_judgment.xqy")
 
         if not response.text:
             raise MarklogicNotPermittedError(
@@ -208,12 +217,10 @@ class MarklogicApiClient:
         return multipart_data.parts[0].text
 
     def get_judgment_name(self, judgment_uri) -> str:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_metadata_name.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri}
 
-        response = self.eval(
-            xquery_path, vars=f'{{"uri":"{uri}"}}', accept_header="application/xml"
-        )
+        response = self._send_to_eval(vars, "get_metadata_name.xqy")
         if not response.text:
             return ""
 
@@ -221,15 +228,10 @@ class MarklogicApiClient:
         return multipart_data.parts[0].text
 
     def set_judgment_name(self, judgment_uri, content):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_metadata_name.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
-        response = self.eval(
-            xquery_path,
-            vars=f'{{"uri":"{uri}", "content":"{content}"}}',
-            accept_header="application/xml",
-        )
-        return response
+        return self._send_to_eval(vars, "set_metadata_name.xqy")
 
     def set_judgment_date(self, judgment_uri, content):
         warnings.warn(
@@ -240,42 +242,25 @@ class MarklogicApiClient:
         return self.set_judgment_work_expression_date(judgment_uri, content)
 
     def set_judgment_work_expression_date(self, judgment_uri, content):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "set_metadata_work_expression_date.xqy"
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
-        response = self.eval(
-            xquery_path,
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
-            accept_header="application/xml",
-        )
-        return response
+        return self._send_to_eval(vars, "set_metadata_work_expression_date.xqy")
 
     def set_judgment_citation(self, judgment_uri, content):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_metadata_citation.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
-        response = self.eval(
-            xquery_path,
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
-            accept_header="application/xml",
-        )
-        return response
+        return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
     def set_judgment_court(self, judgment_uri, content):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_metadata_court.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
-        response = self.eval(
-            xquery_path,
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
-            accept_header="application/xml",
-        )
-        return response
+        return self._send_to_eval(vars, "set_metadata_court.xqy")
 
     def set_judgment_this_uri(self, judgment_uri):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        uri = self._format_uri_for_marklogic(judgment_uri)
         content_with_id = (
             f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
         )
@@ -283,37 +268,28 @@ class MarklogicApiClient:
             f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
         )
         content_with_xml = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
+        vars = {
+            "uri": uri,
+            "content_with_id": content_with_id,
+            "content_without_id": content_without_id,
+            "content_with_xml": content_with_xml,
+        }
 
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy")
-
-        response = self.eval(
-            xquery_path,
-            vars=f'{{"uri": "{uri}", '
-            f'"content_with_id": "{content_with_id}", '
-            f'"content_without_id": "{content_without_id}", '
-            f'"content_with_xml": "{content_with_xml}"}}',
-            accept_header="application/xml",
-        )
-        return response
+        return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
 
     def save_locked_judgment_xml(
         self, judgment_uri: str, judgment_xml: bytes, annotation=None
     ) -> requests.Response:
         """assumes the judgment is already locked, does not unlock/check in
         note this version assumes the XML is raw bytes, rather than a tree..."""
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "judgment": judgment_xml.decode("utf-8"),
             "annotation": annotation or "edited by save_judgment_xml",
         }
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
     def save_judgment_xml(
         self, judgment_uri: str, judgment_xml: Element, annotation=None
@@ -321,51 +297,35 @@ class MarklogicApiClient:
         """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
 
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "update_judgment.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "judgment": xml.decode("utf-8"),
             "annotation": annotation or "edited by save_judgment_xml",
         }
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "update_judgment.xqy")
 
     def insert_judgment_xml(
         self, judgment_uri: str, judgment_xml: Element
     ) -> requests.Response:
         xml = ElementTree.tostring(judgment_xml)
 
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "insert_judgment.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "judgment": xml.decode("utf-8"), "annotation": ""}
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "insert_judgment.xqy")
 
     def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "list_judgment_versions.xqy")
 
     def checkout_judgment(
         self, judgment_uri: str, annotation="", expires_at_midnight=False
     ) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "annotation": annotation,
@@ -377,35 +337,19 @@ class MarklogicApiClient:
         else:
             vars["timeout"] = -1
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "checkout_judgment.xqy")
 
     def checkin_judgment(self, judgment_uri: str) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "checkin_judgment.xqy")
 
     def get_judgment_checkout_status(self, judgment_uri: str) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(
-            ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy"
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "get_judgment_checkout_status.xqy")
 
     def get_judgment_checkout_status_message(self, judgment_uri: str):
         """Return the annotation of the lock or `None` if there is no lock."""
@@ -423,15 +367,10 @@ class MarklogicApiClient:
     def get_judgment_version(
         self, judgment_uri: str, version: int
     ) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "version": str(version)}
 
-        return self.eval(
-            xquery_path,
-            vars=json.dumps(vars),
-            accept_header="application/xml",
-        )
+        return self._send_to_eval(vars, "get_judgment_version.xqy")
 
     def eval(self, xquery_path, vars, accept_header="multipart/mixed"):
         headers = {
@@ -529,10 +468,9 @@ class MarklogicApiClient:
         show_unpublished=False,
         xsl_filename="judgment2.xsl",
     ) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        uri = self._format_uri_for_marklogic(judgment_uri)
         if version_uri:
-            version_uri = f"/{version_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
+            version_uri = self._format_uri_for_marklogic(version_uri)
         if os.getenv("XSLT_IMAGE_LOCATION"):
             image_location = os.getenv("XSLT_IMAGE_LOCATION")
         else:
@@ -540,16 +478,15 @@ class MarklogicApiClient:
 
         show_unpublished = self.verify_show_unpublished(show_unpublished)
 
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "version_uri": version_uri,
-                "show_unpublished": str(show_unpublished).lower(),
-                "img_location": image_location,
-                "xsl_filename": xsl_filename,
-            }
-        )
-        return self.eval(xquery_path, vars=vars, accept_header="application/xml")
+        vars = {
+            "uri": uri,
+            "version_uri": version_uri,
+            "show_unpublished": str(show_unpublished).lower(),
+            "img_location": image_location,
+            "xsl_filename": xsl_filename,
+        }
+
+        return self._send_to_eval(vars, "xslt_transform.xqy")
 
     def accessible_judgment_transformation(
         self, judgment_uri, version_uri=None, show_unpublished=False
@@ -566,19 +503,12 @@ class MarklogicApiClient:
         )
 
     def get_property(self, judgment_uri, name):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_property.xqy")
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "name": name,
-            }
-        )
-        response = self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {
+            "uri": uri,
+            "name": name,
+        }
+        response = self._send_to_eval(vars, "get_property.xqy")
 
         if not response.text:
             return ""
@@ -588,36 +518,23 @@ class MarklogicApiClient:
 
     def set_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_property.xqy")
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "value": value,
-                "name": name,
-            }
-        )
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        vars = {
+            "uri": uri,
+            "value": value,
+            "name": name,
+        }
+
+        return self._send_to_eval(vars, "set_property.xqy")
 
     def set_boolean_property(self, judgment_uri, name, value):
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy")
+        uri = self._format_uri_for_marklogic(judgment_uri)
         string_value = "true" if value else "false"
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "value": string_value,
-                "name": name,
-            }
-        )
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        vars = {
+            "uri": uri,
+            "value": string_value,
+            "name": name,
+        }
+        return self._send_to_eval(vars, "set_boolean_property.xqy")
 
     def get_boolean_property(self, judgment_uri, name):
         content = self.get_property(judgment_uri, name)
@@ -648,18 +565,12 @@ class MarklogicApiClient:
         return self.get_boolean_property(judgment_uri, "anonymised")
 
     def get_last_modified(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_last_modified.xqy")
-        vars = json.dumps(
-            {
-                "uri": uri,
-            }
-        )
-        response = self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {
+            "uri": uri,
+        }
+
+        response = self._send_to_eval(vars, "get_last_modified.xqy")
 
         if not response.text:
             return ""
@@ -668,60 +579,34 @@ class MarklogicApiClient:
         return content
 
     def delete_judgment(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy")
-        vars = json.dumps({"uri": uri})
-        self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri}
+        return self._send_to_eval(vars, "delete_judgment.xqy")
 
     def copy_judgment(self, old, new):
-        old_uri = self._format_uri(old)
-        new_uri = self._format_uri(new)
+        old_uri = self._format_uri_for_marklogic(old)
+        new_uri = self._format_uri_for_marklogic(new)
 
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "copy_judgment.xqy")
-        vars = json.dumps(
-            {
-                "old_uri": old_uri,
-                "new_uri": new_uri,
-            }
-        )
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        vars = {
+            "old_uri": old_uri,
+            "new_uri": new_uri,
+        }
+        return self._send_to_eval(vars, "copy_judgment.xqy")
 
     def break_checkout(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "break_judgment_checkout.xqy")
-        vars = json.dumps(
-            {
-                "uri": uri,
-            }
-        )
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {
+            "uri": uri,
+        }
+        return self._send_to_eval(vars, "break_judgment_checkout.xqy")
 
     def user_has_privilege(self, username, privilege_uri, privilege_action):
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
-        vars = json.dumps(
-            {
-                "user": username,
-                "privilege_uri": privilege_uri,
-                "privilege_action": privilege_action,
-            }
-        )
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        vars = {
+            "user": username,
+            "privilege_uri": privilege_uri,
+            "privilege_action": privilege_action,
+        }
+        return self._send_to_eval(vars, "user_has_privilege.xqy")
 
     def user_can_view_unpublished_judgments(self, username):
         check_privilege = self.user_has_privilege(
@@ -756,34 +641,19 @@ class MarklogicApiClient:
         return show_unpublished
 
     def get_judgment_citation(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_metadata_citation.xqy")
-        vars = json.dumps({"uri": uri})
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri}
+        return self._send_to_eval(vars, "get_metadata_citation.xqy")
 
     def get_judgment_court(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_metadata_court.xqy")
-        vars = json.dumps({"uri": uri})
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri}
+        return self._send_to_eval(vars, "get_metadata_court.xqy")
 
     def get_judgment_work_date(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
-        xquery_path = os.path.join(ROOT_DIR, "xquery", "get_metadata_work_date.xqy")
-        vars = json.dumps({"uri": uri})
-        return self.eval(
-            xquery_path,
-            vars=vars,
-            accept_header="application/xml",
-        )
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars = {"uri": uri}
+        return self._send_to_eval(vars, "get_metadata_work_date.xqy")
 
 
 api_client = MarklogicApiClient(
