@@ -215,10 +215,11 @@ class MarklogicApiClient:
 
     def get_judgment_name(self, judgment_uri) -> str:
         uri = self._format_uri(judgment_uri)
+        vars = {"uri": uri}
 
         response = self.eval(
             self._xquery_path("get_metadata_name.xqy"),
-            vars=f'{{"uri":"{uri}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         if not response.text:
@@ -229,10 +230,11 @@ class MarklogicApiClient:
 
     def set_judgment_name(self, judgment_uri, content):
         uri = self._format_uri(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
         response = self.eval(
             self._xquery_path("set_metadata_name.xqy"),
-            vars=f'{{"uri":"{uri}", "content":"{content}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         return response
@@ -247,30 +249,33 @@ class MarklogicApiClient:
 
     def set_judgment_work_expression_date(self, judgment_uri, content):
         uri = self._format_uri(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
         response = self.eval(
             self._xquery_path("set_metadata_work_expression_date.xqy"),
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         return response
 
     def set_judgment_citation(self, judgment_uri, content):
         uri = self._format_uri(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
         response = self.eval(
             self._xquery_path("set_metadata_citation.xqy"),
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         return response
 
     def set_judgment_court(self, judgment_uri, content):
         uri = self._format_uri(judgment_uri)
+        vars = {"uri": uri, "content": content}
 
         response = self.eval(
             self._xquery_path("set_metadata_court.xqy"),
-            vars=f'{{"uri": "{uri}", "content": "{content}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         return response
@@ -284,13 +289,16 @@ class MarklogicApiClient:
             f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
         )
         content_with_xml = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
+        vars = {
+            "uri": uri,
+            "content_with_id": content_with_id,
+            "content_without_id": content_without_id,
+            "content_with_xml": content_with_xml,
+        }
 
         response = self.eval(
             self._xquery_path("set_metadata_this_uri.xqy"),
-            vars=f'{{"uri": "{uri}", '
-            f'"content_with_id": "{content_with_id}", '
-            f'"content_without_id": "{content_without_id}", '
-            f'"content_with_xml": "{content_with_xml}"}}',
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
         return response
@@ -528,18 +536,17 @@ class MarklogicApiClient:
 
         show_unpublished = self.verify_show_unpublished(show_unpublished)
 
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "version_uri": version_uri,
-                "show_unpublished": str(show_unpublished).lower(),
-                "img_location": image_location,
-                "xsl_filename": xsl_filename,
-            }
-        )
+        vars = {
+            "uri": uri,
+            "version_uri": version_uri,
+            "show_unpublished": str(show_unpublished).lower(),
+            "img_location": image_location,
+            "xsl_filename": xsl_filename,
+        }
+
         return self.eval(
             self._xquery_path("xslt_transform.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -559,15 +566,13 @@ class MarklogicApiClient:
 
     def get_property(self, judgment_uri, name):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "name": name,
-            }
-        )
+        vars = {
+            "uri": uri,
+            "name": name,
+        }
         response = self.eval(
             self._xquery_path("get_property.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -579,32 +584,29 @@ class MarklogicApiClient:
 
     def set_property(self, judgment_uri, name, value):
         uri = f"/{judgment_uri.lstrip('/')}.xml"
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "value": value,
-                "name": name,
-            }
-        )
+        vars = {
+            "uri": uri,
+            "value": value,
+            "name": name,
+        }
+
         return self.eval(
             self._xquery_path("set_property.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
     def set_boolean_property(self, judgment_uri, name, value):
         uri = self._format_uri(judgment_uri)
         string_value = "true" if value else "false"
-        vars = json.dumps(
-            {
-                "uri": uri,
-                "value": string_value,
-                "name": name,
-            }
-        )
+        vars = {
+            "uri": uri,
+            "value": string_value,
+            "name": name,
+        }
         return self.eval(
             self._xquery_path("set_boolean_property.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -638,14 +640,12 @@ class MarklogicApiClient:
 
     def get_last_modified(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps(
-            {
-                "uri": uri,
-            }
-        )
+        vars = {
+            "uri": uri,
+        }
         response = self.eval(
             self._xquery_path("get_last_modified.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -657,10 +657,10 @@ class MarklogicApiClient:
 
     def delete_judgment(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps({"uri": uri})
+        vars = {"uri": uri}
         self.eval(
             self._xquery_path("delete_judgment.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -668,42 +668,36 @@ class MarklogicApiClient:
         old_uri = self._format_uri(old)
         new_uri = self._format_uri(new)
 
-        vars = json.dumps(
-            {
-                "old_uri": old_uri,
-                "new_uri": new_uri,
-            }
-        )
+        vars = {
+            "old_uri": old_uri,
+            "new_uri": new_uri,
+        }
         return self.eval(
             self._xquery_path("copy_judgment.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
     def break_checkout(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps(
-            {
-                "uri": uri,
-            }
-        )
+        vars = {
+            "uri": uri,
+        }
         return self.eval(
             self._xquery_path("break_judgment_checkout.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
     def user_has_privilege(self, username, privilege_uri, privilege_action):
-        vars = json.dumps(
-            {
-                "user": username,
-                "privilege_uri": privilege_uri,
-                "privilege_action": privilege_action,
-            }
-        )
+        vars = {
+            "user": username,
+            "privilege_uri": privilege_uri,
+            "privilege_action": privilege_action,
+        }
         return self.eval(
             self._xquery_path("user_has_privilege.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
@@ -741,28 +735,28 @@ class MarklogicApiClient:
 
     def get_judgment_citation(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps({"uri": uri})
+        vars = {"uri": uri}
         return self.eval(
             self._xquery_path("get_metadata_citation.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
     def get_judgment_court(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps({"uri": uri})
+        vars = {"uri": uri}
         return self.eval(
             self._xquery_path("get_metadata_court.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
     def get_judgment_work_date(self, judgment_uri):
         uri = self._format_uri(judgment_uri)
-        vars = json.dumps({"uri": uri})
+        vars = {"uri": uri}
         return self.eval(
             self._xquery_path("get_metadata_work_date.xqy"),
-            vars=vars,
+            vars=json.dumps(vars),
             accept_header="application/xml",
         )
 
