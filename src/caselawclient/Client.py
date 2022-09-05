@@ -137,7 +137,7 @@ class MarklogicApiClient:
             new_exception.response = response
             raise new_exception
 
-    def _format_uri(self, uri):
+    def _format_uri_for_marklogic(self, uri):
         """
         Marklogic requiores a document URI that begins with a slash `/` and ends in `.xml`.
         This method ensures any URI passed into the client matches this format.
@@ -196,7 +196,7 @@ class MarklogicApiClient:
     def get_judgment_xml(
         self, judgment_uri, version_uri=None, show_unpublished=False
     ) -> str:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         show_unpublished = self.verify_show_unpublished(show_unpublished)
         if version_uri:
             version_uri = f"/{version_uri.lstrip('/')}.xml"
@@ -217,7 +217,7 @@ class MarklogicApiClient:
         return multipart_data.parts[0].text
 
     def get_judgment_name(self, judgment_uri) -> str:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
         response = self._send_to_eval(vars, "get_metadata_name.xqy")
@@ -228,7 +228,7 @@ class MarklogicApiClient:
         return multipart_data.parts[0].text
 
     def set_judgment_name(self, judgment_uri, content):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_name.xqy")
@@ -242,25 +242,25 @@ class MarklogicApiClient:
         return self.set_judgment_work_expression_date(judgment_uri, content)
 
     def set_judgment_work_expression_date(self, judgment_uri, content):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_work_expression_date.xqy")
 
     def set_judgment_citation(self, judgment_uri, content):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
     def set_judgment_court(self, judgment_uri, content):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
 
     def set_judgment_this_uri(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         content_with_id = (
             f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
         )
@@ -282,7 +282,7 @@ class MarklogicApiClient:
     ) -> requests.Response:
         """assumes the judgment is already locked, does not unlock/check in
         note this version assumes the XML is raw bytes, rather than a tree..."""
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "judgment": judgment_xml.decode("utf-8"),
@@ -297,7 +297,7 @@ class MarklogicApiClient:
         """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
 
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "judgment": xml.decode("utf-8"),
@@ -311,13 +311,13 @@ class MarklogicApiClient:
     ) -> requests.Response:
         xml = ElementTree.tostring(judgment_xml)
 
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "judgment": xml.decode("utf-8"), "annotation": ""}
 
         return self._send_to_eval(vars, "insert_judgment.xqy")
 
     def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
         return self._send_to_eval(vars, "list_judgment_versions.xqy")
@@ -325,7 +325,7 @@ class MarklogicApiClient:
     def checkout_judgment(
         self, judgment_uri: str, annotation="", expires_at_midnight=False
     ) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "annotation": annotation,
@@ -340,13 +340,13 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "checkout_judgment.xqy")
 
     def checkin_judgment(self, judgment_uri: str) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
         return self._send_to_eval(vars, "checkin_judgment.xqy")
 
     def get_judgment_checkout_status(self, judgment_uri: str) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
         return self._send_to_eval(vars, "get_judgment_checkout_status.xqy")
@@ -367,7 +367,7 @@ class MarklogicApiClient:
     def get_judgment_version(
         self, judgment_uri: str, version: int
     ) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "version": str(version)}
 
         return self._send_to_eval(vars, "get_judgment_version.xqy")
@@ -468,9 +468,9 @@ class MarklogicApiClient:
         show_unpublished=False,
         xsl_filename="judgment2.xsl",
     ) -> requests.Response:
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         if version_uri:
-            version_uri = self._format_uri(version_uri)
+            version_uri = self._format_uri_for_marklogic(version_uri)
         if os.getenv("XSLT_IMAGE_LOCATION"):
             image_location = os.getenv("XSLT_IMAGE_LOCATION")
         else:
@@ -503,7 +503,7 @@ class MarklogicApiClient:
         )
 
     def get_property(self, judgment_uri, name):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
             "name": name,
@@ -527,7 +527,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "set_property.xqy")
 
     def set_boolean_property(self, judgment_uri, name, value):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         string_value = "true" if value else "false"
         vars = {
             "uri": uri,
@@ -565,7 +565,7 @@ class MarklogicApiClient:
         return self.get_boolean_property(judgment_uri, "anonymised")
 
     def get_last_modified(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
         }
@@ -579,13 +579,13 @@ class MarklogicApiClient:
         return content
 
     def delete_judgment(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "delete_judgment.xqy")
 
     def copy_judgment(self, old, new):
-        old_uri = self._format_uri(old)
-        new_uri = self._format_uri(new)
+        old_uri = self._format_uri_for_marklogic(old)
+        new_uri = self._format_uri_for_marklogic(new)
 
         vars = {
             "old_uri": old_uri,
@@ -594,7 +594,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "copy_judgment.xqy")
 
     def break_checkout(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
         }
@@ -641,17 +641,17 @@ class MarklogicApiClient:
         return show_unpublished
 
     def get_judgment_citation(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "get_metadata_citation.xqy")
 
     def get_judgment_court(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "get_metadata_court.xqy")
 
     def get_judgment_work_date(self, judgment_uri):
-        uri = self._format_uri(judgment_uri)
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "get_metadata_work_date.xqy")
 

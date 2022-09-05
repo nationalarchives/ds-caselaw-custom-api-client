@@ -48,16 +48,16 @@ class ApiClientTest(unittest.TestCase):
 
     def test_format_uri(self):
         uri = "/ewca/2022/123"
-        assert self.client._format_uri(uri) == "/ewca/2022/123.xml"
+        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
 
     def test_format_uri_no_leading_slash(self):
         uri = "ewca/2022/123"
-        assert self.client._format_uri(uri) == "/ewca/2022/123.xml"
+        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
 
     def test_format_uri_trailing_slash(self):
         uri = "ewca/2022/123/"
-        assert self.client._format_uri(uri) == "/ewca/2022/123.xml"
+        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
 
     def test_format_uri_all_the_slashes(self):
         uri = "/ewca/2022/123/"
-        assert self.client._format_uri(uri) == "/ewca/2022/123.xml"
+        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
