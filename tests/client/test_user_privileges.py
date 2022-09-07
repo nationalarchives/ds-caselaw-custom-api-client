@@ -31,14 +31,31 @@ class TestUserPrivileges(unittest.TestCase):
 
     def test_user_can_view_unpublished_judgments_true(self):
         with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = "true"
-
+            self.client.eval.return_value.headers = {
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+            }
+            self.client.eval.return_value.content = (
+                b"\r\n--595658fa1db1aa98\r\n"
+                b"content-type: text/plain\r\n"
+                b"X-Primitive: boolean\r\n\r\n"
+                b"true\r\n"
+                b"--595658fa1db1aa98--\r\n"
+            )
             result = self.client.user_can_view_unpublished_judgments("laura")
             assert result is True
 
     def test_user_can_view_unpublished_judgments_false(self):
         with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = "false"
+            self.client.eval.return_value.headers = {
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+            }
+            self.client.eval.return_value.content = (
+                b"\r\n--595658fa1db1aa98\r\n"
+                b"content-type: text/plain\r\n"
+                b"X-Primitive: boolean\r\n\r\n"
+                b"false\r\n"
+                b"--595658fa1db1aa98--\r\n"
+            )
 
             result = self.client.user_can_view_unpublished_judgments("laura")
             assert result is False
