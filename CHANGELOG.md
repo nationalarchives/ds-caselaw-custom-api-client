@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 4.10.0]
+- Add linting
+- Ensure only people who are allowed to view unpublished judgments can view them
+- Refactor tests
+- Break judgment checkout
+- Methods & XQueries to get & set all metadata
+- DRY up some aspects of the API Client
+- Support renaming of the XSL Transformation files
 - Speed up privilege checking
 
 ## [Release 4.9.2]
@@ -118,7 +127,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.2...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.10.0...HEAD
+[Release 4.10.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.10.0...v4.9.2
 [Release 4.9.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.2...v4.9.1
 [Release 4.9.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...v4.9.0
 [Release 4.9.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.0...v4.8.0
