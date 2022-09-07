@@ -9,7 +9,7 @@ from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 class TestEvalXslt(unittest.TestCase):
     def setUp(self):
-        self.client = MarklogicApiClient("", "", "", False)
+        self.client = MarklogicApiClient("", "testuser", "", False)
 
     def test_eval_xslt_user_can_view_unpublished(self):
         with patch.object(self.client, "eval"):
@@ -38,7 +38,9 @@ class TestEvalXslt(unittest.TestCase):
         Set `show_unpublished` to false and log a warning"""
         with patch.object(self.client, "eval"):
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=False
+                self.client,
+                "user_can_view_unpublished_judgments_cached",
+                return_value=False,
             ):
                 with patch.object(logging, "warning") as mock_logging:
                     uri = "/judgment/uri"

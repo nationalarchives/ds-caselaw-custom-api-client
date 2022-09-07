@@ -8,7 +8,7 @@ from src.caselawclient.Client import MarklogicApiClient
 
 class TestAdvancedSearch(unittest.TestCase):
     def setUp(self):
-        self.client = MarklogicApiClient("", "", "", False)
+        self.client = MarklogicApiClient("", "testuser", "", False)
 
     def test_advanced_search_user_can_view_unpublished_but_show_unpublished_is_false(
         self,
@@ -77,7 +77,9 @@ class TestAdvancedSearch(unittest.TestCase):
         Set `show_unpublished` to false and log a warning"""
         with patch.object(self.client, "invoke"):
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=False
+                self.client,
+                "user_can_view_unpublished_judgments_cached",
+                return_value=False,
             ):
                 with patch.object(logging, "warning") as mock_logging:
                     self.client.advanced_search(

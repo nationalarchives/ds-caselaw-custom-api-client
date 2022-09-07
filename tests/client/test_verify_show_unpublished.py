@@ -7,14 +7,16 @@ from src.caselawclient.Client import MarklogicApiClient
 
 class TestVerifyShowUnpublished(unittest.TestCase):
     def setUp(self):
-        self.client = MarklogicApiClient("", "", "", False)
+        self.client = MarklogicApiClient("", "testuser", "", False)
 
     # Test `verify_show_unpublished` with users who can/cannot see unpublished judgments
     # and with them asking for unpublished judgments or not
     def test_hide_published_if_unauthorised_and_user_asks_for_unpublished(self):
         # User cannot view unpublished but is asking to view unpublished judgments
         with patch.object(
-            self.client, "user_can_view_unpublished_judgments", return_value=False
+            self.client,
+            "user_can_view_unpublished_judgments_cached",
+            return_value=False,
         ):
             with patch.object(logging, "warning") as mock_logger:
                 result = self.client.verify_show_unpublished(True)
@@ -25,7 +27,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
     def test_show_unpublished_if_authorised_and_asks_for_unpublished(self):
         # User can view unpublished and is asking to view unpublished judgments
         with patch.object(
-            self.client, "user_can_view_unpublished_judgments", return_value=True
+            self.client, "user_can_view_unpublished_judgments_cached", return_value=True
         ):
             result = self.client.verify_show_unpublished(True)
             assert result is True

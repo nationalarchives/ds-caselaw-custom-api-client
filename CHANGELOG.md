@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Unreleased]
+- Speed up privilege checking
+
 ## [Release 4.9.2]
 - Add user_has_privilege method & XQuery to check if a user has a privilege
 - Use `user_has_privilege` to check if a user can see unpublished documents

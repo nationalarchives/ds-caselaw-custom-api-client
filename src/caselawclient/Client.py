@@ -647,7 +647,7 @@ class MarklogicApiClient:
         return difference.seconds
 
     def verify_show_unpublished(self, show_unpublished):
-        if show_unpublished and not self.user_can_view_unpublished_judgments(
+        if show_unpublished and not self.user_can_view_unpublished_judgments_cached(
             self.username
         ):
             # The user cannot view unpublished judgments but is requesting to see them
