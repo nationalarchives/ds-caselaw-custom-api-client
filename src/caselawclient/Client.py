@@ -20,6 +20,8 @@ RESULTS_PER_PAGE = 10
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
+user_read_unpublished_cache: Dict[str, bool] = {}
+
 
 class MarklogicAPIError(requests.HTTPError):
     status_code = 500
@@ -624,6 +626,13 @@ class MarklogicApiClient:
         multipart_data = decoder.MultipartDecoder.from_response(check_privilege)
         result = multipart_data.parts[0].text
         return result.lower() == "true"
+
+    def user_can_view_unpublished_judgments_cached(self, username):
+        cached_privilege = user_read_unpublished_cache.get(username, None)
+        if cached_privilege is None:
+            cached_privilege = self.user_can_view_unpublished_judgments(username)
+            user_read_unpublished_cache[username] = cached_privilege
+        return cached_privilege
 
     def calculate_seconds_until_midnight(self, now=None):
         """
