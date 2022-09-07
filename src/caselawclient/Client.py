@@ -621,7 +621,9 @@ class MarklogicApiClient:
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
             "execute",
         )
-        return check_privilege.text.lower() == "true"
+        multipart_data = decoder.MultipartDecoder.from_response(check_privilege)
+        result = multipart_data.parts[0].text
+        return result.lower() == "true"
 
     def calculate_seconds_until_midnight(self, now=None):
         """
