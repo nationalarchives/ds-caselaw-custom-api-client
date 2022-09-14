@@ -39,7 +39,7 @@ class TestEvalXslt(unittest.TestCase):
         with patch.object(self.client, "eval"):
             with patch.object(
                 self.client,
-                "user_can_view_unpublished_judgments_cached",
+                "user_can_view_unpublished_judgments",
                 return_value=False,
             ):
                 with patch.object(logging, "warning") as mock_logging:

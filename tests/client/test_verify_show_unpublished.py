@@ -15,7 +15,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
         # User cannot view unpublished but is asking to view unpublished judgments
         with patch.object(
             self.client,
-            "user_can_view_unpublished_judgments_cached",
+            "user_can_view_unpublished_judgments",
             return_value=False,
         ):
             with patch.object(logging, "warning") as mock_logger:
@@ -27,7 +27,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
     def test_show_unpublished_if_authorised_and_asks_for_unpublished(self):
         # User can view unpublished and is asking to view unpublished judgments
         with patch.object(
-            self.client, "user_can_view_unpublished_judgments_cached", return_value=True
+            self.client, "user_can_view_unpublished_judgments", return_value=True
         ):
             result = self.client.verify_show_unpublished(True)
             assert result is True

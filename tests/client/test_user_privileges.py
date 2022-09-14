@@ -59,14 +59,3 @@ class TestUserPrivileges(unittest.TestCase):
 
             result = self.client.user_can_view_unpublished_judgments("laura")
             assert result is False
-
-    def test_cached_version_only_calls_uncached_once(self):
-        with patch.object(
-            self.client, "user_can_view_unpublished_judgments", return_value=False
-        ):
-
-            result = self.client.user_can_view_unpublished_judgments_cached("laura")
-            assert result is False
-            self.client.user_can_view_unpublished_judgments_cached("laura")
-            self.client.user_can_view_unpublished_judgments.assert_called_once()
-            self.client.user_can_view_unpublished_judgments.assert_called_with("laura")

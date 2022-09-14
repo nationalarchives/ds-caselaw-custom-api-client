@@ -10,6 +10,7 @@ from xml.etree.ElementTree import Element
 
 import environ
 import requests
+from memoization import cached
 from requests.auth import HTTPBasicAuth
 from requests_toolbelt.multipart import decoder
 
@@ -19,8 +20,6 @@ env = environ.Env()
 RESULTS_PER_PAGE = 10
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
-
-user_read_unpublished_cache: Dict[str, bool] = {}
 
 
 class MarklogicAPIError(requests.HTTPError):
@@ -617,6 +616,7 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "user_has_privilege.xqy")
 
+    @cached
     def user_can_view_unpublished_judgments(self, username):
         check_privilege = self.user_has_privilege(
             username,
@@ -626,13 +626,6 @@ class MarklogicApiClient:
         multipart_data = decoder.MultipartDecoder.from_response(check_privilege)
         result = multipart_data.parts[0].text
         return result.lower() == "true"
-
-    def user_can_view_unpublished_judgments_cached(self, username):
-        cached_privilege = user_read_unpublished_cache.get(username, None)
-        if cached_privilege is None:
-            cached_privilege = self.user_can_view_unpublished_judgments(username)
-            user_read_unpublished_cache[username] = cached_privilege
-        return cached_privilege
 
     def calculate_seconds_until_midnight(self, now=None):
         """
@@ -647,7 +640,7 @@ class MarklogicApiClient:
         return difference.seconds
 
     def verify_show_unpublished(self, show_unpublished):
-        if show_unpublished and not self.user_can_view_unpublished_judgments_cached(
+        if show_unpublished and not self.user_can_view_unpublished_judgments(
             self.username
         ):
             # The user cannot view unpublished judgments but is requesting to see them
