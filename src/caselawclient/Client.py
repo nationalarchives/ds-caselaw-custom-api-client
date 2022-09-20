@@ -10,6 +10,7 @@ from xml.etree.ElementTree import Element
 
 import environ
 import requests
+from memoization import cached
 from requests.auth import HTTPBasicAuth
 from requests_toolbelt.multipart import decoder
 
@@ -615,6 +616,7 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "user_has_privilege.xqy")
 
+    @cached
     def user_can_view_unpublished_judgments(self, username):
         check_privilege = self.user_has_privilege(
             username,
@@ -638,9 +640,8 @@ class MarklogicApiClient:
         return difference.seconds
 
     def verify_show_unpublished(self, show_unpublished):
-        if (
-            not self.user_can_view_unpublished_judgments(self.username)
-            and show_unpublished
+        if show_unpublished and not self.user_can_view_unpublished_judgments(
+            self.username
         ):
             # The user cannot view unpublished judgments but is requesting to see them
             logging.warning(
