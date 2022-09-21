@@ -4,7 +4,7 @@ import os
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -111,6 +111,26 @@ class MarklogicApiClient:
 
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
+
+    def _court_list_splitter(self, court_text: str) -> set[str]:
+        return set(court_text.lower().replace(" ", "").split(","))
+
+    def _court_list(self, court_text: str) -> Optional[List[str]]:
+        print(f"court: {court_text}")
+        if not court_text.strip():
+            return None
+        alt_names = {
+            "ewhc/qb": "ewhc/kb",
+            "ewhc/kb": "ewhc/qb",
+            "ewhc/scco": "ewhc/costs",
+            "ewhc/costs": "ewhc/scco",
+        }
+        new_names = set()
+        courts = self._court_list_splitter(court_text)
+        for primary_name, secondary_name in alt_names.items():
+            if primary_name in courts and secondary_name not in courts:
+                new_names.add(secondary_name)
+        return list(courts | new_names)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
@@ -442,11 +462,11 @@ class MarklogicApiClient:
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
         :return:
         """
-        module = "/judgments/search/search.xqy"  # as stored on Marklogic
+        module = "/judgments/search/search-v2.xqy"  # as stored on Marklogic
         show_unpublished = self.verify_show_unpublished(show_unpublished)
         vars = json.dumps(
             {
-                "court": str(court or ""),
+                "court": self._court_list(court or ""),
                 "judge": str(judge or ""),
                 "page": max(1, int(page)),
                 "page-size": int(page_size),
