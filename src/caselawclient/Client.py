@@ -448,7 +448,7 @@ class MarklogicApiClient:
             {
                 "court": str(court or ""),
                 "judge": str(judge or ""),
-                "page": page,
+                "page": max(1, int(page)),
                 "page-size": int(page_size),
                 "q": str(q or ""),
                 "party": str(party or ""),
