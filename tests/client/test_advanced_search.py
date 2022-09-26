@@ -30,7 +30,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 )
 
                 expected_vars = {
-                    "court": "ewhc",
+                    "court": ["ewhc"],
                     "judge": "a. judge",
                     "page": 2,
                     "page-size": 20,
@@ -46,7 +46,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 }
 
                 self.client.invoke.assert_called_with(
-                    "/judgments/search/search.xqy", json.dumps(expected_vars)
+                    "/judgments/search/search-v2.xqy", json.dumps(expected_vars)
                 )
 
     def test_advanced_search_user_can_view_unpublished_and_show_unpublished_is_true(
