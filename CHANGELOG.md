@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 5.0.0]
+- Breaking change: passes a list of zero-or-more courts, rather than a string that might be empty.
+- Search queries: pages less than one are treated as one
+
 ## [Release 4.10.0]
 - Add linting
 - Ensure only people who are allowed to view unpublished judgments can view them
@@ -127,7 +131,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.10.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.0.0...HEAD
+[Release 5.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.0.0...v4.10.0
 [Release 4.10.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.10.0...v4.9.2
 [Release 4.9.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.2...v4.9.1
 [Release 4.9.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.9.1...v4.9.0
