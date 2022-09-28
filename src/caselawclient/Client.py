@@ -116,7 +116,6 @@ class MarklogicApiClient:
         return set(court_text.lower().replace(" ", "").split(","))
 
     def _court_list(self, court_text: str) -> Optional[List[str]]:
-        print(f"court: {court_text}")
         if not court_text.strip():
             return None
         alt_names = {
