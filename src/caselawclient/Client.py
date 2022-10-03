@@ -646,6 +646,23 @@ class MarklogicApiClient:
         result = multipart_data.parts[0].text
         return result.lower() == "true"
 
+    def user_has_role(self, username, role):
+        vars = {
+            "user": username,
+            "role": role,
+        }
+        return self._send_to_eval(vars, "user_has_role.xqy")
+
+    @cached
+    def user_has_admin_role(self, username):
+        check_role = self.user_has_role(
+            username,
+            "admin",
+        )
+        multipart_data = decoder.MultipartDecoder.from_response(check_role)
+        result = multipart_data.parts[0].text
+        return result.lower() == "true"
+
     def calculate_seconds_until_midnight(self, now=None):
         """
         Get timedelta until end of day on the datetime passed, or current time.
