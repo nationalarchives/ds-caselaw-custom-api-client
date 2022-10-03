@@ -59,3 +59,9 @@ class TestUserPrivileges(unittest.TestCase):
 
             result = self.client.user_can_view_unpublished_judgments("laura")
             assert result is False
+
+    def test_user_can_view_unpublished_judgments_with_admin_role(self):
+        with patch.object(self.client, "user_has_admin_role"):
+            self.client.user_has_admin_role.return_value = True
+            result = self.client.user_can_view_unpublished_judgments("laura")
+            assert result is True

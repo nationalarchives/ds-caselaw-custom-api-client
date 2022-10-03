@@ -637,6 +637,9 @@ class MarklogicApiClient:
 
     @cached
     def user_can_view_unpublished_judgments(self, username):
+        if self.user_has_admin_role(username):
+            return True
+
         check_privilege = self.user_has_privilege(
             username,
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
