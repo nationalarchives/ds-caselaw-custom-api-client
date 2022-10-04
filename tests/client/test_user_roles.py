@@ -6,30 +6,25 @@ from unittest.mock import patch
 from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
-class TestUserPrivileges(unittest.TestCase):
+class TestUserRoles(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
 
-    def test_user_has_privilege(self):
+    def test_user_has_role(self):
         with patch.object(self.client, "eval"):
             user = "laura"
-            privilege_uri = "https://caselaw.nationalarchives.gov.uk/custom/uri"
-            privilege_action = "execute"
-            expected_vars = {
-                "user": "laura",
-                "privilege_uri": "https://caselaw.nationalarchives.gov.uk/custom/uri",
-                "privilege_action": "execute",
-            }
-            self.client.user_has_privilege(user, privilege_uri, privilege_action)
+            role = "admin"
+            expected_vars = {"user": "laura", "role": "admin"}
+            self.client.user_has_role(user, role)
 
             assert self.client.eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
+                os.path.join(ROOT_DIR, "xquery", "user_has_role.xqy")
             )
             assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
                 expected_vars
             )
 
-    def test_user_can_view_unpublished_judgments_true(self):
+    def test_user_has_admin_role_true(self):
         with patch.object(self.client, "eval"):
             self.client.eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
@@ -41,10 +36,10 @@ class TestUserPrivileges(unittest.TestCase):
                 b"true\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.user_can_view_unpublished_judgments("laura")
+            result = self.client.user_has_admin_role("laura")
             assert result is True
 
-    def test_user_can_view_unpublished_judgments_false(self):
+    def test_user_has_admin_role_false(self):
         with patch.object(self.client, "eval"):
             self.client.eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
@@ -57,11 +52,5 @@ class TestUserPrivileges(unittest.TestCase):
                 b"--595658fa1db1aa98--\r\n"
             )
 
-            result = self.client.user_can_view_unpublished_judgments("laura")
+            result = self.client.user_has_admin_role("laura")
             assert result is False
-
-    def test_user_can_view_unpublished_judgments_with_admin_role(self):
-        with patch.object(self.client, "user_has_admin_role"):
-            self.client.user_has_admin_role.return_value = True
-            result = self.client.user_can_view_unpublished_judgments("laura")
-            assert result is True

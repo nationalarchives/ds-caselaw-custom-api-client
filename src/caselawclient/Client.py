@@ -637,12 +637,32 @@ class MarklogicApiClient:
 
     @cached
     def user_can_view_unpublished_judgments(self, username):
+        if self.user_has_admin_role(username):
+            return True
+
         check_privilege = self.user_has_privilege(
             username,
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
             "execute",
         )
         multipart_data = decoder.MultipartDecoder.from_response(check_privilege)
+        result = multipart_data.parts[0].text
+        return result.lower() == "true"
+
+    def user_has_role(self, username, role):
+        vars = {
+            "user": username,
+            "role": role,
+        }
+        return self._send_to_eval(vars, "user_has_role.xqy")
+
+    @cached
+    def user_has_admin_role(self, username):
+        check_role = self.user_has_role(
+            username,
+            "admin",
+        )
+        multipart_data = decoder.MultipartDecoder.from_response(check_role)
         result = multipart_data.parts[0].text
         return result.lower() == "true"
 
