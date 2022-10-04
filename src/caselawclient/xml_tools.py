@@ -1,3 +1,4 @@
+import logging
 from typing import List
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, ParseError
@@ -30,6 +31,10 @@ def get_element(
     element_namespace=akn_namespace_uri,
     has_value_attribute=True,
 ) -> Element:
+    logging.warning(
+        "XMLTools is deprecated and will be removed in later versions. "
+        "Use methods from MarklogicApiClient.Client instead."
+    )
     name = xml.find(
         xpath,
         namespaces=akn_uk_namespaces,
@@ -67,6 +72,10 @@ def get_neutral_citation_element(xml) -> Element:
 
 
 def get_judgment_date_element(xml) -> Element:
+    logging.warning(
+        "XMLTools is deprecated and will be removed in later versions. "
+        "Use methods from MarklogicApiClient.Client instead."
+    )
     name = xml.find(
         ".//akn:FRBRWork/akn:FRBRdate",
         namespaces=akn_uk_namespaces,
@@ -87,6 +96,10 @@ def get_court_element(xml) -> Element:
 
 
 def get_search_matches(element: Element) -> List[str]:
+    logging.warning(
+        "XMLTools is deprecated and will be removed in later versions. "
+        "Use methods from MarklogicApiClient.Client instead."
+    )
     nodes = element.findall(".//search:match", namespaces=search_namespace)
     results = []
     for node in nodes:
@@ -96,6 +109,10 @@ def get_search_matches(element: Element) -> List[str]:
 
 
 def get_error_code(xml_content: str):
+    logging.warning(
+        "XMLTools is deprecated and will be removed in later versions. "
+        "Use methods from MarklogicApiClient.Client instead."
+    )
     try:
         xml = ElementTree.fromstring(xml_content)
         return xml.find(
