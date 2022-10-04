@@ -1,5 +1,7 @@
+import logging
 import unittest
 import xml.etree.ElementTree as ET
+from unittest.mock import patch
 
 import src.caselawclient.xml_tools as xml_tools
 
@@ -336,3 +338,24 @@ class XmlToolsTests(unittest.TestCase):
         self.assertEqual(
             result, "Unknown error, Marklogic returned a null or empty response"
         )
+
+    def test_deprecation_warning(self):
+        with patch.object(logging, "warning") as mock_logging:
+            xml_string = """
+                       <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                           <judgment name="judgment" contains="originalVersion">
+                               <meta>
+                                   <identification source="#tna">
+                                       <FRBRname value="My Judgment Name"/>
+                                   </identification>
+                               </meta>
+                           </judgment>
+                       </akomaNtoso>
+                   """
+            xml = ET.ElementTree(ET.fromstring(xml_string))
+            result = xml_tools.get_metadata_name_value(xml)
+            self.assertEqual(result, "My Judgment Name")
+            mock_logging.assert_called_with(
+                "XMLTools is deprecated and will be removed in later versions. "
+                "Use methods from MarklogicApiClient.Client instead."
+            )
