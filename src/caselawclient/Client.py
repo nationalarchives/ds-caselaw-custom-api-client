@@ -4,7 +4,7 @@ import os
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -112,7 +112,7 @@ class MarklogicApiClient:
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
 
-    def _court_list_splitter(self, court_text: str) -> set[str]:
+    def _court_list_splitter(self, court_text: str) -> Set[str]:
         return set(court_text.lower().replace(" ", "").split(","))
 
     def _court_list(self, court_text: str) -> Optional[List[str]]:
