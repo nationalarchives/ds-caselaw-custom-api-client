@@ -24,7 +24,6 @@ DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 def decode_multipart(response):
     """Decode a multipart response and return just the text inside it."""
-
     multipart_data = decoder.MultipartDecoder.from_response(response)
     return multipart_data.parts[0].text
 
@@ -692,10 +691,12 @@ class MarklogicApiClient:
             return False
         return show_unpublished
 
-    def get_judgment_citation(self, judgment_uri):
+    def get_judgment_citation(self, judgment_uri) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
-        return self._send_to_eval(vars, "get_metadata_citation.xqy")
+
+        response = self._send_to_eval(vars, "get_metadata_citation.xqy")
+        return decode_multipart(response)
 
     def get_judgment_court(self, judgment_uri):
         uri = self._format_uri_for_marklogic(judgment_uri)
