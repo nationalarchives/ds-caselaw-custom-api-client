@@ -22,6 +22,12 @@ ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
+def decode_multipart(response):
+    """Decode a multipart response and return just the text inside it."""
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+    return multipart_data.parts[0].text
+
+
 class MarklogicAPIError(requests.HTTPError):
     status_code = 500
     default_message = "An error occurred, and we didn't recognise it."
@@ -234,8 +240,7 @@ class MarklogicApiClient:
                 "The document is not published and show_unpublished was not set"
             )
 
-        multipart_data = decoder.MultipartDecoder.from_response(response)
-        return multipart_data.parts[0].text
+        return decode_multipart(response)
 
     def get_judgment_name(self, judgment_uri) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
@@ -245,8 +250,7 @@ class MarklogicApiClient:
         if not response.text:
             return ""
 
-        multipart_data = decoder.MultipartDecoder.from_response(response)
-        return multipart_data.parts[0].text
+        return decode_multipart(response)
 
     def set_judgment_name(self, judgment_uri, content):
         uri = self._format_uri_for_marklogic(judgment_uri)
@@ -645,9 +649,7 @@ class MarklogicApiClient:
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
             "execute",
         )
-        multipart_data = decoder.MultipartDecoder.from_response(check_privilege)
-        result = multipart_data.parts[0].text
-        return result.lower() == "true"
+        return decode_multipart(check_privilege).lower() == "true"
 
     def user_has_role(self, username, role):
         vars = {
@@ -689,10 +691,12 @@ class MarklogicApiClient:
             return False
         return show_unpublished
 
-    def get_judgment_citation(self, judgment_uri):
+    def get_judgment_citation(self, judgment_uri) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
-        return self._send_to_eval(vars, "get_metadata_citation.xqy")
+
+        response = self._send_to_eval(vars, "get_metadata_citation.xqy")
+        return decode_multipart(response)
 
     def get_judgment_court(self, judgment_uri):
         uri = self._format_uri_for_marklogic(judgment_uri)

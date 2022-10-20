@@ -7,22 +7,23 @@ from unittest.mock import patch
 from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
+@patch("src.caselawclient.Client.decode_multipart")
+@patch("src.caselawclient.Client.MarklogicApiClient.eval")
+def test_get_judgment_citation(send, decode):
+    uri = "judgment/uri"
+    expected_vars = {"uri": "/judgment/uri.xml"}
+    decode.return_value = "ewca/fam/1"  # The decoder is called
+    MarklogicApiClient("", "", "", "").get_judgment_citation(uri) == "ewca/fam/1"
+
+    assert send.call_args.args[0] == (
+        os.path.join(ROOT_DIR, "xquery", "get_metadata_citation.xqy")
+    )
+    assert send.call_args.kwargs["vars"] == json.dumps(expected_vars)
+
+
 class TestGetSetMetadata(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
-
-    def test_get_judgment_citation(self):
-        with patch.object(self.client, "eval"):
-            uri = "judgment/uri"
-            expected_vars = {"uri": "/judgment/uri.xml"}
-            self.client.get_judgment_citation(uri)
-
-            assert self.client.eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "get_metadata_citation.xqy")
-            )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
 
     def test_set_judgment_citation(self):
         with patch.object(self.client, "eval"):
