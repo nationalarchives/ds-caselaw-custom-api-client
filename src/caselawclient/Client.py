@@ -166,7 +166,7 @@ class MarklogicApiClient:
 
     def _format_uri_for_marklogic(self, uri):
         """
-        Marklogic requiores a document URI that begins with a slash `/` and ends in `.xml`.
+        Marklogic requires a document URI that begins with a slash `/` and ends in `.xml`.
         This method ensures any URI passed into the client matches this format.
         """
         return f"/{uri.lstrip('/').rstrip('/')}.xml"
