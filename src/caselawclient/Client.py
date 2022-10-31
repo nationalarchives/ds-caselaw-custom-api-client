@@ -23,8 +23,15 @@ DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
 def decode_multipart(response):
-    """Decode a multipart response and return just the text inside it."""
+    """Decode a multipart response and return just the text inside it.
+    Note that it is possible for multiple responses to be returned, if
+    multiple top-level returns exist in the XQuery."""
     multipart_data = decoder.MultipartDecoder.from_response(response)
+    part_count = len(multipart_data.parts)
+    if part_count > 1:
+        logging.warning(
+            f"Throwing away multipart data ({part_count} items, expected 1)"
+        )
     return multipart_data.parts[0].text
 
 
@@ -707,6 +714,15 @@ class MarklogicApiClient:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "get_metadata_work_date.xqy")
+
+    def get_properties_for_search_results(self, judgment_uris):
+        uris = [
+            self._format_uri_for_marklogic(judgment_uri)
+            for judgment_uri in judgment_uris
+        ]
+        vars = {"uris": uris}
+        response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
+        return decode_multipart(response)
 
 
 api_client = MarklogicApiClient(

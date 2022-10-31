@@ -4,7 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Unreleased]
+## [Release 5.1.1]
+- Get properties for a range of URIs for use in search results
 
 ## [Release 5.1.0]
 - Remove a debug `print()` statement that was missed
@@ -137,7 +138,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.1...HEAD
+[Release 5.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.1...v5.1.0
 [Release 5.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.0...v5.0.0
 [Release 5.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.0.0...v4.10.0
 [Release 4.10.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v4.10.0...v4.9.2
@@ -165,7 +167,7 @@ The format is based on [Keep a Changelog 1.0.0].
 [Release 2.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v2.1.1...v2.1.2
 [Release 2.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v2.1.0...v2.1.1
 [Release 2.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v2.0.1...v2.1.0
-[release 2.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v2.0.0...v2.0.1
-[release 2.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v1.0.5...v2.0.0
-[release 1.0.5]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases/tag/v1.0.5
+[Release 2.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v2.0.0...v2.0.1
+[Release 2.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v1.0.5...v2.0.0
+[Release 1.0.5]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases/tag/v1.0.5
 [keep a changelog 1.0.0]: https://keepachangelog.com/en/1.0.0/

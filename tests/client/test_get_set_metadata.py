@@ -9,11 +9,27 @@ from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 @patch("src.caselawclient.Client.decode_multipart")
 @patch("src.caselawclient.Client.MarklogicApiClient.eval")
+def test_get_properties_for_search_results(send, decode):
+    uris = ["judgment/uri"]
+    expected_vars = {"uris": ["/judgment/uri.xml"]}
+    decode.return_value = "decoded_value"  # The decoder is called
+    retval = MarklogicApiClient("", "", "", "").get_properties_for_search_results(uris)
+    assert retval == "decoded_value"
+
+    assert send.call_args.args[0] == (
+        os.path.join(ROOT_DIR, "xquery", "get_properties_for_search_results.xqy")
+    )
+    assert send.call_args.kwargs["vars"] == json.dumps(expected_vars)
+
+
+@patch("src.caselawclient.Client.decode_multipart")
+@patch("src.caselawclient.Client.MarklogicApiClient.eval")
 def test_get_judgment_citation(send, decode):
     uri = "judgment/uri"
     expected_vars = {"uri": "/judgment/uri.xml"}
     decode.return_value = "ewca/fam/1"  # The decoder is called
-    MarklogicApiClient("", "", "", "").get_judgment_citation(uri) == "ewca/fam/1"
+    retval = MarklogicApiClient("", "", "", "").get_judgment_citation(uri)
+    assert retval == "ewca/fam/1"
 
     assert send.call_args.args[0] == (
         os.path.join(ROOT_DIR, "xquery", "get_metadata_citation.xqy")
