@@ -708,6 +708,15 @@ class MarklogicApiClient:
         vars = {"uri": uri}
         return self._send_to_eval(vars, "get_metadata_work_date.xqy")
 
+    def do_bad_search(self, values):
+        """
+        This is a hack to let us quickly iterate on the search. You'll need to
+        copy over the search xquery from the public-access-service and replace
+        the helper import with /judgments/search/helper.xqy.
+
+        Don't use this function in production."""
+        return decode_multipart(self._send_to_eval(values, "search-v2.xqy"))
+
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST", default=None),
