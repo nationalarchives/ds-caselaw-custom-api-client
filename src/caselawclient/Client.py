@@ -708,12 +708,14 @@ class MarklogicApiClient:
     def get_judgment_court(self, judgment_uri):
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
-        return self._send_to_eval(vars, "get_metadata_court.xqy")
+        response = self._send_to_eval(vars, "get_metadata_court.xqy")
+        return decode_multipart(response)
 
     def get_judgment_work_date(self, judgment_uri):
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
-        return self._send_to_eval(vars, "get_metadata_work_date.xqy")
+        response = self._send_to_eval(vars, "get_metadata_work_date.xqy")
+        return decode_multipart(response)
 
     def get_properties_for_search_results(self, judgment_uris):
         uris = [
