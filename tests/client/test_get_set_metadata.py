@@ -55,14 +55,11 @@ class TestGetSetMetadata(unittest.TestCase):
                 expected_vars
             )
 
-    @patch("src.caselawclient.Client.decode_multipart")
-    def test_get_judgment_court(self, decode):
+    def test_get_judgment_court(self):
         with patch.object(self.client, "eval"):
-            decode.return_value = "EWCA-Fam"
             uri = "judgment/uri"
             expected_vars = {"uri": "/judgment/uri.xml"}
-            retval = self.client.get_judgment_court(uri)
-            assert retval == "EWCA-Fam"
+            self.client.get_judgment_court(uri)
 
             assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "get_metadata_court.xqy")
@@ -85,14 +82,11 @@ class TestGetSetMetadata(unittest.TestCase):
                 expected_vars
             )
 
-    @patch("src.caselawclient.Client.decode_multipart")
-    def test_get_judgment_date(self, decode):
+    def test_get_judgment_date(self):
         with patch.object(self.client, "eval"):
-            decode.return_value = "2022-01-01"
             uri = "judgment/uri"
             expected_vars = {"uri": "/judgment/uri.xml"}
-            retval = self.client.get_judgment_work_date(uri)
-            assert retval == "2022-01-01"
+            self.client.get_judgment_work_date(uri)
 
             assert self.client.eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "get_metadata_work_date.xqy")
