@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.1.2]
+- Ensure Work Date and Court values are returned as text
+
 ## [Release 5.1.1]
 - Get properties for a range of URIs for use in search results
 
@@ -138,7 +141,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.2...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.2...v5.1.1
 [Release 5.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.1...v5.1.0
 [Release 5.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.0...v5.0.0
 [Release 5.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.0.0...v4.10.0
