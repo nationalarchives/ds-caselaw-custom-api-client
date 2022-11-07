@@ -86,7 +86,7 @@ let $query13 := if (($show_unpublished or $only_unpublished) and $editor_assigne
 let $query14 := if (($show_unpublished or $only_unpublished) and $editor_priority) then cts:properties-fragment-query(cts:element-value-query(fn:QName("", "editor-priority"), $editor_priority)) else ()
 let $query15 := if (($show_unpublished or $only_unpublished) and $editor_status) then () else ()
 
-
+(: 14 broken :)
 let $queries := ( $query1, $query2, $query4, $query5, $query6, $query7, $query8, $query9, $query10, $query11, $query12, $query13, $query14, $query15, dls:documents-query() )
 let $query := cts:and-query($queries)
 
