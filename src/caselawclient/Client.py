@@ -26,6 +26,8 @@ def decode_multipart(response):
     """Decode a multipart response and return just the text inside it.
     Note that it is possible for multiple responses to be returned, if
     multiple top-level returns exist in the XQuery."""
+    if not (response.content):
+        return ""
     multipart_data = decoder.MultipartDecoder.from_response(response)
     part_count = len(multipart_data.parts)
     if part_count > 1:
