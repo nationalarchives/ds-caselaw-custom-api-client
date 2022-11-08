@@ -26,6 +26,8 @@ def decode_multipart(response):
     """Decode a multipart response and return just the text inside it.
     Note that it is possible for multiple responses to be returned, if
     multiple top-level returns exist in the XQuery."""
+    if not (response.content):
+        return ""
     multipart_data = decoder.MultipartDecoder.from_response(response)
     part_count = len(multipart_data.parts)
     if part_count > 1:
@@ -706,6 +708,7 @@ class MarklogicApiClient:
         return decode_multipart(response)
 
     def get_judgment_court(self, judgment_uri):
+        breakpoint()
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         response = self._send_to_eval(vars, "get_metadata_court.xqy")
