@@ -4,6 +4,8 @@ import module namespace search = "http://marklogic.com/appservices/search" at "/
 import module namespace helper = "https://caselaw.nationalarchives.gov.uk/helper" at "/judgments/search/helper.xqy";
 import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls.xqy";
 import module namespace cpf = "http://marklogic.com/cpf" at "/MarkLogic/cpf/cpf.xqy";
+import module namespace op="http://marklogic.com/optic"
+     at "/MarkLogic/optic.xqy";
 
 declare namespace akn = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0";
 declare namespace uk = "https://caselaw.nationalarchives.gov.uk";
@@ -84,9 +86,20 @@ else ()
 let $query12 := if (helper:is-a-consignment-number($q)) then (helper:make-consignment-number-query($q)) else ()
 let $query13 := if (($show_unpublished or $only_unpublished) and $editor_assigned) then cts:properties-fragment-query(cts:element-value-query(fn:QName("", "assigned-to"), $editor_assigned)) else ()
 let $query14 := if (($show_unpublished or $only_unpublished) and $editor_priority) then cts:properties-fragment-query(cts:element-value-query(fn:QName("", "editor-priority"), $editor_priority)) else ()
-let $query15 := if (($show_unpublished or $only_unpublished) and $editor_status) then () else ()
 
-(: 14 broken :)
+let $new_query := ()
+let $held_query := ()
+
+let $new_query := cts:properties-fragment-query(cts:element-value-query(fn:QName("", "assigned-to"), ""))
+let $held_query := cts:properties-fragment-query(cts:element-value-query(fn:QName("", "editor-hold"), "true"))
+let $progress_query := cts:properties-fragment-query(cts:not-query(cts:element-value-query(fn:QName("", "editor-hold"), "true")))
+
+
+let $query15 := if (($show_unpublished or $only_unpublished) and $editor_status) then (
+    if ($editor_status = 'new') then ($new_query) else ($held_query)
+) else ()
+
+
 let $queries := ( $query1, $query2, $query4, $query5, $query6, $query7, $query8, $query9, $query10, $query11, $query12, $query13, $query14, $query15, dls:documents-query() )
 let $query := cts:and-query($queries)
 

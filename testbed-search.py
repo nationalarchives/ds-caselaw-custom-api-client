@@ -21,9 +21,9 @@ response = api_client.do_bad_search(
         "to": "",
         "show_unpublished": "true",
         "only_unpublished": "false",
-        "editor_status": "",  # not implemented
+        "editor_status": "new",  # not implemented
         "editor_priority": "",  # 10 has 2 records
-        "editor_assigned": "admin",  # admin has 5 records
+        "editor_assigned": "",  # admin has 5 records
     }
 )
 print(response)
