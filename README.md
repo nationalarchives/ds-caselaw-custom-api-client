@@ -100,3 +100,6 @@ To create a release:
 5. Get approval on the PR
 6. Tag the HEAD of the PR `v{major}.{minor}.{patch}` and push the tag
 7. Merge the PR to main and push
+
+Then create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
+using the created tag & changelog, for ease of reference.
