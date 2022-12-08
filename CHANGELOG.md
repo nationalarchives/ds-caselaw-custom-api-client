@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.1.4]
+- Validate against a schema when priv API document is uploaded
+- Add CodeQL configuration
+- Add a check for secrets
+- Bump certifi from 2021.10.8 to 2022.12.7
+
 ## [Release 5.1.3]
 - Don't crash if multipart data is actually an empty bytestring.
 
@@ -145,7 +151,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.3...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.4...HEAD
+[Release 5.1.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.4...v5.1.3
 [Release 5.1.3]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.3...v5.1.2
 [Release 5.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.2...v5.1.1
 [Release 5.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.1...v5.1.0
