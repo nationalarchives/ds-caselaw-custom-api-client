@@ -85,7 +85,7 @@ When making a change, update the [changelog](CHANGELOG.md) using the
 [Keep a Changelog 1.0.0](https://keepachangelog.com/en/1.0.0/) format. Pull
 requests should not be merged before any relevant updates are made.
 
-## Releasing changes
+## Releasing
 
 When making a new release, update the [changelog](CHANGELOG.md) in the release
 pull request.
@@ -96,13 +96,12 @@ to main alone will **not** trigger a release to PyPI.
 To create a release:
 
 0. Update the version number in `setup.cfg`
-1. Create a branch `release/v{major}.{minor}.{patch}`
-2. Update changelog for the release
-3. Commit and push
-4. Open a PR from that branch to main
-5. Get approval on the PR
-6. Tag the HEAD of the PR `v{major}.{minor}.{patch}` and push the tag
-7. Merge the PR to main and push
-
-Then create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
-using the created tag & changelog, for ease of reference.
+0. Create a branch `release/v{major}.{minor}.{patch}`
+0. Update `CHANGELOG.md` for the release
+0. Commit and push
+0. Open a PR from that branch to main
+0. Get approval on the PR
+0. Merge the PR to main and push
+0. Tag the merge commit on `main` with `v{major}.{minor}.{patch}` and push the tag
+0. Create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
+using the created tag
