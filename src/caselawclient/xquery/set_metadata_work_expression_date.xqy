@@ -6,7 +6,7 @@ declare variable $content as xs:string external;
 
 let $date_attr_name := doc($uri)/akn:akomaNtoso/akn:judgment/@name
 
-(: https://github.com/nationalarchives/ds-caselaw-public-access-service/blob/main/doc/adr/0008-how-frbrdates-are-managed.md :)
+(: https://github.com/nationalarchives/ds-find-caselaw-docs/blob/main/doc/adr/0008-how-frbrdates-are-managed.md :)
 (: Keep these two dates in sync for now as per our ADR :)
 return (
     xdmp:node-replace(
