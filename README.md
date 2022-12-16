@@ -1,9 +1,10 @@
 # The National Archives: Find Case Law
 
 This repository is part of the [Find Case Law](https://caselaw.nationalarchives.gov.uk/) project at [The National Archives](https://www.nationalarchives.gov.uk/). For more information on the project, check [the documentation](https://github.com/nationalarchives/ds-find-caselaw-docs).
+
 # MarkLogic API Client
 
-![PyPI](https://img.shields.io/pypi/v/ds-caselaw-marklogic-api-client)
+![PyPI](https://img.shields.io/pypi/v/ds-caselaw-marklogic-api-client) ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/pypi/ds-caselaw-marklogic-api-client)
 
 This is an API Client for connecting to Marklogic for The National Archive's Caselaw site.
 
