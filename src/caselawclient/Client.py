@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -13,6 +13,7 @@ import environ
 import requests
 from memoization import cached
 from requests.auth import HTTPBasicAuth
+from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
 from . import xml_tools
@@ -223,12 +224,12 @@ class MarklogicApiClient:
         self,
         method: str,
         path: str,
-        headers: Dict[str, Any],
+        headers: CaseInsensitiveDict[Union[str, Any]],
         body: str = None,
         data: Optional[Dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
-        self.session.headers = headers  # type: ignore
+        self.session.headers = headers
         response = self.session.request(method, **kwargs)
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
