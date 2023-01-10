@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
@@ -89,6 +90,11 @@ class MarklogicCheckoutConflictError(MarklogicAPIError):
     default_message = "The resource is checked out by another user."
 
 
+class MarklogicValidationFailedError(MarklogicAPIError):
+    status_code = 422
+    default_message = "The XML document did not validate according to the schema."
+
+
 class MarklogicCommunicationError(MarklogicAPIError):
     status_code = 500
     default_message = (
@@ -111,6 +117,7 @@ class MarklogicApiClient:
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
         "SEC-PRIVDNE": MarklogicNotPermittedError,
+        "XDMP-VALIDATE.*": MarklogicValidationFailedError,
     }
 
     default_http_error_class = MarklogicCommunicationError
@@ -123,6 +130,16 @@ class MarklogicApiClient:
         # Apply auth / common headers to the session
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
+
+    def _get_error_code_class(self, error_code):
+        """
+        Get the exception type for a MarkLogic error code, or the first part of one
+        """
+        for regex, error in self.error_code_classes.items():
+            if re.fullmatch(regex, error_code):
+                return error
+        print(f"No error code match found for {error_code}")
+        return self.default_http_error_class
 
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
@@ -163,9 +180,7 @@ class MarklogicApiClient:
                 # Attempt to decode the error code from the response
                 error_code = xml_tools.get_error_code(response.content.decode("utf-8"))
 
-                new_error_class = self.error_code_classes.get(
-                    error_code, self.default_http_error_class
-                )
+                new_error_class = self._get_error_code_class(error_code)
 
             new_exception = new_error_class(
                 "{}. Response body:\n{}".format(e, response_body)
