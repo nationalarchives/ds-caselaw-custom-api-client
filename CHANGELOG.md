@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
+## [Release 5.2.0]
+- Clarify release process documentation
+- Add pypi version badge and libraries.io dependency shield
+- Expose MarklogicValidationFailed exception
 
 ## [Release 5.1.4]
 - Validate against a schema when priv API document is uploaded
