@@ -292,6 +292,7 @@ class MarklogicApiClient:
         return self.set_judgment_work_expression_date(judgment_uri, content)
 
     def set_judgment_work_expression_date(self, judgment_uri, content):
+        """Sets the date on both the Work and the Expression of the judgment to the given value"""
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
