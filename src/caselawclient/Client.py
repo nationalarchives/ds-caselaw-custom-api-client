@@ -225,7 +225,7 @@ class MarklogicApiClient:
         method: str,
         path: str,
         headers: CaseInsensitiveDict[Union[str, Any]],
-        body: str = None,
+        body: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
