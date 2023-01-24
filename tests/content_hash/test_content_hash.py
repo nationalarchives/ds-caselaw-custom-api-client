@@ -1,5 +1,8 @@
-from src.caselawclient.content_hash import (content_hash, hashable_text,
-                                            validate_content_hash)
+from src.caselawclient.content_hash import (
+    content_hash,
+    hashable_text,
+    validate_content_hash,
+)
 
 VALID_DOC = b"""<?xml version="1.0" encoding="UTF-8"?>
     <akomaNtoso
