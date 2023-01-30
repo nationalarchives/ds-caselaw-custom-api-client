@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.2.2]
+- Bug fix: setting court was not valid XQuery in eval context
+
 ## [Release 5.2.1]
 - Improvements to code linting
 - Expose hash of judgment content
 - Unset the court tag where the court is an empty string
+
 ## [Release 5.2.0]
 - Clarify release process documentation
 - Add pypi version badge and libraries.io dependency shield
@@ -160,7 +164,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.2...HEAD
+[Release 5.2.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.1...v5.2.2
 [Release 5.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.0...v5.2.1
 [Release 5.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.4...v5.2.0
 [Release 5.1.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.1.3...v5.1.4
