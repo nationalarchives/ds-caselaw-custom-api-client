@@ -25,8 +25,7 @@ declare function local:add($uri, $content)
 declare variable $uri as xs:string external;
 declare variable $content as xs:string external;
 
-
-return if (fn:boolean(
+if (fn:boolean(
 cts:search(doc($uri),
 cts:element-query(xs:QName('uk:court'),cts:and-query(()))))) then
     if ($content = "") then local:delete($uri) else local:edit($uri, $content)
