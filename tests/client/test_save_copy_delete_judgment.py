@@ -35,6 +35,11 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             )
 
     def test_save_locked_judgment_xml(self):
+        """
+        Given a locked judgement uri, a judgement_xml and an annotation
+        When `Client.save_locked_judgment_xml` is called with these as arguments
+        Then the xquery in `update_locked_judgment.xqy` is called on the Marklogic db with those arguments
+        """
         with patch.object(src.caselawclient.Client, "validate_content_hash"):
             with patch.object(self.client, "eval"):
                 uri = "/ewca/civ/2004/632"
@@ -55,6 +60,11 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 )
 
     def test_save_locked_judgment_xml_checks_content_hash(self):
+        """
+        Given content hash validation will fail with an error
+        When `Client.save_locked_judgment_xml` is called
+        Then the error is raised.
+        """
         with patch.object(src.caselawclient.Client, "validate_content_hash"):
             uri = "/ewca/civ/2004/632"
             judgment_str = "<root>My updated judgment</root>"

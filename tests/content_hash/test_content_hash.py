@@ -40,12 +40,14 @@ class TestIdentifyHashableString:
 
 
 class TestCorrectHashForString:
-    def test_content_hash(self):
+    def test_valid_content_hash(self):
         """Do we get a hex string when hashing the document, and is it what we expect?"""
         assert (
             hash_of_content(VALID_DOC)
             == "c4367ebc0937f4dc2d6b372d9a09670e3606a5b3da77a070149755db5f942565"
         )
+
+    def test_invalid_content_hash(self):
         assert (
             hash_of_content(INVALID_DOC)
             != "c4367ebc0937f4dc2d6b372d9a09670e3606a5b3da77a070149755db5f942565"
