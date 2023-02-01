@@ -4,7 +4,11 @@ import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree
 
+import pytest
+
+import src.caselawclient.Client
 from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from src.caselawclient.errors import InvalidContentHashError
 
 
 class TestSaveCopyDeleteJudgment(unittest.TestCase):
@@ -31,23 +35,45 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             )
 
     def test_save_locked_judgment_xml(self):
-        with patch.object(self.client, "eval"):
+        """
+        Given a locked judgement uri, a judgement_xml and an annotation
+        When `Client.save_locked_judgment_xml` is called with these as arguments
+        Then the xquery in `update_locked_judgment.xqy` is called on the Marklogic db with those arguments
+        """
+        with patch.object(src.caselawclient.Client, "validate_content_hash"):
+            with patch.object(self.client, "eval"):
+                uri = "/ewca/civ/2004/632"
+                judgment_str = "<root>My updated judgment</root>"
+                judgment_xml = judgment_str.encode("utf-8")
+                expected_vars = {
+                    "uri": "/ewca/civ/2004/632.xml",
+                    "judgment": judgment_str,
+                    "annotation": "my annotation",
+                }
+                self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
+
+                assert self.client.eval.call_args.args[0] == (
+                    os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
+                )
+                assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
+                    expected_vars
+                )
+
+    def test_save_locked_judgment_xml_checks_content_hash(self):
+        """
+        Given content hash validation will fail with an error
+        When `Client.save_locked_judgment_xml` is called
+        Then the error is raised.
+        """
+        with patch.object(src.caselawclient.Client, "validate_content_hash"):
             uri = "/ewca/civ/2004/632"
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = judgment_str.encode("utf-8")
-            expected_vars = {
-                "uri": "/ewca/civ/2004/632.xml",
-                "judgment": judgment_str,
-                "annotation": "my annotation",
-            }
-            self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
-
-            assert self.client.eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
+            src.caselawclient.Client.validate_content_hash.side_effect = (
+                InvalidContentHashError()
             )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
+            with pytest.raises(InvalidContentHashError):
+                self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
 
     def test_insert_judgment_xml(self):
         with patch.object(self.client, "eval"):
