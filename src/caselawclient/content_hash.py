@@ -13,8 +13,10 @@ from hashlib import sha256
 
 import lxml.etree
 
+from .errors import InvalidContentHashError
 
-def content_hash(doc: bytes) -> str:
+
+def hash_of_content(doc: bytes) -> str:
     """Return the content hash for a document"""
     return sha256(hashable_text(doc)).hexdigest()
 
@@ -35,11 +37,19 @@ def hashable_text(doc: bytes) -> bytes:
     return spaceless.encode("utf-8")
 
 
-def validate_content_hash(doc: bytes) -> bool:
-    """Check a document's self-described content hash is the same as the hash of its content"""
+def validate_content_hash(doc: bytes) -> str:
+    """Check a document's self-described content hash is the same as the hash of its content, raise an error if not"""
     root = lxml.etree.fromstring(doc)
-    hash_from_doc = root.xpath(
-        "//uk:hash/text()",
-        namespaces={"uk": "https://caselaw.nationalarchives.gov.uk/akn"},
-    )[0]
-    return hash_from_doc == content_hash(doc)
+    try:
+        hash_from_tag = root.xpath(
+            "//uk:hash/text()",
+            namespaces={"uk": "https://caselaw.nationalarchives.gov.uk/akn"},
+        )[0]
+    except IndexError:
+        raise InvalidContentHashError("Document did not have a content hash tag")
+    content_hash = hash_of_content(doc)
+    if hash_from_tag != content_hash:
+        raise InvalidContentHashError(
+            f"Hash of document was {hash_from_tag} but the content hash was {content_hash}"
+        )
+    return content_hash

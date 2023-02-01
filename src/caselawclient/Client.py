@@ -17,6 +17,7 @@ from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
 from . import xml_tools
+from .content_hash import validate_content_hash
 from .errors import MarklogicAPIError  # noqa: F401
 from .errors import (
     MarklogicBadRequestError,
@@ -281,6 +282,7 @@ class MarklogicApiClient:
     ) -> requests.Response:
         """assumes the judgment is already locked, does not unlock/check in
         note this version assumes the XML is raw bytes, rather than a tree..."""
+        validate_content_hash(judgment_xml)
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
