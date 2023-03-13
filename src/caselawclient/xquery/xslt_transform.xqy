@@ -14,6 +14,11 @@ let $xsl_path := fn:concat("judgments/xslts/", $xsl_filename)
 
 let $params := map:map()
 
+let $_ := if (not(exists($document_to_transform))) then
+  (
+    fn:error(xs:QName("FCL_DOCUMENTNOTFOUND"), "No XML document was found to transform")
+  ) else ()
+
 let $return_value := if (xs:boolean($is_published) or $show_unpublished) then
         xdmp:xslt-invoke($xsl_path,
           $document_to_transform,
