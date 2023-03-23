@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.2.4]
+- HTML view: Do not default to current version if the version doesn't exist (cause an error instead)
+
 ## [Release 5.2.3]
 - Add content hash validation when we save a locked judgment
 
