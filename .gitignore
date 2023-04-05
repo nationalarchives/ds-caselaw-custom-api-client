@@ -10,3 +10,4 @@ src/caselawclient/__pycache__/
 /build
 __pycache__
 __pypackages__
+.coverage
