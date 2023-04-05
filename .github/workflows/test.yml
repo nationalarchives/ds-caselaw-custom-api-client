@@ -18,6 +18,7 @@ jobs:
             requirements.txt
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.0
+
   test:
     env:
       MARKLOGIC_HOST: ""
@@ -27,9 +28,21 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@main
+
       - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
+
       - run: pip install -r requirements.txt
-      - run: python -m pytest
+
+      - name: Run tests with coverage
+        run: coverage run -m pytest
+
+      - name: Generate coverage XML
+        run: coverage xml
+
+      - name: Upload coverage to CodeClimate
+        uses: paambaati/codeclimate-action@v3.2.0
+        env:
+          CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
