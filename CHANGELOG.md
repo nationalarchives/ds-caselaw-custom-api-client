@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.2.6]
+- Add code coverage reporting to CI
+- Make a PEP-561 declaration of typing
+
 ## [Release 5.2.5]
 - Re-add the code that was pointing the XSLT to the assets
 
@@ -174,7 +178,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.5...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.6...HEAD
+[Release 5.2.6]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.5...v5.2.6
 [Release 5.2.5]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.4...v5.2.5
 [Release 5.2.4]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.3...v5.2.4
 [Release 5.2.3]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.2...v5.2.3
