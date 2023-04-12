@@ -6,6 +6,9 @@ authors = ["The National Archives"]
 homepage = "https://github.com/nationalarchives/ds-caselaw-custom-api-client"
 keywords = ["national archives", "caselaw"]
 readme = "README.md"
+packages = [
+    { include = "src/caselawclient" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
