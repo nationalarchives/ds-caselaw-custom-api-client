@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Release 5.3.0]
+## [Release 5.3.1]
+- Fix broken build process
+
+## [Release 5.3.0] (Yanked)
 - Dependabot now updates dependencies for all new versions, not just security updates
 - Use Poetry for dependency management, to improve robustness
 - Add a `Judgment` class (copied from Editor Interface) to begin the process of harmonising how various services interface with the data
@@ -183,7 +186,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.1...HEAD
+[Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.0...v5.3.1
 [Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.6...v5.3.0
 [Release 5.2.6]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.5...v5.2.6
 [Release 5.2.5]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.4...v5.2.5
