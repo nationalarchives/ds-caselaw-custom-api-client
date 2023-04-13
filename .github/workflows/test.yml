@@ -1,9 +1,10 @@
-name: Run unit tests
+name: Run tests
 
 on: push
 
 jobs:
   linter:
+    name: Code linter
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code Repository
@@ -11,25 +12,30 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.0
 
   test:
+    name: Unit tests
+
+    runs-on: ubuntu-latest
+
     env:
       MARKLOGIC_HOST: ""
       MARKLOGIC_USER: ""
       MARKLOGIC_PASSWORD: ""
-    name: Run unit tests
-    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.9
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.python-version }}
 
       - name: Run image
         uses: abatilo/actions-poetry@v2.3.0
