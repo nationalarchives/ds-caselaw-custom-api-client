@@ -162,14 +162,14 @@ testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)"]
 
 [[package]]
 name = "ds-caselaw-utils"
-version = "0.5.0"
+version = "1.0.0"
 description = "Utilities for the National Archives Caselaw project"
 category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "ds_caselaw_utils-0.5.0-py3-none-any.whl", hash = "sha256:f9f1b3694611b0b4be0fbc23a82f126f489b5806b6f94bd032d41a054ac208cc"},
-    {file = "ds_caselaw_utils-0.5.0.tar.gz", hash = "sha256:a4d660a1d56c837b5c8ef0f17945467043a740c3a69d8636007d67c612b51d5a"},
+    {file = "ds_caselaw_utils-1.0.0-py3-none-any.whl", hash = "sha256:1d42e385b39cc8c8aa635e921c26671a83edcbcbf9b92c797390af493883d67f"},
+    {file = "ds_caselaw_utils-1.0.0.tar.gz", hash = "sha256:5005c175cd49eee5968953be9d75668e8b137ed88577b28dfb5cd10ca5322e4c"},
 ]
 
 [package.dependencies]
@@ -560,4 +560,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "17bd21d16a02d2a4799cc3db60c7409df83247d2a7c9a84c08596eea4ff0fbe9"
+content-hash = "77432f2a00425baab4a120cba877f75fb219f270b68aba0983fcdb06c6c5ef89"
