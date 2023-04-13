@@ -22,7 +22,7 @@ urllib3 = "1.26.15"
 memoization = "0.4.0"
 lxml = "4.9.2"
 ds-caselaw-utils = "^0.5.0"
-boto3 = "^1.26.107"
+boto3 = "^1.26.112"
 
 
 [tool.poetry.group.dev.dependencies]
