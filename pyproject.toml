@@ -7,7 +7,7 @@ homepage = "https://github.com/nationalarchives/ds-caselaw-custom-api-client"
 keywords = ["national archives", "caselaw"]
 readme = "README.md"
 packages = [
-    { include = "src/caselawclient" },
+    { include = "caselawclient", from = "src" },
 ]
 
 [tool.poetry.dependencies]
