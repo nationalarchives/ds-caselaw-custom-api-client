@@ -3,7 +3,7 @@ from functools import cached_property
 
 from requests_toolbelt.multipart import decoder
 
-from src.caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import MarklogicApiClient
 
 from .utilities import get_judgment_root, render_versions
 from .utilities.aws import (
