@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 5.3.2]
+- Correct import location used in Judgment model, so it's usable when packaged
 ## [Release 5.3.1]
 - Fix broken build process
 
@@ -186,7 +188,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.2...HEAD
+[Release 5.3.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.1...v5.3.2
 [Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.0...v5.3.1
 [Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.6...v5.3.0
 [Release 5.2.6]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.2.5...v5.2.6
