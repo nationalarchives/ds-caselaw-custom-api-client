@@ -30,7 +30,7 @@ repos:
     rev: v0.991 # Use the sha / tag you want to point at
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests]
+        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]"]
         files: ^src/
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date

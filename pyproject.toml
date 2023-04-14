@@ -28,6 +28,8 @@ boto3 = "^1.26.112"
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
 pytest = "7.3.1"
+mypy-boto3-s3 = "^1.26.104"
+mypy-boto3-sns = "^1.26.69"
 
 [build-system]
 requires = ["poetry-core"]
