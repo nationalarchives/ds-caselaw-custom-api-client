@@ -4,11 +4,11 @@ import unittest
 import warnings
 from unittest.mock import patch
 
-from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
-@patch("src.caselawclient.Client.decode_multipart")
-@patch("src.caselawclient.Client.MarklogicApiClient.eval")
+@patch("caselawclient.Client.decode_multipart")
+@patch("caselawclient.Client.MarklogicApiClient.eval")
 def test_get_properties_for_search_results(send, decode):
     uris = ["judgment/uri"]
     expected_vars = {"uris": ["/judgment/uri.xml"]}
@@ -22,8 +22,8 @@ def test_get_properties_for_search_results(send, decode):
     assert send.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
 
-@patch("src.caselawclient.Client.decode_multipart")
-@patch("src.caselawclient.Client.MarklogicApiClient.eval")
+@patch("caselawclient.Client.decode_multipart")
+@patch("caselawclient.Client.MarklogicApiClient.eval")
 def test_get_judgment_citation(send, decode):
     uri = "judgment/uri"
     expected_vars = {"uri": "/judgment/uri.xml"}
@@ -55,7 +55,7 @@ class TestGetSetMetadata(unittest.TestCase):
                 expected_vars
             )
 
-    @patch("src.caselawclient.Client.decode_multipart")
+    @patch("caselawclient.Client.decode_multipart")
     def test_get_judgment_court(self, decode):
         with patch.object(self.client, "eval"):
             decode.return_value = "EWCA-Fam"
@@ -85,7 +85,7 @@ class TestGetSetMetadata(unittest.TestCase):
                 expected_vars
             )
 
-    @patch("src.caselawclient.Client.decode_multipart")
+    @patch("caselawclient.Client.decode_multipart")
     def test_get_judgment_date(self, decode):
         with patch.object(self.client, "eval"):
             decode.return_value = "2022-01-01"

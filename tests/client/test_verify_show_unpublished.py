@@ -2,7 +2,7 @@ import logging
 import unittest
 from unittest.mock import patch
 
-from src.caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import MarklogicApiClient
 
 
 class TestVerifyShowUnpublished(unittest.TestCase):

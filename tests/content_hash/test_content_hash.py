@@ -1,11 +1,11 @@
 import pytest
 
-from src.caselawclient.content_hash import (
+from caselawclient.content_hash import (
     hash_of_content,
     hashable_text,
     validate_content_hash,
 )
-from src.caselawclient.errors import InvalidContentHashError
+from caselawclient.errors import InvalidContentHashError
 
 VALID_DOC = b"""<?xml version="1.0" encoding="UTF-8"?>
     <akomaNtoso

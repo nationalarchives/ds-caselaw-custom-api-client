@@ -6,9 +6,9 @@ from xml.etree import ElementTree
 
 import pytest
 
-import src.caselawclient.Client
-from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
-from src.caselawclient.errors import InvalidContentHashError
+import caselawclient.Client
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.errors import InvalidContentHashError
 
 
 class TestSaveCopyDeleteJudgment(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         When `Client.save_locked_judgment_xml` is called with these as arguments
         Then the xquery in `update_locked_judgment.xqy` is called on the Marklogic db with those arguments
         """
-        with patch.object(src.caselawclient.Client, "validate_content_hash"):
+        with patch.object(caselawclient.Client, "validate_content_hash"):
             with patch.object(self.client, "eval"):
                 uri = "/ewca/civ/2004/632"
                 judgment_str = "<root>My updated judgment</root>"
@@ -65,11 +65,11 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         When `Client.save_locked_judgment_xml` is called
         Then the error is raised.
         """
-        with patch.object(src.caselawclient.Client, "validate_content_hash"):
+        with patch.object(caselawclient.Client, "validate_content_hash"):
             uri = "/ewca/civ/2004/632"
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = judgment_str.encode("utf-8")
-            src.caselawclient.Client.validate_content_hash.side_effect = (
+            caselawclient.Client.validate_content_hash.side_effect = (
                 InvalidContentHashError()
             )
             with pytest.raises(InvalidContentHashError):

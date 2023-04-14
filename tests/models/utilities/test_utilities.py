@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from src.caselawclient.models.utilities import (
+from caselawclient.models.utilities import (
     extract_version,
     get_judgment_root,
     render_versions,

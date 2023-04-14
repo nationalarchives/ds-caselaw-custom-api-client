@@ -1,6 +1,6 @@
 import pytest
 
-from src.caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import MarklogicApiClient
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch
 
-from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestGetCheckoutStatus(unittest.TestCase):
