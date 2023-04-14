@@ -5,13 +5,12 @@ import re
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Optional, Set, Type, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
 import environ
 import requests
-from memoization import cached
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -38,7 +37,7 @@ ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
-def decode_multipart(response):
+def decode_multipart(response: requests.Response) -> str:
     """Decode a multipart response and return just the text inside it.
     Note that it is possible for multiple responses to be returned, if
     multiple top-level returns exist in the XQuery."""
@@ -50,18 +49,18 @@ def decode_multipart(response):
         logging.warning(
             f"Throwing away multipart data ({part_count} items, expected 1)"
         )
-    return multipart_data.parts[0].text
+    return str(multipart_data.parts[0].text)
 
 
 class MarklogicApiClient:
 
-    http_error_classes = {
+    http_error_classes: dict[int, Type[MarklogicAPIError]] = {
         400: MarklogicBadRequestError,
         401: MarklogicUnauthorizedError,
         403: MarklogicNotPermittedError,
         404: MarklogicResourceNotFoundError,
     }
-    error_code_classes = {
+    error_code_classes: dict[str, Type[MarklogicAPIError]] = {
         "XDMP-DOCNOTFOUND": MarklogicResourceNotFoundError,
         "XDMP-LOCKCONFLICT": MarklogicResourceLockedError,
         "DLS-UNMANAGED": MarklogicResourceUnmanagedError,
@@ -73,7 +72,9 @@ class MarklogicApiClient:
 
     default_http_error_class = MarklogicCommunicationError
 
-    def __init__(self, host: str, username: str, password: str, use_https: bool):
+    def __init__(
+        self, host: str, username: str, password: str, use_https: bool
+    ) -> None:
         self.host = host
         self.username = username
         self.password = password
@@ -82,7 +83,7 @@ class MarklogicApiClient:
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
 
-    def _get_error_code_class(self, error_code):
+    def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
         """
         Get the exception type for a MarkLogic error code, or the first part of one
         """
@@ -98,7 +99,7 @@ class MarklogicApiClient:
     def _court_list_splitter(self, court_text: str) -> Set[str]:
         return set(court_text.lower().replace(" ", "").split(","))
 
-    def _court_list(self, court_text: str) -> Optional[List[str]]:
+    def _court_list(self, court_text: str) -> Optional[list[str]]:
         if not court_text.strip():
             return None
         alt_names = {
@@ -139,17 +140,19 @@ class MarklogicApiClient:
             new_exception.response = response
             raise new_exception
 
-    def _format_uri_for_marklogic(self, uri):
+    def _format_uri_for_marklogic(self, uri: str) -> str:
         """
         Marklogic requires a document URI that begins with a slash `/` and ends in `.xml`.
         This method ensures any URI passed into the client matches this format.
         """
         return f"/{uri.lstrip('/').rstrip('/')}.xml"
 
-    def _xquery_path(self, xquery_file_name):
+    def _xquery_path(self, xquery_file_name: str) -> str:
         return os.path.join(ROOT_DIR, "xquery", xquery_file_name)
 
-    def _send_to_eval(self, vars, xquery_file_name):
+    def _send_to_eval(
+        self, vars: dict[str, Any], xquery_file_name: str
+    ) -> requests.Response:
         return self.eval(
             self._xquery_path(xquery_file_name),
             vars=json.dumps(vars),
@@ -157,8 +160,12 @@ class MarklogicApiClient:
         )
 
     def prepare_request_kwargs(
-        self, method: str, path: str, body=None, data: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self,
+        method: str,
+        path: str,
+        body: Optional[str] = None,
+        data: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         kwargs = dict(url=self._path_to_request_url(path))
         if data is not None:
             data = {k: v for k, v in data.items() if v is not None}
@@ -176,7 +183,7 @@ class MarklogicApiClient:
         path: str,
         headers: CaseInsensitiveDict[Union[str, Any]],
         body: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
         self.session.headers = headers
@@ -185,18 +192,21 @@ class MarklogicApiClient:
         self._raise_for_status(response)
         return response
 
-    def GET(self, path: str, headers: Dict[str, Any], **data: Any) -> requests.Response:
+    def GET(self, path: str, headers: dict[str, Any], **data: Any) -> requests.Response:
         logging.warning("GET() is deprecated, use eval() or invoke()")
         return self.make_request("GET", path, headers, data)  # type: ignore
 
     def POST(
-        self, path: str, headers: Dict[str, Any], **data: Any
+        self, path: str, headers: dict[str, Any], **data: Any
     ) -> requests.Response:
         logging.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
     def get_judgment_xml(
-        self, judgment_uri, version_uri=None, show_unpublished=False
+        self,
+        judgment_uri: str,
+        version_uri: Optional[str] = None,
+        show_unpublished: bool = False,
     ) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         show_unpublished = self.verify_show_unpublished(show_unpublished)
@@ -217,7 +227,7 @@ class MarklogicApiClient:
 
         return decode_multipart(response)
 
-    def get_judgment_name(self, judgment_uri) -> str:
+    def get_judgment_name(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
@@ -227,13 +237,13 @@ class MarklogicApiClient:
 
         return decode_multipart(response)
 
-    def set_judgment_name(self, judgment_uri, content):
+    def set_judgment_name(self, judgment_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_name.xqy")
 
-    def set_judgment_date(self, judgment_uri, content):
+    def set_judgment_date(self, judgment_uri: str, content: str) -> requests.Response:
         warnings.warn(
             "set_judgment_date() is deprecated, use set_judgment_work_expression_date()",
             DeprecationWarning,
@@ -241,25 +251,29 @@ class MarklogicApiClient:
         )
         return self.set_judgment_work_expression_date(judgment_uri, content)
 
-    def set_judgment_work_expression_date(self, judgment_uri, content):
+    def set_judgment_work_expression_date(
+        self, judgment_uri: str, content: str
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_work_expression_date.xqy")
 
-    def set_judgment_citation(self, judgment_uri, content):
+    def set_judgment_citation(
+        self, judgment_uri: str, content: str
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
-    def set_judgment_court(self, judgment_uri, content):
+    def set_judgment_court(self, judgment_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
 
-    def set_judgment_this_uri(self, judgment_uri):
+    def set_judgment_this_uri(self, judgment_uri: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         content_with_id = (
             f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
@@ -278,7 +292,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
 
     def save_locked_judgment_xml(
-        self, judgment_uri: str, judgment_xml: bytes, annotation=None
+        self, judgment_uri: str, judgment_xml: bytes, annotation: Optional[str] = None
     ) -> requests.Response:
         """assumes the judgment is already locked, does not unlock/check in
         note this version assumes the XML is raw bytes, rather than a tree..."""
@@ -293,7 +307,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
     def save_judgment_xml(
-        self, judgment_uri: str, judgment_xml: Element, annotation=None
+        self, judgment_uri: str, judgment_xml: Element, annotation: Optional[str] = None
     ) -> requests.Response:
         """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
@@ -324,10 +338,10 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "list_judgment_versions.xqy")
 
     def checkout_judgment(
-        self, judgment_uri: str, annotation="", expires_at_midnight=False
+        self, judgment_uri: str, annotation: str = "", expires_at_midnight: bool = False
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
-        vars = {
+        vars: dict[str, Any] = {
             "uri": uri,
             "annotation": annotation,
         }
@@ -352,7 +366,7 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "get_judgment_checkout_status.xqy")
 
-    def get_judgment_checkout_status_message(self, judgment_uri: str):
+    def get_judgment_checkout_status_message(self, judgment_uri: str) -> Optional[str]:
         """Return the annotation of the lock or `None` if there is no lock."""
         response = self.get_judgment_checkout_status(judgment_uri)
         if not response.content:
@@ -373,7 +387,9 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "get_judgment_version.xqy")
 
-    def eval(self, xquery_path, vars, accept_header="multipart/mixed"):
+    def eval(
+        self, xquery_path: str, vars: str, accept_header: str = "multipart/mixed"
+    ) -> requests.Response:
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
@@ -390,7 +406,9 @@ class MarklogicApiClient:
         self._raise_for_status(response)
         return response
 
-    def invoke(self, module, vars, accept_header="multipart/mixed"):
+    def invoke(
+        self, module: str, vars: str, accept_header: str = "multipart/mixed"
+    ) -> requests.Response:
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
@@ -409,19 +427,19 @@ class MarklogicApiClient:
 
     def advanced_search(
         self,
-        q=None,
-        court=None,
-        judge=None,
-        party=None,
-        neutral_citation=None,
-        specific_keyword=None,
-        order=None,
-        date_from=None,
-        date_to=None,
-        page=1,
-        page_size=RESULTS_PER_PAGE,
-        show_unpublished=False,
-        only_unpublished=False,
+        q: Optional[str] = None,
+        court: Optional[str] = None,
+        judge: Optional[str] = None,
+        party: Optional[str] = None,
+        neutral_citation: Optional[str] = None,
+        specific_keyword: Optional[str] = None,
+        order: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        page: int = 1,
+        page_size: int = RESULTS_PER_PAGE,
+        show_unpublished: bool = False,
+        only_unpublished: bool = False,
     ) -> requests.Response:
         """
         Performs a search on the entire document set.
@@ -464,10 +482,10 @@ class MarklogicApiClient:
 
     def eval_xslt(
         self,
-        judgment_uri,
-        version_uri=None,
-        show_unpublished=False,
-        xsl_filename=DEFAULT_XSL_TRANSFORM,
+        judgment_uri: str,
+        version_uri: Optional[str] = None,
+        show_unpublished: bool = False,
+        xsl_filename: str = DEFAULT_XSL_TRANSFORM,
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         if version_uri:
@@ -490,8 +508,11 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "xslt_transform.xqy")
 
     def accessible_judgment_transformation(
-        self, judgment_uri, version_uri=None, show_unpublished=False
-    ):
+        self,
+        judgment_uri: str,
+        version_uri: Optional[str] = None,
+        show_unpublished: bool = False,
+    ) -> requests.Response:
         return self.eval_xslt(
             judgment_uri,
             version_uri,
@@ -500,8 +521,11 @@ class MarklogicApiClient:
         )
 
     def original_judgment_transformation(
-        self, judgment_uri, version_uri=None, show_unpublished=False
-    ):
+        self,
+        judgment_uri: str,
+        version_uri: Optional[str] = None,
+        show_unpublished: bool = False,
+    ) -> requests.Response:
         return self.eval_xslt(
             judgment_uri,
             version_uri,
@@ -509,7 +533,7 @@ class MarklogicApiClient:
             xsl_filename="as-handed-down.xsl",
         )
 
-    def get_property(self, judgment_uri, name):
+    def get_property(self, judgment_uri: str, name: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
@@ -520,10 +544,12 @@ class MarklogicApiClient:
         if not response.text:
             return ""
 
-        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
         return content
 
-    def set_property(self, judgment_uri, name, value):
+    def set_property(
+        self, judgment_uri: str, name: str, value: str
+    ) -> requests.Response:
         uri = f"/{judgment_uri.lstrip('/')}.xml"
         vars = {
             "uri": uri,
@@ -533,7 +559,9 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_property.xqy")
 
-    def set_boolean_property(self, judgment_uri, name, value):
+    def set_boolean_property(
+        self, judgment_uri: str, name: str, value: bool
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         string_value = "true" if value else "false"
         vars = {
@@ -543,35 +571,43 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "set_boolean_property.xqy")
 
-    def get_boolean_property(self, judgment_uri, name):
+    def get_boolean_property(self, judgment_uri: str, name: str) -> bool:
         content = self.get_property(judgment_uri, name)
         return content == "true"
 
-    def set_published(self, judgment_uri, published=False):
+    def set_published(
+        self, judgment_uri: str, published: bool = False
+    ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "published", published)
 
-    def set_sensitive(self, judgment_uri, sensitive=False):
+    def set_sensitive(
+        self, judgment_uri: str, sensitive: bool = False
+    ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "sensitive", sensitive)
 
-    def set_supplemental(self, judgment_uri, supplemental=False):
+    def set_supplemental(
+        self, judgment_uri: str, supplemental: bool = False
+    ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "supplemental", supplemental)
 
-    def set_anonymised(self, judgment_uri, anonymised=False):
+    def set_anonymised(
+        self, judgment_uri: str, anonymised: bool = False
+    ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "anonymised", anonymised)
 
-    def get_published(self, judgment_uri):
+    def get_published(self, judgment_uri: str) -> bool:
         return self.get_boolean_property(judgment_uri, "published")
 
-    def get_sensitive(self, judgment_uri):
+    def get_sensitive(self, judgment_uri: str) -> bool:
         return self.get_boolean_property(judgment_uri, "sensitive")
 
-    def get_supplemental(self, judgment_uri):
+    def get_supplemental(self, judgment_uri: str) -> bool:
         return self.get_boolean_property(judgment_uri, "supplemental")
 
-    def get_anonymised(self, judgment_uri):
+    def get_anonymised(self, judgment_uri: str) -> bool:
         return self.get_boolean_property(judgment_uri, "anonymised")
 
-    def get_last_modified(self, judgment_uri):
+    def get_last_modified(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
@@ -582,15 +618,15 @@ class MarklogicApiClient:
         if not response.text:
             return ""
 
-        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
         return content
 
-    def delete_judgment(self, judgment_uri):
+    def delete_judgment(self, judgment_uri: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         return self._send_to_eval(vars, "delete_judgment.xqy")
 
-    def copy_judgment(self, old, new):
+    def copy_judgment(self, old: str, new: str) -> requests.Response:
         old_uri = self._format_uri_for_marklogic(old)
         new_uri = self._format_uri_for_marklogic(new)
 
@@ -600,14 +636,16 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "copy_judgment.xqy")
 
-    def break_checkout(self, judgment_uri):
+    def break_checkout(self, judgment_uri: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {
             "uri": uri,
         }
         return self._send_to_eval(vars, "break_judgment_checkout.xqy")
 
-    def user_has_privilege(self, username, privilege_uri, privilege_action):
+    def user_has_privilege(
+        self, username: str, privilege_uri: str, privilege_action: str
+    ) -> requests.Response:
         vars = {
             "user": username,
             "privilege_uri": privilege_uri,
@@ -615,8 +653,7 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "user_has_privilege.xqy")
 
-    @cached
-    def user_can_view_unpublished_judgments(self, username):
+    def user_can_view_unpublished_judgments(self, username: str) -> bool:
         if self.user_has_admin_role(username):
             return True
 
@@ -627,24 +664,23 @@ class MarklogicApiClient:
         )
         return decode_multipart(check_privilege).lower() == "true"
 
-    def user_has_role(self, username, role):
+    def user_has_role(self, username: str, role: str) -> requests.Response:
         vars = {
             "user": username,
             "role": role,
         }
         return self._send_to_eval(vars, "user_has_role.xqy")
 
-    @cached
-    def user_has_admin_role(self, username):
+    def user_has_admin_role(self, username: str) -> bool:
         check_role = self.user_has_role(
             username,
             "admin",
         )
         multipart_data = decoder.MultipartDecoder.from_response(check_role)
-        result = multipart_data.parts[0].text
+        result = str(multipart_data.parts[0].text)
         return result.lower() == "true"
 
-    def calculate_seconds_until_midnight(self, now=None):
+    def calculate_seconds_until_midnight(self, now: Optional[datetime] = None) -> int:
         """
         Get timedelta until end of day on the datetime passed, or current time.
         https://stackoverflow.com/questions/45986035/seconds-until-end-of-day-in-python
@@ -656,7 +692,7 @@ class MarklogicApiClient:
 
         return difference.seconds
 
-    def verify_show_unpublished(self, show_unpublished):
+    def verify_show_unpublished(self, show_unpublished: bool) -> bool:
         if show_unpublished and not self.user_can_view_unpublished_judgments(
             self.username
         ):
@@ -667,26 +703,26 @@ class MarklogicApiClient:
             return False
         return show_unpublished
 
-    def get_judgment_citation(self, judgment_uri) -> str:
+    def get_judgment_citation(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
 
         response = self._send_to_eval(vars, "get_metadata_citation.xqy")
         return decode_multipart(response)
 
-    def get_judgment_court(self, judgment_uri):
+    def get_judgment_court(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         response = self._send_to_eval(vars, "get_metadata_court.xqy")
         return decode_multipart(response)
 
-    def get_judgment_work_date(self, judgment_uri):
+    def get_judgment_work_date(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars = {"uri": uri}
         response = self._send_to_eval(vars, "get_metadata_work_date.xqy")
         return decode_multipart(response)
 
-    def get_properties_for_search_results(self, judgment_uris):
+    def get_properties_for_search_results(self, judgment_uris: list[str]) -> str:
         uris = [
             self._format_uri_for_marklogic(judgment_uri)
             for judgment_uri in judgment_uris
