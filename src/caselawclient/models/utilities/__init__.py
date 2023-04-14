@@ -1,5 +1,8 @@
 import re
 import xml.etree.ElementTree as ET
+from typing import TypedDict
+
+from requests_toolbelt.multipart.decoder import BodyPart
 
 VERSION_REGEX = r"xml_versions/(\d{1,10})-(\d{1,10}|TDR)"
 # Here we limit the number of digits in the version and document reference to 10 on purpose, see
@@ -9,7 +12,7 @@ akn_namespace = {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"}
 uk_namespace = {"uk": "https://caselaw.nationalarchives.gov.uk/akn"}
 
 
-def get_judgment_root(judgment_xml) -> str:
+def get_judgment_root(judgment_xml: str) -> str:
     try:
         parsed_xml = ET.XML(bytes(judgment_xml, encoding="utf-8"))
         return parsed_xml.tag
@@ -17,8 +20,13 @@ def get_judgment_root(judgment_xml) -> str:
         return "error"
 
 
-def render_versions(decoded_versions):
-    versions = [
+class VersionsDict(TypedDict):
+    uri: str
+    version: int
+
+
+def render_versions(decoded_versions: list[BodyPart]) -> list[VersionsDict]:
+    versions: list[VersionsDict] = [
         {
             "uri": part.text.rstrip(".xml"),
             "version": extract_version(part.text),
