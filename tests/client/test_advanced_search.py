@@ -46,7 +46,9 @@ class TestAdvancedSearch(unittest.TestCase):
                 }
 
                 self.client.invoke.assert_called_with(
-                    "/judgments/search/search-v2.xqy", json.dumps(expected_vars)
+                    "/judgments/search/search-v2.xqy",
+                    json.dumps(expected_vars),
+                    transformation=None,
                 )
 
     def test_advanced_search_user_can_view_unpublished_and_show_unpublished_is_true(

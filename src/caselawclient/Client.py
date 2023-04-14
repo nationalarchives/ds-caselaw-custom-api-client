@@ -390,7 +390,9 @@ class MarklogicApiClient:
         self._raise_for_status(response)
         return response
 
-    def invoke(self, module, vars, accept_header="multipart/mixed"):
+    def invoke(
+        self, module, vars, accept_header="multipart/mixed", transformation=None
+    ):
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
@@ -399,9 +401,17 @@ class MarklogicApiClient:
             "module": module,
             "vars": vars,
         }
+        if transformation:
+            params = {"transformation": transformation}
+        else:
+            params = {}
         path = "LATEST/invoke"
         response = self.session.request(
-            "POST", url=self._path_to_request_url(path), headers=headers, data=data
+            "POST",
+            url=self._path_to_request_url(path),
+            headers=headers,
+            data=data,
+            params=params,
         )
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
@@ -422,6 +432,7 @@ class MarklogicApiClient:
         page_size=RESULTS_PER_PAGE,
         show_unpublished=False,
         only_unpublished=False,
+        transformation=None,
     ) -> requests.Response:
         """
         Performs a search on the entire document set.
@@ -460,7 +471,7 @@ class MarklogicApiClient:
                 "only_unpublished": str(only_unpublished).lower(),
             }
         )
-        return self.invoke(module, vars)
+        return self.invoke(module, vars, transformation=transformation)
 
     def eval_xslt(
         self,

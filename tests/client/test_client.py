@@ -44,6 +44,7 @@ class ApiClientTest(unittest.TestCase):
                 "Accept": "multipart/mixed",
             },
             data={"module": "mock-query-path.xqy", "vars": '{{"testvar":"test"}}'},
+            params={},
         )
 
     def test_format_uri(self):
