@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, ParseError
 
@@ -26,10 +26,10 @@ def get_metadata_name_value(xml: Element) -> str:
 
 def get_element(
     xml: Element,
-    xpath,
-    element_name="FRBRname",
-    element_namespace=akn_namespace_uri,
-    has_value_attribute=True,
+    xpath: str,
+    element_name: str = "FRBRname",
+    element_namespace: str = akn_namespace_uri,
+    has_value_attribute: bool = True,
 ) -> Element:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
@@ -51,27 +51,27 @@ def get_element(
     return name
 
 
-def get_neutral_citation_name_value(xml):
+def get_neutral_citation_name_value(xml: Element) -> Optional[str]:
     return get_neutral_citation_element(xml).text
 
 
-def get_judgment_date_value(xml):
+def get_judgment_date_value(xml: Element) -> str:
     return get_judgment_date_element(xml).attrib["date"]
 
 
-def get_court_value(xml):
+def get_court_value(xml: Element) -> Optional[str]:
     return get_court_element(xml).text
 
 
-def get_metadata_name_element(xml) -> Element:
+def get_metadata_name_element(xml: Element) -> Element:
     return get_element(xml, ".//akn:FRBRname", "FRBRname", akn_namespace_uri, True)
 
 
-def get_neutral_citation_element(xml) -> Element:
+def get_neutral_citation_element(xml: Element) -> Element:
     return get_element(xml, ".//uk:cite", "cite", uk_namespace_uri, False)
 
 
-def get_judgment_date_element(xml) -> Element:
+def get_judgment_date_element(xml: Element) -> Element:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
         "Use methods from MarklogicApiClient.Client instead."
@@ -91,7 +91,7 @@ def get_judgment_date_element(xml) -> Element:
     return name
 
 
-def get_court_element(xml) -> Element:
+def get_court_element(xml: Element) -> Element:
     return get_element(xml, ".//uk:court", "court", uk_namespace_uri, False)
 
 
@@ -108,7 +108,7 @@ def get_search_matches(element: Element) -> List[str]:
     return results
 
 
-def get_error_code(xml_content: str):
+def get_error_code(xml_content: str) -> str:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
         "Use methods from MarklogicApiClient.Client instead."
