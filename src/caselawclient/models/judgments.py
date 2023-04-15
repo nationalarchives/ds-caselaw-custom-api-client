@@ -5,7 +5,7 @@ from requests_toolbelt.multipart import decoder
 
 from caselawclient.Client import MarklogicApiClient
 
-from .utilities import get_judgment_root, render_versions
+from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
     generate_docx_url,
     generate_pdf_url,
@@ -103,7 +103,7 @@ class Judgment:
         return self.api_client.get_property(self.uri, "assigned-to")
 
     @cached_property
-    def versions(self) -> list:
+    def versions(self) -> list[VersionsDict]:
         versions_response = self.api_client.list_judgment_versions(self.uri)
 
         try:
@@ -120,7 +120,7 @@ class Judgment:
             self.uri, version_uri, show_unpublished=True
         )
         multipart_data = decoder.MultipartDecoder.from_response(results)
-        return multipart_data.parts[0].text
+        return str(multipart_data.parts[0].text)
 
     @cached_property
     def is_failure(self) -> bool:
