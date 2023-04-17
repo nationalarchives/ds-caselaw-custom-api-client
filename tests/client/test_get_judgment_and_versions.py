@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestGetJudgment(unittest.TestCase):
@@ -11,12 +11,12 @@ class TestGetJudgment(unittest.TestCase):
         self.client = MarklogicApiClient("", "", "", False)
 
     def test_get_judgment_xml(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = "true"
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.text = "true"
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--6bfe89fc4493c0e3\r\n"
                 b"Content-Type: application/xml\r\n"
                 b"X-Primitive: document-node()\r\n"
@@ -40,28 +40,24 @@ class TestGetJudgment(unittest.TestCase):
             assert result == expected
 
     def test_get_judgment_version(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             uri = "/ewca/civ/2004/632"
-            version = "3"
+            version = 3
             expected_vars = {"uri": "/ewca/civ/2004/632.xml", "version": "3"}
             self.client.get_judgment_version(uri, version)
 
-            assert self.client.eval.call_args.args[0] == (
+            assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy")
             )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_list_judgment_versions(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             uri = "/ewca/civ/2004/632"
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             self.client.list_judgment_versions(uri)
 
-            assert self.client.eval.call_args.args[0] == (
+            assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy")
             )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

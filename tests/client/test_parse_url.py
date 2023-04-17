@@ -1,6 +1,6 @@
 import pytest
 
-from src.caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import MarklogicApiClient
 
 
 @pytest.mark.parametrize(
@@ -13,9 +13,9 @@ from src.caselawclient.Client import MarklogicApiClient
     ],
 )
 def test_court_list(test_input, expected):
-    c = MarklogicApiClient("", "", "", "")._court_list
+    c = MarklogicApiClient("", "", "", False)._court_list
     assert set(c(test_input)) == set(expected)
 
 
 def test_court_list_nothing():
-    assert MarklogicApiClient("", "", "", "")._court_list("") is None
+    assert MarklogicApiClient("", "", "", False)._court_list("") is None

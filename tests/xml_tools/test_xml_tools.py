@@ -3,7 +3,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
-import src.caselawclient.xml_tools as xml_tools
+import caselawclient.xml_tools as xml_tools
 
 
 class XmlToolsTests(unittest.TestCase):

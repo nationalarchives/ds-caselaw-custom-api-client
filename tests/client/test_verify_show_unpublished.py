@@ -2,7 +2,7 @@ import logging
 import unittest
 from unittest.mock import patch
 
-from src.caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import MarklogicApiClient
 
 
 class TestVerifyShowUnpublished(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestVerifyShowUnpublished(unittest.TestCase):
         """
         with patch.object(
             self.client, "user_can_view_unpublished_judgments", return_value=True
-        ):
+        ) as mock_client:
             result = self.client.verify_show_unpublished(False)
-            self.client.user_can_view_unpublished_judgments.assert_not_called()
+            mock_client.user_can_view_unpublished_judgments.assert_not_called()
             assert result is False

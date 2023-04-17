@@ -3,8 +3,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.caselawclient.Client import MarklogicApiClient
-from src.caselawclient.models.judgments import (
+from caselawclient.Client import MarklogicApiClient
+from caselawclient.models.judgments import (
     JUDGMENT_STATUS_HOLD,
     JUDGMENT_STATUS_IN_PROGRESS,
     JUDGMENT_STATUS_PUBLISHED,
@@ -134,7 +134,7 @@ class TestJudgment:
             "test/1234", "transfer-consignment-reference"
         )
 
-    @patch("src.caselawclient.models.judgments.generate_docx_url")
+    @patch("caselawclient.models.judgments.generate_docx_url")
     def test_judgment_docx_url(self, mock_url_generator, mock_api_client):
         mock_url_generator.return_value = "https://example.com/mock.docx"
 
@@ -143,7 +143,7 @@ class TestJudgment:
         assert judgment.docx_url == "https://example.com/mock.docx"
         mock_url_generator.assert_called_once
 
-    @patch("src.caselawclient.models.judgments.generate_pdf_url")
+    @patch("caselawclient.models.judgments.generate_pdf_url")
     def test_judgment_pdf_url(self, mock_url_generator, mock_api_client):
         mock_url_generator.return_value = "https://example.com/mock.pdf"
 
@@ -214,8 +214,8 @@ class TestJudgmentPublication:
             judgment.publish()
             mock_api_client.set_published.assert_not_called()
 
-    @patch("src.caselawclient.models.judgments.notify_changed")
-    @patch("src.caselawclient.models.judgments.publish_documents")
+    @patch("caselawclient.models.judgments.notify_changed")
+    @patch("caselawclient.models.judgments.publish_documents")
     def test_publish(
         self, mock_publish_documents, mock_notify_changed, mock_api_client
     ):
@@ -228,8 +228,8 @@ class TestJudgmentPublication:
             uri="test/1234", status="published", enrich=True
         )
 
-    @patch("src.caselawclient.models.judgments.notify_changed")
-    @patch("src.caselawclient.models.judgments.unpublish_documents")
+    @patch("caselawclient.models.judgments.notify_changed")
+    @patch("caselawclient.models.judgments.unpublish_documents")
     def test_unpublish(
         self, mock_unpublish_documents, mock_notify_changed, mock_api_client
     ):

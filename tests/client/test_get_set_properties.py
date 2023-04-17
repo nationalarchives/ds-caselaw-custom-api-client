@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from src.caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestGetSetJudgmentProperties(unittest.TestCase):
@@ -11,23 +11,23 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
         self.client = MarklogicApiClient("", "", "", False)
 
     def test_set_boolean_property_true(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             uri = "/judgment/uri"
             expected_vars = {
                 "uri": "/judgment/uri.xml",
                 "value": "true",
                 "name": "my-property",
             }
-            self.client.set_boolean_property(uri, name="my-property", value="true")
+            self.client.set_boolean_property(uri, name="my-property", value=True)
 
-            self.client.eval.assert_called_with(
+            mock_eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
             )
 
     def test_set_boolean_property_false(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             uri = "/judgment/uri"
             expected_vars = {
                 "uri": "/judgment/uri.xml",
@@ -36,26 +36,26 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             }
             self.client.set_boolean_property(uri, name="my-property", value=False)
 
-            self.client.eval.assert_called_with(
+            mock_eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
             )
 
     def test_get_unset_boolean_property(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = ""
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.text = ""
             result = self.client.get_boolean_property("/judgment/uri", "my-property")
 
             assert result is False
 
     def test_get_boolean_property(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = "true"
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.text = "true"
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"Content-Type: text/plain\r\n"
                 b"X-Primitive: text()\r\n"
@@ -69,12 +69,12 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             assert result is True
 
     def test_get_property(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = "my-content"
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.text = "my-content"
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"Content-Type: text/plain\r\n"
                 b"X-Primitive: text()\r\n"
@@ -88,14 +88,14 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             assert "my-content" == result
 
     def test_get_unset_property(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.text = ""
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.text = ""
             result = self.client.get_property("/judgment/uri", "my-property")
 
             assert "" == result
 
     def test_set_property(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             uri = "/judgment/uri"
             expected_vars = {
                 "uri": "/judgment/uri.xml",
@@ -104,7 +104,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             }
             self.client.set_property(uri, name="my-property", value="my-value")
 
-            self.client.eval.assert_called_with(
+            mock_eval.assert_called_with(
                 os.path.join(ROOT_DIR, "xquery", "set_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",

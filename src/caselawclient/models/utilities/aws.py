@@ -1,15 +1,29 @@
 import json
 import logging
+from typing import Any, Literal, Union, overload
 
 import boto3
 import botocore.client
 import environ
+from mypy_boto3_s3.client import S3Client
+from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef
+from mypy_boto3_sns.client import SNSClient
+from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 
 env = environ.Env()
 
 
-def create_aws_client(service: str):  # service
-    """@param: service The AWS service, e.g. 's3'"""
+@overload
+def create_aws_client(service: Literal["s3"]) -> S3Client:
+    ...
+
+
+@overload
+def create_aws_client(service: Literal["sns"]) -> SNSClient:
+    ...
+
+
+def create_aws_client(service: Union[Literal["s3"], Literal["sns"]]) -> Any:
     aws = boto3.session.Session(
         aws_access_key_id=env("AWS_ACCESS_KEY_ID", default=None),
         aws_secret_access_key=env("AWS_SECRET_KEY", default=None),
@@ -22,15 +36,19 @@ def create_aws_client(service: str):  # service
     )
 
 
-def create_s3_client():
+def create_s3_client() -> S3Client:
     return create_aws_client("s3")
 
 
-def uri_for_s3(uri: str):
+def create_sns_client() -> SNSClient:
+    return create_aws_client("sns")
+
+
+def uri_for_s3(uri: str) -> str:
     return uri.lstrip("/")
 
 
-def generate_signed_asset_url(key: str):
+def generate_signed_asset_url(key: str) -> str:
     # If there isn't a PRIVATE_ASSET_BUCKET, don't try to get the bucket.
     # This helps local environment setup where we don't use S3.
     bucket = env("PRIVATE_ASSET_BUCKET", None)
@@ -39,18 +57,20 @@ def generate_signed_asset_url(key: str):
 
     client = create_s3_client()
 
-    return client.generate_presigned_url(
-        "get_object", Params={"Bucket": bucket, "Key": key}
+    return str(
+        client.generate_presigned_url(
+            "get_object", Params={"Bucket": bucket, "Key": key}
+        )
     )
 
 
-def generate_docx_url(uri: str):
+def generate_docx_url(uri: str) -> str:
     key = f'{uri}/{uri.replace("/", "_")}.docx'
 
     return generate_signed_asset_url(key)
 
 
-def generate_pdf_url(uri: str):
+def generate_pdf_url(uri: str) -> str:
     key = f'{uri}/{uri.replace("/", "_")}.pdf'
 
     return generate_signed_asset_url(key)
@@ -61,7 +81,7 @@ def delete_from_bucket(uri: str, bucket: str) -> None:
     response = client.list_objects(Bucket=bucket, Prefix=uri)
 
     if response.get("Contents"):
-        objects_to_delete = [
+        objects_to_delete: list[ObjectIdentifierTypeDef] = [
             {"Key": obj["Key"]} for obj in response.get("Contents", [])
         ]
         client.delete_objects(
@@ -84,7 +104,7 @@ def publish_documents(uri: str) -> None:
         key = str(result["Key"])
 
         if not key.endswith("parser.log") and not key.endswith(".tar.gz"):
-            source = {"Bucket": private_bucket, "Key": key}
+            source: CopySourceTypeDef = {"Bucket": private_bucket, "Key": key}
             extra_args = {"ACL": "public-read"}
             try:
                 client.copy(source, public_bucket, key, extra_args)
@@ -99,9 +119,9 @@ def unpublish_documents(uri: str) -> None:
 
 
 def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
-    client = create_aws_client("sns")
+    client = create_sns_client()
 
-    message_attributes = {}
+    message_attributes: dict[str, MessageAttributeValueTypeDef] = {}
     message_attributes["update_type"] = {
         "DataType": "String",
         "StringValue": status,
