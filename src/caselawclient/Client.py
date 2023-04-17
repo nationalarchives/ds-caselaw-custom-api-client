@@ -53,7 +53,6 @@ def decode_multipart(response: requests.Response) -> str:
 
 
 class MarklogicApiClient:
-
     http_error_classes: dict[int, Type[MarklogicAPIError]] = {
         400: MarklogicBadRequestError,
         401: MarklogicUnauthorizedError,
