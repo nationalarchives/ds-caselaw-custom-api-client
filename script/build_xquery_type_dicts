@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+import re
+from os import listdir
+from os.path import join
+
+DICTS_FILE_PREAMBLE = """# This file is built automatically with script/build_xquery_type_dicts.
+# DO NOT CHANGE IT MANUALLY!
+
+from typing import Any, Optional, TypedDict
+
+
+class MarkLogicAPIDict(TypedDict):
+    pass"""
+
+XQY_FILES_PATCH = join("src", "caselawclient", "xquery")
+DICTS_FILES_PATCH = join("src", "caselawclient", "xquery_type_dicts.py")
+
+ML_TYPES_TO_PYTHON_TYPES_DICT = {
+    "xs:string": "str",
+    "json:array": "list[Any]",
+    "xs:boolean": "bool",
+    "xs:int": "int",
+}
+
+XQY_VARIABLE_DECLARATION_REGEX = re.compile(
+    r"\s*declare variable \$(.+) as (.+) external;".replace(" ", "\\s+"),
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def file_name_to_class_name(file_name: str):
+    return file_name.split(".")[0].title().replace("_", "") + "Dict"
+
+
+def ml_type_to_python_type(type: str):
+    if type[-1] == "?":
+        type = ML_TYPES_TO_PYTHON_TYPES_DICT[type[:-1]]
+        return f"Optional[{type}]"
+    else:
+        return ML_TYPES_TO_PYTHON_TYPES_DICT[type]
+
+
+xquery_files = [f for f in listdir(XQY_FILES_PATCH) if f.endswith(".xqy")]
+
+with open(DICTS_FILES_PATCH, "w") as dicts_file:
+    dicts_file.write(DICTS_FILE_PREAMBLE)
+
+    for xquery_file in sorted(xquery_files):
+        with open(join(XQY_FILES_PATCH, xquery_file)) as file:
+            data = file.read()
+
+            matches = XQY_VARIABLE_DECLARATION_REGEX.findall(data)
+
+            if len(matches) > 0:
+                class_name = file_name_to_class_name(xquery_file)
+                dicts_file.write(
+                    f"""
+
+
+# {xquery_file}
+class {class_name}(MarkLogicAPIDict):"""
+                )
+
+                for match in sorted(matches):
+                    variable_name = match[0]
+                    variable_type = ml_type_to_python_type(match[1])
+                    dicts_file.write(f"\n    {variable_name}: {variable_type}")
+
+    dicts_file.write("\n")

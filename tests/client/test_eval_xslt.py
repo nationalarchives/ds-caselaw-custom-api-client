@@ -20,7 +20,7 @@ class TestEvalXslt(unittest.TestCase):
                 expected_vars = {
                     "uri": "/judgment/uri.xml",
                     "version_uri": None,
-                    "show_unpublished": "true",
+                    "show_unpublished": True,
                     "img_location": "",
                     "xsl_filename": "accessible-html.xsl",
                 }
@@ -45,7 +45,7 @@ class TestEvalXslt(unittest.TestCase):
                     expected_vars = {
                         "uri": "/judgment/uri.xml",
                         "version_uri": None,
-                        "show_unpublished": "false",
+                        "show_unpublished": False,
                         "img_location": "",
                         "xsl_filename": "accessible-html.xsl",
                     }
@@ -68,7 +68,7 @@ class TestEvalXslt(unittest.TestCase):
                 expected_vars = {
                     "uri": "/judgment/uri.xml",
                     "version_uri": None,
-                    "show_unpublished": "true",
+                    "show_unpublished": True,
                     "img_location": "",
                     "xsl_filename": "as-handed-down.xsl",
                 }
