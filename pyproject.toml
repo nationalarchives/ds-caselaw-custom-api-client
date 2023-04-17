@@ -27,7 +27,7 @@ boto3 = "^1.26.112"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
-pytest = "7.3.0"
+pytest = "7.3.1"
 
 [build-system]
 requires = ["poetry-core"]
