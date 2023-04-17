@@ -11,7 +11,7 @@ class TestUserPrivileges(unittest.TestCase):
         self.client = MarklogicApiClient("", "", "", False)
 
     def test_user_has_privilege(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             user = "laura"
             privilege_uri = "https://caselaw.nationalarchives.gov.uk/custom/uri"
             privilege_action = "execute"
@@ -22,19 +22,17 @@ class TestUserPrivileges(unittest.TestCase):
             }
             self.client.user_has_privilege(user, privilege_uri, privilege_action)
 
-            assert self.client.eval.call_args.args[0] == (
+            assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
             )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_user_can_view_unpublished_judgments_true(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"content-type: text/plain\r\n"
                 b"X-Primitive: boolean\r\n\r\n"
@@ -45,11 +43,11 @@ class TestUserPrivileges(unittest.TestCase):
             assert result is True
 
     def test_user_can_view_unpublished_judgments_false(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"content-type: text/plain\r\n"
                 b"X-Primitive: boolean\r\n\r\n"
@@ -61,7 +59,7 @@ class TestUserPrivileges(unittest.TestCase):
             assert result is False
 
     def test_user_can_view_unpublished_judgments_with_admin_role(self):
-        with patch.object(self.client, "user_has_admin_role"):
-            self.client.user_has_admin_role.return_value = True
+        with patch.object(self.client, "user_has_admin_role") as mock_user_has_admin:
+            mock_user_has_admin.return_value = True
             result = self.client.user_can_view_unpublished_judgments("laura")
             assert result is True

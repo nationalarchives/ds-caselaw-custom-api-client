@@ -42,11 +42,11 @@ class TestVersionUtils:
         assert extract_version(uri) == 0
 
     def test_render_versions(self):
-        version_parts = (
+        version_parts = [
             Mock(text="/ewhc/ch/2022/1178_xml_versions/3-1178.xml"),
             Mock(text="/ewhc/ch/2022/1178_xml_versions/2-1178.xml"),
             Mock(text="/ewhc/ch/2022/1178_xml_versions/1-1178.xml"),
-        )
+        ]
         requests_toolbelt = Mock()
         requests_toolbelt.multipart.decoder.BodyPart.return_value = version_parts
 

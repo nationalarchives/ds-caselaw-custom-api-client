@@ -15,7 +15,7 @@ class TestAdvancedSearch(unittest.TestCase):
     ):
         """If a user who is allowed to view unpublished judgments wishes to specifically see only published
         judgments, do not change the value of `show_unpublished`"""
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as mock_invoke:
             with patch.object(
                 self.client, "user_can_view_unpublished_judgments", return_value=True
             ):
@@ -45,7 +45,7 @@ class TestAdvancedSearch(unittest.TestCase):
                     "only_unpublished": "false",
                 }
 
-                self.client.invoke.assert_called_with(
+                mock_invoke.assert_called_with(
                     "/judgments/search/search-v2.xqy", json.dumps(expected_vars)
                 )
 
@@ -53,7 +53,7 @@ class TestAdvancedSearch(unittest.TestCase):
         self,
     ):
         """The user is permitted to see unpublished judgments and requests to see unpublished judgments"""
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as mock_invoke:
             with patch.object(
                 self.client, "user_can_view_unpublished_judgments", return_value=True
             ):
@@ -66,16 +66,14 @@ class TestAdvancedSearch(unittest.TestCase):
                     page_size=20,
                     show_unpublished=True,
                 )
-                assert (
-                    '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
-                )
+                assert '"show_unpublished": "true"' in mock_invoke.call_args.args[1]
 
     def test_advanced_search_user_cannot_view_unpublished_but_show_unpublished_is_true(
         self,
     ):
         """The user is not permitted to see unpublished judgments but is attempting to view them
         Set `show_unpublished` to false and log a warning"""
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as mock_invoke:
             with patch.object(
                 self.client, "user_can_view_unpublished_judgments", return_value=False
             ):
@@ -91,16 +89,15 @@ class TestAdvancedSearch(unittest.TestCase):
                     )
 
                     assert (
-                        '"show_unpublished": "false"'
-                        in self.client.invoke.call_args.args[1]
+                        '"show_unpublished": "false"' in mock_invoke.call_args.args[1]
                     )
                     mock_logging.assert_called()
 
     def test_advanced_search_no_page_0(self):
         """Requests for page 0 or lower are sent to page 1."""
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as mock_invoke:
             self.client.advanced_search(
                 page=0,
             )
 
-            assert ', "page": 1,' in self.client.invoke.call_args.args[1]
+            assert ', "page": 1,' in mock_invoke.call_args.args[1]

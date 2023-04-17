@@ -67,4 +67,4 @@ class TestCorrectlyRaisesExceptions:
         with pytest.raises(
             InvalidContentHashError, match="Document did not have a content hash tag"
         ):
-            validate_content_hash("<dog></dog>")
+            validate_content_hash(b"<dog></dog>")

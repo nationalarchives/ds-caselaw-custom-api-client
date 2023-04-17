@@ -11,25 +11,23 @@ class TestUserRoles(unittest.TestCase):
         self.client = MarklogicApiClient("", "", "", False)
 
     def test_user_has_role(self):
-        with patch.object(self.client, "eval"):
+        with patch.object(self.client, "eval") as mock_eval:
             user = "laura"
             role = "admin"
             expected_vars = {"user": "laura", "role": "admin"}
             self.client.user_has_role(user, role)
 
-            assert self.client.eval.call_args.args[0] == (
+            assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "user_has_role.xqy")
             )
-            assert self.client.eval.call_args.kwargs["vars"] == json.dumps(
-                expected_vars
-            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_user_has_admin_role_true(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"content-type: text/plain\r\n"
                 b"X-Primitive: boolean\r\n\r\n"
@@ -40,11 +38,11 @@ class TestUserRoles(unittest.TestCase):
             assert result is True
 
     def test_user_has_admin_role_false(self):
-        with patch.object(self.client, "eval"):
-            self.client.eval.return_value.headers = {
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
             }
-            self.client.eval.return_value.content = (
+            mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
                 b"content-type: text/plain\r\n"
                 b"X-Primitive: boolean\r\n\r\n"
