@@ -145,11 +145,21 @@ class Judgment:
         return True
 
     @cached_property
+    def has_ncn(self) -> bool:
+        if not self.neutral_citation:
+            return False
+
+        return True
+
+    @cached_property
     def is_publishable(self) -> bool:
         if self.is_held:
             return False
 
         if not self.has_name:
+            return False
+
+        if not self.has_ncn:
             return False
 
         return True
