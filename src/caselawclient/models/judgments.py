@@ -1,6 +1,7 @@
 import datetime
 from functools import cached_property
 
+from ds_caselaw_utils import neutral_url
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.Client import MarklogicApiClient
@@ -152,6 +153,14 @@ class Judgment:
         return True
 
     @cached_property
+    def has_valid_ncn(self) -> bool:
+        # The checks that we can convert an NCN to a URI using the function from utils
+        if not self.has_ncn or not neutral_url(self.neutral_citation):
+            return False
+
+        return True
+
+    @cached_property
     def has_court(self) -> bool:
         if not self.court:
             return False
@@ -167,6 +176,9 @@ class Judgment:
             return False
 
         if not self.has_ncn:
+            return False
+
+        if not self.has_valid_ncn:
             return False
 
         if not self.has_court:

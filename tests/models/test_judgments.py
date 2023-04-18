@@ -213,6 +213,33 @@ class TestJudgment:
         assert judgment_with_ncn.has_ncn is True
         assert judgment_without_ncn.has_ncn is False
 
+    @pytest.mark.parametrize(
+        "ncn_to_test, valid",
+        [
+            ("[2022] UKSC 1", True),
+            ("[1604] EWCA Crim 555", True),
+            ("[2022] EWHC 1 (Comm)", True),
+            ("[1999] EWCOP 7", True),
+            ("[2022] UKUT 1 (IAC)", True),
+            ("[2022] EAT 1", True),
+            ("[2022] UKFTT 1 (TC)", True),
+            ("[2022] UKFTT 1 (GRC)", True),
+            ("[2022] EWHC 1 (KB)", True),
+            ("", False),
+            ("1604] EWCA Crim 555", False),
+            ("[2022 EWHC 1 Comm", False),
+            ("[1999] EWCOP", False),
+            ("[2022] UKUT B1 IAC", False),
+            ("[2022] EAT A", False),
+            ("[2022] NOTACOURT 1 TC", False),
+        ],
+    )
+    def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.neutral_citation = ncn_to_test
+
+        assert judgment.has_valid_ncn is valid
+
     def test_has_court(self, mock_api_client):
         judgment_with_court = Judgment("test/1234", mock_api_client)
         judgment_with_court.court = "[2023] TEST 1234"
@@ -243,8 +270,15 @@ class TestJudgmentPublication:
 
         assert judgment.is_publishable is False
 
+    def test_judgment_not_publishable_if_invalid_ncn(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_valid_ncn = False
+
+        assert judgment.is_publishable is False
+
     def test_judgment_not_publishable_if_missing_court(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_valid_ncn = True
         judgment.has_court = False
 
         assert judgment.is_publishable is False
@@ -254,6 +288,7 @@ class TestJudgmentPublication:
         judgment.is_held = False
         judgment.has_name = True
         judgment.has_ncn = True
+        judgment.has_valid_ncn = True
         judgment.has_court = True
 
         assert judgment.is_publishable is True
