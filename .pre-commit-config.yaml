@@ -26,6 +26,13 @@ repos:
       - id: flake8
         args: ["--config=setup.cfg"]
 
+  - repo: local
+    hooks:
+      - id: build-xquery-type-dicts
+        name: build-xquery-type-dicts
+        language: python
+        entry: script/build_xquery_type_dicts
+
   # Check the library itself in strict mode
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.2.0
