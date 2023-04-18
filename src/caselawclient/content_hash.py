@@ -16,12 +16,7 @@ import lxml.etree
 from .errors import InvalidContentHashError
 
 
-def hash_of_content(doc: bytes) -> str:
-    """Return the content hash for a document"""
-    return sha256(hashable_text(doc)).hexdigest()
-
-
-def hashable_text(doc: bytes) -> bytes:
+def get_hashable_text(doc: bytes) -> bytes:
     """Extract the text (as UTF-8 bytes) that would be hashed"""
     root = lxml.etree.fromstring(doc)
     metadatas = root.xpath(
@@ -37,8 +32,13 @@ def hashable_text(doc: bytes) -> bytes:
     return spaceless.encode("utf-8")
 
 
-def validate_content_hash(doc: bytes) -> str:
-    """Check a document's self-described content hash is the same as the hash of its content, raise an error if not"""
+def get_hash_from_document(doc: bytes) -> str:
+    """Get the content hash of an XML document from its contents"""
+    return sha256(get_hashable_text(doc)).hexdigest()
+
+
+def get_hash_from_tag(doc: bytes) -> str:
+    """Get the content hash of an XML document from its uk:hash tag (if present)."""
     root = lxml.etree.fromstring(doc)
     try:
         hash_from_tag = root.xpath(
@@ -47,9 +47,16 @@ def validate_content_hash(doc: bytes) -> str:
         )[0]
     except IndexError:
         raise InvalidContentHashError("Document did not have a content hash tag")
-    content_hash = hash_of_content(doc)
-    if hash_from_tag != content_hash:
+
+    return str(hash_from_tag)
+
+
+def validate_content_hash(doc: bytes) -> str:
+    """Check a document's self-described content hash is the same as the hash of its content, raise an error if not"""
+    hash_from_document = get_hash_from_document(doc)
+    hash_from_tag = get_hash_from_tag(doc)
+    if hash_from_document != hash_from_tag:
         raise InvalidContentHashError(
-            f"Hash of document was {hash_from_tag} but the content hash was {content_hash}"
+            f'Hash of existing tag is "{hash_from_tag}" but the hash of the document is "{hash_from_document}"'
         )
-    return content_hash
+    return hash_from_document
