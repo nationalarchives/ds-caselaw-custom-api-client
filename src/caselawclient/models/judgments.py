@@ -138,8 +138,18 @@ class Judgment:
         return get_judgment_root(self.content_as_xml())
 
     @cached_property
+    def has_name(self) -> bool:
+        if not self.name:
+            return False
+
+        return True
+
+    @cached_property
     def is_publishable(self) -> bool:
         if self.is_held:
+            return False
+
+        if not self.has_name:
             return False
 
         return True

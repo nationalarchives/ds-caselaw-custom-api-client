@@ -193,17 +193,34 @@ class TestJudgment:
         published_judgment.is_published = True
         assert published_judgment.status == JUDGMENT_STATUS_PUBLISHED
 
+    def test_has_name(self, mock_api_client):
+        judgment_with_name = Judgment("test/1234", mock_api_client)
+        judgment_with_name.name = "Judgment v Judgement"
+
+        judgment_without_name = Judgment("test/1234", mock_api_client)
+        judgment_without_name.name = ""
+
+        assert judgment_with_name.has_name is True
+        assert judgment_without_name.has_name is False
+
 
 class TestJudgmentPublication:
-    def test_judgment_is_publishable_if_held(self, mock_api_client):
+    def test_judgment_not_publishable_if_held(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = True
 
         assert judgment.is_publishable is False
 
-    def test_judgment_is_publishable_if_not_held(self, mock_api_client):
+    def test_judgment_not_publishable_if_missing_name(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_name = False
+
+        assert judgment.is_publishable is False
+
+    def test_judgment_is_publishable_if_conditions_met(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = False
+        judgment.has_name = True
 
         assert judgment.is_publishable is True
 
