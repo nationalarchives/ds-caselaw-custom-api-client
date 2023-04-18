@@ -152,6 +152,13 @@ class Judgment:
         return True
 
     @cached_property
+    def has_court(self) -> bool:
+        if not self.court:
+            return False
+
+        return True
+
+    @cached_property
     def is_publishable(self) -> bool:
         if self.is_held:
             return False
@@ -160,6 +167,9 @@ class Judgment:
             return False
 
         if not self.has_ncn:
+            return False
+
+        if not self.has_court:
             return False
 
         return True

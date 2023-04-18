@@ -213,6 +213,16 @@ class TestJudgment:
         assert judgment_with_ncn.has_ncn is True
         assert judgment_without_ncn.has_ncn is False
 
+    def test_has_court(self, mock_api_client):
+        judgment_with_court = Judgment("test/1234", mock_api_client)
+        judgment_with_court.court = "[2023] TEST 1234"
+
+        judgment_without_court = Judgment("test/1234", mock_api_client)
+        judgment_without_court.court = ""
+
+        assert judgment_with_court.has_court is True
+        assert judgment_without_court.has_court is False
+
 
 class TestJudgmentPublication:
     def test_judgment_not_publishable_if_held(self, mock_api_client):
@@ -233,11 +243,18 @@ class TestJudgmentPublication:
 
         assert judgment.is_publishable is False
 
+    def test_judgment_not_publishable_if_missing_court(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_court = False
+
+        assert judgment.is_publishable is False
+
     def test_judgment_is_publishable_if_conditions_met(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = False
         judgment.has_name = True
         judgment.has_ncn = True
+        judgment.has_court = True
 
         assert judgment.is_publishable is True
 
