@@ -169,19 +169,13 @@ class Judgment:
 
     @cached_property
     def is_publishable(self) -> bool:
-        if self.is_held:
-            return False
-
-        if not self.has_name:
-            return False
-
-        if not self.has_ncn:
-            return False
-
-        if not self.has_valid_ncn:
-            return False
-
-        if not self.has_court:
+        if (
+            self.is_held
+            or not self.has_name
+            or not self.has_ncn
+            or not self.has_valid_ncn
+            or not self.has_court
+        ):
             return False
 
         return True
