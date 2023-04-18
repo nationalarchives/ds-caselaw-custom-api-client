@@ -49,9 +49,11 @@ jobs:
         run: poetry run coverage run -m pytest
 
       - name: Generate coverage XML
+        if: ${{ matrix.python-version == '3.11' }}
         run: poetry run coverage xml
 
       - name: Upload coverage to CodeClimate
         uses: paambaati/codeclimate-action@v3.2.0
+        if: ${{ matrix.python-version == '3.11' }}
         env:
           CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
