@@ -142,3 +142,17 @@ def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
         Subject=f"Updated: {uri} {status}",
         MessageAttributes=message_attributes,
     )
+
+
+def get_parser_log(uri: str) -> str:
+    s3 = create_s3_client()
+    private_bucket = env("PRIVATE_ASSET_BUCKET", None)
+    # Locally, we may not have an S3 bucket set up; continue as best we can.
+    if not private_bucket:
+        return ""
+
+    try:
+        parser_log = s3.get_object(Bucket=private_bucket, Key=f"{uri}/parser.log")
+        return parser_log["Body"].read().decode("utf-8")
+    except KeyError:
+        return ""
