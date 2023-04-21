@@ -193,17 +193,103 @@ class TestJudgment:
         published_judgment.is_published = True
         assert published_judgment.status == JUDGMENT_STATUS_PUBLISHED
 
+    def test_has_name(self, mock_api_client):
+        judgment_with_name = Judgment("test/1234", mock_api_client)
+        judgment_with_name.name = "Judgment v Judgement"
+
+        judgment_without_name = Judgment("test/1234", mock_api_client)
+        judgment_without_name.name = ""
+
+        assert judgment_with_name.has_name is True
+        assert judgment_without_name.has_name is False
+
+    def test_has_ncn(self, mock_api_client):
+        judgment_with_ncn = Judgment("test/1234", mock_api_client)
+        judgment_with_ncn.neutral_citation = "[2023] TEST 1234"
+
+        judgment_without_ncn = Judgment("test/1234", mock_api_client)
+        judgment_without_ncn.neutral_citation = ""
+
+        assert judgment_with_ncn.has_ncn is True
+        assert judgment_without_ncn.has_ncn is False
+
+    @pytest.mark.parametrize(
+        "ncn_to_test, valid",
+        [
+            ("[2022] UKSC 1", True),
+            ("[1604] EWCA Crim 555", True),
+            ("[2022] EWHC 1 (Comm)", True),
+            ("[1999] EWCOP 7", True),
+            ("[2022] UKUT 1 (IAC)", True),
+            ("[2022] EAT 1", True),
+            ("[2022] UKFTT 1 (TC)", True),
+            ("[2022] UKFTT 1 (GRC)", True),
+            ("[2022] EWHC 1 (KB)", True),
+            ("", False),
+            ("1604] EWCA Crim 555", False),
+            ("[2022 EWHC 1 Comm", False),
+            ("[1999] EWCOP", False),
+            ("[2022] UKUT B1 IAC", False),
+            ("[2022] EAT A", False),
+            ("[2022] NOTACOURT 1 TC", False),
+        ],
+    )
+    def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.neutral_citation = ncn_to_test
+
+        assert judgment.has_valid_ncn is valid
+
+    def test_has_court(self, mock_api_client):
+        judgment_with_court = Judgment("test/1234", mock_api_client)
+        judgment_with_court.court = "[2023] TEST 1234"
+
+        judgment_without_court = Judgment("test/1234", mock_api_client)
+        judgment_without_court.court = ""
+
+        assert judgment_with_court.has_court is True
+        assert judgment_without_court.has_court is False
+
 
 class TestJudgmentPublication:
-    def test_judgment_is_publishable_if_held(self, mock_api_client):
+    def test_judgment_not_publishable_if_held(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = True
 
         assert judgment.is_publishable is False
 
-    def test_judgment_is_publishable_if_not_held(self, mock_api_client):
+    def test_judgment_not_publishable_if_missing_name(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_name = False
+
+        assert judgment.is_publishable is False
+
+    def test_judgment_not_publishable_if_missing_ncn(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_ncn = False
+
+        assert judgment.is_publishable is False
+
+    def test_judgment_not_publishable_if_invalid_ncn(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_valid_ncn = False
+
+        assert judgment.is_publishable is False
+
+    def test_judgment_not_publishable_if_missing_court(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.has_valid_ncn = True
+        judgment.has_court = False
+
+        assert judgment.is_publishable is False
+
+    def test_judgment_is_publishable_if_conditions_met(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = False
+        judgment.has_name = True
+        judgment.has_ncn = True
+        judgment.has_valid_ncn = True
+        judgment.has_court = True
 
         assert judgment.is_publishable is True
 
