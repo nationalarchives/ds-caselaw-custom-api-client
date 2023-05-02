@@ -1,5 +1,6 @@
 import datetime
 from functools import cached_property
+from typing import Optional
 
 from ds_caselaw_utils import neutral_url
 from requests_toolbelt.multipart import decoder
@@ -116,7 +117,7 @@ class Judgment:
     def content_as_xml(self) -> str:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
 
-    def content_as_html(self, version_uri: str) -> str:
+    def content_as_html(self, version_uri: Optional[str] = None) -> str:
         results = self.api_client.eval_xslt(
             self.uri, version_uri, show_unpublished=True
         )
