@@ -78,8 +78,8 @@ xml_tools.get_search_matches(element)
 To run the test suite:
 
 ```bash
-pip install -r requirements.txt
-python -m pytest
+poetry install
+poetry run pytest
 ```
 
 ## Making changes

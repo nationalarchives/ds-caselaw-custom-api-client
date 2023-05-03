@@ -42,8 +42,12 @@ def decode_multipart(response: requests.Response) -> str:
     """Decode a multipart response and return just the text inside it.
     Note that it is possible for multiple responses to be returned, if
     multiple top-level returns exist in the XQuery."""
+
+    # Arguably, this should return None -- it occurs when there are no
+    # matching entries
     if not (response.content):
         return ""
+
     multipart_data = decoder.MultipartDecoder.from_response(response)
     part_count = len(multipart_data.parts)
     if part_count > 1:
@@ -159,6 +163,11 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
+    def _eval_and_decode(self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
+    ) -> str:
+        response = self._send_to_eval(vars, xquery_file_name)
+        return decode_multipart(response)
+
     def prepare_request_kwargs(
         self,
         method: str,
@@ -202,6 +211,19 @@ class MarklogicApiClient:
         logging.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
+    def judgment_exists(self, judgment_uri: str) -> bool:
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.JudgmentExistsDict = {
+            "uri": uri,
+        }
+        decoded_response = self._eval_and_decode(vars, "judgment_exists.xqy")
+
+        if decoded_response == "true":
+            return True
+        if decoded_response == "false":
+            return False
+        raise RuntimeError("Marklogic response was neither true nor false")
+
     def get_judgment_xml(
         self,
         judgment_uri: str,
@@ -218,29 +240,25 @@ class MarklogicApiClient:
             "show_unpublished": show_unpublished,
         }
 
-        response = self._send_to_eval(vars, "get_judgment.xqy")
-
-        if not response.text:
+        decoded_response = self._eval_and_decode(vars, "get_judgment.xqy")
+        if not decoded_response:
             raise MarklogicNotPermittedError(
                 "The document is not published and show_unpublished was not set"
             )
 
-        return decode_multipart(response)
+        return decoded_response
+
+
+        return self._eval_and_decode(vars, "get_judgment.xqy")
 
     def get_judgment_name(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetMetadataNameDict = {"uri": uri}
-
-        response = self._send_to_eval(vars, "get_metadata_name.xqy")
-        if not response.text:
-            return ""
-
-        return decode_multipart(response)
+        return self._eval_and_decode(vars, "get_metadata_name.xqy")
 
     def set_judgment_name(self, judgment_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
-
         return self._send_to_eval(vars, "set_metadata_name.xqy")
 
     def set_judgment_date(self, judgment_uri: str, content: str) -> requests.Response:
@@ -544,13 +562,7 @@ class MarklogicApiClient:
             "uri": uri,
             "name": name,
         }
-        response = self._send_to_eval(vars, "get_property.xqy")
-
-        if not response.text:
-            return ""
-
-        content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
-        return content
+        return self._eval_and_decode(vars, "get_property.xqy")
 
     def set_property(
         self, judgment_uri: str, name: str, value: str

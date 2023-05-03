@@ -6,6 +6,7 @@ from ds_caselaw_utils import neutral_url
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.errors import JudgmentNotFoundError
 
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
@@ -30,9 +31,11 @@ class Judgment:
     def __init__(self, uri: str, api_client: MarklogicApiClient):
         self.uri = uri.strip("/")
         self.api_client = api_client
+        if not self.judgment_exists():
+            raise JudgmentNotFoundError(f"Judgment {self.uri} does not exist")
 
-        # As part of initialisation, we preload the NCN so we can generate a MarklogicResourceNotFoundError early
-        self.neutral_citation
+    def judgment_exists(self) -> bool:
+        return self.api_client.judgment_exists(self.uri)
 
     @property
     def public_uri(self) -> str:

@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.errors import JudgmentNotFoundError
 from caselawclient.models.judgments import (
     JUDGMENT_STATUS_HOLD,
     JUDGMENT_STATUS_IN_PROGRESS,
@@ -30,6 +31,11 @@ class TestJudgment:
         assert (
             judgment.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
         )
+
+    def test_judgment_exists_check(self, mock_api_client):
+        mock_api_client.judgment_exists.return_value = False
+        with pytest.raises(JudgmentNotFoundError):
+            Judgment("not_a_real_judgment", mock_api_client)
 
     def test_judgment_neutral_citation(self, mock_api_client):
         mock_api_client.get_judgment_citation.return_value = "[2023] TEST 1234"
