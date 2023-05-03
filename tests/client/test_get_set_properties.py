@@ -44,7 +44,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
 
     def test_get_unset_boolean_property(self):
         with patch.object(self.client, "eval") as mock_eval:
-            mock_eval.return_value.text = ""
+            mock_eval.return_value.content = ""
             result = self.client.get_boolean_property("/judgment/uri", "my-property")
 
             assert result is False
@@ -89,7 +89,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
 
     def test_get_unset_property(self):
         with patch.object(self.client, "eval") as mock_eval:
-            mock_eval.return_value.text = ""
+            mock_eval.return_value.content = ""
             result = self.client.get_property("/judgment/uri", "my-property")
 
             assert "" == result

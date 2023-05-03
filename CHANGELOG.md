@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+- **BREAKING**: Instantiating a`Judgment` object will now raise a `caselawclient.errors.JudgmentNotFoundError` if the uri passed in does not correspond to a valid Judgment, rather than attempting (and failing) to return a `MarklogicResourceNotFoundError`
+- Added `judgment_exists` method to `Client` class
+
 ## [Release 6.1.0]
 - `Judgment.publish` method will now reject publication in more invalid states (must have a name, must have a valid NCN, must have a court code).
 - Less strict version pinning of dependencies to give downstream package users more flexibility in resolving.
