@@ -96,6 +96,11 @@ class InsertJudgmentDict(MarkLogicAPIDict):
     uri: str
 
 
+# judgment_exists.xqy
+class JudgmentExistsDict(MarkLogicAPIDict):
+    uri: str
+
+
 # list_judgment_versions.xqy
 class ListJudgmentVersionsDict(MarkLogicAPIDict):
     uri: str
