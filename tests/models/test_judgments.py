@@ -329,6 +329,7 @@ class TestJudgmentPublication:
         judgment.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
+        mock_api_client.break_checkout.assert_called_once_with("test/1234")
         mock_notify_changed.assert_called_once_with(
             uri="test/1234", status="not published", enrich=False
         )
