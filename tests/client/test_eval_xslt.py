@@ -11,6 +11,7 @@ class TestEvalXslt(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "testuser", "", False)
 
+    @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_user_can_view_unpublished(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
@@ -21,7 +22,7 @@ class TestEvalXslt(unittest.TestCase):
                     "uri": "/judgment/uri.xml",
                     "version_uri": None,
                     "show_unpublished": True,
-                    "img_location": "",
+                    "img_location": "imagepath",
                     "xsl_filename": "accessible-html.xsl",
                 }
                 self.client.eval_xslt(uri, show_unpublished=True)
@@ -31,6 +32,7 @@ class TestEvalXslt(unittest.TestCase):
                 )
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
+    @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_user_cannot_view_unpublished(self):
         """The user is not permitted to see unpublished judgments but is attempting to view them
         Set `show_unpublished` to false and log a warning"""
@@ -46,7 +48,7 @@ class TestEvalXslt(unittest.TestCase):
                         "uri": "/judgment/uri.xml",
                         "version_uri": None,
                         "show_unpublished": False,
-                        "img_location": "",
+                        "img_location": "imagepath",
                         "xsl_filename": "accessible-html.xsl",
                     }
                     self.client.eval_xslt(uri, show_unpublished=True)
@@ -59,6 +61,7 @@ class TestEvalXslt(unittest.TestCase):
                     )
                     mock_logging.assert_called()
 
+    @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_with_filename(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
@@ -69,7 +72,7 @@ class TestEvalXslt(unittest.TestCase):
                     "uri": "/judgment/uri.xml",
                     "version_uri": None,
                     "show_unpublished": True,
-                    "img_location": "",
+                    "img_location": "imagepath",
                     "xsl_filename": "as-handed-down.xsl",
                 }
                 self.client.eval_xslt(
