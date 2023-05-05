@@ -98,7 +98,7 @@ to main alone will **not** trigger a release to PyPI.
 
 To create a release:
 
-0. Update the version number in `setup.cfg`
+0. Update the version number in `pyproject.toml`
 0. Create a branch `release/v{major}.{minor}.{patch}`
 0. Update `CHANGELOG.md` for the release
 0. Commit and push
