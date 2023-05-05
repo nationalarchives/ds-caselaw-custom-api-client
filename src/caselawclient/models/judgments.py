@@ -207,6 +207,7 @@ class Judgment:
         )
 
     def unpublish(self) -> None:
+        self.api_client.break_checkout(self.uri)
         unpublish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, False)
         notify_changed(
