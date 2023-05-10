@@ -1,6 +1,6 @@
 import datetime
 from functools import cached_property
-from typing import Optional
+from typing import Callable, Optional, TypedDict, Union
 
 from ds_caselaw_utils import neutral_url
 from requests_toolbelt.multipart import decoder
@@ -23,39 +23,96 @@ JUDGMENT_STATUS_PUBLISHED = "Published"
 JUDGMENT_STATUS_IN_PROGRESS = "In progress"
 
 
+class MarkLogicAttributeDict(TypedDict):
+    getter: Callable[[str], Union[str, bool]]
+    setter: None
+
+
+MarkLogicValueType = Union[str, bool]
+
+
 class CannotPublishUnpublishableJudgment(Exception):
     pass
 
 
 class Judgment:
+    marklogic_attribute_map: dict[str, MarkLogicAttributeDict]
+    values_store: dict[str, MarkLogicValueType]
+
+    uri: str
+    api_client: MarklogicApiClient
+
+    # These definitions make sure that downstream users of this class can rely on the types of attributes.
+    name: str
+    neutral_citation: str
+    court: str
+    judgment_date_as_string: str
+    is_published: bool
+    is_sensitive: bool
+    is_anonymised: bool
+    has_supplementary_materials: bool
+
     def __init__(self, uri: str, api_client: MarklogicApiClient):
-        self.uri = uri.strip("/")
-        self.api_client = api_client
+        self.__dict__["uri"] = uri.strip("/")
+        self.__dict__["api_client"] = api_client
+        self.__dict__["values_store"] = {}
+
         if not self.judgment_exists():
             raise JudgmentNotFoundError(f"Judgment {self.uri} does not exist")
+
+        # Callables for setter accept a single argument of the judgment URI
+        self.__dict__["marklogic_attribute_map"] = {
+            "name": {
+                "getter": self.api_client.get_judgment_name,
+                "setter": None,
+            },
+            "neutral_citation": {
+                "getter": self.api_client.get_judgment_citation,
+                "setter": None,
+            },
+            "court": {
+                "getter": self.api_client.get_judgment_court,
+                "setter": None,
+            },
+            "judgment_date_as_string": {
+                "getter": self.api_client.get_judgment_work_date,
+                "setter": None,
+            },
+            "is_published": {
+                "getter": self.api_client.get_published,
+                "setter": None,
+            },
+            "is_sensitive": {
+                "getter": self.api_client.get_sensitive,
+                "setter": None,
+            },
+            "is_anonymised": {
+                "getter": self.api_client.get_anonymised,
+                "setter": None,
+            },
+            "has_supplementary_materials": {
+                "getter": self.api_client.get_supplemental,
+                "setter": None,
+            },
+        }
 
     def judgment_exists(self) -> bool:
         return self.api_client.judgment_exists(self.uri)
 
+    def __getattr__(self, attr_name: str) -> MarkLogicValueType:
+        if attr_name not in self.marklogic_attribute_map:
+            raise AttributeError
+
+        attribute = self.marklogic_attribute_map[attr_name]
+
+        if attr_name not in self.values_store:
+            self.values_store[attr_name] = attribute["getter"](self.uri)
+
+        return self.values_store[attr_name]
+
     @property
     def public_uri(self) -> str:
         return "https://caselaw.nationalarchives.gov.uk/{uri}".format(uri=self.uri)
-
-    @cached_property
-    def neutral_citation(self) -> str:
-        return self.api_client.get_judgment_citation(self.uri)
-
-    @cached_property
-    def name(self) -> str:
-        return self.api_client.get_judgment_name(self.uri)
-
-    @cached_property
-    def court(self) -> str:
-        return self.api_client.get_judgment_court(self.uri)
-
-    @cached_property
-    def judgment_date_as_string(self) -> str:
-        return self.api_client.get_judgment_work_date(self.uri)
 
     @cached_property
     def judgment_date_as_date(self) -> datetime.date:
@@ -64,24 +121,8 @@ class Judgment:
         ).date()
 
     @cached_property
-    def is_published(self) -> bool:
-        return self.api_client.get_published(self.uri)
-
-    @cached_property
     def is_held(self) -> bool:
         return self.api_client.get_property(self.uri, "editor-hold") == "true"
-
-    @cached_property
-    def is_sensitive(self) -> bool:
-        return self.api_client.get_sensitive(self.uri)
-
-    @cached_property
-    def is_anonymised(self) -> bool:
-        return self.api_client.get_anonymised(self.uri)
-
-    @cached_property
-    def has_supplementary_materials(self) -> bool:
-        return self.api_client.get_supplemental(self.uri)
 
     @cached_property
     def source_name(self) -> str:

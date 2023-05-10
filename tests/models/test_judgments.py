@@ -183,20 +183,22 @@ class TestJudgment:
         assert successful_judgment.is_failure is False
         assert failing_judgment.is_failure is True
 
-    def test_judgment_status(self, mock_api_client):
+    @patch.object(Judgment, "is_held", False, create=True)
+    @patch.object(Judgment, "is_published", False, create=True)
+    def test_judgment_status_in_progress(self, mock_api_client):
         in_progress_judgment = Judgment("test/1234", mock_api_client)
-        in_progress_judgment.is_held = False
-        in_progress_judgment.is_published = False
         assert in_progress_judgment.status == JUDGMENT_STATUS_IN_PROGRESS
 
+    @patch.object(Judgment, "is_held", True, create=True)
+    @patch.object(Judgment, "is_published", False, create=True)
+    def test_judgment_status_on_hold(self, mock_api_client):
         on_hold_judgment = Judgment("test/1234", mock_api_client)
-        on_hold_judgment.is_held = True
-        on_hold_judgment.is_published = False
         assert on_hold_judgment.status == JUDGMENT_STATUS_HOLD
 
+    @patch.object(Judgment, "is_held", True, create=True)
+    @patch.object(Judgment, "is_published", True, create=True)
+    def test_judgment_status_published(self, mock_api_client):
         published_judgment = Judgment("test/1234", mock_api_client)
-        on_hold_judgment.is_held = False
-        published_judgment.is_published = True
         assert published_judgment.status == JUDGMENT_STATUS_PUBLISHED
 
     def test_has_name(self, mock_api_client):
@@ -257,62 +259,64 @@ class TestJudgment:
         assert judgment_without_court.has_court is False
 
 
+class TestJudgmentMagicAttributes:
+    def test_getattr_raises_attributeerror_on_attribute_map_miss(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        with pytest.raises(AttributeError):
+            judgment.this_attribute_does_not_exist
+
+
 class TestJudgmentPublication:
+    @patch.object(Judgment, "is_held", True)
     def test_judgment_not_publishable_if_held(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_held = True
-
         assert judgment.is_publishable is False
 
+    @patch.object(Judgment, "has_name", False)
     def test_judgment_not_publishable_if_missing_name(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_name = False
-
         assert judgment.is_publishable is False
 
+    @patch.object(Judgment, "has_ncn", False)
     def test_judgment_not_publishable_if_missing_ncn(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_ncn = False
-
         assert judgment.is_publishable is False
 
+    @patch.object(Judgment, "has_valid_ncn", False)
     def test_judgment_not_publishable_if_invalid_ncn(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_valid_ncn = False
-
         assert judgment.is_publishable is False
 
+    @patch.object(Judgment, "has_valid_ncn", True)
+    @patch.object(Judgment, "has_court", False)
     def test_judgment_not_publishable_if_missing_court(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_valid_ncn = True
-        judgment.has_court = False
-
         assert judgment.is_publishable is False
 
+    @patch.object(Judgment, "is_held", False)
+    @patch.object(Judgment, "has_name", True)
+    @patch.object(Judgment, "has_ncn", True)
+    @patch.object(Judgment, "has_valid_ncn", True)
+    @patch.object(Judgment, "has_court", True)
     def test_judgment_is_publishable_if_conditions_met(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_held = False
-        judgment.has_name = True
-        judgment.has_ncn = True
-        judgment.has_valid_ncn = True
-        judgment.has_court = True
 
         assert judgment.is_publishable is True
 
+    @patch.object(Judgment, "is_publishable", False)
     def test_publish_fails_if_not_publishable(self, mock_api_client):
         with pytest.raises(CannotPublishUnpublishableJudgment):
             judgment = Judgment("test/1234", mock_api_client)
-            judgment.is_publishable = False
             judgment.publish()
             mock_api_client.set_published.assert_not_called()
 
     @patch("caselawclient.models.judgments.notify_changed")
     @patch("caselawclient.models.judgments.publish_documents")
+    @patch.object(Judgment, "is_publishable", True)
     def test_publish(
         self, mock_publish_documents, mock_notify_changed, mock_api_client
     ):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_publishable = True
         judgment.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
