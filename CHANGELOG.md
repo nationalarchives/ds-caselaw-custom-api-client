@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 7.0.1]
+- Updates to dependencies
+
 ## [Release 7.0.0]
 - **BREAKING**: Instantiating a`Judgment` object will now raise a `caselawclient.errors.JudgmentNotFoundError` if the uri passed in does not correspond to a valid Judgment, rather than attempting (and failing) to return a `MarklogicResourceNotFoundError`
 - Added `judgment_exists` method to `Client` class
@@ -207,8 +210,10 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.1.0...HEAD
-[Release 6.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.0.0...v6.1.0
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v7.0.1...HEAD
+[Release 7.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v7.0.0...v7.0.1
+[Release 7.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.1.0...v7.0.0
+[Release 6.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.0.0...v6.1.0
 [Release 6.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.2...v6.0.0
 [Release 5.3.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.1...v5.3.2
 [Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.0...v5.3.1
