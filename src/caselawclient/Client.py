@@ -44,7 +44,7 @@ def decode_multipart(response: requests.Response) -> str:
     multiple top-level returns exist in the XQuery."""
 
     # Arguably, this should return None -- it occurs when there are no
-    # matching entries
+    # matching entries
     if not (response.content):
         return ""
 
@@ -163,7 +163,8 @@ class MarklogicApiClient:
             accept_header="application/xml",
         )
 
-    def _eval_and_decode(self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
+    def _eval_and_decode(
+        self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
     ) -> str:
         response = self._send_to_eval(vars, xquery_file_name)
         return decode_multipart(response)
@@ -247,7 +248,6 @@ class MarklogicApiClient:
             )
 
         return decoded_response
-
 
         return self._eval_and_decode(vars, "get_judgment.xqy")
 
@@ -463,6 +463,7 @@ class MarklogicApiClient:
         page_size: int = RESULTS_PER_PAGE,
         show_unpublished: bool = False,
         only_unpublished: bool = False,
+        collections: str = "",
     ) -> requests.Response:
         """
         Performs a search on the entire document set.
@@ -480,6 +481,7 @@ class MarklogicApiClient:
         :param page_size:
         :param show_unpublished: If True, both published and unpublished documents will be returned
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
+        :param collections:
         :return:
         """
         module = "/judgments/search/search-v2.xqy"  # as stored on Marklogic
@@ -499,6 +501,7 @@ class MarklogicApiClient:
                 "to": str(date_to or ""),
                 "show_unpublished": str(show_unpublished).lower(),
                 "only_unpublished": str(only_unpublished).lower(),
+                "collections": str(collections).lower(),
             }
         )
         return self.invoke(module, vars)
