@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Unreleased]
+- Added optional `collections` kwarg to `Client.advanced_search`  method for filtering by collections
+
+
 ## [Release 7.0.0]
 - **BREAKING**: Instantiating a`Judgment` object will now raise a `caselawclient.errors.JudgmentNotFoundError` if the uri passed in does not correspond to a valid Judgment, rather than attempting (and failing) to return a `MarklogicResourceNotFoundError`
 - Added `judgment_exists` method to `Client` class

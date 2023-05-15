@@ -463,6 +463,7 @@ class MarklogicApiClient:
         page_size: int = RESULTS_PER_PAGE,
         show_unpublished: bool = False,
         only_unpublished: bool = False,
+        collections: Optional[str] = None,
     ) -> requests.Response:
         """
         Performs a search on the entire document set.
@@ -480,6 +481,7 @@ class MarklogicApiClient:
         :param page_size:
         :param show_unpublished: If True, both published and unpublished documents will be returned
         :param only_unpublished: If True, will only return published documents. Ignores the value of show_unpublished
+        :param collections:
         :return:
         """
         module = "/judgments/search/search-v2.xqy"  # as stored on Marklogic
@@ -499,6 +501,7 @@ class MarklogicApiClient:
                 "to": str(date_to or ""),
                 "show_unpublished": str(show_unpublished).lower(),
                 "only_unpublished": str(only_unpublished).lower(),
+                "collections": str(collections or ""),
             }
         )
         return self.invoke(module, vars)
