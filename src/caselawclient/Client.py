@@ -501,7 +501,9 @@ class MarklogicApiClient:
                 "to": str(date_to or ""),
                 "show_unpublished": str(show_unpublished).lower(),
                 "only_unpublished": str(only_unpublished).lower(),
-                "collections": str(collections or ""),
+                "collections": ",".join(collections or [])
+                .replace(" ", "")
+                .replace(",,", ","),
             }
         )
         return self.invoke(module, vars)

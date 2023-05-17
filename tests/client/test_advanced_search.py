@@ -73,7 +73,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 page_size=10,
                 show_unpublished=False,
                 only_unpublished=False,
-                collections="foo,bar",
+                collections=[" foo ", "abc def", " bar"],
             )
 
             self.client.invoke.assert_called_with(
@@ -93,7 +93,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         "to": "2010-12-31",
                         "show_unpublished": "false",
                         "only_unpublished": "false",
-                        "collections": "foo,bar",
+                        "collections": "foo,abcdef,bar",
                     }
                 ),
             )
