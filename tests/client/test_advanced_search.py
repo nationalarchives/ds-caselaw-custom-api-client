@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.search_parameters import SearchParameters
 
 
 class TestAdvancedSearch(unittest.TestCase):
@@ -24,7 +25,7 @@ class TestAdvancedSearch(unittest.TestCase):
         """
 
         with patch.object(self.client, "invoke"):
-            response = self.client.advanced_search()
+            response = self.client.advanced_search(SearchParameters())
 
             self.client.invoke.assert_called_with(
                 "/judgments/search/search-v2.xqy",
@@ -60,20 +61,22 @@ class TestAdvancedSearch(unittest.TestCase):
         """
         with patch.object(self.client, "invoke"):
             response = self.client.advanced_search(
-                q="test query",
-                court="court",
-                judge="judge",
-                party="party",
-                neutral_citation="citation",
-                specific_keyword="keyword",
-                order="order",
-                date_from="2010-01-01",
-                date_to="2010-12-31",
-                page=2,
-                page_size=10,
-                show_unpublished=False,
-                only_unpublished=False,
-                collections=[" foo ", "abc def", " bar"],
+                SearchParameters(
+                    q="test query",
+                    court="court",
+                    judge="judge",
+                    party="party",
+                    neutral_citation="citation",
+                    specific_keyword="keyword",
+                    order="order",
+                    date_from="2010-01-01",
+                    date_to="2010-12-31",
+                    page=2,
+                    page_size=10,
+                    show_unpublished=False,
+                    only_unpublished=False,
+                    collections=[" foo ", "abc def", " bar"],
+                )
             )
 
             self.client.invoke.assert_called_with(
@@ -111,7 +114,7 @@ class TestAdvancedSearch(unittest.TestCase):
         with patch.object(self.client, "invoke"):
             self.client.invoke.side_effect = exception
             with pytest.raises(Exception) as e:
-                self.client.advanced_search(q="test query")
+                self.client.advanced_search(SearchParameters(q="test query"))
         assert e.value == exception
 
     def test_user_can_view_unpublished_but_show_unpublished_is_false(
@@ -128,13 +131,15 @@ class TestAdvancedSearch(unittest.TestCase):
                 self.client, "user_can_view_unpublished_judgments", return_value=True
             ):
                 self.client.advanced_search(
-                    q="my-query",
-                    court="ewhc",
-                    judge="a. judge",
-                    party="a party",
-                    page=2,
-                    page_size=20,
-                    show_unpublished=False,
+                    SearchParameters(
+                        q="my-query",
+                        court="ewhc",
+                        judge="a. judge",
+                        party="a party",
+                        page=2,
+                        page_size=20,
+                        show_unpublished=False,
+                    )
                 )
 
                 expected_vars = {
@@ -172,13 +177,15 @@ class TestAdvancedSearch(unittest.TestCase):
                 self.client, "user_can_view_unpublished_judgments", return_value=True
             ):
                 self.client.advanced_search(
-                    q="my-query",
-                    court="ewhc",
-                    judge="a. judge",
-                    party="a party",
-                    page=2,
-                    page_size=20,
-                    show_unpublished=True,
+                    SearchParameters(
+                        q="my-query",
+                        court="ewhc",
+                        judge="a. judge",
+                        party="a party",
+                        page=2,
+                        page_size=20,
+                        show_unpublished=True,
+                    )
                 )
                 assert (
                     '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
@@ -199,13 +206,15 @@ class TestAdvancedSearch(unittest.TestCase):
             ):
                 with patch.object(logging, "warning") as mock_logging:
                     self.client.advanced_search(
-                        q="my-query",
-                        court="ewhc",
-                        judge="a. judge",
-                        party="a party",
-                        page=2,
-                        page_size=20,
-                        show_unpublished=True,
+                        SearchParameters(
+                            q="my-query",
+                            court="ewhc",
+                            judge="a. judge",
+                            party="a party",
+                            page=2,
+                            page_size=20,
+                            show_unpublished=True,
+                        )
                     )
 
                     assert (
@@ -223,7 +232,9 @@ class TestAdvancedSearch(unittest.TestCase):
         """
         with patch.object(self.client, "invoke"):
             self.client.advanced_search(
-                page=0,
+                SearchParameters(
+                    page=0,
+                )
             )
 
             assert ', "page": 1,' in self.client.invoke.call_args.args[1]

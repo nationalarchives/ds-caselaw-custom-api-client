@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Optional, Set, Type, Union
+from typing import Any, Optional, Type, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -14,6 +14,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
+
+from caselawclient.models.search_results import SearchResults
+from caselawclient.search_parameters import SearchParameters
 
 from . import xml_tools
 from . import xquery_type_dicts as query_dicts
@@ -33,7 +36,6 @@ from .errors import (
 )
 
 env = environ.Env()
-RESULTS_PER_PAGE = 10
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
@@ -55,6 +57,9 @@ def decode_multipart(response: requests.Response) -> str:
             f"Throwing away multipart data ({part_count} items, expected 1)"
         )
     return str(multipart_data.parts[0].text)
+
+
+JUDGMENT_COLLECTION_URI = "judgment"
 
 
 class MarklogicApiClient:
@@ -99,25 +104,6 @@ class MarklogicApiClient:
 
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
-
-    def _court_list_splitter(self, court_text: str) -> Set[str]:
-        return set(court_text.lower().replace(" ", "").split(","))
-
-    def _court_list(self, court_text: str) -> Optional[list[str]]:
-        if not court_text.strip():
-            return None
-        alt_names = {
-            "ewhc/qb": "ewhc/kb",
-            "ewhc/kb": "ewhc/qb",
-            "ewhc/scco": "ewhc/costs",
-            "ewhc/costs": "ewhc/scco",
-        }
-        new_names = set()
-        courts = self._court_list_splitter(court_text)
-        for primary_name, secondary_name in alt_names.items():
-            if primary_name in courts and secondary_name not in courts:
-                new_names.add(secondary_name)
-        return list(courts | new_names)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
@@ -448,23 +434,7 @@ class MarklogicApiClient:
         self._raise_for_status(response)
         return response
 
-    def advanced_search(
-        self,
-        q: Optional[str] = None,
-        court: Optional[str] = None,
-        judge: Optional[str] = None,
-        party: Optional[str] = None,
-        neutral_citation: Optional[str] = None,
-        specific_keyword: Optional[str] = None,
-        order: Optional[str] = None,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        page: int = 1,
-        page_size: int = RESULTS_PER_PAGE,
-        show_unpublished: bool = False,
-        only_unpublished: bool = False,
-        collections: Optional[str] = None,
-    ) -> requests.Response:
+    def advanced_search(self, search_parameters: SearchParameters) -> requests.Response:
         """
         Performs a search on the entire document set.
 
@@ -485,27 +455,10 @@ class MarklogicApiClient:
         :return:
         """
         module = "/judgments/search/search-v2.xqy"  # as stored on Marklogic
-        show_unpublished = self.verify_show_unpublished(show_unpublished)
-        vars = json.dumps(
-            {
-                "court": self._court_list(court or ""),
-                "judge": str(judge or ""),
-                "page": max(1, int(page)),
-                "page-size": int(page_size),
-                "q": str(q or ""),
-                "party": str(party or ""),
-                "neutral_citation": str(neutral_citation or ""),
-                "specific_keyword": str(specific_keyword or ""),
-                "order": str(order or ""),
-                "from": str(date_from or ""),
-                "to": str(date_to or ""),
-                "show_unpublished": str(show_unpublished).lower(),
-                "only_unpublished": str(only_unpublished).lower(),
-                "collections": ",".join(collections or [])
-                .replace(" ", "")
-                .replace(",,", ","),
-            }
+        search_parameters.show_unpublished = self.verify_show_unpublished(
+            search_parameters.show_unpublished
         )
+        vars = json.dumps(search_parameters.as_marklogic_payload())
         return self.invoke(module, vars)
 
     def eval_xslt(
@@ -752,6 +705,19 @@ class MarklogicApiClient:
         vars: query_dicts.GetPropertiesForSearchResultsDict = {"uris": uris}
         response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
         return decode_multipart(response)
+
+    def search_and_parse_results(
+        self, search_parameters: SearchParameters
+    ) -> SearchResults:
+        response = self.advanced_search(search_parameters)
+        response_string = decode_multipart(response)
+        return SearchResults(response_string)
+
+    def search_judgments_and_parse_results(
+        self, search_parameters: SearchParameters
+    ) -> SearchResults:
+        search_parameters.collections = [JUDGMENT_COLLECTION_URI]
+        return self.search_and_parse_results(search_parameters)
 
 
 api_client = MarklogicApiClient(
