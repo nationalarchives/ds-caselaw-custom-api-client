@@ -110,6 +110,12 @@ class Judgment:
 
         return self.values_store[attr_name]
 
+    def __setattr__(self, attr_name: str, value: MarkLogicValueType) -> None:
+        if attr_name not in self.marklogic_attribute_map:
+            raise AttributeError
+
+        self.__dict__["values_store"][attr_name] = value
+
     @property
     def public_uri(self) -> str:
         return "https://caselaw.nationalarchives.gov.uk/{uri}".format(uri=self.uri)

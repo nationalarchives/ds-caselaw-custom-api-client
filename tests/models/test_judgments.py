@@ -265,6 +265,11 @@ class TestJudgmentMagicAttributes:
         with pytest.raises(AttributeError):
             judgment.this_attribute_does_not_exist
 
+    def test_setattr_raises_attributeerror_on_attribute_map_miss(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        with pytest.raises(AttributeError):
+            judgment.this_attribute_does_not_exist = "Any Value"
+
 
 class TestJudgmentPublication:
     @patch.object(Judgment, "is_held", True)
