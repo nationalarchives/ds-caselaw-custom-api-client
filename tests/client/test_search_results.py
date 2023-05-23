@@ -1,3 +1,4 @@
+import pytest
 from lxml import etree
 
 from caselawclient.models.search_results import SearchResults
@@ -32,11 +33,22 @@ class TestSearchResults:
         assert results[0].text == "Result 1"
         assert results[1].text == "Result 2"
 
-    def test_init_fails(self):
+    def test_when_search_namespace_prefix_not_defined_on_response_xml_syntax_error_raised(
+        self,
+    ):
+        """
+        Given an XML response without the 'search' namespace prefix defined
+        When creating SearchResults instance with the XML
+        Then a XMLSyntaxError with the expected message should be raised
+        """
         xml_without_namespace = (
-            '<search:response xmlns:search="http://marklogic.com/appservices/adasf" total="2">'  # noqa: E501
+            '<search:response xmlns:foo="http://marklogic.com/appservices/search" total="2">'  # noqa: E501
             "<search:result>Result 1</search:result>"
             "<search:result>Result 2</search:result>"
             "</search:response>"
         )
-        SearchResults(xml_without_namespace)
+        with pytest.raises(
+            etree.XMLSyntaxError,
+            match="Namespace prefix search on response is not defined",
+        ):
+            SearchResults(xml_without_namespace)
