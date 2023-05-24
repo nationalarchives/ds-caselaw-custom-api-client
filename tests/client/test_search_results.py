@@ -1,7 +1,7 @@
 import pytest
 from lxml import etree
 
-from caselawclient.models.search_results import SearchResults
+from caselawclient.models.search_results import SearchMatches, SearchResults
 
 
 class TestSearchResults:
@@ -52,3 +52,33 @@ class TestSearchResults:
             match="Namespace prefix search on response is not defined",
         ):
             SearchResults(xml_without_namespace)
+
+
+class TestSearchMatches:
+    def test_transform_to_html(self):
+        """
+        Given a SearchMatch instantiated with a `search:result` xml node
+        When transform_to_html is called on the SearchMatch instance
+        Then it returns html representation of all its matches
+        """
+        xml = (
+            '<search:result xmlns:search="http://marklogic.com/appservices/search">'
+            "<search:snippet>"
+            "<search:match path=\"fn:doc('/a/c/2015/20.xml')/*:akomaNtoso\">"
+            "text from the document that matched the search"
+            "</search:match>"
+            "<search:match path=\"fn:doc('/a/c/2015/20.xml')/*:akomaNtoso\">"
+            "some more text from the document that matched the search"
+            "</search:match>"
+            "</search:snippet>"
+            "</search:result>"
+        )
+        search_match = SearchMatches(xml)
+        assert search_match.transform_to_html() == (
+            "<p data-path=\"fn:doc('/a/c/2015/20.xml')/*:akomaNtoso\">"
+            "text from the document that matched the search"
+            "</p>"
+            "<p data-path=\"fn:doc('/a/c/2015/20.xml')/*:akomaNtoso\">"
+            "some more text from the document that matched the search"
+            "</p>\n"
+        )
