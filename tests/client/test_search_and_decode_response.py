@@ -1,27 +1,30 @@
 from unittest.mock import patch
 
 from caselawclient.Client import api_client
-from caselawclient.models.search_results import SearchResults
 from caselawclient.search_parameters import SearchParameters
 
 
 @patch("caselawclient.Client.api_client.advanced_search")
-def test_search_judgments_and_parse_results(
-    mock_advanced_search, mock_search_results_response
+def search_judgments_and_decode_response(
+    mock_advanced_search,
+    valid_search_response_xml,
+    generate_mock_search_response,
 ):
     """
-    Given the search parameters for search_judgments_and_parse_results are valid
-    And a mocked api_client response with 2 search results
-    When search_judgments_and_parse_results function is called with the mocked API client
+    Given the search parameters for search_judgments_and_decode_response are valid
+    And a mocked api_client response with search results
+    When search_judgments_and_decode_response function is called with the mocked API client
         and input parameters
     Then the API client's advanced_search method should be called once with the
         appropriate parameters
-    And the search_judgments_and_parse_results function should return an instance of
-        SearchResults with the 2 search results
+    And the search_judgments_and_decode_response function should return the response
+        xml string with all the search results
     """
-    mock_advanced_search.return_value = mock_search_results_response
+    mock_advanced_search.return_value = generate_mock_search_response(
+        valid_search_response_xml
+    )
 
-    search_results = api_client.search_judgments_and_parse_results(
+    search_response = api_client.search_judgments_and_decode_response(
         SearchParameters(
             q="test query",
             court="test court",
@@ -55,9 +58,4 @@ def test_search_judgments_and_parse_results(
         )
     )
 
-    assert isinstance(search_results, SearchResults)
-    assert search_results.total == "2"
-    assert [result.text for result in search_results.results] == [
-        "Result 1",
-        "Result 2",
-    ]
+    assert search_response == valid_search_response_xml

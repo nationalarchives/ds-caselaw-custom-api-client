@@ -15,7 +15,6 @@ from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
-from caselawclient.models.search_results import SearchResults
 from caselawclient.search_parameters import SearchParameters
 
 from . import xml_tools
@@ -706,18 +705,15 @@ class MarklogicApiClient:
         response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
         return decode_multipart(response)
 
-    def search_and_parse_results(
-        self, search_parameters: SearchParameters
-    ) -> SearchResults:
+    def search_and_decode_response(self, search_parameters: SearchParameters) -> str:
         response = self.advanced_search(search_parameters)
-        response_string = decode_multipart(response)
-        return SearchResults(response_string)
+        return decode_multipart(response)
 
-    def search_judgments_and_parse_results(
+    def search_judgments_and_decode_response(
         self, search_parameters: SearchParameters
-    ) -> SearchResults:
+    ) -> str:
         search_parameters.collections = [JUDGMENT_COLLECTION_URI]
-        return self.search_and_parse_results(search_parameters)
+        return self.search_and_decode_response(search_parameters)
 
 
 api_client = MarklogicApiClient(
