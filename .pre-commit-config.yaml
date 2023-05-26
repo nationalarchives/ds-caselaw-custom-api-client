@@ -38,7 +38,7 @@ repos:
     rev: v1.2.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]"]
+        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^src/
         args: ["--strict"]
 
@@ -47,7 +47,7 @@ repos:
     rev: v1.2.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]"]
+        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^tests/
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date

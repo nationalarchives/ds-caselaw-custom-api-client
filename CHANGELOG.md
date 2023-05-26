@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Added `SearchParameters` dataclass for use with search functions using the legacy kwargs from `Client.advanced_search` and new `collections` field for filtering by collections
 - Changed `Client.advanced_search` interface to take in `SearchParameters` as opposed to the legacy kwargs.
 - Added `search_and_decode_response` and `search_judgments_and_decode_response` methods to `Client`
+- Added `SearchResponse`, `SearchResult`, `SearchResultMetadata` classes to encapsulate and process document search responses.
 
 ## [Release 7.0.0]
 - **BREAKING**: Instantiating a`Judgment` object will now raise a `caselawclient.errors.JudgmentNotFoundError` if the uri passed in does not correspond to a valid Judgment, rather than attempting (and failing) to return a `MarklogicResourceNotFoundError`
