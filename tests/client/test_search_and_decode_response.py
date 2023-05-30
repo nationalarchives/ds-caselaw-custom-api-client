@@ -26,7 +26,7 @@ def test_search_judgments_and_decode_response(
 
     search_response = api_client.search_judgments_and_decode_response(
         SearchParameters(
-            q="test query",
+            query="test query",
             court="test court",
             judge="test judge",
             party="test party",
@@ -41,7 +41,7 @@ def test_search_judgments_and_decode_response(
 
     mock_advanced_search.assert_called_once_with(
         SearchParameters(
-            q="test query",
+            query="test query",
             court="test court",
             judge="test judge",
             party="test party",

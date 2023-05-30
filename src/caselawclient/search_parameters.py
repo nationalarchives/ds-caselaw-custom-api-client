@@ -8,7 +8,7 @@ RESULTS_PER_PAGE = 10
 class SearchParameters:
     """Represents search parameters for a case law search."""
 
-    q: Optional[str] = None
+    query: Optional[str] = None
     court: Optional[str] = None
     judge: Optional[str] = None
     party: Optional[str] = None
@@ -33,7 +33,7 @@ class SearchParameters:
             "judge": str(self.judge or ""),
             "page": max(1, int(self.page)),
             "page-size": int(self.page_size),
-            "q": str(self.q or ""),
+            "q": str(self.query or ""),
             "party": str(self.party or ""),
             "neutral_citation": str(self.neutral_citation or ""),
             "specific_keyword": str(self.specific_keyword or ""),

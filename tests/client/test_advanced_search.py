@@ -62,7 +62,7 @@ class TestAdvancedSearch(unittest.TestCase):
         with patch.object(self.client, "invoke"):
             response = self.client.advanced_search(
                 SearchParameters(
-                    q="test query",
+                    query="test query",
                     court="court",
                     judge="judge",
                     party="party",
@@ -114,7 +114,7 @@ class TestAdvancedSearch(unittest.TestCase):
         with patch.object(self.client, "invoke"):
             self.client.invoke.side_effect = exception
             with pytest.raises(Exception) as e:
-                self.client.advanced_search(SearchParameters(q="test query"))
+                self.client.advanced_search(SearchParameters(query="test query"))
         assert e.value == exception
 
     def test_user_can_view_unpublished_but_show_unpublished_is_false(
@@ -132,7 +132,7 @@ class TestAdvancedSearch(unittest.TestCase):
             ):
                 self.client.advanced_search(
                     SearchParameters(
-                        q="my-query",
+                        query="my-query",
                         court="ewhc",
                         judge="a. judge",
                         party="a party",
@@ -178,7 +178,7 @@ class TestAdvancedSearch(unittest.TestCase):
             ):
                 self.client.advanced_search(
                     SearchParameters(
-                        q="my-query",
+                        query="my-query",
                         court="ewhc",
                         judge="a. judge",
                         party="a party",
@@ -207,7 +207,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 with patch.object(logging, "warning") as mock_logging:
                     self.client.advanced_search(
                         SearchParameters(
-                            q="my-query",
+                            query="my-query",
                             court="ewhc",
                             judge="a. judge",
                             party="a party",
