@@ -35,7 +35,7 @@ class TestSearchParametersToMarklogicData:
         THEN it should return a dictionary with the specified parameter values
         """
         search_parameters = SearchParameters(
-            q="test query",
+            query="test query",
             court="test court",
             judge="test judge",
             party="test party",

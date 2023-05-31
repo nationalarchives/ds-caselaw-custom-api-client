@@ -437,7 +437,7 @@ class MarklogicApiClient:
         """
         Performs a search on the entire document set.
 
-        :param q:
+        :param query:
         :param court:
         :param judge:
         :param party:
