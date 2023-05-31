@@ -7,11 +7,14 @@ from caselawclient.responses.search_response import SearchResponse
 class TestSearchResponse:
     def test_total(
         self,
+        valid_search_result_xml,
+        generate_search_response_xml,
     ):
         """
-        Given a SearchResponse instance
-        When calling 'total' on it
-        Then it should return a string representing the total number of results
+        Given a SearchResponse instance with n results
+        When calling 'results' on it
+        Then it should return a list of n SearchResult elements
+        And each element's node attribute should be as expected
         """
         search_response = SearchResponse.from_response_string(
             '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'  # noqa: E501
