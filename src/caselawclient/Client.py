@@ -327,18 +327,18 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "update_judgment.xqy")
 
-    def insert_judgment_xml(
-        self, judgment_uri: str, judgment_xml: Element
+    def insert_document_xml(
+        self, document_uri: str, document_xml: Element
     ) -> requests.Response:
-        xml = ElementTree.tostring(judgment_xml)
+        xml = ElementTree.tostring(document_xml)
 
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.InsertJudgmentDict = {
+        uri = self._format_uri_for_marklogic(document_uri)
+        vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
-            "judgment": xml.decode("utf-8"),
+            "document": xml.decode("utf-8"),
         }
 
-        return self._send_to_eval(vars, "insert_judgment.xqy")
+        return self._send_to_eval(vars, "insert_document.xqy")
 
     def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)

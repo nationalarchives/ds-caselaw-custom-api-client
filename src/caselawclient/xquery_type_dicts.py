@@ -90,9 +90,9 @@ class GetPropertyDict(MarkLogicAPIDict):
     uri: str
 
 
-# insert_judgment.xqy
-class InsertJudgmentDict(MarkLogicAPIDict):
-    judgment: str
+# insert_document.xqy
+class InsertDocumentDict(MarkLogicAPIDict):
+    document: str
     uri: str
 
 
