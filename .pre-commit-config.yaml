@@ -35,18 +35,20 @@ repos:
 
   # Check the library itself in strict mode
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: v1.3.0
     hooks:
       - id: mypy
+        name: mypy-src
         additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^src/
         args: ["--strict"]
 
   # Check the tests in regular mode
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: v1.3.0
     hooks:
       - id: mypy
+        name: mypy-tests
         additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^tests/
 

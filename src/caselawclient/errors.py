@@ -65,6 +65,12 @@ class MarklogicCommunicationError(MarklogicAPIError):
     )
 
 
+class GatewayTimeoutError(MarklogicAPIError):
+    "This will not contain XML, because it is a failure to connect to the Marklogic server."
+    status_code = 504
+    default_message = "The gateway to MarkLogic timed out."
+
+
 class InvalidContentHashError(MarklogicAPIError):
     # This error does not come from Marklogic, but is an error raised by this API...
     status_code = 422

@@ -1,7 +1,30 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
+import requests
+import responses
+
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.errors import GatewayTimeoutError
+
+
+class TestErrors(unittest.TestCase):
+    def setUp(self):
+        self.client = MarklogicApiClient("", "", "", False)
+
+    def test_timeout(self):
+        with responses.RequestsMock() as response_list:  # type: ignore[attr-defined]
+            response_list.add(
+                responses.GET,  # type: ignore[attr-defined]
+                url="http://example.com",
+                status=504,
+                body="Example Gateway Timeout.",
+            )
+            response = requests.get("http://example.com")
+        with pytest.raises(GatewayTimeoutError) as gateway_exception:
+            self.client._raise_for_status(response)
+        assert "Example Gateway Timeout" in str(gateway_exception.value)
 
 
 class ApiClientTest(unittest.TestCase):
