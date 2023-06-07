@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 10.0.0]
+- **BREAKING**: Renamed `insert_judgment_xml` to `insert_document_xml` and enhanced it to place a document in the appropriate collection (`press_summary` or `judgment`)
+
 ## [Release 9.0.0]
 - **BREAKING**: Changed `SearchParameters` dataclass field from `q` to `query`
 - Added `search_helpers` module to allow clients to search and process document search responses in one go.

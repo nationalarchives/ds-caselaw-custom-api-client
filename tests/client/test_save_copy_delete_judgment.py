@@ -71,19 +71,19 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             with pytest.raises(InvalidContentHashError):
                 self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
 
-    def test_insert_judgment_xml(self):
+    def test_insert_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/ewca/civ/2004/632"
-            judgment_str = "<root>My new judgment</root>"
-            judgment_xml = ElementTree.fromstring(judgment_str)
+            uri = "/ewca/civ/2004/632/"
+            document_str = "<root>My judgment</root>"
+            document_xml = ElementTree.fromstring(document_str)
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
-                "judgment": judgment_str,
+                "document": document_str,
             }
-            self.client.insert_judgment_xml(uri, judgment_xml)
+            self.client.insert_document_xml(uri, document_xml)
 
             assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "insert_judgment.xqy")
+                os.path.join(ROOT_DIR, "xquery", "insert_document.xqy")
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
