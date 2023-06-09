@@ -8,8 +8,8 @@ declare variable $document as xs:string external;
 let $document_xml := xdmp:unquote($document)
 
 let $collections :=
-  if (fn:contains($uri, 'press_summary'))
-  then ("press_summary")
+  if (fn:contains($uri, 'press-summary'))
+  then ("press-summary")
   else ("judgment")
 
 return dls:document-insert-and-manage($uri, fn:true(), $document_xml, (), (), $collections)
