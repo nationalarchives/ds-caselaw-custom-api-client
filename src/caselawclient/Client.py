@@ -22,6 +22,7 @@ from . import xquery_type_dicts as query_dicts
 from .content_hash import validate_content_hash
 from .errors import MarklogicAPIError  # noqa: F401
 from .errors import (
+    GatewayTimeoutError,
     MarklogicBadRequestError,
     MarklogicCheckoutConflictError,
     MarklogicCommunicationError,
@@ -67,6 +68,7 @@ class MarklogicApiClient:
         401: MarklogicUnauthorizedError,
         403: MarklogicNotPermittedError,
         404: MarklogicResourceNotFoundError,
+        504: GatewayTimeoutError,
     }
     error_code_classes: dict[str, Type[MarklogicAPIError]] = {
         "XDMP-DOCNOTFOUND": MarklogicResourceNotFoundError,

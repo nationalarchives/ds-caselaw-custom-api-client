@@ -24,12 +24,12 @@ lxml = "^4.9.2"
 ds-caselaw-utils = "^1.0.0"
 boto3 = "^1.26.112"
 
-
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
-pytest = "7.3.2"
+pytest = "^7.3.2"
 mypy-boto3-s3 = "^1.26.104"
 mypy-boto3-sns = "^1.26.69"
+responses = "^0.23.1"
 
 [build-system]
 requires = ["poetry-core"]
