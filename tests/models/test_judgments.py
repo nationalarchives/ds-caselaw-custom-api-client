@@ -176,13 +176,6 @@ class TestJudgment:
             "test/1234", show_unpublished=True
         )
 
-    def test_judgment_is_failure(self, mock_api_client):
-        successful_judgment = Judgment("test/1234", mock_api_client)
-        failing_judgment = Judgment("failures/test/1234", mock_api_client)
-
-        assert successful_judgment.is_failure is False
-        assert failing_judgment.is_failure is True
-
     def test_judgment_status(self, mock_api_client):
         in_progress_judgment = Judgment("test/1234", mock_api_client)
         in_progress_judgment.is_held = False
@@ -198,6 +191,15 @@ class TestJudgment:
         on_hold_judgment.is_held = False
         published_judgment.is_published = True
         assert published_judgment.status == JUDGMENT_STATUS_PUBLISHED
+
+
+class TestJudgmentValidation:
+    def test_judgment_is_failure(self, mock_api_client):
+        successful_judgment = Judgment("test/1234", mock_api_client)
+        failing_judgment = Judgment("failures/test/1234", mock_api_client)
+
+        assert successful_judgment.is_failure is False
+        assert failing_judgment.is_failure is True
 
     def test_has_name(self, mock_api_client):
         judgment_with_name = Judgment("test/1234", mock_api_client)
@@ -256,40 +258,37 @@ class TestJudgment:
         assert judgment_with_court.has_court is True
         assert judgment_without_court.has_court is False
 
-
-class TestJudgmentPublication:
-    def test_judgment_not_publishable_if_held(self, mock_api_client):
+    @pytest.mark.parametrize(
+        "is_held, has_name, has_ncn, has_valid_ncn, has_court, publishable",
+        [
+            (False, True, True, True, True, True),  # Publishable
+            (True, True, True, True, True, False),  # Held
+            (False, False, True, True, True, False),  # No name
+            (False, True, False, True, True, False),  # No NCN
+            (False, True, True, False, True, False),  # Invalid NCN
+            (False, True, True, True, False, False),  # No court
+        ],
+    )
+    def test_judgment_is_publishable_conditions(
+        self,
+        mock_api_client,
+        is_held,
+        has_name,
+        has_ncn,
+        has_valid_ncn,
+        has_court,
+        publishable,
+    ):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_held = True
+        judgment.is_held = is_held
+        judgment.has_name = has_name
+        judgment.has_ncn = has_ncn
+        judgment.has_valid_ncn = has_valid_ncn
+        judgment.has_court = has_court
 
-        assert judgment.is_publishable is False
+        assert judgment.is_publishable is publishable
 
-    def test_judgment_not_publishable_if_missing_name(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_name = False
-
-        assert judgment.is_publishable is False
-
-    def test_judgment_not_publishable_if_missing_ncn(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_ncn = False
-
-        assert judgment.is_publishable is False
-
-    def test_judgment_not_publishable_if_invalid_ncn(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_valid_ncn = False
-
-        assert judgment.is_publishable is False
-
-    def test_judgment_not_publishable_if_missing_court(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.has_valid_ncn = True
-        judgment.has_court = False
-
-        assert judgment.is_publishable is False
-
-    def test_judgment_is_publishable_if_conditions_met(self, mock_api_client):
+    def test_judgment_validation_failure_messages_if_no_messages(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
         judgment.is_held = False
         judgment.has_name = True
@@ -297,8 +296,28 @@ class TestJudgmentPublication:
         judgment.has_valid_ncn = True
         judgment.has_court = True
 
-        assert judgment.is_publishable is True
+        assert judgment.validation_failure_messages == []
 
+    def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.is_held = True
+        judgment.has_name = False
+        judgment.has_ncn = False
+        judgment.has_valid_ncn = False
+        judgment.has_court = False
+
+        assert judgment.validation_failure_messages == sorted(
+            [
+                "This judgment is currently on hold",
+                "This judgment has no name",
+                "This judgment has no neutral citation number",
+                "The neutral citation number of this judgment is not valid",
+                "This judgment has no court",
+            ]
+        )
+
+
+class TestJudgmentPublication:
     def test_publish_fails_if_not_publishable(self, mock_api_client):
         with pytest.raises(CannotPublishUnpublishableJudgment):
             judgment = Judgment("test/1234", mock_api_client)
