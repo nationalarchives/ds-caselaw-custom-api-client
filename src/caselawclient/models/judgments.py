@@ -171,18 +171,53 @@ class Judgment:
 
         return True
 
+    # attribute name, value which passes validation, error message
+    VALIDATION_ATTRIBUTES: list[tuple[str, bool, str]] = [
+        (
+            "is_failure",
+            False,
+            "This judgment has failed to parse",
+        ),
+        (
+            "is_held",
+            False,
+            "This judgment is currently on hold",
+        ),
+        (
+            "has_name",
+            True,
+            "This judgment has no name",
+        ),
+        (
+            "has_ncn",
+            True,
+            "This judgment has no neutral citation number",
+        ),
+        (
+            "has_valid_ncn",
+            True,
+            "The neutral citation number of this judgment is not valid",
+        ),
+        (
+            "has_court",
+            True,
+            "This judgment has no court",
+        ),
+    ]
+
     @cached_property
     def is_publishable(self) -> bool:
-        if (
-            self.is_held
-            or not self.has_name
-            or not self.has_ncn
-            or not self.has_valid_ncn
-            or not self.has_court
-        ):
-            return False
+        # If there are any validation failures, there will be no messages in the list.
+        # An empty list (which is falsy) therefore means the judgment can be published safely.
+        return not self.validation_failure_messages
 
-        return True
+    @cached_property
+    def validation_failure_messages(self) -> list[str]:
+        exception_list = []
+        for function_name, pass_value, message in self.VALIDATION_ATTRIBUTES:
+            if getattr(self, function_name) != pass_value:
+                exception_list.append(message)
+        return sorted(exception_list)
 
     @property
     def status(self) -> str:

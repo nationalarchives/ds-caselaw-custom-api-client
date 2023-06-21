@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Unreleased]
+
+- `Judgment.validation_failure_messages` method for retrieving a list of strings with reasons a judgment cannot be published.
+
 ## [Release 10.0.1]
 - Fixed `insert_document_xml` to pattern match uris with and add documents to `press-summary`, not `press_summary`.
 
