@@ -201,6 +201,13 @@ class TestJudgmentValidation:
         assert successful_judgment.is_failure is False
         assert failing_judgment.is_failure is True
 
+    def test_judgment_is_parked(self, mock_api_client):
+        normal_judgment = Judgment("test/1234", mock_api_client)
+        parked_judgment = Judgment("parked/a1b2c3d4", mock_api_client)
+
+        assert normal_judgment.is_parked is False
+        assert parked_judgment.is_parked is True
+
     def test_has_name(self, mock_api_client):
         judgment_with_name = Judgment("test/1234", mock_api_client)
         judgment_with_name.name = "Judgment v Judgement"
@@ -259,20 +266,22 @@ class TestJudgmentValidation:
         assert judgment_without_court.has_court is False
 
     @pytest.mark.parametrize(
-        "is_held, has_name, has_ncn, has_valid_ncn, has_court, publishable",
+        "is_parked, is_held, has_name, has_ncn, has_valid_ncn, has_court, publishable",
         [
-            (False, True, True, True, True, True),  # Publishable
-            (True, True, True, True, True, False),  # Held
-            (False, False, True, True, True, False),  # No name
-            (False, True, False, True, True, False),  # No NCN
-            (False, True, True, False, True, False),  # Invalid NCN
-            (False, True, True, True, False, False),  # No court
+            (False, False, True, True, True, True, True),  # Publishable
+            (False, True, True, True, True, True, False),  # Held
+            (True, False, True, True, True, True, False),  # Parked
+            (False, False, False, True, True, True, False),  # No name
+            (False, False, True, False, True, True, False),  # No NCN
+            (False, False, True, True, False, True, False),  # Invalid NCN
+            (False, False, True, True, True, False, False),  # No court
         ],
     )
     def test_judgment_is_publishable_conditions(
         self,
         mock_api_client,
         is_held,
+        is_parked,
         has_name,
         has_ncn,
         has_valid_ncn,
@@ -280,6 +289,7 @@ class TestJudgmentValidation:
         publishable,
     ):
         judgment = Judgment("test/1234", mock_api_client)
+        judgment.is_parked = is_parked
         judgment.is_held = is_held
         judgment.has_name = has_name
         judgment.has_ncn = has_ncn
@@ -290,6 +300,7 @@ class TestJudgmentValidation:
 
     def test_judgment_validation_failure_messages_if_no_messages(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
+        judgment.is_parked = False
         judgment.is_held = False
         judgment.has_name = True
         judgment.has_ncn = True
@@ -300,6 +311,7 @@ class TestJudgmentValidation:
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
+        judgment.is_parked = True
         judgment.is_held = True
         judgment.has_name = False
         judgment.has_ncn = False
@@ -308,6 +320,7 @@ class TestJudgmentValidation:
 
         assert judgment.validation_failure_messages == sorted(
             [
+                "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
                 "This judgment has no name",
                 "This judgment has no neutral citation number",
