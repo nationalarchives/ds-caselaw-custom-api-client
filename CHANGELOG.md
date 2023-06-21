@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 10.1.0]
+
 - `Judgment.validation_failure_messages` method for retrieving a list of strings with reasons a judgment cannot be published.
 
 ## [Release 10.0.1]
@@ -227,8 +229,14 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.1.0...HEAD
-[Release 6.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.0.0...v6.1.0
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.1.0...HEAD
+[Release 10.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.0.1...v10.1.0
+[Release 10.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.0.0...v10.0.1
+[Release 10.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v9.0.0...v10.0.0
+[Release 9.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v8.0.0...v9.0.0
+[Release 8.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v7.0.0...v8.0.0
+[Release 7.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.1.0...v7.0.0
+[Release 6.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v6.0.0...v6.1.0
 [Release 6.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.2...v6.0.0
 [Release 5.3.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.1...v5.3.2
 [Release 5.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v5.3.0...v5.3.1
