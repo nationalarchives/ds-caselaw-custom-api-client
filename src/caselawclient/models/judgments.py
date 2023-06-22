@@ -134,6 +134,12 @@ class Judgment:
         return False
 
     @cached_property
+    def is_parked(self) -> bool:
+        if "parked" in self.uri:
+            return True
+        return False
+
+    @cached_property
     def is_editable(self) -> bool:
         if "error" in self._get_root():
             return False
@@ -177,6 +183,11 @@ class Judgment:
             "is_failure",
             False,
             "This judgment has failed to parse",
+        ),
+        (
+            "is_parked",
+            False,
+            "This judgment is currently parked at a temporary URI",
         ),
         (
             "is_held",
