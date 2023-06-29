@@ -100,7 +100,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
-    def test_copy_judgment(self):
+    def test_copy_document(self):
         with patch.object(self.client, "eval") as mock_eval:
             old_uri = "/judgment/old_uri"
             new_uri = "/judgment/new_uri"
@@ -108,9 +108,9 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 "old_uri": "/judgment/old_uri.xml",
                 "new_uri": "/judgment/new_uri.xml",
             }
-            self.client.copy_judgment(old_uri, new_uri)
+            self.client.copy_document(old_uri, new_uri)
 
             assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "copy_judgment.xqy")
+                os.path.join(ROOT_DIR, "xquery", "copy_document.xqy")
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

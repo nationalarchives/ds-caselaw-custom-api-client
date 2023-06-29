@@ -602,15 +602,15 @@ class MarklogicApiClient:
         vars: query_dicts.DeleteJudgmentDict = {"uri": uri}
         return self._send_to_eval(vars, "delete_judgment.xqy")
 
-    def copy_judgment(self, old: str, new: str) -> requests.Response:
+    def copy_document(self, old: str, new: str) -> requests.Response:
         old_uri = self._format_uri_for_marklogic(old)
         new_uri = self._format_uri_for_marklogic(new)
 
-        vars: query_dicts.CopyJudgmentDict = {
+        vars: query_dicts.CopyDocumentDict = {
             "old_uri": old_uri,
             "new_uri": new_uri,
         }
-        return self._send_to_eval(vars, "copy_judgment.xqy")
+        return self._send_to_eval(vars, "copy_document.xqy")
 
     def break_checkout(self, judgment_uri: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)

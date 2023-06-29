@@ -25,8 +25,8 @@ class CheckoutJudgmentDict(MarkLogicAPIDict):
     uri: str
 
 
-# copy_judgment.xqy
-class CopyJudgmentDict(MarkLogicAPIDict):
+# copy_document.xqy
+class CopyDocumentDict(MarkLogicAPIDict):
     new_uri: str
     old_uri: str
 
