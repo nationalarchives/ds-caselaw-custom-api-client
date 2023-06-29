@@ -255,18 +255,18 @@ class TestJudgmentValidation:
 
         assert judgment.has_valid_ncn is valid
 
-    def test_has_court(self, mock_api_client):
+    def test_has_court_is_covered_by_has_valid_court(self, mock_api_client):
         judgment_with_court = Judgment("test/1234", mock_api_client)
-        judgment_with_court.court = "[2023] TEST 1234"
+        judgment_with_court.court = "UKSC"
 
         judgment_without_court = Judgment("test/1234", mock_api_client)
         judgment_without_court.court = ""
 
-        assert judgment_with_court.has_court is True
-        assert judgment_without_court.has_court is False
+        assert judgment_with_court.has_valid_court is True
+        assert judgment_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_parked, is_held, has_name, has_ncn, has_valid_ncn, has_court, publishable",
+        "is_parked, is_held, has_name, has_ncn, has_valid_ncn, has_valid_court, publishable",
         [
             (False, False, True, True, True, True, True),  # Publishable
             (False, True, True, True, True, True, False),  # Held
@@ -274,7 +274,7 @@ class TestJudgmentValidation:
             (False, False, False, True, True, True, False),  # No name
             (False, False, True, False, True, True, False),  # No NCN
             (False, False, True, True, False, True, False),  # Invalid NCN
-            (False, False, True, True, True, False, False),  # No court
+            (False, False, True, True, True, False, False),  # Invalid court
         ],
     )
     def test_judgment_is_publishable_conditions(
@@ -285,7 +285,7 @@ class TestJudgmentValidation:
         has_name,
         has_ncn,
         has_valid_ncn,
-        has_court,
+        has_valid_court,
         publishable,
     ):
         judgment = Judgment("test/1234", mock_api_client)
@@ -294,7 +294,7 @@ class TestJudgmentValidation:
         judgment.has_name = has_name
         judgment.has_ncn = has_ncn
         judgment.has_valid_ncn = has_valid_ncn
-        judgment.has_court = has_court
+        judgment.has_valid_court = has_valid_court
 
         assert judgment.is_publishable is publishable
 
@@ -305,7 +305,7 @@ class TestJudgmentValidation:
         judgment.has_name = True
         judgment.has_ncn = True
         judgment.has_valid_ncn = True
-        judgment.has_court = True
+        judgment.has_valid_court = True
 
         assert judgment.validation_failure_messages == []
 
@@ -316,7 +316,7 @@ class TestJudgmentValidation:
         judgment.has_name = False
         judgment.has_ncn = False
         judgment.has_valid_ncn = False
-        judgment.has_court = False
+        judgment.has_valid_court = False
 
         assert judgment.validation_failure_messages == sorted(
             [
@@ -325,7 +325,7 @@ class TestJudgmentValidation:
                 "This judgment has no name",
                 "This judgment has no neutral citation number",
                 "The neutral citation number of this judgment is not valid",
-                "This judgment has no court",
+                "The court is not valid",
             ]
         )
 

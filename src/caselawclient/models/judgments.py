@@ -2,7 +2,8 @@ import datetime
 from functools import cached_property
 from typing import Optional
 
-from ds_caselaw_utils import neutral_url
+from ds_caselaw_utils import courts, neutral_url
+from ds_caselaw_utils.courts import CourtNotFoundException
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.Client import MarklogicApiClient
@@ -171,11 +172,11 @@ class Judgment:
         return True
 
     @cached_property
-    def has_court(self) -> bool:
-        if not self.court:
+    def has_valid_court(self) -> bool:
+        try:
+            return bool(courts.get_by_code(self.court))
+        except CourtNotFoundException:
             return False
-
-        return True
 
     # attribute name, value which passes validation, error message
     VALIDATION_ATTRIBUTES: list[tuple[str, bool, str]] = [
@@ -210,9 +211,9 @@ class Judgment:
             "The neutral citation number of this judgment is not valid",
         ),
         (
-            "has_court",
+            "has_valid_court",
             True,
-            "This judgment has no court",
+            "The court is not valid",
         ),
     ]
 
