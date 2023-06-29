@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- **Breaking**: Renamed `copy_judgment` to `copy_document`
+- `copy_document` now adds the document to the appropriate collection based on the uri.
+
 ## [Release 10.1.0]
 
 - `Judgment.validation_failure_messages` method for retrieving a list of strings with reasons a judgment cannot be published.
