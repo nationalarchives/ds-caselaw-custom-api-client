@@ -55,6 +55,18 @@ class TestGetSetMetadata(unittest.TestCase):
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
+    def test_set_judgment_citation_whitespace_stripping(self):
+        with patch.object(self.client, "eval") as mock_eval:
+            uri = "judgment/uri"
+            content = "  [2033] UKSC 1234  "
+            expected_vars = {"uri": "/judgment/uri.xml", "content": "[2033] UKSC 1234"}
+            self.client.set_judgment_citation(uri, content)
+
+            assert mock_eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_citation.xqy")
+            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+
     @patch("caselawclient.Client.decode_multipart")
     def test_get_judgment_court(self, decode):
         with patch.object(self.client, "eval") as mock_eval:
