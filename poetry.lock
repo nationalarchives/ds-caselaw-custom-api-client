@@ -338,17 +338,14 @@ files = [
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.26.69"
-description = "Type annotations for boto3.SNS 1.26.69 service generated with mypy-boto3-builder 7.12.3"
+version = "1.27.0"
+description = "Type annotations for boto3.SNS 1.27.0 service generated with mypy-boto3-builder 7.14.5"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mypy-boto3-sns-1.26.69.tar.gz", hash = "sha256:3cf0b746ee2c66fb7cb318ff19b34c148cb308f9a47b7d7668980de4cfe9f8a9"},
-    {file = "mypy_boto3_sns-1.26.69-py3-none-any.whl", hash = "sha256:d4cf04336cf0394b9e0143f35a553c7279b30691f16b90c11ef9cb836dd241d5"},
+    {file = "mypy-boto3-sns-1.27.0.tar.gz", hash = "sha256:e3e3dfa97da3b01057723c9c90f6b4f17df334ef9839f287f82ea3fff95e2d9f"},
+    {file = "mypy_boto3_sns-1.27.0-py3-none-any.whl", hash = "sha256:ee94fe3d96ff2f61cc5e5a9bb73d803a1f17140d22c6353fcd2f3b38e3629e5f"},
 ]
-
-[package.dependencies]
-typing-extensions = ">=4.1.0"
 
 [[package]]
 name = "packaging"
@@ -628,17 +625,6 @@ python-versions = "*"
 files = [
     {file = "types-PyYAML-6.0.12.10.tar.gz", hash = "sha256:ebab3d0700b946553724ae6ca636ea932c1b0868701d4af121630e78d695fc97"},
     {file = "types_PyYAML-6.0.12.10-py3-none-any.whl", hash = "sha256:662fa444963eff9b68120d70cda1af5a5f2aa57900003c2006d7626450eaae5f"},
-]
-
-[[package]]
-name = "typing-extensions"
-version = "4.6.3"
-description = "Backported and Experimental Type Hints for Python 3.7+"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "typing_extensions-4.6.3-py3-none-any.whl", hash = "sha256:88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26"},
-    {file = "typing_extensions-4.6.3.tar.gz", hash = "sha256:d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5"},
 ]
 
 [[package]]
