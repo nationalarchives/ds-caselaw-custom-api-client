@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- **Breaking**: Renamed `Judgment` to `Document`
+
 ## [Release 11.0.1]
 
 - Check for a valid court, rather than an present one

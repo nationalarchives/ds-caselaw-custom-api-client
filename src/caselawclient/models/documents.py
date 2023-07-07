@@ -7,7 +7,7 @@ from ds_caselaw_utils.courts import CourtNotFoundException
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.errors import JudgmentNotFoundError
+from caselawclient.errors import DocumentNotFoundError
 
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
@@ -19,21 +19,21 @@ from .utilities.aws import (
     uri_for_s3,
 )
 
-JUDGMENT_STATUS_HOLD = "On hold"
-JUDGMENT_STATUS_PUBLISHED = "Published"
-JUDGMENT_STATUS_IN_PROGRESS = "In progress"
+DOCUMENT_STATUS_HOLD = "On hold"
+DOCUMENT_STATUS_PUBLISHED = "Published"
+DOCUMENT_STATUS_IN_PROGRESS = "In progress"
 
 
-class CannotPublishUnpublishableJudgment(Exception):
+class CannotPublishUnpublishableDocument(Exception):
     pass
 
 
-class Judgment:
+class Document:
     def __init__(self, uri: str, api_client: MarklogicApiClient):
         self.uri = uri.strip("/")
         self.api_client = api_client
         if not self.judgment_exists():
-            raise JudgmentNotFoundError(f"Judgment {self.uri} does not exist")
+            raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
     def judgment_exists(self) -> bool:
         return self.api_client.judgment_exists(self.uri)
@@ -234,16 +234,16 @@ class Judgment:
     @property
     def status(self) -> str:
         if self.is_published:
-            return JUDGMENT_STATUS_PUBLISHED
+            return DOCUMENT_STATUS_PUBLISHED
 
         if self.is_held:
-            return JUDGMENT_STATUS_HOLD
+            return DOCUMENT_STATUS_HOLD
 
-        return JUDGMENT_STATUS_IN_PROGRESS
+        return DOCUMENT_STATUS_IN_PROGRESS
 
     def publish(self) -> None:
         if not self.is_publishable:
-            raise CannotPublishUnpublishableJudgment
+            raise CannotPublishUnpublishableDocument
 
         publish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, True)

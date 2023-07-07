@@ -4,13 +4,13 @@ from unittest.mock import Mock, patch
 import pytest
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.errors import JudgmentNotFoundError
-from caselawclient.models.judgments import (
-    JUDGMENT_STATUS_HOLD,
-    JUDGMENT_STATUS_IN_PROGRESS,
-    JUDGMENT_STATUS_PUBLISHED,
-    CannotPublishUnpublishableJudgment,
-    Judgment,
+from caselawclient.errors import DocumentNotFoundError
+from caselawclient.models.documents import (
+    DOCUMENT_STATUS_HOLD,
+    DOCUMENT_STATUS_IN_PROGRESS,
+    DOCUMENT_STATUS_PUBLISHED,
+    CannotPublishUnpublishableDocument,
+    Document,
 )
 
 
@@ -19,30 +19,30 @@ def mock_api_client():
     return Mock(spec=MarklogicApiClient)
 
 
-class TestJudgment:
+class TestDocument:
     def test_uri_strips_slashes(self, mock_api_client):
-        judgment = Judgment("////test/1234/////", mock_api_client)
+        document = Document("////test/1234/////", mock_api_client)
 
-        assert judgment.uri == "test/1234"
+        assert document.uri == "test/1234"
 
     def test_public_uri(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
         assert (
-            judgment.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
+            document.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
         )
 
     def test_judgment_exists_check(self, mock_api_client):
         mock_api_client.judgment_exists.return_value = False
-        with pytest.raises(JudgmentNotFoundError):
-            Judgment("not_a_real_judgment", mock_api_client)
+        with pytest.raises(DocumentNotFoundError):
+            Document("not_a_real_judgment", mock_api_client)
 
     def test_judgment_neutral_citation(self, mock_api_client):
         mock_api_client.get_judgment_citation.return_value = "[2023] TEST 1234"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.neutral_citation == "[2023] TEST 1234"
+        assert document.neutral_citation == "[2023] TEST 1234"
         mock_api_client.get_judgment_citation.assert_called_once_with("test/1234")
 
     def test_judgment_name(self, mock_api_client):
@@ -50,82 +50,82 @@ class TestJudgment:
             "Test Judgment v Test Judgement"
         )
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.name == "Test Judgment v Test Judgement"
+        assert document.name == "Test Judgment v Test Judgement"
         mock_api_client.get_judgment_name.assert_called_once_with("test/1234")
 
     def test_judgment_court(self, mock_api_client):
         mock_api_client.get_judgment_court.return_value = "Court of Testing"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.court == "Court of Testing"
+        assert document.court == "Court of Testing"
         mock_api_client.get_judgment_court.assert_called_once_with("test/1234")
 
     def test_judgment_date_as_string(self, mock_api_client):
         mock_api_client.get_judgment_work_date.return_value = "2023-02-03"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.judgment_date_as_string == "2023-02-03"
-        assert judgment.judgment_date_as_date == datetime.date(2023, 2, 3)
+        assert document.judgment_date_as_string == "2023-02-03"
+        assert document.judgment_date_as_date == datetime.date(2023, 2, 3)
         mock_api_client.get_judgment_work_date.assert_called_once_with("test/1234")
 
     def test_judgment_is_published(self, mock_api_client):
         mock_api_client.get_published.return_value = True
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.is_published is True
+        assert document.is_published is True
         mock_api_client.get_published.assert_called_once_with("test/1234")
 
     def test_judgment_is_held(self, mock_api_client):
         mock_api_client.get_property.return_value = False
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.is_held is False
+        assert document.is_held is False
         mock_api_client.get_property.assert_called_once_with("test/1234", "editor-hold")
 
     def test_judgment_is_sensitive(self, mock_api_client):
         mock_api_client.get_sensitive.return_value = True
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.is_sensitive is True
+        assert document.is_sensitive is True
         mock_api_client.get_sensitive.assert_called_once_with("test/1234")
 
     def test_judgment_is_anonymised(self, mock_api_client):
         mock_api_client.get_anonymised.return_value = True
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.is_anonymised is True
+        assert document.is_anonymised is True
         mock_api_client.get_anonymised.assert_called_once_with("test/1234")
 
     def test_judgment_has_supplementary_materials(self, mock_api_client):
         mock_api_client.get_supplemental.return_value = True
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.has_supplementary_materials is True
+        assert document.has_supplementary_materials is True
         mock_api_client.get_supplemental.assert_called_once_with("test/1234")
 
     def test_judgment_source_name(self, mock_api_client):
         mock_api_client.get_property.return_value = "Test Name"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.source_name == "Test Name"
+        assert document.source_name == "Test Name"
         mock_api_client.get_property.assert_called_once_with("test/1234", "source-name")
 
     def test_judgment_source_email(self, mock_api_client):
         mock_api_client.get_property.return_value = "testemail@example.com"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.source_email == "testemail@example.com"
+        assert document.source_email == "testemail@example.com"
         mock_api_client.get_property.assert_called_once_with(
             "test/1234", "source-email"
         )
@@ -133,100 +133,100 @@ class TestJudgment:
     def test_judgment_consignment_reference(self, mock_api_client):
         mock_api_client.get_property.return_value = "TDR-2023-ABC"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.consignment_reference == "TDR-2023-ABC"
+        assert document.consignment_reference == "TDR-2023-ABC"
         mock_api_client.get_property.assert_called_once_with(
             "test/1234", "transfer-consignment-reference"
         )
 
-    @patch("caselawclient.models.judgments.generate_docx_url")
+    @patch("caselawclient.models.documents.generate_docx_url")
     def test_judgment_docx_url(self, mock_url_generator, mock_api_client):
         mock_url_generator.return_value = "https://example.com/mock.docx"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.docx_url == "https://example.com/mock.docx"
+        assert document.docx_url == "https://example.com/mock.docx"
         mock_url_generator.assert_called_once
 
-    @patch("caselawclient.models.judgments.generate_pdf_url")
+    @patch("caselawclient.models.documents.generate_pdf_url")
     def test_judgment_pdf_url(self, mock_url_generator, mock_api_client):
         mock_url_generator.return_value = "https://example.com/mock.pdf"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.pdf_url == "https://example.com/mock.pdf"
+        assert document.pdf_url == "https://example.com/mock.pdf"
         mock_url_generator.assert_called_once
 
     def test_judgment_assigned_to(self, mock_api_client):
         mock_api_client.get_property.return_value = "testuser"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.assigned_to == "testuser"
+        assert document.assigned_to == "testuser"
         mock_api_client.get_property.assert_called_once_with("test/1234", "assigned-to")
 
     def test_judgment_content_as_xml(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = "<xml></xml>"
 
-        judgment = Judgment("test/1234", mock_api_client)
+        document = Document("test/1234", mock_api_client)
 
-        assert judgment.content_as_xml() == "<xml></xml>"
+        assert document.content_as_xml() == "<xml></xml>"
         mock_api_client.get_judgment_xml.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 
-    def test_judgment_status(self, mock_api_client):
-        in_progress_judgment = Judgment("test/1234", mock_api_client)
-        in_progress_judgment.is_held = False
-        in_progress_judgment.is_published = False
-        assert in_progress_judgment.status == JUDGMENT_STATUS_IN_PROGRESS
+    def test_DOCUMENT_STATUS(self, mock_api_client):
+        in_progress_document = Document("test/1234", mock_api_client)
+        in_progress_document.is_held = False
+        in_progress_document.is_published = False
+        assert in_progress_document.status == DOCUMENT_STATUS_IN_PROGRESS
 
-        on_hold_judgment = Judgment("test/1234", mock_api_client)
-        on_hold_judgment.is_held = True
-        on_hold_judgment.is_published = False
-        assert on_hold_judgment.status == JUDGMENT_STATUS_HOLD
+        on_hold_document = Document("test/1234", mock_api_client)
+        on_hold_document.is_held = True
+        on_hold_document.is_published = False
+        assert on_hold_document.status == DOCUMENT_STATUS_HOLD
 
-        published_judgment = Judgment("test/1234", mock_api_client)
-        on_hold_judgment.is_held = False
-        published_judgment.is_published = True
-        assert published_judgment.status == JUDGMENT_STATUS_PUBLISHED
+        published_document = Document("test/1234", mock_api_client)
+        published_document.is_held = False
+        published_document.is_published = True
+        assert published_document.status == DOCUMENT_STATUS_PUBLISHED
 
 
-class TestJudgmentValidation:
+class TestDocumentValidation:
     def test_judgment_is_failure(self, mock_api_client):
-        successful_judgment = Judgment("test/1234", mock_api_client)
-        failing_judgment = Judgment("failures/test/1234", mock_api_client)
+        successful_document = Document("test/1234", mock_api_client)
+        failing_document = Document("failures/test/1234", mock_api_client)
 
-        assert successful_judgment.is_failure is False
-        assert failing_judgment.is_failure is True
+        assert successful_document.is_failure is False
+        assert failing_document.is_failure is True
 
     def test_judgment_is_parked(self, mock_api_client):
-        normal_judgment = Judgment("test/1234", mock_api_client)
-        parked_judgment = Judgment("parked/a1b2c3d4", mock_api_client)
+        normal_document = Document("test/1234", mock_api_client)
+        parked_document = Document("parked/a1b2c3d4", mock_api_client)
 
-        assert normal_judgment.is_parked is False
-        assert parked_judgment.is_parked is True
+        assert normal_document.is_parked is False
+        assert parked_document.is_parked is True
 
     def test_has_name(self, mock_api_client):
-        judgment_with_name = Judgment("test/1234", mock_api_client)
-        judgment_with_name.name = "Judgment v Judgement"
+        document_with_name = Document("test/1234", mock_api_client)
+        document_with_name.name = "Judgment v Judgement"
 
-        judgment_without_name = Judgment("test/1234", mock_api_client)
-        judgment_without_name.name = ""
+        document_without_name = Document("test/1234", mock_api_client)
+        document_without_name.name = ""
 
-        assert judgment_with_name.has_name is True
-        assert judgment_without_name.has_name is False
+        assert document_with_name.has_name is True
+        assert document_without_name.has_name is False
 
     def test_has_ncn(self, mock_api_client):
-        judgment_with_ncn = Judgment("test/1234", mock_api_client)
-        judgment_with_ncn.neutral_citation = "[2023] TEST 1234"
+        document_with_ncn = Document("test/1234", mock_api_client)
+        document_with_ncn.neutral_citation = "[2023] TEST 1234"
 
-        judgment_without_ncn = Judgment("test/1234", mock_api_client)
-        judgment_without_ncn.neutral_citation = ""
+        document_without_ncn = Document("test/1234", mock_api_client)
+        document_without_ncn.neutral_citation = ""
 
-        assert judgment_with_ncn.has_ncn is True
-        assert judgment_without_ncn.has_ncn is False
+        assert document_with_ncn.has_ncn is True
+        assert document_without_ncn.has_ncn is False
 
     @pytest.mark.parametrize(
         "ncn_to_test, valid",
@@ -250,20 +250,20 @@ class TestJudgmentValidation:
         ],
     )
     def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.neutral_citation = ncn_to_test
+        document = Document("test/1234", mock_api_client)
+        document.neutral_citation = ncn_to_test
 
-        assert judgment.has_valid_ncn is valid
+        assert document.has_valid_ncn is valid
 
     def test_has_court_is_covered_by_has_valid_court(self, mock_api_client):
-        judgment_with_court = Judgment("test/1234", mock_api_client)
-        judgment_with_court.court = "UKSC"
+        document_with_court = Document("test/1234", mock_api_client)
+        document_with_court.court = "UKSC"
 
-        judgment_without_court = Judgment("test/1234", mock_api_client)
-        judgment_without_court.court = ""
+        document_without_court = Document("test/1234", mock_api_client)
+        document_without_court.court = ""
 
-        assert judgment_with_court.has_valid_court is True
-        assert judgment_without_court.has_valid_court is False
+        assert document_with_court.has_valid_court is True
+        assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
         "is_parked, is_held, has_name, has_ncn, has_valid_ncn, has_valid_court, publishable",
@@ -288,37 +288,37 @@ class TestJudgmentValidation:
         has_valid_court,
         publishable,
     ):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_parked = is_parked
-        judgment.is_held = is_held
-        judgment.has_name = has_name
-        judgment.has_ncn = has_ncn
-        judgment.has_valid_ncn = has_valid_ncn
-        judgment.has_valid_court = has_valid_court
+        document = Document("test/1234", mock_api_client)
+        document.is_parked = is_parked
+        document.is_held = is_held
+        document.has_name = has_name
+        document.has_ncn = has_ncn
+        document.has_valid_ncn = has_valid_ncn
+        document.has_valid_court = has_valid_court
 
-        assert judgment.is_publishable is publishable
+        assert document.is_publishable is publishable
 
     def test_judgment_validation_failure_messages_if_no_messages(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_parked = False
-        judgment.is_held = False
-        judgment.has_name = True
-        judgment.has_ncn = True
-        judgment.has_valid_ncn = True
-        judgment.has_valid_court = True
+        document = Document("test/1234", mock_api_client)
+        document.is_parked = False
+        document.is_held = False
+        document.has_name = True
+        document.has_ncn = True
+        document.has_valid_ncn = True
+        document.has_valid_court = True
 
-        assert judgment.validation_failure_messages == []
+        assert document.validation_failure_messages == []
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_parked = True
-        judgment.is_held = True
-        judgment.has_name = False
-        judgment.has_ncn = False
-        judgment.has_valid_ncn = False
-        judgment.has_valid_court = False
+        document = Document("test/1234", mock_api_client)
+        document.is_parked = True
+        document.is_held = True
+        document.has_name = False
+        document.has_ncn = False
+        document.has_valid_ncn = False
+        document.has_valid_court = False
 
-        assert judgment.validation_failure_messages == sorted(
+        assert document.validation_failure_messages == sorted(
             [
                 "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
@@ -330,35 +330,35 @@ class TestJudgmentValidation:
         )
 
 
-class TestJudgmentPublication:
+class TestDocumentPublication:
     def test_publish_fails_if_not_publishable(self, mock_api_client):
-        with pytest.raises(CannotPublishUnpublishableJudgment):
-            judgment = Judgment("test/1234", mock_api_client)
-            judgment.is_publishable = False
-            judgment.publish()
+        with pytest.raises(CannotPublishUnpublishableDocument):
+            document = Document("test/1234", mock_api_client)
+            document.is_publishable = False
+            document.publish()
             mock_api_client.set_published.assert_not_called()
 
-    @patch("caselawclient.models.judgments.notify_changed")
-    @patch("caselawclient.models.judgments.publish_documents")
+    @patch("caselawclient.models.documents.notify_changed")
+    @patch("caselawclient.models.documents.publish_documents")
     def test_publish(
         self, mock_publish_documents, mock_notify_changed, mock_api_client
     ):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.is_publishable = True
-        judgment.publish()
+        document = Document("test/1234", mock_api_client)
+        document.is_publishable = True
+        document.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
         mock_notify_changed.assert_called_once_with(
             uri="test/1234", status="published", enrich=True
         )
 
-    @patch("caselawclient.models.judgments.notify_changed")
-    @patch("caselawclient.models.judgments.unpublish_documents")
+    @patch("caselawclient.models.documents.notify_changed")
+    @patch("caselawclient.models.documents.unpublish_documents")
     def test_unpublish(
         self, mock_unpublish_documents, mock_notify_changed, mock_api_client
     ):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.unpublish()
+        document = Document("test/1234", mock_api_client)
+        document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
         mock_api_client.break_checkout.assert_called_once_with("test/1234")
@@ -367,17 +367,17 @@ class TestJudgmentPublication:
         )
 
 
-class TestJudgmentHold:
+class TestDocumentHold:
     def test_hold(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.hold()
+        document = Document("test/1234", mock_api_client)
+        document.hold()
         mock_api_client.set_property.assert_called_once_with(
             "test/1234", "editor-hold", "true"
         )
 
     def test_unhold(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
-        judgment.unhold()
+        document = Document("test/1234", mock_api_client)
+        document.unhold()
         mock_api_client.set_property.assert_called_once_with(
             "test/1234", "editor-hold", "false"
         )
