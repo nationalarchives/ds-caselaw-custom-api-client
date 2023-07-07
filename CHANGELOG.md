@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 11.0.1]
+
+- Check for a valid court, rather than an present one
+- Trim whitespace when trying to set an NCN
 ## [Release 11.0.0]
 
 - **Breaking**: Renamed `copy_judgment` to `copy_document`
@@ -234,7 +238,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.1...HEAD
+[Release 11.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.0...v11.0.1
 [Release 11.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.1.0...v11.0.0
 [Release 10.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.0.1...v10.1.0
 [Release 10.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.0.0...v10.0.1
