@@ -93,6 +93,11 @@ def delete_from_bucket(uri: str, bucket: str) -> None:
 
 
 def publish_documents(uri: str) -> None:
+    """
+    Copy assets from the unpublished bucket to the published one.
+    Don't copy parser logs and package tar gz.
+    TODO: consider refactoring with copy_assets
+    """
     client = create_s3_client()
 
     public_bucket = env("PUBLIC_ASSET_BUCKET")
@@ -146,3 +151,40 @@ def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
         Subject=f"Updated: {uri} {status}",
         MessageAttributes=message_attributes,
     )
+
+
+def copy_assets(old_uri: str, new_uri: str) -> None:
+    """
+    Copy *unpublished* assets from one path to another,
+    renaming DOCX and PDF files as appropriate.
+    """
+    client = create_s3_client()
+    bucket = env("PRIVATE_ASSET_BUCKET")
+    old_uri = uri_for_s3(old_uri)
+    new_uri = uri_for_s3(new_uri)
+
+    response = client.list_objects(Bucket=bucket, Prefix=old_uri)
+
+    for result in response.get("Contents", []):
+        old_key = str(result["Key"])
+        new_key = build_new_key(old_key, new_uri)
+        if new_key is not None:
+            try:
+                source: CopySourceTypeDef = {"Bucket": bucket, "Key": old_key}
+                client.copy(source, bucket, new_key)
+            except botocore.client.ClientError as e:
+                logging.warning(
+                    f"Unable to copy file {old_key} to new location {new_key}, error: {e}"
+                )
+
+
+def build_new_key(old_key: str, new_uri: str) -> str:
+    """Ensure that DOCX and PDF filenames are modified to reflect their new home
+    as we get the name of the new S3 path"""
+    old_filename = old_key.rsplit("/", 1)[-1]
+
+    if old_filename.endswith(".docx") or old_filename.endswith(".pdf"):
+        new_filename = new_uri.replace("/", "_")
+        return f"{new_uri}/{new_filename}.{old_filename.split('.')[-1]}"
+    else:
+        return f"{new_uri}/{old_filename}"
