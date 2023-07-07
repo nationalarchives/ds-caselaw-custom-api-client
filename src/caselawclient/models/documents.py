@@ -2,7 +2,7 @@ import datetime
 from functools import cached_property
 from typing import Optional
 
-from ds_caselaw_utils import courts, neutral_url
+from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from requests_toolbelt.multipart import decoder
 
@@ -29,6 +29,38 @@ class CannotPublishUnpublishableDocument(Exception):
 
 
 class Document:
+    document_noun = "document"
+    document_noun_plural = "documents"
+
+    # attribute name, value which passes validation, error message
+    attributes_to_validate: list[tuple[str, bool, str]] = [
+        (
+            "is_failure",
+            False,
+            "This {document_noun} has failed to parse",
+        ),
+        (
+            "is_parked",
+            False,
+            "This {document_noun} is currently parked at a temporary URI",
+        ),
+        (
+            "is_held",
+            False,
+            "This {document_noun} is currently on hold",
+        ),
+        (
+            "has_name",
+            True,
+            "This {document_noun} has no name",
+        ),
+        (
+            "has_valid_court",
+            True,
+            "The court for this {document_noun} is not valid",
+        ),
+    ]
+
     def __init__(self, uri: str, api_client: MarklogicApiClient):
         self.uri = uri.strip("/")
         self.api_client = api_client
@@ -41,10 +73,6 @@ class Document:
     @property
     def public_uri(self) -> str:
         return "https://caselaw.nationalarchives.gov.uk/{uri}".format(uri=self.uri)
-
-    @cached_property
-    def neutral_citation(self) -> str:
-        return self.api_client.get_judgment_citation(self.uri)
 
     @cached_property
     def name(self) -> str:
@@ -157,65 +185,11 @@ class Document:
         return True
 
     @cached_property
-    def has_ncn(self) -> bool:
-        if not self.neutral_citation:
-            return False
-
-        return True
-
-    @cached_property
-    def has_valid_ncn(self) -> bool:
-        # The checks that we can convert an NCN to a URI using the function from utils
-        if not self.has_ncn or not neutral_url(self.neutral_citation):
-            return False
-
-        return True
-
-    @cached_property
     def has_valid_court(self) -> bool:
         try:
             return bool(courts.get_by_code(self.court))
         except CourtNotFoundException:
             return False
-
-    # attribute name, value which passes validation, error message
-    VALIDATION_ATTRIBUTES: list[tuple[str, bool, str]] = [
-        (
-            "is_failure",
-            False,
-            "This judgment has failed to parse",
-        ),
-        (
-            "is_parked",
-            False,
-            "This judgment is currently parked at a temporary URI",
-        ),
-        (
-            "is_held",
-            False,
-            "This judgment is currently on hold",
-        ),
-        (
-            "has_name",
-            True,
-            "This judgment has no name",
-        ),
-        (
-            "has_ncn",
-            True,
-            "This judgment has no neutral citation number",
-        ),
-        (
-            "has_valid_ncn",
-            True,
-            "The neutral citation number of this judgment is not valid",
-        ),
-        (
-            "has_valid_court",
-            True,
-            "The court is not valid",
-        ),
-    ]
 
     @cached_property
     def is_publishable(self) -> bool:
@@ -226,9 +200,9 @@ class Document:
     @cached_property
     def validation_failure_messages(self) -> list[str]:
         exception_list = []
-        for function_name, pass_value, message in self.VALIDATION_ATTRIBUTES:
+        for function_name, pass_value, message in self.attributes_to_validate:
             if getattr(self, function_name) != pass_value:
-                exception_list.append(message)
+                exception_list.append(message.format(document_noun=self.document_noun))
         return sorted(exception_list)
 
     @property

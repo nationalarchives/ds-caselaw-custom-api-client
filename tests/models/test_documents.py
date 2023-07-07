@@ -37,14 +37,6 @@ class TestDocument:
         with pytest.raises(DocumentNotFoundError):
             Document("not_a_real_judgment", mock_api_client)
 
-    def test_judgment_neutral_citation(self, mock_api_client):
-        mock_api_client.get_judgment_citation.return_value = "[2023] TEST 1234"
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.neutral_citation == "[2023] TEST 1234"
-        mock_api_client.get_judgment_citation.assert_called_once_with("test/1234")
-
     def test_judgment_name(self, mock_api_client):
         mock_api_client.get_judgment_name.return_value = (
             "Test Judgment v Test Judgement"
@@ -218,43 +210,6 @@ class TestDocumentValidation:
         assert document_with_name.has_name is True
         assert document_without_name.has_name is False
 
-    def test_has_ncn(self, mock_api_client):
-        document_with_ncn = Document("test/1234", mock_api_client)
-        document_with_ncn.neutral_citation = "[2023] TEST 1234"
-
-        document_without_ncn = Document("test/1234", mock_api_client)
-        document_without_ncn.neutral_citation = ""
-
-        assert document_with_ncn.has_ncn is True
-        assert document_without_ncn.has_ncn is False
-
-    @pytest.mark.parametrize(
-        "ncn_to_test, valid",
-        [
-            ("[2022] UKSC 1", True),
-            ("[1604] EWCA Crim 555", True),
-            ("[2022] EWHC 1 (Comm)", True),
-            ("[1999] EWCOP 7", True),
-            ("[2022] UKUT 1 (IAC)", True),
-            ("[2022] EAT 1", True),
-            ("[2022] UKFTT 1 (TC)", True),
-            ("[2022] UKFTT 1 (GRC)", True),
-            ("[2022] EWHC 1 (KB)", True),
-            ("", False),
-            ("1604] EWCA Crim 555", False),
-            ("[2022 EWHC 1 Comm", False),
-            ("[1999] EWCOP", False),
-            ("[2022] UKUT B1 IAC", False),
-            ("[2022] EAT A", False),
-            ("[2022] NOTACOURT 1 TC", False),
-        ],
-    )
-    def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
-        document = Document("test/1234", mock_api_client)
-        document.neutral_citation = ncn_to_test
-
-        assert document.has_valid_ncn is valid
-
     def test_has_court_is_covered_by_has_valid_court(self, mock_api_client):
         document_with_court = Document("test/1234", mock_api_client)
         document_with_court.court = "UKSC"
@@ -266,25 +221,21 @@ class TestDocumentValidation:
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_parked, is_held, has_name, has_ncn, has_valid_ncn, has_valid_court, publishable",
+        "is_parked, is_held, has_name, has_valid_court, publishable",
         [
-            (False, False, True, True, True, True, True),  # Publishable
-            (False, True, True, True, True, True, False),  # Held
-            (True, False, True, True, True, True, False),  # Parked
-            (False, False, False, True, True, True, False),  # No name
-            (False, False, True, False, True, True, False),  # No NCN
-            (False, False, True, True, False, True, False),  # Invalid NCN
-            (False, False, True, True, True, False, False),  # Invalid court
+            (False, False, True, True, True),  # Publishable
+            (False, True, True, True, False),  # Held
+            (True, False, True, True, False),  # Parked
+            (False, False, False, True, False),  # No name
+            (False, False, True, False, False),  # Invalid court
         ],
     )
-    def test_judgment_is_publishable_conditions(
+    def test_document_is_publishable_conditions(
         self,
         mock_api_client,
         is_held,
         is_parked,
         has_name,
-        has_ncn,
-        has_valid_ncn,
         has_valid_court,
         publishable,
     ):
@@ -292,19 +243,14 @@ class TestDocumentValidation:
         document.is_parked = is_parked
         document.is_held = is_held
         document.has_name = has_name
-        document.has_ncn = has_ncn
-        document.has_valid_ncn = has_valid_ncn
         document.has_valid_court = has_valid_court
 
         assert document.is_publishable is publishable
 
-    def test_judgment_validation_failure_messages_if_no_messages(self, mock_api_client):
+    def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
         document.is_parked = False
         document.is_held = False
-        document.has_name = True
-        document.has_ncn = True
-        document.has_valid_ncn = True
         document.has_valid_court = True
 
         assert document.validation_failure_messages == []
@@ -314,18 +260,14 @@ class TestDocumentValidation:
         document.is_parked = True
         document.is_held = True
         document.has_name = False
-        document.has_ncn = False
-        document.has_valid_ncn = False
         document.has_valid_court = False
 
         assert document.validation_failure_messages == sorted(
             [
-                "This judgment is currently parked at a temporary URI",
-                "This judgment is currently on hold",
-                "This judgment has no name",
-                "This judgment has no neutral citation number",
-                "The neutral citation number of this judgment is not valid",
-                "The court is not valid",
+                "This document is currently parked at a temporary URI",
+                "This document is currently on hold",
+                "This document has no name",
+                "The court for this document is not valid",
             ]
         )
 
