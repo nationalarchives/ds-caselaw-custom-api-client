@@ -49,19 +49,19 @@ class ApiClientTest(unittest.TestCase):
         )
 
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
-    def test_judgment_exists(self, mock_decode):
+    def test_document_exists(self, mock_decode):
         mock_decode.return_value = "true"
-        assert self.client.judgment_exists("/2029/eat/1") is True
+        assert self.client.document_exists("/2029/eat/1") is True
         mock_decode.assert_called_with(
-            {"uri": "/2029/eat/1.xml"}, "judgment_exists.xqy"
+            {"uri": "/2029/eat/1.xml"}, "document_exists.xqy"
         )
 
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
-    def test_judgment_not_exists(self, mock_decode):
+    def test_document_not_exists(self, mock_decode):
         mock_decode.return_value = "false"
-        assert self.client.judgment_exists("/2029/eat/1") is False
+        assert self.client.document_exists("/2029/eat/1") is False
         mock_decode.assert_called_with(
-            {"uri": "/2029/eat/1.xml"}, "judgment_exists.xqy"
+            {"uri": "/2029/eat/1.xml"}, "document_exists.xqy"
         )
 
     @patch("caselawclient.Client.Path")

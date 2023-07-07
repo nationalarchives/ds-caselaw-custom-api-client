@@ -36,6 +36,11 @@ class DeleteJudgmentDict(MarkLogicAPIDict):
     uri: str
 
 
+# document_exists.xqy
+class DocumentExistsDict(MarkLogicAPIDict):
+    uri: str
+
+
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     show_unpublished: Optional[bool]
@@ -93,11 +98,6 @@ class GetPropertyDict(MarkLogicAPIDict):
 # insert_document.xqy
 class InsertDocumentDict(MarkLogicAPIDict):
     document: str
-    uri: str
-
-
-# judgment_exists.xqy
-class JudgmentExistsDict(MarkLogicAPIDict):
     uri: str
 
 

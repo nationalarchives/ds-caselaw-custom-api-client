@@ -199,12 +199,12 @@ class MarklogicApiClient:
         logging.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
-    def judgment_exists(self, judgment_uri: str) -> bool:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.JudgmentExistsDict = {
+    def document_exists(self, document_uri: str) -> bool:
+        uri = self._format_uri_for_marklogic(document_uri)
+        vars: query_dicts.DocumentExistsDict = {
             "uri": uri,
         }
-        decoded_response = self._eval_and_decode(vars, "judgment_exists.xqy")
+        decoded_response = self._eval_and_decode(vars, "document_exists.xqy")
 
         if decoded_response == "true":
             return True

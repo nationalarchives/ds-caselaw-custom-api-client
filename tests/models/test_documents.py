@@ -32,8 +32,8 @@ class TestDocument:
             document.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
         )
 
-    def test_judgment_exists_check(self, mock_api_client):
-        mock_api_client.judgment_exists.return_value = False
+    def test_document_exists_check(self, mock_api_client):
+        mock_api_client.document_exists.return_value = False
         with pytest.raises(DocumentNotFoundError):
             Document("not_a_real_judgment", mock_api_client)
 

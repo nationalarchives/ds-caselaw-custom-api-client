@@ -32,11 +32,11 @@ class Document:
     def __init__(self, uri: str, api_client: MarklogicApiClient):
         self.uri = uri.strip("/")
         self.api_client = api_client
-        if not self.judgment_exists():
+        if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-    def judgment_exists(self) -> bool:
-        return self.api_client.judgment_exists(self.uri)
+    def document_exists(self) -> bool:
+        return self.api_client.document_exists(self.uri)
 
     @property
     def public_uri(self) -> str:
