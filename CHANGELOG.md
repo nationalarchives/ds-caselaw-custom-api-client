@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 12.0.0]
+
 - **Breaking**: Renamed `Judgment` to `Document`
 - **Breaking**: `Document.judgment_exists` is now `Document.document_exists`
 
@@ -241,7 +243,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v12.0.0...HEAD
+[Release 12.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.1...v12.0.0
 [Release 11.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.0...v11.0.1
 [Release 11.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.1.0...v11.0.0
 [Release 10.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v10.0.1...v10.1.0
