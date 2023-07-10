@@ -79,7 +79,7 @@ class InvalidContentHashError(MarklogicAPIError):
     )
 
 
-class JudgmentNotFoundError(MarklogicAPIError):
+class DocumentNotFoundError(MarklogicAPIError):
     # This error does not come from Marklogic, but is an error raised by this API...
     status_code = 404
-    default_message = "The judgment was not found"
+    default_message = "The document was not found"
