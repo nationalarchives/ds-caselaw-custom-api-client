@@ -4,7 +4,7 @@ This repository is part of the [Find Case Law](https://caselaw.nationalarchives.
 
 # MarkLogic API Client
 
-![PyPI](https://img.shields.io/pypi/v/ds-caselaw-marklogic-api-client) ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/pypi/ds-caselaw-marklogic-api-client)
+[![PyPI](https://img.shields.io/pypi/v/ds-caselaw-marklogic-api-client)](https://pypi.org/project/ds-caselaw-marklogic-api-client/) ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/pypi/ds-caselaw-marklogic-api-client)
 
 This is an API Client for connecting to Marklogic for The National Archive's Caselaw site.
 
@@ -12,14 +12,18 @@ This package is published on PyPI: https://pypi.org/project/ds-caselaw-marklogic
 
 ## Usage
 
-Include the API client in your project using PIP:
+Include the API client in your project using Pip or Poetry:
 ```bash
 pip install ds-caselaw-marklogic-api-client
 ```
 
+```bash
+poetry add ds-caselaw-marklogic-api-client
+```
+
 or in your projects `requirements.txt` with:
 ```text
-ds-caselaw-marklogic-api-client~=2.0.0
+ds-caselaw-marklogic-api-client~=12.0.0
 ```
 
 ### Using the client
