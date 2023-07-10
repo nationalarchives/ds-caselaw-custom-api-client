@@ -26,6 +26,10 @@ if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient
 
 
+class VersionsObjectDict(VersionsDict):
+    object: "Document"
+
+
 class CannotPublishUnpublishableDocument(Exception):
     pass
 
@@ -147,6 +151,22 @@ class Document:
             return render_versions(decoded_versions.parts)
         except AttributeError:
             return []
+
+    @cached_property
+    def versions_with_objects(self) -> list[VersionsObjectDict]:
+        document_class = type(self)
+        versions_with_objects: list[VersionsObjectDict] = []
+
+        for version in self.versions:
+            versions_with_objects.append(
+                {
+                    "uri": version["uri"],
+                    "version": version["version"],
+                    "object": document_class(version["uri"], self.api_client),
+                }
+            )
+
+        return versions_with_objects
 
     def content_as_xml(self) -> str:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
