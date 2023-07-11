@@ -1,23 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base",
-    ":approveMajorUpdates",
-    ":automergeLinters",
-    ":automergePatch",
-    ":automergePr",
-    ":automergeRequireAllStatusChecks",
-    ":automergeTesters",
-    ":dependencyDashboard",
-    ":enablePreCommit",
-    ":maintainLockFilesWeekly"
-  ],
-  "platformAutomerge": true,
-  "minimumReleaseAge": "2 days",
-  "packageRules": [
-    {
-      "matchDatasources": ["npm"],
-      "minimumReleaseAge": "3 days"
-    }
-  ]
+  "extends": ["github>nationalarchives/ds-find-caselaw-docs"]
 }
