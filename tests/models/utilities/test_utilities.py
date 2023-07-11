@@ -1,11 +1,12 @@
-from unittest.mock import Mock
+import os
+from unittest.mock import Mock, patch
 
 from caselawclient.models.utilities import (
     extract_version,
     get_judgment_root,
     render_versions,
 )
-from caselawclient.models.utilities.aws import build_new_key
+from caselawclient.models.utilities.aws import build_new_key, copy_assets
 
 
 class TestUtils:
@@ -76,4 +77,20 @@ class TestAWSUtils:
         new_uri = "ukpc/2023/120"
         assert build_new_key(old_key, new_uri) == "ukpc/2023/120/image1.jpg"
 
-    """TODO: there are no tests for copy_assets"""
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_copy_assets(self, client):
+        """
+        Copy *unpublished* assets from one path to another,
+        renaming DOCX and PDF files as appropriate.
+        """
+
+        client.return_value.list_objects.return_value = {
+            "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]
+        }
+        copy_assets("uksc/2023/1", "ukpc/1999/9")
+        client.return_value.copy.assert_called_with(
+            {"Bucket": "MY_BUCKET", "Key": "uksc/2023/1/uksc_2023_1.docx"},
+            "MY_BUCKET",
+            "ukpc/1999/9/ukpc_1999_9.docx",
+        )

@@ -97,6 +97,6 @@ class TestJudgmentValidation:
                 "This judgment has no name",
                 "This judgment has no neutral citation number",
                 "The neutral citation number of this judgment is not valid",
-                "The court for this judgment is not valid",
+                "The court is not valid",
             ]
         )
