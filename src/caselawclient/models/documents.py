@@ -359,3 +359,9 @@ class Document:
 
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
+
+    def move_and_overwrite(self, target: str) -> None:
+        ...
+
+    def move_empty(self, target: str) -> None:
+        ...
