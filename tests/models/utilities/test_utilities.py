@@ -1,12 +1,18 @@
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
+
+import ds_caselaw_utils
+import pytest
 
 from caselawclient.models.utilities import (
     extract_version,
     get_judgment_root,
+    move,
     render_versions,
 )
 from caselawclient.models.utilities.aws import build_new_key, copy_assets
+
+from ...factories import JudgmentFactory
 
 
 class TestUtils:
@@ -94,3 +100,36 @@ class TestAWSUtils:
             "MY_BUCKET",
             "ukpc/1999/9/ukpc_1999_9.docx",
         )
+
+
+class TestOverwrite:
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch("caselawclient.models.utilities.move.api_client")
+    @patch("boto3.session.Session.client")
+    @patch("caselawclient.models.utilities.move.Judgment")
+    def test_overwrite_judgment_success(
+        self, fake_judgment, fake_boto3_client, fake_api_client
+    ):
+        """Given the target judgment does not exist,
+        we continue to move the judgment to the new location
+        (where moving is copy + delete)"""
+        # fake_judgment.return_value = JudgmentFactory.build()
+        ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
+        fake_api_client.judgment_exists.return_value = True
+        fake_api_client.copy_judgment.return_value = True
+        fake_api_client.delete_judgment.return_value = True
+        fake_boto3_client.list_objects.return_value = []
+        fake_judgment.return_value = JudgmentFactory.build()
+
+        result = move.overwrite_judgment("old/uri", "[2002] EAT 1")
+        fake_api_client.save_judgment_xml.assert_called_with(
+            "new/uri", ANY, annotation="overwritten from old/uri"
+        )
+        fake_api_client.delete_judgment.assert_called_with("old/uri")
+        assert result == "new/uri"
+
+    def test_overwrite_judgment_unparseable_citation(self):
+        ds_caselaw_utils.neutral_url = MagicMock(return_value=None)
+
+        with pytest.raises(move.NeutralCitationToUriError):
+            move.overwrite_judgment("old/uri", "Wrong neutral citation")

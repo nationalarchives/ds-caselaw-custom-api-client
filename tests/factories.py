@@ -3,26 +3,13 @@ from typing import Any
 from unittest.mock import Mock
 
 import factory
-from django.contrib.auth import get_user_model
 from typing_extensions import TypeAlias
 
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 
-User = get_user_model()
 
-
-class UserFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = User
-
-    username = factory.Faker("email")
-    email = username
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-
-
-class JudgmentFactory:
+class DocumentFactory:
     # "name_of_attribute": ("name of incoming param", "default value")
     PARAMS_MAP: dict[str, tuple[str, Any]] = {
         "uri": ("uri", "test/2023/123"),
@@ -112,3 +99,7 @@ class SearchResultFactory(SimpleFactory):
         "metadata": SearchResultMetadataFactory.build(),
         "is_failure": False,
     }
+
+
+class JudgmentFactory(DocumentFactory):
+    pass
