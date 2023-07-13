@@ -1,12 +1,11 @@
 import datetime
 from functools import cached_property
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from requests_toolbelt.multipart import decoder
 
-from caselawclient.Client import MarklogicApiClient
 from caselawclient.errors import DocumentNotFoundError
 
 from .utilities import VersionsDict, get_judgment_root, render_versions
@@ -22,6 +21,9 @@ from .utilities.aws import (
 DOCUMENT_STATUS_HOLD = "On hold"
 DOCUMENT_STATUS_PUBLISHED = "Published"
 DOCUMENT_STATUS_IN_PROGRESS = "In progress"
+
+if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
 
 
 class CannotPublishUnpublishableDocument(Exception):
@@ -61,7 +63,7 @@ class Document:
         ),
     ]
 
-    def __init__(self, uri: str, api_client: MarklogicApiClient):
+    def __init__(self, uri: str, api_client: "MarklogicApiClient"):
         self.uri = uri.strip("/")
         self.api_client = api_client
         if not self.document_exists():
