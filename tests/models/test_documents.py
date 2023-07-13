@@ -168,7 +168,7 @@ class TestDocument:
             "test/1234", show_unpublished=True
         )
 
-    def test_DOCUMENT_STATUS(self, mock_api_client):
+    def test_document_status(self, mock_api_client):
         in_progress_document = Document("test/1234", mock_api_client)
         in_progress_document.is_held = False
         in_progress_document.is_published = False
