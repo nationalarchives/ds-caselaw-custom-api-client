@@ -15,6 +15,8 @@ from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
+from caselawclient.models.documents import Document
+from caselawclient.models.judgments import Judgment
 from caselawclient.search_parameters import SearchParameters
 
 from . import xml_tools
@@ -92,6 +94,9 @@ class MarklogicApiClient:
         # Apply auth / common headers to the session
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
+
+    def get_document_by_uri(self, uri: str) -> Document:
+        return Judgment(uri, self)
 
     def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
         """
