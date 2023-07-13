@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- Add a new `MarklogicApiClient.get_document_by_uri` method to retrieve a document (of any type) by URI.
+
 ## [Release 12.0.0]
 
 - **Breaking**: Renamed `Judgment` to `Document`
