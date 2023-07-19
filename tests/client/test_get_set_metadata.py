@@ -24,21 +24,6 @@ def test_get_properties_for_search_results(send, decode):
     assert send.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
 
-@patch("caselawclient.Client.decode_multipart")
-@patch("caselawclient.Client.MarklogicApiClient.eval")
-def test_get_judgment_citation(send, decode):
-    uri = "judgment/uri"
-    expected_vars = {"uri": "/judgment/uri.xml"}
-    decode.return_value = "ewca/fam/1"  # The decoder is called
-    retval = MarklogicApiClient("", "", "", False).get_judgment_citation(uri)
-    assert retval == "ewca/fam/1"
-
-    assert send.call_args.args[0] == (
-        os.path.join(ROOT_DIR, "xquery", "get_metadata_citation.xqy")
-    )
-    assert send.call_args.kwargs["vars"] == json.dumps(expected_vars)
-
-
 class TestGetSetMetadata(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
@@ -67,20 +52,6 @@ class TestGetSetMetadata(unittest.TestCase):
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
-    @patch("caselawclient.Client.decode_multipart")
-    def test_get_judgment_court(self, decode):
-        with patch.object(self.client, "eval") as mock_eval:
-            decode.return_value = "EWCA-Fam"
-            uri = "judgment/uri"
-            expected_vars = {"uri": "/judgment/uri.xml"}
-            retval = self.client.get_judgment_court(uri)
-            assert retval == "EWCA-Fam"
-
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "get_metadata_court.xqy")
-            )
-            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
-
     def test_set_judgment_court(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = "judgment/uri"
@@ -90,20 +61,6 @@ class TestGetSetMetadata(unittest.TestCase):
 
             assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "set_metadata_court.xqy")
-            )
-            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
-
-    @patch("caselawclient.Client.decode_multipart")
-    def test_get_judgment_date(self, decode):
-        with patch.object(self.client, "eval") as mock_eval:
-            decode.return_value = "2022-01-01"
-            uri = "judgment/uri"
-            expected_vars = {"uri": "/judgment/uri.xml"}
-            retval = self.client.get_judgment_work_date(uri)
-            assert retval == "2022-01-01"
-
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "get_metadata_work_date.xqy")
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 

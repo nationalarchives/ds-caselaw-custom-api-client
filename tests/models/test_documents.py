@@ -38,31 +38,67 @@ class TestDocument:
             Document("not_a_real_judgment", mock_api_client)
 
     def test_judgment_name(self, mock_api_client):
-        mock_api_client.get_judgment_name.return_value = (
-            "Test Judgment v Test Judgement"
-        )
+        mock_api_client.get_judgment_xml.return_value = """
+            <root xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <akn:FRBRname value="Test Claimant v Test Defendant"/>
+            </root>
+        """
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.name == "Test Judgment v Test Judgement"
-        mock_api_client.get_judgment_name.assert_called_once_with("test/1234")
+        assert document.name == "Test Claimant v Test Defendant"
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
 
     def test_judgment_court(self, mock_api_client):
-        mock_api_client.get_judgment_court.return_value = "Court of Testing"
+        mock_api_client.get_judgment_xml.return_value = """
+            <root xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <akn:akomaNtoso>
+                    <akn:judgment>
+                        <akn:meta>
+                            <akn:proprietary>
+                                <uk:court>Court of Testing</uk:court>
+                            </akn:proprietary>
+                        </akn:meta>
+                    </akn:judgment>
+                </akn:akomaNtoso>
+            </root>
+        """
 
         document = Document("test/1234", mock_api_client)
 
         assert document.court == "Court of Testing"
-        mock_api_client.get_judgment_court.assert_called_once_with("test/1234")
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
 
     def test_judgment_date_as_string(self, mock_api_client):
-        mock_api_client.get_judgment_work_date.return_value = "2023-02-03"
+        mock_api_client.get_judgment_xml.return_value = """
+            <root xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <akn:akomaNtoso>
+                    <akn:judgment>
+                        <akn:meta>
+                            <akn:identification>
+                                <akn:FRBRWork>
+                                    <akn:FRBRdate date="2023-02-03"/>
+                                </akn:FRBRWork>
+                            </akn:identification>
+                        </akn:meta>
+                    </akn:judgment>
+                </akn:akomaNtoso>
+            </root>
+        """
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.judgment_date_as_string == "2023-02-03"
-        assert document.judgment_date_as_date == datetime.date(2023, 2, 3)
-        mock_api_client.get_judgment_work_date.assert_called_once_with("test/1234")
+        assert document.document_date_as_string == "2023-02-03"
+        assert document.document_date_as_date == datetime.date(2023, 2, 3)
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
 
     def test_judgment_is_published(self, mock_api_client):
         mock_api_client.get_published.return_value = True
@@ -163,7 +199,7 @@ class TestDocument:
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.content_as_xml() == "<xml></xml>"
+        assert document.content_as_xml == "<xml></xml>"
         mock_api_client.get_judgment_xml.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
@@ -248,6 +284,12 @@ class TestDocumentValidation:
         assert document.is_publishable is publishable
 
     def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
+        mock_api_client.get_judgment_xml.return_value = """
+            <root xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <akn:FRBRname value="Test Claimant v Test Defendant"/>
+            </root>
+        """
+
         document = Document("test/1234", mock_api_client)
         document.is_parked = False
         document.is_held = False
