@@ -104,24 +104,22 @@ class TestAWSUtils:
 
 class TestOverwrite:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
-    @patch("caselawclient.models.utilities.move.api_client")
     @patch("boto3.session.Session.client")
     @patch("caselawclient.models.utilities.move.Judgment")
-    def test_overwrite_judgment_success(
-        self, fake_judgment, fake_boto3_client, fake_api_client
-    ):
+    def test_overwrite_judgment_success(self, fake_judgment, fake_boto3_client):
         """Given the target judgment does not exist,
         we continue to move the judgment to the new location
         (where moving is copy + delete)"""
         # fake_judgment.return_value = JudgmentFactory.build()
         ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
+        fake_api_client = MagicMock()
         fake_api_client.judgment_exists.return_value = True
         fake_api_client.copy_judgment.return_value = True
         fake_api_client.delete_judgment.return_value = True
         fake_boto3_client.list_objects.return_value = []
         fake_judgment.return_value = JudgmentFactory.build()
 
-        result = move.overwrite_judgment("old/uri", "[2002] EAT 1")
+        result = move.overwrite_judgment("old/uri", "[2002] EAT 1", fake_api_client)
         fake_api_client.save_judgment_xml.assert_called_with(
             "new/uri", ANY, annotation="overwritten from old/uri"
         )
@@ -130,22 +128,23 @@ class TestOverwrite:
 
     def test_overwrite_judgment_unparseable_citation(self):
         ds_caselaw_utils.neutral_url = MagicMock(return_value=None)
+        fake_api_client = MagicMock()
 
         with pytest.raises(move.NeutralCitationToUriError):
-            move.overwrite_judgment("old/uri", "Wrong neutral citation")
+            move.overwrite_judgment(
+                "old/uri", "Wrong neutral citation", fake_api_client
+            )
 
 
 class TestMove:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch("boto3.session.Session.client")
-    @patch("caselawclient.models.utilities.move.api_client")
     @patch("caselawclient.models.utilities.move.set_metadata")
     @patch("caselawclient.models.utilities.move.copy_assets")
     def test_move_judgment_success(
         self,
         fake_copy,
         fake_metadata,
-        fake_api_client,
         fake_boto3_client,
     ):
         """Given the target judgment does not exist,
@@ -153,11 +152,12 @@ class TestMove:
         (where moving is copy + delete)"""
         # fake_judgment.return_value = JudgmentFactory.build()
         ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
+        fake_api_client = MagicMock()
         fake_api_client.document_exists.return_value = False
-        move.update_document_uri("old/uri", "[2023] EAT 1")
+        move.update_document_uri("old/uri", "[2023] EAT 1", fake_api_client)
 
         fake_api_client.copy_document.assert_called_with("old/uri", "new/uri")
-        fake_metadata.assert_called_with("old/uri", "new/uri")
+        fake_metadata.assert_called_with("old/uri", "new/uri", fake_api_client)
         fake_copy.assert_called_with("old/uri", "new/uri")
         fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
         fake_api_client.delete_judgment.assert_called_with("old/uri")

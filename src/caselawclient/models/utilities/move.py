@@ -3,7 +3,7 @@ from typing import Optional
 
 import ds_caselaw_utils as caselawutils
 
-from caselawclient.Client import MarklogicAPIError, api_client  # type:ignore
+from caselawclient.Client import MarklogicApiClient, MarklogicAPIError  # type:ignore
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.utilities.aws import copy_assets
 
@@ -20,9 +20,12 @@ class MoveJudgmentError(Exception):
     pass
 
 
-def overwrite_judgment(old_uri: str, new_citation: str) -> str:
+def overwrite_judgment(
+    old_uri: str, new_citation: str, api_client: MarklogicApiClient
+) -> str:
     """Move the judgment at old_uri on top of the new citation, which must already exist
     Compare to update_document_uri"""
+
     new_uri: Optional[str] = caselawutils.neutral_url(new_citation.strip())
 
     if new_uri == old_uri:
@@ -44,7 +47,7 @@ def overwrite_judgment(old_uri: str, new_citation: str) -> str:
             old_judgment_xml,
             annotation=f"overwritten from {old_uri}",
         )
-        set_metadata(old_uri, new_uri)
+        set_metadata(old_uri, new_uri, api_client)
         # TODO: consider deleting existing public assets at that location
         copy_assets(old_uri, new_uri)
         api_client.set_judgment_this_uri(new_uri)
@@ -63,7 +66,9 @@ def overwrite_judgment(old_uri: str, new_citation: str) -> str:
     return new_uri
 
 
-def update_document_uri(old_uri: str, new_citation: str) -> str:
+def update_document_uri(
+    old_uri: str, new_citation: str, api_client: MarklogicApiClient
+) -> str:
     """
     Move the document at old_uri to the correct location based on the neutral citation
     The new neutral citation *must* not already exist (that is handled elsewhere)
@@ -82,7 +87,7 @@ def update_document_uri(old_uri: str, new_citation: str) -> str:
 
     try:
         api_client.copy_document(old_uri, new_uri)
-        set_metadata(old_uri, new_uri)
+        set_metadata(old_uri, new_uri, api_client)
         copy_assets(old_uri, new_uri)
         api_client.set_judgment_this_uri(new_uri)
     except MarklogicAPIError as e:
@@ -100,7 +105,7 @@ def update_document_uri(old_uri: str, new_citation: str) -> str:
     return new_uri
 
 
-def set_metadata(old_uri: str, new_uri: str) -> None:
+def set_metadata(old_uri: str, new_uri: str, api_client: MarklogicApiClient) -> None:
     source_organisation = api_client.get_property(old_uri, "source-organisation")
     source_name = api_client.get_property(old_uri, "source-name")
     source_email = api_client.get_property(old_uri, "source-email")
