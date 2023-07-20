@@ -360,8 +360,8 @@ class Document:
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
 
-    def move_and_overwrite(self, target: str) -> None:
-        ...
+    def overwrite(self, new_citation: str) -> None:
+        self.api_client.overwrite_judgment(self.uri, new_citation)
 
-    def move_empty(self, target: str) -> None:
-        ...
+    def move(self, new_citation: str) -> None:
+        self.api_client.update_document_uri(self.uri, new_citation)
