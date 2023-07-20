@@ -2,7 +2,6 @@ import datetime
 from typing import Any
 from unittest.mock import Mock
 
-import factory
 from typing_extensions import TypeAlias
 
 from caselawclient.models.judgments import Judgment
@@ -79,8 +78,8 @@ class SearchResultMetadataFactory(SimpleFactory):
     target_class = SearchResultMetadata
     # "name_of_attribute": ("name of incoming param", "default value")
     PARAMS_MAP = {
-        "author": factory.Faker("name"),
-        "author_email": factory.Faker("email"),
+        "author": "Fake Name",
+        "author_email": "fake.email@gov.invalid",
         "consignment_reference": "TDR-2023-ABC",
         "submission_datetime": datetime.datetime(2023, 2, 3, 9, 12, 34),
     }

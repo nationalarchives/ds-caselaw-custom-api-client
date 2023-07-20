@@ -106,7 +106,7 @@ class TestOverwrite:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch("boto3.session.Session.client")
     @patch("caselawclient.models.utilities.move.Judgment")
-    def test_overwrite_judgment_success(self, fake_judgment, fake_boto3_client):
+    def test_overwrite_success(self, fake_judgment, fake_boto3_client):
         """Given the target judgment does not exist,
         we continue to move the judgment to the new location
         (where moving is copy + delete)"""
@@ -119,19 +119,19 @@ class TestOverwrite:
         fake_boto3_client.list_objects.return_value = []
         fake_judgment.return_value = JudgmentFactory.build()
 
-        result = move.overwrite_judgment("old/uri", "[2002] EAT 1", fake_api_client)
+        result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
         fake_api_client.save_judgment_xml.assert_called_with(
             "new/uri", ANY, annotation="overwritten from old/uri"
         )
         fake_api_client.delete_judgment.assert_called_with("old/uri")
         assert result == "new/uri"
 
-    def test_overwrite_judgment_unparseable_citation(self):
+    def test_overwrite_unparseable_citation(self):
         ds_caselaw_utils.neutral_url = MagicMock(return_value=None)
         fake_api_client = MagicMock()
 
         with pytest.raises(move.NeutralCitationToUriError):
-            move.overwrite_judgment(
+            move.overwrite_document(
                 "old/uri", "Wrong neutral citation", fake_api_client
             )
 

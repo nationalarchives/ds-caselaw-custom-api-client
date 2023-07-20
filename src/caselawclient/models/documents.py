@@ -361,7 +361,7 @@ class Document:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
 
     def overwrite(self, new_citation: str) -> None:
-        self.api_client.overwrite_judgment(self.uri, new_citation)
+        self.api_client.overwrite_document(self.uri, new_citation)
 
     def move(self, new_citation: str) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)

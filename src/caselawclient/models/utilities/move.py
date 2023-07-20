@@ -1,9 +1,9 @@
 import xml.etree.ElementTree as ET
-from typing import Optional
+from typing import Any, Optional
 
 import ds_caselaw_utils as caselawutils
 
-from caselawclient.Client import MarklogicApiClient, MarklogicAPIError  # type:ignore
+from caselawclient.errors import MarklogicAPIError
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.utilities.aws import copy_assets
 
@@ -20,11 +20,10 @@ class MoveJudgmentError(Exception):
     pass
 
 
-def overwrite_judgment(
-    # TODO: change to document throughout?
+def overwrite_document(
     old_uri: str,
     new_citation: str,
-    api_client: MarklogicApiClient,
+    api_client: Any,
 ) -> str:
     """Move the judgment at old_uri on top of the new citation, which must already exist
     Compare to update_document_uri"""
@@ -69,9 +68,7 @@ def overwrite_judgment(
     return new_uri
 
 
-def update_document_uri(
-    old_uri: str, new_citation: str, api_client: MarklogicApiClient
-) -> str:
+def update_document_uri(old_uri: str, new_citation: str, api_client: Any) -> str:
     """
     Move the document at old_uri to the correct location based on the neutral citation
     The new neutral citation *must* not already exist (that is handled elsewhere)
@@ -108,7 +105,7 @@ def update_document_uri(
     return new_uri
 
 
-def set_metadata(old_uri: str, new_uri: str, api_client: MarklogicApiClient) -> None:
+def set_metadata(old_uri: str, new_uri: str, api_client: Any) -> None:
     source_organisation = api_client.get_property(old_uri, "source-organisation")
     source_name = api_client.get_property(old_uri, "source-name")
     source_email = api_client.get_property(old_uri, "source-email")
