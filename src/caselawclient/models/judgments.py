@@ -4,6 +4,7 @@ from typing import Any
 from ds_caselaw_utils import neutral_url
 
 from caselawclient.models.documents import Document
+from caselawclient.xml_helpers import get_xpath_match_string
 
 
 class Judgment(Document):
@@ -28,7 +29,14 @@ class Judgment(Document):
 
     @cached_property
     def neutral_citation(self) -> str:
-        return self.api_client.get_judgment_citation(self.uri)
+        return get_xpath_match_string(
+            self.content_as_xml_tree,
+            "/root/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:cite/text()",
+            {
+                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+            },
+        )
 
     @cached_property
     def has_ncn(self) -> bool:

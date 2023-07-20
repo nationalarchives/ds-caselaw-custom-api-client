@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- Refactored `Document` class' `name`, `court`, `document_date_as_string` and `document_date_as_date` (previously judgment_date_...) on Document class and neutral_citation on Judgment class making use of the new cached `content_as_xml_tree` property.
+- Renamed `judgment_date_as_string` `judgment_date_as_date` to `document_date_as_string` and `document_date_as_date` respectively.
+- Added `content_as_xml_tree` cached property to `Document` class
+- Changed the `Document` class' `content_as_html` to be a cached_property also.
+- Removed `get_judgment_name`, `get_judgment_citation`, `get_judgment_court`, `get_judgment_work_date` from the `Client` class and associated `.xqy` files.
 - Add a new `MarklogicApiClient.get_document_by_uri` method to retrieve a document (of any type) by URI.
 
 ## [Release 12.0.0]

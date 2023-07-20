@@ -64,26 +64,6 @@ class GetLastModifiedDict(MarkLogicAPIDict):
     uri: str
 
 
-# get_metadata_citation.xqy
-class GetMetadataCitationDict(MarkLogicAPIDict):
-    uri: str
-
-
-# get_metadata_court.xqy
-class GetMetadataCourtDict(MarkLogicAPIDict):
-    uri: str
-
-
-# get_metadata_name.xqy
-class GetMetadataNameDict(MarkLogicAPIDict):
-    uri: str
-
-
-# get_metadata_work_date.xqy
-class GetMetadataWorkDateDict(MarkLogicAPIDict):
-    uri: str
-
-
 # get_properties_for_search_results.xqy
 class GetPropertiesForSearchResultsDict(MarkLogicAPIDict):
     uris: list[Any]

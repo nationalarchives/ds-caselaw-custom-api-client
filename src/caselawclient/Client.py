@@ -243,11 +243,6 @@ class MarklogicApiClient:
 
         return self._eval_and_decode(vars, "get_judgment.xqy")
 
-    def get_judgment_name(self, judgment_uri: str) -> str:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.GetMetadataNameDict = {"uri": uri}
-        return self._eval_and_decode(vars, "get_metadata_name.xqy")
-
     def set_judgment_name(self, judgment_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
@@ -686,25 +681,6 @@ class MarklogicApiClient:
             )
             return False
         return show_unpublished
-
-    def get_judgment_citation(self, judgment_uri: str) -> str:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.GetMetadataCitationDict = {"uri": uri}
-
-        response = self._send_to_eval(vars, "get_metadata_citation.xqy")
-        return decode_multipart(response)
-
-    def get_judgment_court(self, judgment_uri: str) -> str:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.GetMetadataCourtDict = {"uri": uri}
-        response = self._send_to_eval(vars, "get_metadata_court.xqy")
-        return decode_multipart(response)
-
-    def get_judgment_work_date(self, judgment_uri: str) -> str:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.GetMetadataWorkDateDict = {"uri": uri}
-        response = self._send_to_eval(vars, "get_metadata_work_date.xqy")
-        return decode_multipart(response)
 
     def get_properties_for_search_results(self, judgment_uris: list[str]) -> str:
         uris = [

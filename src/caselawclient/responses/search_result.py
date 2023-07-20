@@ -10,6 +10,7 @@ from ds_caselaw_utils.courts import Court, CourtNotFoundException, courts
 from lxml import etree
 
 from caselawclient.Client import api_client
+from caselawclient.xml_helpers import get_xpath_match_string
 
 
 class EditorStatus(Enum):
@@ -212,13 +213,3 @@ class SearchResult:
 
     def _get_xpath_match_string(self, path: str) -> str:
         return get_xpath_match_string(self.node, path, namespaces=self.NAMESPACES)
-
-
-def get_xpath_match_string(
-    node: etree._Element,
-    path: str,
-    namespaces: Optional[Dict[str, str]] = None,
-    fallback: str = "",
-) -> str:
-    kwargs = {"namespaces": namespaces} if namespaces else {}
-    return str((node.xpath(path, **kwargs) or [fallback])[0])

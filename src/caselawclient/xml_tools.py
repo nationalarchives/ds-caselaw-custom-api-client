@@ -112,15 +112,15 @@ def get_search_matches(element: ElementTree) -> List[str]:
     return results
 
 
-def get_error_code(xml_content: Optional[str]) -> str:
+def get_error_code(content_as_xml: Optional[str]) -> str:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
         "Use methods from MarklogicApiClient.Client instead."
     )
-    if not xml_content:
+    if not content_as_xml:
         return "Unknown error, Marklogic returned a null or empty response"
     try:
-        xml = fromstring(xml_content)
+        xml = fromstring(content_as_xml)
         return xml.find(
             "message-code", namespaces={"": "http://marklogic.com/xdmp/error"}
         ).text  # type: ignore

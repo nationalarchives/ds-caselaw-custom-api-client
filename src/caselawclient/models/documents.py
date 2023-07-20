@@ -1,12 +1,14 @@
 import datetime
 from functools import cached_property
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
+from lxml import etree
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.errors import DocumentNotFoundError
+from caselawclient.xml_helpers import get_xpath_match_string
 
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
@@ -78,20 +80,35 @@ class Document:
 
     @cached_property
     def name(self) -> str:
-        return self.api_client.get_judgment_name(self.uri)
+        return self._get_xpath_match_string(
+            "//akn:FRBRname/@value",
+            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
+        )
 
     @cached_property
     def court(self) -> str:
-        return self.api_client.get_judgment_court(self.uri)
+        return self._get_xpath_match_string(
+            "/root/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court/text()",
+            {
+                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+            },
+        )
 
     @cached_property
-    def judgment_date_as_string(self) -> str:
-        return self.api_client.get_judgment_work_date(self.uri)
+    def document_date_as_string(self) -> str:
+        return self._get_xpath_match_string(
+            "/root/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
+            {
+                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+            },
+        )
 
     @cached_property
-    def judgment_date_as_date(self) -> datetime.date:
+    def document_date_as_date(self) -> datetime.date:
         return datetime.datetime.strptime(
-            self.judgment_date_as_string, "%Y-%m-%d"
+            self.document_date_as_string, "%Y-%m-%d"
         ).date()
 
     @cached_property
@@ -148,8 +165,13 @@ class Document:
         except AttributeError:
             return []
 
+    @cached_property
     def content_as_xml(self) -> str:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
+
+    @cached_property
+    def content_as_xml_tree(self) -> Any:
+        return etree.fromstring(self.content_as_xml)
 
     def content_as_html(self, version_uri: Optional[str] = None) -> str:
         results = self.api_client.eval_xslt(
@@ -177,7 +199,7 @@ class Document:
         return True
 
     def _get_root(self) -> str:
-        return get_judgment_root(self.content_as_xml())
+        return get_judgment_root(self.content_as_xml)
 
     @cached_property
     def has_name(self) -> bool:
@@ -244,3 +266,6 @@ class Document:
 
     def unhold(self) -> None:
         self.api_client.set_property(self.uri, "editor-hold", "false")
+
+    def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
+        return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
