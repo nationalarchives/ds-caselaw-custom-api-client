@@ -21,7 +21,10 @@ class MoveJudgmentError(Exception):
 
 
 def overwrite_judgment(
-    old_uri: str, new_citation: str, api_client: MarklogicApiClient
+    # TODO: change to document throughout?
+    old_uri: str,
+    new_citation: str,
+    api_client: MarklogicApiClient,
 ) -> str:
     """Move the judgment at old_uri on top of the new citation, which must already exist
     Compare to update_document_uri"""
