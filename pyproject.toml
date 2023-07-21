@@ -23,6 +23,7 @@ memoization = "^0.4.0"
 lxml = "^4.9.2"
 ds-caselaw-utils = "^1.0.0"
 boto3 = "^1.26.112"
+typing-extensions = "^4.7.1"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
