@@ -22,9 +22,9 @@ class TestErrors(unittest.TestCase):
         self.client = MarklogicApiClient("", "", "", False)
 
     def test_timeout(self):
-        with responses.RequestsMock() as response_list:  # type: ignore[attr-defined]
+        with responses.RequestsMock() as response_list:
             response_list.add(
-                responses.GET,  # type: ignore[attr-defined]
+                responses.GET,
                 url="http://example.com",
                 status=504,
                 body="Example Gateway Timeout.",

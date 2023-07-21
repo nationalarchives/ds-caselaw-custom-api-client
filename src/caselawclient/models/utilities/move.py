@@ -42,7 +42,7 @@ def overwrite_document(
         )
     old_judgment = Judgment(old_uri, api_client)
     try:
-        old_judgment_bytes = old_judgment.content_as_xml()
+        old_judgment_bytes = old_judgment.content_as_xml
         old_judgment_xml = ET.XML(bytes(old_judgment_bytes, encoding="utf-8"))
         api_client.save_judgment_xml(
             new_uri,
