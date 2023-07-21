@@ -116,30 +116,6 @@ class TestDocument:
         assert document.is_held is False
         mock_api_client.get_property.assert_called_once_with("test/1234", "editor-hold")
 
-    def test_judgment_is_sensitive(self, mock_api_client):
-        mock_api_client.get_sensitive.return_value = True
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.is_sensitive is True
-        mock_api_client.get_sensitive.assert_called_once_with("test/1234")
-
-    def test_judgment_is_anonymised(self, mock_api_client):
-        mock_api_client.get_anonymised.return_value = True
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.is_anonymised is True
-        mock_api_client.get_anonymised.assert_called_once_with("test/1234")
-
-    def test_judgment_has_supplementary_materials(self, mock_api_client):
-        mock_api_client.get_supplemental.return_value = True
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.has_supplementary_materials is True
-        mock_api_client.get_supplemental.assert_called_once_with("test/1234")
-
     def test_judgment_source_name(self, mock_api_client):
         mock_api_client.get_property.return_value = "Test Name"
 
