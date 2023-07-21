@@ -118,6 +118,7 @@ class TestOverwrite:
         fake_api_client.delete_judgment.return_value = True
         fake_boto3_client.list_objects.return_value = []
         fake_judgment.return_value = JudgmentFactory.build()
+        fake_judgment.return_value.content_as_xml = "<xml>b</xml>"
 
         result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
         fake_api_client.save_judgment_xml.assert_called_with(
