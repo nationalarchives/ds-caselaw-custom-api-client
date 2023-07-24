@@ -42,23 +42,29 @@ ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
-def decode_multipart(response: requests.Response) -> str:
-    """Decode a multipart response and return just the text inside it.
-    Note that it is possible for multiple responses to be returned, if
-    multiple top-level returns exist in the XQuery."""
+class MultipartResponseLongerThanExpected(Exception):
+    pass
 
-    # Arguably, this should return None -- it occurs when there are no
-    # matching entries
+
+def extract_parts_text_from_multipart(response: requests.Response) -> list[str]:
+    # TODO: This is horrible, and should either return a None, or throw an exception.
     if not (response.content):
-        return ""
+        return [""]
 
     multipart_data = decoder.MultipartDecoder.from_response(response)
-    part_count = len(multipart_data.parts)
+
+    return [part.text for part in multipart_data.parts]
+
+
+def decode_multipart(response: requests.Response) -> str:
+    parts = extract_parts_text_from_multipart(response)
+    part_count = len(parts)
     if part_count > 1:
-        logging.warning(
-            f"Throwing away multipart data ({part_count} items, expected 1)"
+        raise MultipartResponseLongerThanExpected(
+            f"Response returned {part_count} multipart items, expected 1"
         )
-    return str(multipart_data.parts[0].text)
+
+    return parts[0]
 
 
 JUDGMENT_COLLECTION_URI = "judgment"
