@@ -24,18 +24,16 @@ class TestJudgmentValidation:
 
     def test_judgment_neutral_citation(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = """
-            <root xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <akn:akomaNtoso>
-                    <akn:judgment>
-                        <akn:meta>
-                            <akn:proprietary>
-                                <uk:cite>[2023] TEST 1234</uk:cite>
-                            </akn:proprietary>
-                        </akn:meta>
-                    </akn:judgment>
-                </akn:akomaNtoso>
-            </root>
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                        xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:cite>[2023] TEST 1234</uk:cite>
+                        </proprietary>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
         """
 
         judgment = Judgment("test/1234", mock_api_client)
