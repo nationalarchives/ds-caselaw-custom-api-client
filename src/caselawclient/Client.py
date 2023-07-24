@@ -46,22 +46,33 @@ class MultipartResponseLongerThanExpected(Exception):
     pass
 
 
+class NoStringResponseWhenExpected(Exception):
+    pass
+
+
 def get_multipart_strings_from_marklogic_response(
     response: requests.Response,
 ) -> list[str]:
-    # TODO: This is horrible, and should either return a None, or throw an exception.
     if not (response.content):
-        return [""]
+        return []
 
     multipart_data = decoder.MultipartDecoder.from_response(response)
 
     return [part.text for part in multipart_data.parts]
 
 
-def get_single_string_from_marklogic_response(response: requests.Response) -> str:
+def get_single_string_from_marklogic_response(
+    response: requests.Response,
+) -> str:
     parts = get_multipart_strings_from_marklogic_response(response)
     part_count = len(parts)
-    if part_count > 1:
+
+    if part_count == 0:
+        # TODO: This should strictly speaking be None, but fixing this involves refactoring a lot of other stuff which
+        # relies on "" being falsy.
+        return ""
+
+    elif part_count > 1:
         raise MultipartResponseLongerThanExpected(
             f"Response returned {part_count} multipart items, expected 1"
         )

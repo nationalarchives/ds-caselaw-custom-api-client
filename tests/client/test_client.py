@@ -49,7 +49,7 @@ class TestMarklogicResponseHandlers(unittest.TestCase):
     def test_get_multipart_strings_from_marklogic_response_if_no_content(self):
         response = MagicMock(requests.Response)
         response.content = None
-        assert get_multipart_strings_from_marklogic_response(response) == [""]
+        assert get_multipart_strings_from_marklogic_response(response) == []
 
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
     def test_get_single_string_from_marklogic_response(
@@ -59,6 +59,16 @@ class TestMarklogicResponseHandlers(unittest.TestCase):
         assert (
             get_single_string_from_marklogic_response(MagicMock(requests.Response))
             == "test string"
+        )
+
+    @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
+    def test_get_single_string_from_marklogic_response_if_empty_set(
+        self, mock_multipart_strings_handler
+    ):
+        mock_multipart_strings_handler.return_value = []
+        assert (
+            get_single_string_from_marklogic_response(MagicMock(requests.Response))
+            == ""
         )
 
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
