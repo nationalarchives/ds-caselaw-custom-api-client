@@ -42,23 +42,42 @@ ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
-def decode_multipart(response: requests.Response) -> str:
-    """Decode a multipart response and return just the text inside it.
-    Note that it is possible for multiple responses to be returned, if
-    multiple top-level returns exist in the XQuery."""
+class MultipartResponseLongerThanExpected(Exception):
+    pass
 
-    # Arguably, this should return None -- it occurs when there are no
-    # matching entries
+
+class NoStringResponseWhenExpected(Exception):
+    pass
+
+
+def get_multipart_strings_from_marklogic_response(
+    response: requests.Response,
+) -> list[str]:
     if not (response.content):
-        return ""
+        return []
 
     multipart_data = decoder.MultipartDecoder.from_response(response)
-    part_count = len(multipart_data.parts)
-    if part_count > 1:
-        logging.warning(
-            f"Throwing away multipart data ({part_count} items, expected 1)"
+
+    return [part.text for part in multipart_data.parts]
+
+
+def get_single_string_from_marklogic_response(
+    response: requests.Response,
+) -> str:
+    parts = get_multipart_strings_from_marklogic_response(response)
+    part_count = len(parts)
+
+    if part_count == 0:
+        # TODO: This should strictly speaking be None, but fixing this involves refactoring a lot of other stuff which
+        # relies on "" being falsy.
+        return ""
+
+    elif part_count > 1:
+        raise MultipartResponseLongerThanExpected(
+            f"Response returned {part_count} multipart items, expected 1"
         )
-    return str(multipart_data.parts[0].text)
+
+    return parts[0]
 
 
 JUDGMENT_COLLECTION_URI = "judgment"
@@ -159,7 +178,7 @@ class MarklogicApiClient:
         self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
     ) -> str:
         response = self._send_to_eval(vars, xquery_file_name)
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def prepare_request_kwargs(
         self,
@@ -617,7 +636,9 @@ class MarklogicApiClient:
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
             "execute",
         )
-        return decode_multipart(check_privilege).lower() == "true"
+        return (
+            get_single_string_from_marklogic_response(check_privilege).lower() == "true"
+        )
 
     def user_has_role(self, username: str, role: str) -> requests.Response:
         vars: query_dicts.UserHasRoleDict = {
@@ -665,11 +686,11 @@ class MarklogicApiClient:
         ]
         vars: query_dicts.GetPropertiesForSearchResultsDict = {"uris": uris}
         response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def search_and_decode_response(self, search_parameters: SearchParameters) -> str:
         response = self.advanced_search(search_parameters)
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def search_judgments_and_decode_response(
         self, search_parameters: SearchParameters

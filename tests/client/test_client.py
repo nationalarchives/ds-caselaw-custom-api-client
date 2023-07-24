@@ -1,11 +1,17 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 import responses
 
-from caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import (
+    MarklogicApiClient,
+    MultipartResponseLongerThanExpected,
+    get_multipart_strings_from_marklogic_response,
+    get_single_string_from_marklogic_response,
+)
 from caselawclient.errors import GatewayTimeoutError
 
 
@@ -25,6 +31,56 @@ class TestErrors(unittest.TestCase):
         with pytest.raises(GatewayTimeoutError) as gateway_exception:
             self.client._raise_for_status(response)
         assert "Example Gateway Timeout" in str(gateway_exception.value)
+
+
+class TestMarklogicResponseHandlers(unittest.TestCase):
+    @patch("caselawclient.Client.decoder.MultipartDecoder.from_response")
+    def test_get_multipart_strings_from_marklogic_response(
+        self, mock_multipart_decoder
+    ):
+        mock_multipart_decoder.return_value.parts = (
+            SimpleNamespace(text="string 1"),
+            SimpleNamespace(text="string 2"),
+        )
+        assert get_multipart_strings_from_marklogic_response(
+            MagicMock(requests.Response)
+        ) == ["string 1", "string 2"]
+
+    def test_get_multipart_strings_from_marklogic_response_if_no_content(self):
+        response = MagicMock(requests.Response)
+        response.content = None
+        assert get_multipart_strings_from_marklogic_response(response) == []
+
+    @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
+    def test_get_single_string_from_marklogic_response(
+        self, mock_multipart_strings_handler
+    ):
+        mock_multipart_strings_handler.return_value = ["test string"]
+        assert (
+            get_single_string_from_marklogic_response(MagicMock(requests.Response))
+            == "test string"
+        )
+
+    @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
+    def test_get_single_string_from_marklogic_response_if_empty_set(
+        self, mock_multipart_strings_handler
+    ):
+        mock_multipart_strings_handler.return_value = []
+        assert (
+            get_single_string_from_marklogic_response(MagicMock(requests.Response))
+            == ""
+        )
+
+    @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
+    def test_get_single_string_from_marklogic_response_if_multiple_strings(
+        self, mock_multipart_strings_handler
+    ):
+        mock_multipart_strings_handler.return_value = [
+            "test string",
+            "too many strings",
+        ]
+        with pytest.raises(MultipartResponseLongerThanExpected):
+            get_single_string_from_marklogic_response(MagicMock(requests.Response))
 
 
 class ApiClientTest(unittest.TestCase):

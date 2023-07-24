@@ -7,7 +7,7 @@ from unittest.mock import patch
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
-@patch("caselawclient.Client.decode_multipart")
+@patch("caselawclient.Client.get_single_string_from_marklogic_response")
 @patch("caselawclient.Client.MarklogicApiClient.eval")
 def test_get_properties_for_search_results(send, decode):
     uris = ["judgment/uri"]
