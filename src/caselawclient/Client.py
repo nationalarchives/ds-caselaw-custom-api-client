@@ -559,32 +559,8 @@ class MarklogicApiClient:
     ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "published", published)
 
-    def set_sensitive(
-        self, judgment_uri: str, sensitive: bool = False
-    ) -> requests.Response:
-        return self.set_boolean_property(judgment_uri, "sensitive", sensitive)
-
-    def set_supplemental(
-        self, judgment_uri: str, supplemental: bool = False
-    ) -> requests.Response:
-        return self.set_boolean_property(judgment_uri, "supplemental", supplemental)
-
-    def set_anonymised(
-        self, judgment_uri: str, anonymised: bool = False
-    ) -> requests.Response:
-        return self.set_boolean_property(judgment_uri, "anonymised", anonymised)
-
     def get_published(self, judgment_uri: str) -> bool:
         return self.get_boolean_property(judgment_uri, "published")
-
-    def get_sensitive(self, judgment_uri: str) -> bool:
-        return self.get_boolean_property(judgment_uri, "sensitive")
-
-    def get_supplemental(self, judgment_uri: str) -> bool:
-        return self.get_boolean_property(judgment_uri, "supplemental")
-
-    def get_anonymised(self, judgment_uri: str) -> bool:
-        return self.get_boolean_property(judgment_uri, "anonymised")
 
     def get_last_modified(self, judgment_uri: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)

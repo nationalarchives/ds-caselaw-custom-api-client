@@ -120,18 +120,6 @@ class Document:
         return self.api_client.get_property(self.uri, "editor-hold") == "true"
 
     @cached_property
-    def is_sensitive(self) -> bool:
-        return self.api_client.get_sensitive(self.uri)
-
-    @cached_property
-    def is_anonymised(self) -> bool:
-        return self.api_client.get_anonymised(self.uri)
-
-    @cached_property
-    def has_supplementary_materials(self) -> bool:
-        return self.api_client.get_supplemental(self.uri)
-
-    @cached_property
     def source_name(self) -> str:
         return self.api_client.get_property(self.uri, "source-name")
 
