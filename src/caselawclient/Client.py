@@ -46,7 +46,9 @@ class MultipartResponseLongerThanExpected(Exception):
     pass
 
 
-def extract_parts_text_from_multipart(response: requests.Response) -> list[str]:
+def get_multipart_strings_from_marklogic_response(
+    response: requests.Response,
+) -> list[str]:
     # TODO: This is horrible, and should either return a None, or throw an exception.
     if not (response.content):
         return [""]
@@ -56,8 +58,8 @@ def extract_parts_text_from_multipart(response: requests.Response) -> list[str]:
     return [part.text for part in multipart_data.parts]
 
 
-def decode_multipart(response: requests.Response) -> str:
-    parts = extract_parts_text_from_multipart(response)
+def get_single_string_from_marklogic_response(response: requests.Response) -> str:
+    parts = get_multipart_strings_from_marklogic_response(response)
     part_count = len(parts)
     if part_count > 1:
         raise MultipartResponseLongerThanExpected(
@@ -165,7 +167,7 @@ class MarklogicApiClient:
         self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
     ) -> str:
         response = self._send_to_eval(vars, xquery_file_name)
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def prepare_request_kwargs(
         self,
@@ -623,7 +625,9 @@ class MarklogicApiClient:
             "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
             "execute",
         )
-        return decode_multipart(check_privilege).lower() == "true"
+        return (
+            get_single_string_from_marklogic_response(check_privilege).lower() == "true"
+        )
 
     def user_has_role(self, username: str, role: str) -> requests.Response:
         vars: query_dicts.UserHasRoleDict = {
@@ -671,11 +675,11 @@ class MarklogicApiClient:
         ]
         vars: query_dicts.GetPropertiesForSearchResultsDict = {"uris": uris}
         response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def search_and_decode_response(self, search_parameters: SearchParameters) -> str:
         response = self.advanced_search(search_parameters)
-        return decode_multipart(response)
+        return get_single_string_from_marklogic_response(response)
 
     def search_judgments_and_decode_response(
         self, search_parameters: SearchParameters
