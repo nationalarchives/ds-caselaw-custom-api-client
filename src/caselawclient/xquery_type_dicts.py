@@ -36,6 +36,11 @@ class DeleteJudgmentDict(MarkLogicAPIDict):
     uri: str
 
 
+# document_collections.xqy
+class DocumentCollectionsDict(MarkLogicAPIDict):
+    uri: str
+
+
 # document_exists.xqy
 class DocumentExistsDict(MarkLogicAPIDict):
     uri: str
