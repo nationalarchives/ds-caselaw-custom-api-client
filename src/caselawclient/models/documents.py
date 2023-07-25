@@ -7,9 +7,8 @@ from ds_caselaw_utils.courts import CourtNotFoundException
 from lxml import etree
 from requests_toolbelt.multipart import decoder
 
-from caselawclient.errors import DocumentNotFoundError
-from caselawclient.xml_helpers import get_xpath_match_string
-
+from ..errors import DocumentNotFoundError
+from ..xml_helpers import get_xpath_match_string
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
     generate_docx_url,
@@ -23,6 +22,9 @@ from .utilities.aws import (
 DOCUMENT_STATUS_HOLD = "On hold"
 DOCUMENT_STATUS_PUBLISHED = "Published"
 DOCUMENT_STATUS_IN_PROGRESS = "In progress"
+
+DOCUMENT_COLLECTION_URI_JUDGMENT = "judgment"
+DOCUMENT_COLLECTION_URI_PRESS_SUMMARY = "press-summary"
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient

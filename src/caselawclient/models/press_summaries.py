@@ -1,4 +1,4 @@
-from caselawclient.models.documents import Document
+from .documents import Document
 
 
 class PressSummary(Document):
