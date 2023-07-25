@@ -227,6 +227,13 @@ class Document:
 
         return DOCUMENT_STATUS_IN_PROGRESS
 
+    def enrich(self) -> None:
+        notify_changed(
+            uri=self.uri,
+            status="published",
+            enrich=True,
+        )
+
     def publish(self) -> None:
         if not self.is_publishable:
             raise CannotPublishUnpublishableDocument
