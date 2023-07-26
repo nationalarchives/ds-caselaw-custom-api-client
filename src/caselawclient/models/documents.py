@@ -83,14 +83,14 @@ class Document:
     @cached_property
     def name(self) -> str:
         return self._get_xpath_match_string(
-            "//akn:FRBRname/@value",
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
     def court(self) -> str:
         return self._get_xpath_match_string(
-            "/root/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court/text()",
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
@@ -100,7 +100,7 @@ class Document:
     @cached_property
     def document_date_as_string(self) -> str:
         return self._get_xpath_match_string(
-            "/root/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",

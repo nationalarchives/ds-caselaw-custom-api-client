@@ -39,9 +39,14 @@ class TestDocument:
 
     def test_judgment_name(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = """
-            <root xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <akn:FRBRname value="Test Claimant v Test Defendant"/>
-            </root>
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                        xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta><identification><FRBRWork>
+                            <FRBRname value="Test Claimant v Test Defendant"/>
+                    </FRBRWork></identification></meta>
+                </judgment>
+            </akomaNtoso>
         """
 
         document = Document("test/1234", mock_api_client)
@@ -53,9 +58,8 @@ class TestDocument:
 
     def test_judgment_court(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = """
-            <root xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                <akn:akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <akn:akomaNtoso>
                     <akn:judgment>
                         <akn:meta>
                             <akn:proprietary>
@@ -64,7 +68,6 @@ class TestDocument:
                         </akn:meta>
                     </akn:judgment>
                 </akn:akomaNtoso>
-            </root>
         """
 
         document = Document("test/1234", mock_api_client)
@@ -76,9 +79,9 @@ class TestDocument:
 
     def test_judgment_date_as_string(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = """
-            <root xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+
+            <akn:akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <akn:akomaNtoso>
                     <akn:judgment>
                         <akn:meta>
                             <akn:identification>
@@ -89,7 +92,6 @@ class TestDocument:
                         </akn:meta>
                     </akn:judgment>
                 </akn:akomaNtoso>
-            </root>
         """
 
         document = Document("test/1234", mock_api_client)
@@ -261,9 +263,12 @@ class TestDocumentValidation:
 
     def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
         mock_api_client.get_judgment_xml.return_value = """
-            <root xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <akn:FRBRname value="Test Claimant v Test Defendant"/>
-            </root>
+            <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                        xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment><meta><identification><FRBRWork>
+                <FRBRname value="Test Claimant v Test Defendant"/>
+                </FRBRWork></identification></meta></judgment>
+            </akomaNtoso>
         """
 
         document = Document("test/1234", mock_api_client)
