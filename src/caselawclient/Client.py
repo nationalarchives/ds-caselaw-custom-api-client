@@ -15,8 +15,13 @@ from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
-from caselawclient.models.documents import Document
+from caselawclient.models.documents import (
+    DOCUMENT_COLLECTION_URI_JUDGMENT,
+    DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
+    Document,
+)
 from caselawclient.models.judgments import Judgment
+from caselawclient.models.press_summaries import PressSummary
 from caselawclient.search_parameters import SearchParameters
 
 from . import xml_tools
@@ -50,6 +55,10 @@ class NoStringResponseWhenExpected(Exception):
     pass
 
 
+class DocumentHasNoTypeCollection(Exception):
+    pass
+
+
 def get_multipart_strings_from_marklogic_response(
     response: requests.Response,
 ) -> list[str]:
@@ -78,9 +87,6 @@ def get_single_string_from_marklogic_response(
         )
 
     return parts[0]
-
-
-JUDGMENT_COLLECTION_URI = "judgment"
 
 
 class MarklogicApiClient:
@@ -115,7 +121,24 @@ class MarklogicApiClient:
         self.session.auth = HTTPBasicAuth(username, password)
 
     def get_document_by_uri(self, uri: str) -> Document:
-        return Judgment(uri, self)
+        document_type_class = self.get_document_type_from_uri(uri)
+        return document_type_class(uri, self)
+
+    def get_document_type_from_uri(self, uri: str) -> Type[Document]:
+        vars: query_dicts.DocumentCollectionsDict = {
+            "uri": self._format_uri_for_marklogic(uri),
+        }
+        response = self._send_to_eval(vars, "document_collections.xqy")
+        collections = get_multipart_strings_from_marklogic_response(response)
+
+        if DOCUMENT_COLLECTION_URI_JUDGMENT in collections:
+            return Judgment
+        elif DOCUMENT_COLLECTION_URI_PRESS_SUMMARY in collections:
+            return PressSummary
+        else:
+            raise DocumentHasNoTypeCollection(
+                f"The document at URI {uri} is not part of a valid document type collection."
+            )
 
     def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
         """
@@ -695,7 +718,7 @@ class MarklogicApiClient:
     def search_judgments_and_decode_response(
         self, search_parameters: SearchParameters
     ) -> str:
-        search_parameters.collections = [JUDGMENT_COLLECTION_URI]
+        search_parameters.collections = [DOCUMENT_COLLECTION_URI_JUDGMENT]
         return self.search_and_decode_response(search_parameters)
 
 

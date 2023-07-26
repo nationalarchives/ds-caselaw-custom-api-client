@@ -3,8 +3,8 @@ from typing import Any
 
 from ds_caselaw_utils import neutral_url
 
-from caselawclient.models.documents import Document
-from caselawclient.xml_helpers import get_xpath_match_string
+from ..xml_helpers import get_xpath_match_string
+from .documents import Document
 
 
 class Judgment(Document):
