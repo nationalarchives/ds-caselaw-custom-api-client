@@ -66,6 +66,8 @@ MarklogicResourceNotFoundError
 MarklogicCommunicationError
 ```
 
+You can find more comprehensive documentation of the client class and available methods [here](https://nationalarchives.github.io/ds-caselaw-custom-api-client).
+
 ### XML Tools
 There is also a small set of xml helper tools that provide some common functionality for dealing with xml:
 
