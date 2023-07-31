@@ -101,10 +101,7 @@ class Document:
     def document_date_as_string(self) -> str:
         return self._get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
+            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
