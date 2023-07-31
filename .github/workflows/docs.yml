@@ -21,7 +21,7 @@ jobs:
         with:
           poetry-version: 1.4.2
 
-      - run: poetry install --only docs
+      - run: poetry install --with docs
 
       - run: poetry run pdoc -o docs/ src/caselawclient
 
