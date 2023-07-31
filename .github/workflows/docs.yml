@@ -23,7 +23,7 @@ jobs:
 
       - run: poetry install --only docs
 
-      - run: pdoc -o docs/ src/caselawclient
+      - run: poetry run pdoc -o docs/ src/caselawclient
 
       - uses: actions/upload-pages-artifact@v1
         with:
