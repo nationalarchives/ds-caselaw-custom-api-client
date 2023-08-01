@@ -37,71 +37,6 @@ class TestDocument:
         with pytest.raises(DocumentNotFoundError):
             Document("not_a_real_judgment", mock_api_client)
 
-    def test_judgment_name(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
-            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                        xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <judgment>
-                    <meta><identification><FRBRWork>
-                            <FRBRname value="Test Claimant v Test Defendant"/>
-                    </FRBRWork></identification></meta>
-                </judgment>
-            </akomaNtoso>
-        """
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.name == "Test Claimant v Test Defendant"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
-            "test/1234", show_unpublished=True
-        )
-
-    def test_judgment_court(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
-                <akn:akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                    <akn:judgment>
-                        <akn:meta>
-                            <akn:proprietary>
-                                <uk:court>Court of Testing</uk:court>
-                            </akn:proprietary>
-                        </akn:meta>
-                    </akn:judgment>
-                </akn:akomaNtoso>
-        """
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.court == "Court of Testing"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
-            "test/1234", show_unpublished=True
-        )
-
-    def test_judgment_date_as_string(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
-
-            <akn:akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                    <akn:judgment>
-                        <akn:meta>
-                            <akn:identification>
-                                <akn:FRBRWork>
-                                    <akn:FRBRdate date="2023-02-03"/>
-                                </akn:FRBRWork>
-                            </akn:identification>
-                        </akn:meta>
-                    </akn:judgment>
-                </akn:akomaNtoso>
-        """
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.document_date_as_string == "2023-02-03"
-        assert document.document_date_as_date == datetime.date(2023, 2, 3)
-        mock_api_client.get_judgment_xml.assert_called_once_with(
-            "test/1234", show_unpublished=True
-        )
-
     def test_judgment_is_published(self, mock_api_client):
         mock_api_client.get_published.return_value = True
 
@@ -345,4 +280,95 @@ class TestDocumentHold:
         document.unhold()
         mock_api_client.set_property.assert_called_once_with(
             "test/1234", "editor-hold", "false"
+        )
+
+
+class TestDocumentMetadata:
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_name(self, opening_tag, closing_tag, mock_api_client):
+        mock_api_client.get_judgment_xml.return_value = f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Test Claimant v Test Defendant"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.name == "Test Claimant v Test Defendant"
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_court(self, opening_tag, closing_tag, mock_api_client):
+        mock_api_client.get_judgment_xml.return_value = f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:court>Court of Testing</uk:court>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.court == "Court of Testing"
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_date_as_string(self, opening_tag, closing_tag, mock_api_client):
+        mock_api_client.get_judgment_xml.return_value = f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRdate date="2023-02-03"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.document_date_as_string == "2023-02-03"
+        assert document.document_date_as_date == datetime.date(2023, 2, 3)
+        mock_api_client.get_judgment_xml.assert_called_once_with(
+            "test/1234", show_unpublished=True
         )
