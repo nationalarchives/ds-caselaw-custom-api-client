@@ -1,10 +1,10 @@
-name: website
+name: Build/deploy documentation
 
-# build the documentation whenever there are new commits on main
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: read
 

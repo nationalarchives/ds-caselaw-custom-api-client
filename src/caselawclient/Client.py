@@ -48,20 +48,31 @@ DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
 
 class MultipartResponseLongerThanExpected(Exception):
-    pass
+    """
+    MarkLogic has returned a multipart response with more than one part, where only a single part was expected.
+    """
 
-
-class NoStringResponseWhenExpected(Exception):
     pass
 
 
 class DocumentHasNoTypeCollection(Exception):
+    """
+    A MarkLogic document is not part of a collection which identifies its document type.
+    """
+
     pass
 
 
 def get_multipart_strings_from_marklogic_response(
     response: requests.Response,
 ) -> list[str]:
+    """
+    Given a HTTP response from a MarkLogic server, extract the text content from each part of the response.
+
+    :param response: A multipart HTTP response
+
+    :return: A list of the text within each part of the response
+    """
     if not (response.content):
         return []
 
@@ -73,6 +84,16 @@ def get_multipart_strings_from_marklogic_response(
 def get_single_string_from_marklogic_response(
     response: requests.Response,
 ) -> str:
+    """
+    Given a HTTP response from a MarkLogic server, assuming the response contains a single part, extract the text
+    content of the response.
+
+    :param response: A multipart HTTP response
+
+    :return: The text of the response
+
+    :raises MultipartResponseLongerThanExpected: If the response from MarkLogic has more than one part
+    """
     parts = get_multipart_strings_from_marklogic_response(response)
     part_count = len(parts)
 
@@ -90,6 +111,10 @@ def get_single_string_from_marklogic_response(
 
 
 class MarklogicApiClient:
+    """
+    The base class for interacting with a MarkLogic instance.
+    """
+
     http_error_classes: dict[int, Type[MarklogicAPIError]] = {
         400: MarklogicBadRequestError,
         401: MarklogicUnauthorizedError,
@@ -728,3 +753,9 @@ api_client = MarklogicApiClient(
     password=env("MARKLOGIC_PASSWORD", default=None),
     use_https=env("MARKLOGIC_USE_HTTPS", default=False),
 )
+"""
+An instance of the API client which is automatically initialised on importing the library.
+
+.. deprecated:: 13.0.1
+   You should instead initialise your own instance of `MarklogicApiClient`
+"""
