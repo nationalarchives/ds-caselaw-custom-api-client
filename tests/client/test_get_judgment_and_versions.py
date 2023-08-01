@@ -31,11 +31,11 @@ class TestGetJudgment(unittest.TestCase):
             result = self.client.get_judgment_xml("/judgment/uri")
 
             expected = (
-                '<?xml version="1.0" encoding="UTF-8"?>\n'
-                '<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">\n'
-                '<judgment name="judgment" contains="originalVersion">\n'
-                "</judgment>\n"
-                "</akomaNtoso>"
+                b'<?xml version="1.0" encoding="UTF-8"?>\n'
+                b'<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">\n'
+                b'<judgment name="judgment" contains="originalVersion">\n'
+                b"</judgment>\n"
+                b"</akomaNtoso>"
             )
             assert result == expected
 

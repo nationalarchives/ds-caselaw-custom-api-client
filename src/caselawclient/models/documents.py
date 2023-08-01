@@ -156,7 +156,7 @@ class Document:
             return []
 
     @cached_property
-    def content_as_xml(self) -> str:
+    def content_as_xml(self) -> bytes:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
 
     @cached_property

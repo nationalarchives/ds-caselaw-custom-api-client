@@ -182,6 +182,16 @@ class TestDocument:
             "test/1234", show_unpublished=True
         )
 
+    def test_judgment_content_as_xml_tree(self, mock_api_client):
+        mock_api_client.get_judgment_xml.return_value = (
+            b'<?xml version="1.0" encoding="UTF-8"?><xml></xml>'
+        )
+        try:
+            document = Document("test/1234", mock_api_client)
+            document.content_as_xml_tree
+        except ValueError as ex:
+            assert False, f"document.content_as_xml_tree raised a ValueError: {ex}"
+
     def test_document_status(self, mock_api_client):
         in_progress_document = Document("test/1234", mock_api_client)
         in_progress_document.is_held = False
