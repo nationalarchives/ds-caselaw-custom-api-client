@@ -36,17 +36,6 @@ class EditorPriority(Enum):
 class SearchResultMetadata:
     """
     Represents the metadata of a search result.
-
-    Properties:
-        author (str): The author of the search result.
-        author_email (str): The email of the author.
-        consignment_reference (str): The consignment reference.
-        assigned_to (str): The assigned editor.
-        editor_hold (str): The editor hold status.
-        editor_priority (str): The editor priority.
-        last_modified (str): The last modified date.
-        submission_datetime (datetime): The submission datetime.
-        editor_status (str): The editor status based on the metadata.
     """
 
     def __init__(self, node: etree._Element, last_modified: str):
@@ -58,11 +47,9 @@ class SearchResultMetadata:
         """
         Create a SearchResultMetadata instance from a search result URI.
 
-        Args:
-            uri (str): The URI of the search result.
+        :param uri: The URI of the search result
 
-        Returns:
-            SearchResultMetadata: The created SearchResultMetadata instance.
+        :return: The created SearchResultMetadata instance
         """
         response_text = api_client.get_properties_for_search_results([uri])
         last_modified = api_client.get_last_modified(uri)
@@ -70,7 +57,61 @@ class SearchResultMetadata:
         return SearchResultMetadata(root, last_modified)
 
     @property
+    def author(self) -> str:
+        """
+        :return: The author of the search result
+        """
+
+        return self._get_xpath_match_string("//source-name/text()")
+
+    @property
+    def author_email(self) -> str:
+        """
+        :return: The email address of the author
+        """
+
+        return self._get_xpath_match_string("//source-email/text()")
+
+    @property
+    def consignment_reference(self) -> str:
+        """
+        :return: The consignment reference of this document submission
+        """
+
+        return self._get_xpath_match_string("//transfer-consignment-reference/text()")
+
+    @property
+    def assigned_to(self) -> str:
+        """
+        :return: The username of the editor assigned to this document
+        """
+
+        return self._get_xpath_match_string("//assigned-to/text()")
+
+    @property
+    def editor_hold(self) -> str:
+        """
+        :return: The editor hold status
+        """
+
+        return self._get_xpath_match_string("//editor-hold/text()")
+
+    @property
+    def editor_priority(self) -> str:
+        """
+        :return: The editor priority
+        """
+
+        return self._get_xpath_match_string(
+            "//editor-priority/text()", EditorPriority.MEDIUM.value
+        )
+
+    @property
     def submission_datetime(self) -> datetime:
+        """
+        :return: The submission datetime
+        """
+
         extracted_submission_datetime = self._get_xpath_match_string(
             "//transfer-received-at/text()"
         )
@@ -81,35 +122,13 @@ class SearchResultMetadata:
         )
 
     @property
-    def author(self) -> str:
-        return self._get_xpath_match_string("//source-name/text()")
-
-    @property
-    def author_email(self) -> str:
-        return self._get_xpath_match_string("//source-email/text()")
-
-    @property
-    def consignment_reference(self) -> str:
-        return self._get_xpath_match_string("//transfer-consignment-reference/text()")
-
-    @property
-    def assigned_to(self) -> str:
-        return self._get_xpath_match_string("//assigned-to/text()")
-
-    @property
-    def editor_hold(self) -> str:
-        return self._get_xpath_match_string("//editor-hold/text()")
-
-    @property
-    def editor_priority(self) -> str:
-        return self._get_xpath_match_string(
-            "//editor-priority/text()", EditorPriority.MEDIUM.value
-        )
-
-    @property
     def editor_status(
         self,
     ) -> str:
+        """
+        :return: The editor status based on the metadata
+        """
+
         if self.editor_hold == "true":
             return EditorStatus.HOLD.value
         if self.assigned_to:
@@ -123,23 +142,6 @@ class SearchResultMetadata:
 class SearchResult:
     """
     Represents a search result obtained from XML data.
-
-    Attributes:
-        NAMESPACES (Dict[str, str]): Namespace mappings used in XPath expressions.
-
-    Args:
-        node (etree._Element): The XML element representing the search result.
-
-    Properties:
-        uri (str): The URI of the search result.
-        neutral_citation (str): The neutral citation of the search result.
-        name (str): The name of the search result.
-        court (Optional[Court]): The court of the search result.
-        date (Optional[datetime]): The date of the search result.
-        transformation_date (str): The transformation date of the search result.
-        content_hash (str): The content hash of the search result.
-        matches (str): The search result matches.
-        metadata (SearchResultMetadata): The metadata of the search result.
     """
 
     NAMESPACES: Dict[str, str] = {
@@ -147,26 +149,47 @@ class SearchResult:
         "uk": "https://caselaw.nationalarchives.gov.uk/akn",
         "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
     }
+    """ Namespace mappings used in XPath expressions. """
 
     def __init__(self, node: etree._Element):
+        """
+        :param node: The XML element representing the search result
+        """
+
         self.node = node
 
     @property
     def uri(self) -> str:
+        """
+        :return: The URI of the search result
+        """
+
         return self._get_xpath_match_string("@uri").lstrip("/").split(".xml")[0]
 
     @property
     def neutral_citation(self) -> str:
+        """
+        :return: The neutral citation of the search result
+        """
+
         return self._get_xpath_match_string("search:extracted/uk:cite/text()")
 
     @property
     def name(self) -> str:
+        """
+        :return: The neutral citation of the search result
+        """
+
         return self._get_xpath_match_string("search:extracted/akn:FRBRname/@value")
 
     @property
     def court(
         self,
     ) -> Optional[Court]:
+        """
+        :return: The court of the search result
+        """
+
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
         try:
             court = courts.get_by_code(court_code)
@@ -177,6 +200,10 @@ class SearchResult:
 
     @property
     def date(self) -> Optional[datetime]:
+        """
+        :return: The date of the search result
+        """
+
         date_string = self._get_xpath_match_string(
             "search:extracted/akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
         )
@@ -191,22 +218,38 @@ class SearchResult:
 
     @property
     def transformation_date(self) -> str:
+        """
+        :return: The transformation date of the search result
+        """
+
         return self._get_xpath_match_string(
             "search:extracted/akn:FRBRdate[@name='transform']/@date"
         )
 
     @property
     def content_hash(self) -> str:
+        """
+        :return: The content hash of the search result
+        """
+
         return self._get_xpath_match_string("search:extracted/uk:hash/text()")
 
     @property
     def matches(self) -> str:
+        """
+        :return: The search result matches
+        """
+
         file_path = os.path.join(os.path.dirname(__file__), "xsl/search_match.xsl")
         xslt_transform = etree.XSLT(etree.parse(file_path))
         return str(xslt_transform(self.node))
 
     @property
     def metadata(self) -> SearchResultMetadata:
+        """
+        :return: The metadata of the search result
+        """
+
         return SearchResultMetadata.create_from_uri(
             self.uri,
         )

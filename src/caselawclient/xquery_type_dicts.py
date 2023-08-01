@@ -1,6 +1,11 @@
 # This file is built automatically with script/build_xquery_type_dicts.
 # DO NOT CHANGE IT MANUALLY!
 
+"""
+These classes are automatically generated using the `script/build_xquery_type_dicts` script, as part of pre-commit
+checks. They are used to enforce appropriately typed variables being passed in to MarkLogic XQuery functions.
+"""
+
 from typing import Any, Optional, TypedDict
 
 

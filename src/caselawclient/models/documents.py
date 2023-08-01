@@ -20,8 +20,13 @@ from .utilities.aws import (
 )
 
 DOCUMENT_STATUS_HOLD = "On hold"
+""" This document has been placed on hold to actively prevent publication. """
+
 DOCUMENT_STATUS_PUBLISHED = "Published"
+""" This document has been published and should be considered publicly visible. """
+
 DOCUMENT_STATUS_IN_PROGRESS = "In progress"
+""" This document has not been published or put on hold, and should be progressing through the document pipeline. """
 
 DOCUMENT_COLLECTION_URI_JUDGMENT = "judgment"
 DOCUMENT_COLLECTION_URI_PRESS_SUMMARY = "press-summary"
@@ -31,14 +36,23 @@ if TYPE_CHECKING:
 
 
 class CannotPublishUnpublishableDocument(Exception):
+    """A document which has failed publication safety checks in `Document.is_publishable` cannot be published."""
+
     pass
 
 
 class Document:
-    document_noun = "document"
-    document_noun_plural = "documents"
+    """
+    A base class from which all other document types are extensions. This class includes the essential methods for
+    retrieving and manipulating a document within MarkLogic.
+    """
 
-    # attribute name, value which passes validation, error message
+    document_noun = "document"
+    """ The noun for a single instance of this document type. """
+
+    document_noun_plural = "documents"
+    """ The noun for a plural of this document type. """
+
     attributes_to_validate: list[tuple[str, bool, str]] = [
         (
             "is_failure",
@@ -66,18 +80,42 @@ class Document:
             "The court for this {document_noun} is not valid",
         ),
     ]
+    """
+    A list of tuples in the form:
+
+    ``` python
+    (
+        attribute_name,
+        passing_condition,
+        error_message,
+    )
+    ```
+
+    describing attributes which should be checked in order for a document to be considered valid.
+
+    Individual document classes should extend this list where necessary to validate document type-specific attributes.
+    """
 
     def __init__(self, uri: str, api_client: "MarklogicApiClient"):
+        """
+        :raises DocumentNotFoundError: The document does not exist within MarkLogic
+        """
         self.uri = uri.strip("/")
         self.api_client = api_client
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
     def document_exists(self) -> bool:
+        """Helper method to verify the existence of a document within MarkLogic.
+
+        :return: `True` if the document exists, `False` otherwise."""
         return self.api_client.document_exists(self.uri)
 
     @property
     def public_uri(self) -> str:
+        """
+        :return: The absolute, public URI at which a copy of this document can be found
+        """
         return "https://caselaw.nationalarchives.gov.uk/{uri}".format(uri=self.uri)
 
     @cached_property
@@ -234,6 +272,10 @@ class Document:
         )
 
     def publish(self) -> None:
+        """
+        :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
+        such cannot be published.
+        """
         if not self.is_publishable:
             raise CannotPublishUnpublishableDocument
 

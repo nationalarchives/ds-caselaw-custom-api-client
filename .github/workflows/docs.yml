@@ -1,10 +1,10 @@
-name: website
+name: Build/deploy documentation
 
-# build the documentation whenever there are new commits on main
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: read
 
@@ -21,7 +21,7 @@ jobs:
         with:
           poetry-version: 1.4.2
 
-      - run: poetry install --only docs
+      - run: poetry install --with docs
 
       - run: poetry run pdoc -o docs/ src/caselawclient
 
