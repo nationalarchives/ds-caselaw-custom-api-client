@@ -195,8 +195,14 @@ class Document:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
 
     @cached_property
+    def content_as_xml_bytestring(self) -> bytes:
+        return self.api_client.get_judgment_xml_bytestring(
+            self.uri, show_unpublished=True
+        )
+
+    @cached_property
     def content_as_xml_tree(self) -> Any:
-        return etree.fromstring(self.content_as_xml)
+        return etree.fromstring(self.content_as_xml_bytestring)
 
     def content_as_html(self, version_uri: Optional[str] = None) -> str:
         results = self.api_client.eval_xslt(
@@ -224,7 +230,7 @@ class Document:
         return True
 
     def _get_root(self) -> str:
-        return get_judgment_root(self.content_as_xml)
+        return get_judgment_root(self.content_as_xml_bytestring)
 
     @cached_property
     def has_name(self) -> bool:

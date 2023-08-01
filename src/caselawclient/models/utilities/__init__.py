@@ -12,9 +12,9 @@ akn_namespace = {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"}
 uk_namespace = {"uk": "https://caselaw.nationalarchives.gov.uk/akn"}
 
 
-def get_judgment_root(judgment_xml: str) -> str:
+def get_judgment_root(judgment_xml: bytes) -> str:
     try:
-        parsed_xml = ET.XML(bytes(judgment_xml, encoding="utf-8"))
+        parsed_xml = ET.XML(judgment_xml)
         return parsed_xml.tag
     except ET.ParseError:
         return "error"

@@ -23,7 +23,7 @@ class TestPressSummaryValidation:
         assert document_without_ncn.has_ncn is False
 
     def test_press_summary_neutral_citation(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
         <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
             xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
         <doc name="pressSummary">
@@ -40,12 +40,14 @@ class TestPressSummaryValidation:
             </mainBody>
         </doc>
         </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         press_summary = PressSummary("test/1234", mock_api_client)
 
         assert press_summary.neutral_citation == "[2016] TEST 49"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 
