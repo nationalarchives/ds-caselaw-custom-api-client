@@ -1,31 +1,22 @@
 from functools import cached_property
 from typing import Any
 
-from ds_caselaw_utils import neutral_url
+from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 
 from ..xml_helpers import get_xpath_match_string
 from .documents import Document
 
 
-class Judgment(Document):
+class Judgment(NeutralCitationMixin, Document):
+    """
+    Represents a judgment document.
+    """
+
     document_noun = "judgment"
     document_noun_plural = "judgments"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.attributes_to_validate = self.attributes_to_validate + [
-            (
-                "has_ncn",
-                True,
-                "This {document_noun} has no neutral citation number",
-            ),
-            (
-                "has_valid_ncn",
-                True,
-                "The neutral citation number of this {document_noun} is not valid",
-            ),
-        ]
-
-        super(Judgment, self).__init__(*args, **kwargs)
+        super(Judgment, self).__init__(self.document_noun, *args, **kwargs)
 
     @cached_property
     def neutral_citation(self) -> str:
@@ -37,18 +28,3 @@ class Judgment(Document):
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
             },
         )
-
-    @cached_property
-    def has_ncn(self) -> bool:
-        if not self.neutral_citation:
-            return False
-
-        return True
-
-    @cached_property
-    def has_valid_ncn(self) -> bool:
-        # The checks that we can convert an NCN to a URI using the function from utils
-        if not self.has_ncn or not neutral_url(self.neutral_citation):
-            return False
-
-        return True
