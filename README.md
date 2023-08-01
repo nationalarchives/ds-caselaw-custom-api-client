@@ -12,70 +12,7 @@ This package is published on PyPI: https://pypi.org/project/ds-caselaw-marklogic
 
 ## Usage
 
-Include the API client in your project using Pip or Poetry:
-```bash
-pip install ds-caselaw-marklogic-api-client
-```
-
-```bash
-poetry add ds-caselaw-marklogic-api-client
-```
-
-or in your projects `requirements.txt` with:
-```text
-ds-caselaw-marklogic-api-client~=12.0.0
-```
-
-### Using the client
-
-The client expects the following environment variables to be set or defined in a `.env` file:
-
-```bash
-MARKLOGIC_HOST
-MARKLOGIC_USER
-MARKLOGIC_PASSWORD
-MARKLOGIC_USE_HTTPS # Optional, defaults to False
-```
-
-Then import `api_client` from `caselawclient.Client`:
-
-```python
-from caselawclient.Client import api_client
-```
-
-Alternatively, you can import the base class and instantiate it with different credentials:
-
-```python
-from caselawclient.Client import MarklogicApiClient
-
-client = MarklogicApiClient(
-    host="",
-    username="",
-    password="",
-    use_https=False,
-)
-```
-
-`Client` also exports some exception classes:
-```python
-MarklogicAPIError
-MarklogicBadRequestError
-MarklogicUnauthorizedError
-MarklogicNotPermittedError
-MarklogicResourceNotFoundError
-MarklogicCommunicationError
-```
-
-### XML Tools
-There is also a small set of xml helper tools that provide some common functionality for dealing with xml:
-
-```python
-from caselawclient import xml_tools
-
-xml_tools.get_metadata_name_value(xml)
-xml_tools.get_metadata_name_element(xml)
-xml_tools.get_search_matches(element)
-```
+You can find documentation of the client class and available methods [here](https://nationalarchives.github.io/ds-caselaw-custom-api-client).
 
 ## Testing
 
