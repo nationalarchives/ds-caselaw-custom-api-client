@@ -310,8 +310,8 @@ class MarklogicApiClient:
 
         return self._eval_and_decode(vars, "get_judgment.xqy")
 
-    def set_judgment_name(self, judgment_uri: str, content: str) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+    def set_document_name(self, document_uri: str, content: str) -> requests.Response:
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
         return self._send_to_eval(vars, "set_metadata_name.xqy")
 
