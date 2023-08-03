@@ -28,3 +28,7 @@ class Judgment(NeutralCitationMixin, Document):
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
             },
         )
+
+    @property
+    def best_human_identifier(self) -> str:
+        return self.neutral_citation

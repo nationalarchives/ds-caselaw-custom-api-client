@@ -112,6 +112,16 @@ class Document:
         return self.api_client.document_exists(self.uri)
 
     @property
+    def best_human_identifier(self) -> Optional[str]:
+        """
+        Some identifier that is understood by legal professionals to refer to this legal event
+        that is not the name of the document.
+        Typically, this will be the neutral citation number, should it exist.
+        Should typically overridden in subclasses.
+        """
+        return None
+
+    @property
     def public_uri(self) -> str:
         """
         :return: The absolute, public URI at which a copy of this document can be found
