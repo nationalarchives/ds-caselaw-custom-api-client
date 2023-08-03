@@ -345,7 +345,7 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
-    def set_judgment_court(self, judgment_uri: str, content: str) -> requests.Response:
+    def set_document_court(self, judgment_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetMetadataCourtDict = {"uri": uri, "content": content}
 

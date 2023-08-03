@@ -2,14 +2,18 @@ xquery version "1.0-ml";
 
 declare namespace akn = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0";
 declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn";
+
+let $proprietary-node := document($uri)/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court
+let $court-node := $proprietary-node/uk:court
+
 declare function local:delete($uri)
 {
-   xdmp:node-delete(document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court)
+   xdmp:node-delete($court-node)
 };
 declare function local:edit($uri, $content)
 {
    xdmp:node-replace(
-     document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court,
+     ,
      <uk:court>{$content}</uk:court>
    )
 };
@@ -17,7 +21,7 @@ declare function local:add($uri, $content)
 {
 
    xdmp:node-insert-child(
-     document($uri)/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary,
+     $proprietary-node,
      <uk:court>{$content}</uk:court>
    )
 };
