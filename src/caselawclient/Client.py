@@ -324,9 +324,9 @@ class MarklogicApiClient:
         return self.set_document_work_expression_date(judgment_uri, content)
 
     def set_document_work_expression_date(
-        self, judgment_uri: str, content: str
+        self, document_uri: str, content: str
     ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataWorkExpressionDateDict = {
             "uri": uri,
             "content": content,
@@ -345,8 +345,8 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
-    def set_document_court(self, judgment_uri: str, content: str) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+    def set_document_court(self, document_uri: str, content: str) -> requests.Response:
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataCourtDict = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
