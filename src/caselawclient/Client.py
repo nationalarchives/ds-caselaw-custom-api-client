@@ -317,13 +317,13 @@ class MarklogicApiClient:
 
     def set_judgment_date(self, judgment_uri: str, content: str) -> requests.Response:
         warnings.warn(
-            "set_judgment_date() is deprecated, use set_judgment_work_expression_date()",
+            "set_judgment_date() is deprecated, use set_document_work_expression_date()",
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.set_judgment_work_expression_date(judgment_uri, content)
+        return self.set_document_work_expression_date(judgment_uri, content)
 
-    def set_judgment_work_expression_date(
+    def set_document_work_expression_date(
         self, judgment_uri: str, content: str
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
