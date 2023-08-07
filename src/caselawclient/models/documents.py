@@ -11,6 +11,7 @@ from ..errors import DocumentNotFoundError
 from ..xml_helpers import get_xpath_match_string
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
+    delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
     notify_changed,
@@ -37,6 +38,12 @@ if TYPE_CHECKING:
 
 class CannotPublishUnpublishableDocument(Exception):
     """A document which has failed publication safety checks in `Document.is_publishable` cannot be published."""
+
+    pass
+
+
+class DocumentNotSafeForDeletion(Exception):
+    """A document which is not safe for deletion cannot be deleted."""
 
     pass
 
@@ -318,6 +325,27 @@ class Document:
 
     def unhold(self) -> None:
         self.api_client.set_property(self.uri, "editor-hold", "false")
+
+    @cached_property
+    def safe_to_delete(self) -> bool:
+        """
+        Determines if a document is in a state where it's safe to be deleted, eg not currently publicly available.
+
+        :return: If the document is safe to be deleted
+        """
+
+        return not self.is_published
+
+    def delete(self) -> None:
+        """
+        Deletes this document from MarkLogic and any resources from AWS.
+        """
+
+        if self.safe_to_delete:
+            self.api_client.delete_judgment(self.uri)
+            delete_documents_from_private_bucket(self.uri)
+        else:
+            raise DocumentNotSafeForDeletion()
 
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
