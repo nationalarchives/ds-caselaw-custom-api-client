@@ -142,6 +142,10 @@ class TestDocument:
         published_document.is_published = True
         assert published_document.status == DOCUMENT_STATUS_PUBLISHED
 
+    def test_document_best_identifier(self, mock_api_client):
+        example_document = Document("uri", mock_api_client)
+        assert example_document.best_human_identifier is None
+
 
 class TestDocumentValidation:
     def test_judgment_is_failure(self, mock_api_client):

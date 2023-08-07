@@ -11,6 +11,13 @@ def mock_api_client():
     return Mock(spec=MarklogicApiClient)
 
 
+class TestJudgment:
+    def test_best_identifier(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.neutral_citation = "[2023] TEST 1234"
+        assert judgment.best_human_identifier == judgment.neutral_citation
+
+
 class TestJudgmentValidation:
     def test_has_ncn(self, mock_api_client):
         document_with_ncn = Judgment("test/1234", mock_api_client)
