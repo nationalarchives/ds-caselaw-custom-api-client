@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 13.2.1]
+ - Fix issues blocking push to PyPI
+
+## [Release 13.2.0]
+ - Add a "Best human identifier" to Documents
+
 ## [Release 13.1.0]
 
 - Added `get_judgment_xml_bytestring` and `content_as_xml_bytestring` to `Client`
@@ -269,7 +275,9 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.1.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...HEAD
+[Release 13.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.0...v13.2.1
+[Release 13.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.2.0
 [Release 13.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.1.0
 [Release 13.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v12.0.0...v13.0.0
 [Release 12.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.1...v12.0.0
