@@ -118,6 +118,10 @@ def unpublish_documents(uri: str) -> None:
     delete_from_bucket(uri, env("PUBLIC_ASSET_BUCKET"))
 
 
+def delete_documents_from_private_bucket(uri: str) -> None:
+    delete_from_bucket(uri, env("PRIVATE_ASSET_BUCKET"))
+
+
 def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
     client = create_sns_client()
 

@@ -12,6 +12,7 @@ from caselawclient.models.documents import (
     DOCUMENT_STATUS_PUBLISHED,
     CannotPublishUnpublishableDocument,
     Document,
+    DocumentNotSafeForDeletion,
 )
 
 
@@ -296,6 +297,41 @@ class TestDocumentHold:
         mock_api_client.set_property.assert_called_once_with(
             "test/1234", "editor-hold", "false"
         )
+
+
+class TestDocumentDelete:
+    def test_not_safe_to_delete_if_published(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.is_published = True
+
+        assert document.safe_to_delete is False
+
+    def test_safe_to_delete_if_unpublished(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.is_published = False
+
+        assert document.safe_to_delete is True
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_safe(self, mock_aws_delete_documents, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.safe_to_delete = True
+
+        document.delete()
+
+        mock_api_client.delete_judgment.assert_called_once_with("test/1234")
+        mock_aws_delete_documents.assert_called_once_with("test/1234")
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_unsafe(self, mock_aws_delete_documents, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.safe_to_delete = False
+
+        with pytest.raises(DocumentNotSafeForDeletion):
+            document.delete()
+
+        mock_api_client.delete_judgment.assert_not_called()
+        mock_aws_delete_documents.assert_not_called()
 
 
 class TestDocumentMetadata:
