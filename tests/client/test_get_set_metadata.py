@@ -52,24 +52,24 @@ class TestGetSetMetadata(unittest.TestCase):
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
-    def test_set_judgment_court(self):
+    def test_set_document_court(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = "judgment/uri"
             content = "new court"
             expected_vars = {"uri": "/judgment/uri.xml", "content": content}
-            self.client.set_judgment_court(uri, content)
+            self.client.set_document_court(uri, content)
 
             assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "set_metadata_court.xqy")
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
-    def test_set_judgment_date(self):
+    def test_set_document_date(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = "judgment/uri"
             content = "01-01-2023"
             expected_vars = {"uri": "/judgment/uri.xml", "content": content}
-            self.client.set_judgment_work_expression_date(uri, content)
+            self.client.set_document_work_expression_date(uri, content)
 
             assert mock_eval.call_args.args[0] == (
                 os.path.join(

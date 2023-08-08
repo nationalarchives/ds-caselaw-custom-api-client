@@ -354,23 +354,23 @@ class MarklogicApiClient:
             judgment_uri, version_uri, show_unpublished
         ).decode(encoding="utf-8")
 
-    def set_judgment_name(self, judgment_uri: str, content: str) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+    def set_document_name(self, document_uri: str, content: str) -> requests.Response:
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
         return self._send_to_eval(vars, "set_metadata_name.xqy")
 
     def set_judgment_date(self, judgment_uri: str, content: str) -> requests.Response:
         warnings.warn(
-            "set_judgment_date() is deprecated, use set_judgment_work_expression_date()",
+            "set_judgment_date() is deprecated, use set_document_work_expression_date()",
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.set_judgment_work_expression_date(judgment_uri, content)
+        return self.set_document_work_expression_date(judgment_uri, content)
 
-    def set_judgment_work_expression_date(
-        self, judgment_uri: str, content: str
+    def set_document_work_expression_date(
+        self, document_uri: str, content: str
     ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataWorkExpressionDateDict = {
             "uri": uri,
             "content": content,
@@ -389,8 +389,8 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
-    def set_judgment_court(self, judgment_uri: str, content: str) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+    def set_document_court(self, document_uri: str, content: str) -> requests.Response:
+        uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataCourtDict = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
