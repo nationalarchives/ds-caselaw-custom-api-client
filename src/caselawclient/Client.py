@@ -29,6 +29,7 @@ from . import xquery_type_dicts as query_dicts
 from .content_hash import validate_content_hash
 from .errors import MarklogicAPIError  # noqa: F401
 from .errors import (
+    DocumentNotFoundError,
     GatewayTimeoutError,
     MarklogicBadRequestError,
     MarklogicCheckoutConflictError,
@@ -160,6 +161,7 @@ class MarklogicApiClient:
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
         "SEC-PRIVDNE": MarklogicNotPermittedError,
         "XDMP-VALIDATE.*": MarklogicValidationFailedError,
+        "FCL-DOCUMENTNOTFOUND.*": DocumentNotFoundError,
     }
 
     default_http_error_class = MarklogicCommunicationError
