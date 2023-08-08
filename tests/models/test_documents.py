@@ -2,6 +2,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.errors import DocumentNotFoundError
@@ -11,6 +12,7 @@ from caselawclient.models.documents import (
     DOCUMENT_STATUS_PUBLISHED,
     CannotPublishUnpublishableDocument,
     Document,
+    DocumentNotSafeForDeletion,
 )
 
 
@@ -117,6 +119,14 @@ class TestDocument:
             "test/1234", show_unpublished=True
         )
 
+    def test_judgment_content_as_xml_tree(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = (
+            b'<?xml version="1.0" encoding="UTF-8"?><xml></xml>'
+        )
+
+        document = Document("test/1234", mock_api_client)
+        assert etree.tostring(document.content_as_xml_tree) == b"<xml/>"
+
     def test_document_status(self, mock_api_client):
         in_progress_document = Document("test/1234", mock_api_client)
         in_progress_document.is_held = False
@@ -132,6 +142,10 @@ class TestDocument:
         published_document.is_held = False
         published_document.is_published = True
         assert published_document.status == DOCUMENT_STATUS_PUBLISHED
+
+    def test_document_best_identifier(self, mock_api_client):
+        example_document = Document("uri", mock_api_client)
+        assert example_document.best_human_identifier is None
 
 
 class TestDocumentValidation:
@@ -197,14 +211,16 @@ class TestDocumentValidation:
         assert document.is_publishable is publishable
 
     def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
             <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                         xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment><meta><identification><FRBRWork>
                 <FRBRname value="Test Claimant v Test Defendant"/>
                 </FRBRWork></identification></meta></judgment>
             </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         document = Document("test/1234", mock_api_client)
         document.is_parked = False
@@ -283,6 +299,41 @@ class TestDocumentHold:
         )
 
 
+class TestDocumentDelete:
+    def test_not_safe_to_delete_if_published(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.is_published = True
+
+        assert document.safe_to_delete is False
+
+    def test_safe_to_delete_if_unpublished(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.is_published = False
+
+        assert document.safe_to_delete is True
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_safe(self, mock_aws_delete_documents, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.safe_to_delete = True
+
+        document.delete()
+
+        mock_api_client.delete_judgment.assert_called_once_with("test/1234")
+        mock_aws_delete_documents.assert_called_once_with("test/1234")
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_unsafe(self, mock_aws_delete_documents, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.safe_to_delete = False
+
+        with pytest.raises(DocumentNotSafeForDeletion):
+            document.delete()
+
+        mock_api_client.delete_judgment.assert_not_called()
+        mock_aws_delete_documents.assert_not_called()
+
+
 class TestDocumentMetadata:
     @pytest.mark.parametrize(
         "opening_tag, closing_tag",
@@ -292,7 +343,7 @@ class TestDocumentMetadata:
         ],
     )
     def test_name(self, opening_tag, closing_tag, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = f"""
+        mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <{opening_tag}>
@@ -305,12 +356,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         document = Document("test/1234", mock_api_client)
 
         assert document.name == "Test Claimant v Test Defendant"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 
@@ -322,7 +375,7 @@ class TestDocumentMetadata:
         ],
     )
     def test_court(self, opening_tag, closing_tag, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = f"""
+        mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <{opening_tag}>
@@ -333,12 +386,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         document = Document("test/1234", mock_api_client)
 
         assert document.court == "Court of Testing"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 
@@ -350,7 +405,7 @@ class TestDocumentMetadata:
         ],
     )
     def test_date_as_string(self, opening_tag, closing_tag, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = f"""
+        mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <{opening_tag}>
@@ -363,12 +418,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         document = Document("test/1234", mock_api_client)
 
         assert document.document_date_as_string == "2023-02-03"
         assert document.document_date_as_date == datetime.date(2023, 2, 3)
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )

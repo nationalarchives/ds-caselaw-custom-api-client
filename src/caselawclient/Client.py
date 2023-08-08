@@ -81,6 +81,17 @@ def get_multipart_strings_from_marklogic_response(
     return [part.text for part in multipart_data.parts]
 
 
+def get_multipart_bytes_from_marklogic_response(
+    response: requests.Response,
+) -> list[bytes]:
+    if not (response.content):
+        return []
+
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+
+    return [part.content for part in multipart_data.parts]
+
+
 def get_single_string_from_marklogic_response(
     response: requests.Response,
 ) -> str:
@@ -101,6 +112,25 @@ def get_single_string_from_marklogic_response(
         # TODO: This should strictly speaking be None, but fixing this involves refactoring a lot of other stuff which
         # relies on "" being falsy.
         return ""
+
+    elif part_count > 1:
+        raise MultipartResponseLongerThanExpected(
+            f"Response returned {part_count} multipart items, expected 1"
+        )
+
+    return parts[0]
+
+
+def get_single_bytestring_from_marklogic_response(
+    response: requests.Response,
+) -> bytes:
+    parts = get_multipart_bytes_from_marklogic_response(response)
+    part_count = len(parts)
+
+    if part_count == 0:
+        # TODO: This should strictly speaking be None, but fixing this involves refactoring a lot of other stuff which
+        # relies on "" being falsy.
+        return b""
 
     elif part_count > 1:
         raise MultipartResponseLongerThanExpected(
@@ -228,6 +258,12 @@ class MarklogicApiClient:
         response = self._send_to_eval(vars, xquery_file_name)
         return get_single_string_from_marklogic_response(response)
 
+    def _eval_as_bytes(
+        self, vars: query_dicts.MarkLogicAPIDict, xquery_file_name: str
+    ) -> bytes:
+        response = self._send_to_eval(vars, xquery_file_name)
+        return get_single_bytestring_from_marklogic_response(response)
+
     def prepare_request_kwargs(
         self,
         method: str,
@@ -284,12 +320,12 @@ class MarklogicApiClient:
             return False
         raise RuntimeError("Marklogic response was neither true nor false")
 
-    def get_judgment_xml(
+    def get_judgment_xml_bytestring(
         self,
         judgment_uri: str,
         version_uri: Optional[str] = None,
         show_unpublished: bool = False,
-    ) -> str:
+    ) -> bytes:
         uri = self._format_uri_for_marklogic(judgment_uri)
         show_unpublished = self.verify_show_unpublished(show_unpublished)
         if version_uri:
@@ -300,15 +336,23 @@ class MarklogicApiClient:
             "show_unpublished": show_unpublished,
         }
 
-        decoded_response = self._eval_and_decode(vars, "get_judgment.xqy")
-        if not decoded_response:
+        response = self._eval_as_bytes(vars, "get_judgment.xqy")
+        if not response:
             raise MarklogicNotPermittedError(
                 "The document is not published and show_unpublished was not set"
             )
 
-        return decoded_response
+        return response
 
-        return self._eval_and_decode(vars, "get_judgment.xqy")
+    def get_judgment_xml(
+        self,
+        judgment_uri: str,
+        version_uri: Optional[str] = None,
+        show_unpublished: bool = False,
+    ) -> str:
+        return self.get_judgment_xml_bytestring(
+            judgment_uri, version_uri, show_unpublished
+        ).decode(encoding="utf-8")
 
     def set_document_name(self, document_uri: str, content: str) -> requests.Response:
         uri = self._format_uri_for_marklogic(document_uri)

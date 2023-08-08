@@ -11,6 +11,13 @@ def mock_api_client():
     return Mock(spec=MarklogicApiClient)
 
 
+class TestJudgment:
+    def test_best_identifier(self, mock_api_client):
+        judgment = Judgment("test/1234", mock_api_client)
+        judgment.neutral_citation = "[2023] TEST 1234"
+        assert judgment.best_human_identifier == judgment.neutral_citation
+
+
 class TestJudgmentValidation:
     def test_has_ncn(self, mock_api_client):
         document_with_ncn = Judgment("test/1234", mock_api_client)
@@ -23,7 +30,7 @@ class TestJudgmentValidation:
         assert document_without_ncn.has_ncn is False
 
     def test_judgment_neutral_citation(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                         xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment>
@@ -34,12 +41,14 @@ class TestJudgmentValidation:
                     </meta>
                 </judgment>
             </akomaNtoso>
-        """
+        """.encode(
+            "utf-8"
+        )
 
         judgment = Judgment("test/1234", mock_api_client)
 
         assert judgment.neutral_citation == "[2023] TEST 1234"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 

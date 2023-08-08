@@ -11,6 +11,7 @@ from ..errors import DocumentNotFoundError
 from ..xml_helpers import get_xpath_match_string
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
+    delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
     notify_changed,
@@ -37,6 +38,12 @@ if TYPE_CHECKING:
 
 class CannotPublishUnpublishableDocument(Exception):
     """A document which has failed publication safety checks in `Document.is_publishable` cannot be published."""
+
+    pass
+
+
+class DocumentNotSafeForDeletion(Exception):
+    """A document which is not safe for deletion cannot be deleted."""
 
     pass
 
@@ -110,6 +117,16 @@ class Document:
 
         :return: `True` if the document exists, `False` otherwise."""
         return self.api_client.document_exists(self.uri)
+
+    @property
+    def best_human_identifier(self) -> Optional[str]:
+        """
+        Some identifier that is understood by legal professionals to refer to this legal event
+        that is not the name of the document.
+        Typically, this will be the neutral citation number, should it exist.
+        Should typically overridden in subclasses.
+        """
+        return None
 
     @property
     def public_uri(self) -> str:
@@ -195,8 +212,14 @@ class Document:
         return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
 
     @cached_property
+    def content_as_xml_bytestring(self) -> bytes:
+        return self.api_client.get_judgment_xml_bytestring(
+            self.uri, show_unpublished=True
+        )
+
+    @cached_property
     def content_as_xml_tree(self) -> Any:
-        return etree.fromstring(self.content_as_xml)
+        return etree.fromstring(self.content_as_xml_bytestring)
 
     def content_as_html(self, version_uri: Optional[str] = None) -> str:
         results = self.api_client.eval_xslt(
@@ -224,7 +247,7 @@ class Document:
         return True
 
     def _get_root(self) -> str:
-        return get_judgment_root(self.content_as_xml)
+        return get_judgment_root(self.content_as_xml_bytestring)
 
     @cached_property
     def has_name(self) -> bool:
@@ -302,6 +325,27 @@ class Document:
 
     def unhold(self) -> None:
         self.api_client.set_property(self.uri, "editor-hold", "false")
+
+    @cached_property
+    def safe_to_delete(self) -> bool:
+        """
+        Determines if a document is in a state where it's safe to be deleted, eg not currently publicly available.
+
+        :return: If the document is safe to be deleted
+        """
+
+        return not self.is_published
+
+    def delete(self) -> None:
+        """
+        Deletes this document from MarkLogic and any resources from AWS.
+        """
+
+        if self.safe_to_delete:
+            self.api_client.delete_judgment(self.uri)
+            delete_documents_from_private_bucket(self.uri)
+        else:
+            raise DocumentNotSafeForDeletion()
 
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)

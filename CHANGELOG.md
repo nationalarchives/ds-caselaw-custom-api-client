@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 13.2.1]
+ - Fix issues blocking push to PyPI
+
+## [Release 13.2.0]
+ - Add a "Best human identifier" to Documents
+
+## [Release 13.1.0]
+
+- Added `get_judgment_xml_bytestring` and `content_as_xml_bytestring` to `Client`
+- Fixed `content_as_xml_tree` by making it use `content_as_xml_bytestring`
+- Made `Document` class' `name`, `court`, `document_date_as_string` and `document_date_as_date` work for Press Summaries also.
+- Added `neutral_citation` property and validation to `PressSummary` class.
 - Significant improvements to inline documentation of the code.
 - **Deprecated**: The `caselawclient.api_client` instance should be considered deprecated. Projects should instead initialise their own instance.
 
@@ -20,7 +32,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Refactored `Document` class' `name`, `court`, `document_date_as_string` and `document_date_as_date` (previously judgment_date_...) on Document class and neutral_citation on Judgment class making use of the new cached `content_as_xml_tree` property.
 - Renamed `judgment_date_as_string` `judgment_date_as_date` to `document_date_as_string` and `document_date_as_date` respectively.
 - Added `content_as_xml_tree` cached property to `Document` class
-- Changed the `Document` class' `content_as_html` to be a cached_property also.
+- Changed the `Document` class' `content_as_xml` to be a cached_property also. [Note: this changelog line previously mistakenly referred to `content_as_html`.]
 - Removed `get_judgment_name`, `get_judgment_citation`, `get_judgment_court`, `get_judgment_work_date` from the `Client` class and associated `.xqy` files.
 - Add a new `MarklogicApiClient.get_document_by_uri` method to retrieve a document (of any type) by URI.
 - New `get_document_by_uri` method on API client returning unique types for `Judgment`s and `PressSummary`s.
@@ -263,7 +275,10 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...HEAD
+[Release 13.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.0...v13.2.1
+[Release 13.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.2.0
+[Release 13.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.1.0
 [Release 13.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v12.0.0...v13.0.0
 [Release 12.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.1...v12.0.0
 [Release 11.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v11.0.0...v11.0.1
