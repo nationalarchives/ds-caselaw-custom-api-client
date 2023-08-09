@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 14.0.0]
+
 - **Breaking:**: Removed `document.is_editable` in favour of the more descriptive and better-tested `document.failed_to_parse`.
+- Add new `Document.delete()` method.
+- Generalised the set judgment metadata methods to set document metadata methods specifically for name, court and date.
 
 ## [Release 13.2.1]
  - Fix issues blocking push to PyPI
@@ -277,7 +281,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.0...HEAD
+[Release 14.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...v14.0.0
 [Release 13.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.0...v13.2.1
 [Release 13.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.2.0
 [Release 13.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.1.0
