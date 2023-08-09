@@ -39,6 +39,28 @@ class TestDocument:
         with pytest.raises(DocumentNotFoundError):
             Document("not_a_real_judgment", mock_api_client)
 
+    def test_document_failed_to_parse(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <error>Parsing failed</error>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.failed_to_parse is True
+
+    def test_document_parsed(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <akomaNtoso>Parsing succeeded</akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.failed_to_parse is False
+
     def test_judgment_is_published(self, mock_api_client):
         mock_api_client.get_published.return_value = True
 
@@ -184,18 +206,20 @@ class TestDocumentValidation:
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_parked, is_held, has_name, has_valid_court, publishable",
+        "failed_to_parse, is_parked, is_held, has_name, has_valid_court, publishable",
         [
-            (False, False, True, True, True),  # Publishable
-            (False, True, True, True, False),  # Held
-            (True, False, True, True, False),  # Parked
-            (False, False, False, True, False),  # No name
-            (False, False, True, False, False),  # Invalid court
+            (False, False, False, True, True, True),  # Publishable
+            (True, False, False, False, False, False),  # Parser failure
+            (False, False, True, True, True, False),  # Held
+            (False, True, False, True, True, False),  # Parked
+            (False, False, False, False, True, False),  # No name
+            (False, False, False, True, False, False),  # Invalid court
         ],
     )
     def test_document_is_publishable_conditions(
         self,
         mock_api_client,
+        failed_to_parse,
         is_held,
         is_parked,
         has_name,
@@ -203,6 +227,7 @@ class TestDocumentValidation:
         publishable,
     ):
         document = Document("test/1234", mock_api_client)
+        document.failed_to_parse = failed_to_parse
         document.is_parked = is_parked
         document.is_held = is_held
         document.has_name = has_name
@@ -231,6 +256,7 @@ class TestDocumentValidation:
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
+        document.failed_to_parse = True
         document.is_parked = True
         document.is_held = True
         document.has_name = False
@@ -238,6 +264,7 @@ class TestDocumentValidation:
 
         assert document.validation_failure_messages == sorted(
             [
+                "This document failed to parse",
                 "This document is currently parked at a temporary URI",
                 "This document is currently on hold",
                 "This document has no name",

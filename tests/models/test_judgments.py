@@ -81,6 +81,7 @@ class TestJudgmentValidation:
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
+        judgment.failed_to_parse = True
         judgment.is_parked = True
         judgment.is_held = True
         judgment.has_name = False
@@ -90,6 +91,7 @@ class TestJudgmentValidation:
 
         assert judgment.validation_failure_messages == sorted(
             [
+                "This document failed to parse",
                 "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
                 "This judgment has no name",

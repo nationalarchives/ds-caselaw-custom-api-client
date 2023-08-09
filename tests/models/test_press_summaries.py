@@ -89,6 +89,7 @@ class TestPressSummaryValidation:
         self, mock_api_client
     ):
         press_summary = PressSummary("test/1234", mock_api_client)
+        press_summary.failed_to_parse = True
         press_summary.is_parked = True
         press_summary.is_held = True
         press_summary.has_name = False
@@ -98,6 +99,7 @@ class TestPressSummaryValidation:
 
         assert press_summary.validation_failure_messages == sorted(
             [
+                "This document failed to parse",
                 "This press summary is currently parked at a temporary URI",
                 "This press summary is currently on hold",
                 "This press summary has no name",
