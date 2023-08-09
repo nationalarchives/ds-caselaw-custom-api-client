@@ -62,9 +62,14 @@ class Document:
 
     attributes_to_validate: list[tuple[str, bool, str]] = [
         (
+            "failed_to_parse",
+            False,
+            "This document failed to parse",
+        ),
+        (
             "is_failure",
             False,
-            "This {document_noun} has failed to parse",
+            "This {document_noun} does not have a valid URI",
         ),
         (
             "is_parked",
@@ -241,10 +246,15 @@ class Document:
         return False
 
     @cached_property
-    def is_editable(self) -> bool:
+    def failed_to_parse(self) -> bool:
+        """
+        Did this document entirely fail to parse?
+
+        :return: `True` if there was a complete parser failure, otherwise `False`
+        """
         if "error" in self._get_root():
-            return False
-        return True
+            return True
+        return False
 
     def _get_root(self) -> str:
         return get_judgment_root(self.content_as_xml_bytestring)

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- **Breaking:**: Removed `document.is_editable` in favour of the more descriptive and better-tested `document.failed_to_parse`.
+
 ## [Release 13.2.1]
  - Fix issues blocking push to PyPI
 
