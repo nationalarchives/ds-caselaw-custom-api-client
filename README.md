@@ -23,6 +23,11 @@ poetry install
 poetry run pytest
 ```
 
+There are also some smoketests that run against the staging database but do not run in CI. Run them with
+```bash
+poetry run pytest smoketest.py
+```
+
 ## Making changes
 
 When making a change, update the [changelog](CHANGELOG.md) using the
