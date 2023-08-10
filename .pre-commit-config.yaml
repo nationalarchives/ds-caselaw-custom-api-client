@@ -32,8 +32,8 @@ repos:
         language: node
         additional_dependencies:
           - xqlint
-        entry: xqlint lint
-        types_or: [xquery]
+        entry: bash -c "for f in $@ ; do xqlint lint $f; done"
+        types_or: ["xquery"]
 
   - repo: local
     hooks:

@@ -1,5 +1,6 @@
 xquery version "1.0-ml";
 
+declare namespace xdmp = "http://marklogic.com/xdmp";
 import module namespace dls = "http://marklogic.com/xdmp/dls"
       at "/MarkLogic/dls.xqy";
 
