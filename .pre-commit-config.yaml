@@ -1,5 +1,4 @@
-exclude: "src/caselawclient/xquery"
-default_stages: [commit]
+default_install_hook_types: [pre-commit, pre-push]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -39,7 +38,8 @@ repos:
     hooks:
       - id: mypy
         name: mypy-src
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+        additional_dependencies:
+          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^src/
         args: ["--strict"]
 
@@ -49,7 +49,8 @@ repos:
     hooks:
       - id: mypy
         name: mypy-tests
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+        additional_dependencies:
+          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^tests/
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
