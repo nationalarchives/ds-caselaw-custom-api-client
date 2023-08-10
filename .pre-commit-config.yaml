@@ -27,6 +27,16 @@ repos:
 
   - repo: local
     hooks:
+      - id: xqlint
+        name: Lint XQuery files
+        language: node
+        additional_dependencies:
+          - xqlint
+        entry: xqlint lint
+        types_or: [xquery]
+
+  - repo: local
+    hooks:
       - id: build-xquery-type-dicts
         name: build-xquery-type-dicts
         language: python
