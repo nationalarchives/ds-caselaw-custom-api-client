@@ -3,31 +3,31 @@ xquery version "1.0-ml";
 declare namespace akn = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0";
 declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn";
 
-let $proprietary-node := document($uri)/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court
-let $court-node := $proprietary-node/uk:court
+declare variable $uri as xs:string external;
+declare variable $content as xs:string external;
+declare variable $proprietary-node := document($uri)/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary;
+declare variable $court-node := $proprietary-node/uk:court;
 
 declare function local:delete($uri)
 {
    xdmp:node-delete($court-node)
 };
+
 declare function local:edit($uri, $content)
 {
    xdmp:node-replace(
-     ,
+      $court-node,
      <uk:court>{$content}</uk:court>
    )
 };
+
 declare function local:add($uri, $content)
 {
-
    xdmp:node-insert-child(
      $proprietary-node,
      <uk:court>{$content}</uk:court>
    )
 };
-
-declare variable $uri as xs:string external;
-declare variable $content as xs:string external;
 
 if (fn:boolean(
 cts:search(doc($uri),
