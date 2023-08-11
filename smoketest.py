@@ -18,7 +18,6 @@ api_client = Client.MarklogicApiClient(
 )
 
 
-@pytest.mark.xfail
 def test_get_document_type_returns_404():
     with pytest.raises(DocumentNotFoundError) as e:
         api_client.get_document_type_from_uri("/not/a/real/url")
