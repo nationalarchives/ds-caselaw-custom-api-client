@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 14.0.1]
+
+- Fixed `Client.set_document_court` method
+- Fixed `Client.get_document_type_from_uri` method
+
 ## [Release 14.0.0]
 
 - **Breaking:**: Removed `document.is_editable` in favour of the more descriptive and better-tested `document.failed_to_parse`.
@@ -281,7 +286,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.1...HEAD
+[Release 14.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.0...v14.0.1
 [Release 14.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...v14.0.0
 [Release 13.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.0...v13.2.1
 [Release 13.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.0.0...v13.2.0
