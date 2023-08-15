@@ -22,7 +22,7 @@ class PressSummary(NeutralCitationMixin, Document):
     def neutral_citation(self) -> str:
         return get_xpath_match_string(
             self.content_as_xml_tree,
-            "/akn:akomaNtoso/akn:doc/akn:mainBody/akn:p/akn:neutralCitation/text()",
+            "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()",
             {
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
             },
