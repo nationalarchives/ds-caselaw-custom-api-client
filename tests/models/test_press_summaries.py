@@ -34,7 +34,7 @@ class TestPressSummaryValidation:
         <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
             xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
         <doc name="pressSummary">
-            <mainBody>
+            <preface>
             <p>
                 some paragraph
             </p>
@@ -44,7 +44,7 @@ class TestPressSummaryValidation:
                 </docTitle>
                 <neutralCitation style="font-weight:bold;font-family:Garamond">[2016] TEST 49</neutralCitation>
             </p>
-            </mainBody>
+            </preface>
         </doc>
         </akomaNtoso>
         """.encode(

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- Fixed `neutral_citation` property to look within `preface` tag rather than `mainBody` for press summaries, due to updated parsing resulting in updated press summary xml structure.
+
 ## [Release 14.0.1]
 
 - Fixed `Client.set_document_court` method
