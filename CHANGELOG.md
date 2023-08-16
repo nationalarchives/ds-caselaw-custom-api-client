@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 14.0.2]
+
 - Fixed `neutral_citation` property to look within `preface` tag rather than `mainBody` for press summaries, due to updated parsing resulting in updated press summary xml structure.
 - Added `python-dotenv` as a poetry `dev` dependency to be able to run the new `smoketest.py` file that connects to a MarkLogic instance.
 
@@ -289,7 +291,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.2...HEAD
+[Release 14.0.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.1...v14.0.2
 [Release 14.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.0...v14.0.1
 [Release 14.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...v14.0.0
 [Release 13.2.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.0...v13.2.1
