@@ -23,10 +23,19 @@ poetry install
 poetry run pytest
 ```
 
-There are also some smoketests that run against the staging database but do not run in CI. Run them with
+There are also some smoketests in `smoketests.py` which run against a MarkLogic database but do not run in CI currently.
+
+To run them locally you can set the environment variables as detailed in the file in a `.env` file or just hardcode them in, as long as you don't commit those changes to the repo.
+
+And then run
+
 ```bash
 poetry run pytest smoketest.py
 ```
+
+To start with when running this, we have been choosing to point to the staging MarkLogic to have more confidence that the setup is a good representation of production as opposed to a local MarkLogic instance but that can work too.
+
+Eventually we will make it so that we run these tests in CI and probably point to a dedicated testing MarkLogic instance so we don't get conflicts with people using staging for manual testing.
 
 ## Making changes
 
