@@ -21,85 +21,96 @@ class MoveJudgmentError(Exception):
 
 
 def overwrite_document(
-    old_uri: str,
-    new_citation: str,
+    source_uri: str,
+    target_citation: str,
     api_client: Any,
 ) -> str:
     """Move the judgment at old_uri on top of the new citation, which must already exist
-    Compare to update_document_uri"""
+    Compare to update_document_uri
 
-    new_uri: Optional[str] = caselawutils.neutral_url(new_citation.strip())
+    :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
+    :param target_citation: The NCN (implying a URL) whose contents will be overwritten
+    :param api_client: An instance of MarklogicApiClient used to make the search request
+    :return: The URL associated with the `target_citation`
+    """
 
-    if new_uri == old_uri:
-        raise RuntimeError(f"trying to overwrite yourself, {old_uri}")
+    new_uri: Optional[str] = caselawutils.neutral_url(target_citation.strip())
+
+    if new_uri == source_uri:
+        raise RuntimeError(f"trying to overwrite yourself, {source_uri}")
     if new_uri is None:
         raise NeutralCitationToUriError(
-            f"Unable to form new URI for {old_uri} from neutral citation: {new_citation}"
+            f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}"
         )
     if not api_client.document_exists(new_uri):
         raise OverwriteJudgmentError(
-            f"The URI {new_uri} generated from {new_citation} does not already exist, so cannot be overwritten"
+            f"The URI {new_uri} generated from {target_citation} does not already exist, so cannot be overwritten"
         )
-    old_judgment = Judgment(old_uri, api_client)
+    old_judgment = Judgment(source_uri, api_client)
     try:
         old_judgment_bytes = old_judgment.content_as_xml
         old_judgment_xml = ET.XML(bytes(old_judgment_bytes, encoding="utf-8"))
         api_client.save_judgment_xml(
             new_uri,
             old_judgment_xml,
-            annotation=f"overwritten from {old_uri}",
+            annotation=f"overwritten from {source_uri}",
         )
-        set_metadata(old_uri, new_uri, api_client)
+        set_metadata(source_uri, new_uri, api_client)
         # TODO: consider deleting existing public assets at that location
-        copy_assets(old_uri, new_uri)
+        copy_assets(source_uri, new_uri)
         api_client.set_judgment_this_uri(new_uri)
     except MarklogicAPIError as e:
         raise OverwriteJudgmentError(
-            f"Failure when attempting to copy judgment from {old_uri} to {new_uri}: {e}"
+            f"Failure when attempting to copy judgment from {source_uri} to {new_uri}: {e}"
         )
 
     try:
-        api_client.delete_judgment(old_uri)
+        api_client.delete_judgment(source_uri)
     except MarklogicAPIError as e:
         raise OverwriteJudgmentError(
-            f"Failure when attempting to delete judgment from {old_uri}: {e}"
+            f"Failure when attempting to delete judgment from {source_uri}: {e}"
         )
 
     return new_uri
 
 
-def update_document_uri(old_uri: str, new_citation: str, api_client: Any) -> str:
+def update_document_uri(source_uri: str, target_citation: str, api_client: Any) -> str:
     """
     Move the document at old_uri to the correct location based on the neutral citation
     The new neutral citation *must* not already exist (that is handled elsewhere)
+
+    :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
+    :param target_citation: The NCN (implying an unused URL) where the document will be written to
+    :param api_client: An instance of MarklogicApiClient used to make the search request
+    :return: The URL associated with the `target_citation`
     """
-    new_uri: Optional[str] = caselawutils.neutral_url(new_citation.strip())
+    new_uri: Optional[str] = caselawutils.neutral_url(target_citation.strip())
     if new_uri is None:
         raise NeutralCitationToUriError(
-            f"Unable to form new URI for {old_uri} from neutral citation: {new_citation}"
+            f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}"
         )
 
     if api_client.document_exists(new_uri):
         raise MoveJudgmentError(
-            f"The URI {new_uri} generated from {new_citation} already exists, you cannot move this judgment to a"
+            f"The URI {new_uri} generated from {target_citation} already exists, you cannot move this judgment to a"
             f" pre-existing Neutral Citation Number."
         )
 
     try:
-        api_client.copy_document(old_uri, new_uri)
-        set_metadata(old_uri, new_uri, api_client)
-        copy_assets(old_uri, new_uri)
+        api_client.copy_document(source_uri, new_uri)
+        set_metadata(source_uri, new_uri, api_client)
+        copy_assets(source_uri, new_uri)
         api_client.set_judgment_this_uri(new_uri)
     except MarklogicAPIError as e:
         raise MoveJudgmentError(
-            f"Failure when attempting to copy judgment from {old_uri} to {new_uri}: {e}"
+            f"Failure when attempting to copy judgment from {source_uri} to {new_uri}: {e}"
         )
 
     try:
-        api_client.delete_judgment(old_uri)
+        api_client.delete_judgment(source_uri)
     except MarklogicAPIError as e:
         raise MoveJudgmentError(
-            f"Failure when attempting to delete judgment from {old_uri}: {e}"
+            f"Failure when attempting to delete judgment from {source_uri}: {e}"
         )
 
     return new_uri
