@@ -1,3 +1,4 @@
+import re
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -5,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 import responses
+from requests import Request
 
 from caselawclient.Client import (
     MarklogicApiClient,
@@ -173,3 +175,9 @@ class ApiClientTest(unittest.TestCase):
     def test_format_uri_all_the_slashes(self):
         uri = "/ewca/2022/123/"
         assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
+
+    def test_user_agent(self):
+        user_agent = self.client.session.prepare_request(
+            Request("GET", "http://example.invalid")
+        ).headers["user-agent"]
+        assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", user_agent)
