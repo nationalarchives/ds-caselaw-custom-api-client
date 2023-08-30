@@ -168,14 +168,15 @@ def copy_assets(old_uri: str, new_uri: str) -> None:
     for result in response.get("Contents", []):
         old_key = str(result["Key"])
         new_key = build_new_key(old_key, new_uri)
-        if new_key is not None:
-            try:
-                source: CopySourceTypeDef = {"Bucket": bucket, "Key": old_key}
-                client.copy(source, bucket, new_key)
-            except botocore.client.ClientError as e:
-                logging.warning(
-                    f"Unable to copy file {old_key} to new location {new_key}, error: {e}"
-                )
+        if new_key is None:
+            continue
+        try:
+            source: CopySourceTypeDef = {"Bucket": bucket, "Key": old_key}
+            client.copy(source, bucket, new_key)
+        except botocore.client.ClientError as e:
+            logging.warning(
+                f"Unable to copy file {old_key} to new location {new_key}, error: {e}"
+            )
 
 
 def build_new_key(old_key: str, new_uri: str) -> str:

@@ -25,7 +25,7 @@ def overwrite_document(
     target_citation: str,
     api_client: Any,
 ) -> str:
-    """Move the judgment at old_uri on top of the new citation, which must already exist
+    """Move the document at source_uri on top of the new citation, which must already exist
     Compare to update_document_uri
 
     :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
@@ -37,7 +37,9 @@ def overwrite_document(
     new_uri: Optional[str] = caselawutils.neutral_url(target_citation.strip())
 
     if new_uri == source_uri:
-        raise RuntimeError(f"trying to overwrite yourself, {source_uri}")
+        raise RuntimeError(
+            f"Attempted to overwrite document {source_uri} with itself, which is not permitted."
+        )
     if new_uri is None:
         raise NeutralCitationToUriError(
             f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}"
@@ -76,7 +78,7 @@ def overwrite_document(
 
 def update_document_uri(source_uri: str, target_citation: str, api_client: Any) -> str:
     """
-    Move the document at old_uri to the correct location based on the neutral citation
+    Move the document at source_uri to the correct location based on the neutral citation
     The new neutral citation *must* not already exist (that is handled elsewhere)
 
     :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
