@@ -1,10 +1,8 @@
-import xml.etree.ElementTree as ET
 from typing import Any, Optional
 
 import ds_caselaw_utils as caselawutils
 
 from caselawclient.errors import MarklogicAPIError
-from caselawclient.models.judgments import Judgment
 from caselawclient.models.utilities.aws import copy_assets
 
 
@@ -48,13 +46,12 @@ def overwrite_document(
         raise OverwriteJudgmentError(
             f"The URI {new_uri} generated from {target_citation} does not already exist, so cannot be overwritten"
         )
-    old_judgment = Judgment(source_uri, api_client)
+    old_doc = api_client.get_document_by_uri_or_404(source_uri)
     try:
-        old_judgment_bytes = old_judgment.content_as_xml
-        old_judgment_xml = ET.XML(bytes(old_judgment_bytes, encoding="utf-8"))
+        old_doc_xml = old_doc.content_as_xml
         api_client.save_judgment_xml(
             new_uri,
-            old_judgment_xml,
+            old_doc_xml,
             annotation=f"overwritten from {source_uri}",
         )
         set_metadata(source_uri, new_uri, api_client)

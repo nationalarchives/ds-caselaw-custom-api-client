@@ -105,20 +105,20 @@ class TestAWSUtils:
 class TestOverwrite:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch("boto3.session.Session.client")
-    @patch("caselawclient.models.utilities.move.Judgment")
-    def test_overwrite_success(self, fake_judgment, fake_boto3_client):
+    def test_overwrite_success(self, fake_boto3_client):
         """Given the target judgment does not exist,
         we continue to move the judgment to the new location
         (where moving is copy + delete)"""
-        # fake_judgment.return_value = JudgmentFactory.build()
         ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
         fake_api_client = MagicMock()
         fake_api_client.judgment_exists.return_value = True
         fake_api_client.copy_judgment.return_value = True
         fake_api_client.delete_judgment.return_value = True
         fake_boto3_client.list_objects.return_value = []
-        fake_judgment.return_value = JudgmentFactory.build()
+
+        fake_judgment = JudgmentFactory.build()
         fake_judgment.return_value.content_as_xml = "<xml>b</xml>"
+        fake_api_client.get_document_by_uri_or_404.return_value = fake_judgment
 
         result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
         fake_api_client.save_judgment_xml.assert_called_with(
