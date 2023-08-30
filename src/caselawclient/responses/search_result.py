@@ -10,6 +10,7 @@ from ds_caselaw_utils.courts import Court, CourtNotFoundException, courts
 from lxml import etree
 
 from caselawclient.Client import api_client
+from caselawclient.models.documents import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
 
 
@@ -43,7 +44,7 @@ class SearchResultMetadata:
         self.last_modified = last_modified
 
     @staticmethod
-    def create_from_uri(uri: str) -> "SearchResultMetadata":
+    def create_from_uri(uri: DocumentURIString) -> "SearchResultMetadata":
         """
         Create a SearchResultMetadata instance from a search result URI.
 
@@ -159,12 +160,14 @@ class SearchResult:
         self.node = node
 
     @property
-    def uri(self) -> str:
+    def uri(self) -> DocumentURIString:
         """
         :return: The URI of the search result
         """
 
-        return self._get_xpath_match_string("@uri").lstrip("/").split(".xml")[0]
+        return DocumentURIString(
+            self._get_xpath_match_string("@uri").lstrip("/").split(".xml")[0]
+        )
 
     @property
     def neutral_citation(self) -> str:

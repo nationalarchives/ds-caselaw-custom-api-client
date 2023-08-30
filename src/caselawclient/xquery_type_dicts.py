@@ -6,8 +6,12 @@ These classes are automatically generated using the `script/build_xquery_type_di
 checks. They are used to enforce appropriately typed variables being passed in to MarkLogic XQuery functions.
 """
 
-from typing import Any, Optional, TypedDict
+from typing import Any, NewType, Optional, TypedDict
 
+MarkLogicDocumentURIString = NewType("MarkLogicDocumentURIString", str)
+MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
+
+MarkLogicPrivilegeURIString = NewType("MarkLogicPrivilegeURIString", str)
 
 class MarkLogicAPIDict(TypedDict):
     pass
@@ -15,63 +19,63 @@ class MarkLogicAPIDict(TypedDict):
 
 # break_judgment_checkout.xqy
 class BreakJudgmentCheckoutDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # checkin_judgment.xqy
 class CheckinJudgmentDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # checkout_judgment.xqy
 class CheckoutJudgmentDict(MarkLogicAPIDict):
     annotation: str
     timeout: int
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # copy_document.xqy
 class CopyDocumentDict(MarkLogicAPIDict):
-    new_uri: str
-    old_uri: str
+    new_uri: MarkLogicDocumentURIString
+    old_uri: MarkLogicDocumentURIString
 
 
 # delete_judgment.xqy
 class DeleteJudgmentDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # document_collections.xqy
 class DocumentCollectionsDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # document_exists.xqy
 class DocumentExistsDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     show_unpublished: Optional[bool]
-    uri: str
-    version_uri: Optional[str]
+    uri: MarkLogicDocumentURIString
+    version_uri: Optional[MarkLogicDocumentVersionURIString]
 
 
 # get_judgment_checkout_status.xqy
 class GetJudgmentCheckoutStatusDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # get_judgment_version.xqy
 class GetJudgmentVersionDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
     version: str
 
 
 # get_last_modified.xqy
 class GetLastModifiedDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # get_properties_for_search_results.xqy
@@ -82,43 +86,43 @@ class GetPropertiesForSearchResultsDict(MarkLogicAPIDict):
 # get_property.xqy
 class GetPropertyDict(MarkLogicAPIDict):
     name: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # insert_document.xqy
 class InsertDocumentDict(MarkLogicAPIDict):
     document: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # list_judgment_versions.xqy
 class ListJudgmentVersionsDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_boolean_property.xqy
 class SetBooleanPropertyDict(MarkLogicAPIDict):
     name: str
-    uri: str
+    uri: MarkLogicDocumentURIString
     value: str
 
 
 # set_metadata_citation.xqy
 class SetMetadataCitationDict(MarkLogicAPIDict):
     content: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_metadata_court.xqy
 class SetMetadataCourtDict(MarkLogicAPIDict):
     content: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_metadata_name.xqy
 class SetMetadataNameDict(MarkLogicAPIDict):
     content: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_metadata_this_uri.xqy
@@ -126,19 +130,19 @@ class SetMetadataThisUriDict(MarkLogicAPIDict):
     content_with_id: str
     content_with_xml: str
     content_without_id: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_metadata_work_expression_date.xqy
 class SetMetadataWorkExpressionDateDict(MarkLogicAPIDict):
     content: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # set_property.xqy
 class SetPropertyDict(MarkLogicAPIDict):
     name: str
-    uri: str
+    uri: MarkLogicDocumentURIString
     value: str
 
 
@@ -146,20 +150,20 @@ class SetPropertyDict(MarkLogicAPIDict):
 class UpdateJudgmentDict(MarkLogicAPIDict):
     annotation: str
     judgment: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # update_locked_judgment.xqy
 class UpdateLockedJudgmentDict(MarkLogicAPIDict):
     annotation: str
     judgment: str
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # user_has_privilege.xqy
 class UserHasPrivilegeDict(MarkLogicAPIDict):
     privilege_action: str
-    privilege_uri: str
+    privilege_uri: MarkLogicPrivilegeURIString
     user: str
 
 
@@ -171,13 +175,13 @@ class UserHasRoleDict(MarkLogicAPIDict):
 
 # xslt.xqy
 class XsltDict(MarkLogicAPIDict):
-    uri: str
+    uri: MarkLogicDocumentURIString
 
 
 # xslt_transform.xqy
 class XsltTransformDict(MarkLogicAPIDict):
     img_location: Optional[str]
     show_unpublished: Optional[bool]
-    uri: str
-    version_uri: Optional[str]
+    uri: MarkLogicDocumentURIString
+    version_uri: Optional[MarkLogicDocumentVersionURIString]
     xsl_filename: Optional[str]

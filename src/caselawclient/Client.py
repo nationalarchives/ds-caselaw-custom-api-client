@@ -16,18 +16,24 @@ from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
 
+from caselawclient import xquery_type_dicts as query_dicts
 from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
+    DocumentURIString,
 )
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
+from caselawclient.xquery_type_dicts import (
+    MarkLogicDocumentURIString,
+    MarkLogicDocumentVersionURIString,
+    MarkLogicPrivilegeURIString,
+)
 
 from . import xml_tools
-from . import xquery_type_dicts as query_dicts
 from .content_hash import validate_content_hash
 from .errors import MarklogicAPIError  # noqa: F401
 from .errors import (
@@ -191,11 +197,11 @@ class MarklogicApiClient:
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.headers.update({"User-Agent": user_agent})
 
-    def get_document_by_uri(self, uri: str) -> Document:
+    def get_document_by_uri(self, uri: DocumentURIString) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
         return document_type_class(uri, self)
 
-    def get_document_type_from_uri(self, uri: str) -> Type[Document]:
+    def get_document_type_from_uri(self, uri: DocumentURIString) -> Type[Document]:
         vars: query_dicts.DocumentCollectionsDict = {
             "uri": self._format_uri_for_marklogic(uri),
         }
@@ -249,12 +255,17 @@ class MarklogicApiClient:
             new_exception.response = response
             raise new_exception
 
-    def _format_uri_for_marklogic(self, uri: str) -> str:
+    def _format_uri_for_marklogic(
+        self, uri: DocumentURIString
+    ) -> MarkLogicDocumentURIString:
         """
-        Marklogic requires a document URI that begins with a slash `/` and ends in `.xml`.
-        This method ensures any URI passed into the client matches this format.
+        MarkLogic requires a document URI that begins with a slash `/` and ends in `.xml`. This method ensures any takes
+        a `DocumentURIString` and converts it to a MarkLogic-friendly `MarkLogicDocumentURIString`.
+
+        :return: A `MarkLogicDocumentURIString` at which the document at the given `DocumentURIString` can be located
+            within MarkLogic.
         """
-        return f"/{uri.lstrip('/').rstrip('/')}.xml"
+        return MarkLogicDocumentURIString(f"/{uri.lstrip('/').rstrip('/')}.xml")
 
     def _xquery_path(self, xquery_file_name: str) -> str:
         return os.path.join(ROOT_DIR, "xquery", xquery_file_name)
@@ -323,7 +334,7 @@ class MarklogicApiClient:
         logging.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
-    def document_exists(self, document_uri: str) -> bool:
+    def document_exists(self, document_uri: DocumentURIString) -> bool:
         uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.DocumentExistsDict = {
             "uri": uri,
@@ -338,17 +349,23 @@ class MarklogicApiClient:
 
     def get_judgment_xml_bytestring(
         self,
-        judgment_uri: str,
-        version_uri: Optional[str] = None,
+        judgment_uri: DocumentURIString,
+        version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
     ) -> bytes:
-        uri = self._format_uri_for_marklogic(judgment_uri)
+        marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
+        marklogic_document_version_uri = (
+            MarkLogicDocumentVersionURIString(
+                self._format_uri_for_marklogic(version_uri)
+            )
+            if version_uri
+            else None
+        )
         show_unpublished = self.verify_show_unpublished(show_unpublished)
-        if version_uri:
-            version_uri = f"/{version_uri.lstrip('/')}.xml"
+
         vars: query_dicts.GetJudgmentDict = {
-            "uri": uri,
-            "version_uri": version_uri,
+            "uri": marklogic_document_uri,
+            "version_uri": marklogic_document_version_uri,
             "show_unpublished": show_unpublished,
         }
 
@@ -362,20 +379,24 @@ class MarklogicApiClient:
 
     def get_judgment_xml(
         self,
-        judgment_uri: str,
-        version_uri: Optional[str] = None,
+        judgment_uri: DocumentURIString,
+        version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
     ) -> str:
         return self.get_judgment_xml_bytestring(
             judgment_uri, version_uri, show_unpublished
         ).decode(encoding="utf-8")
 
-    def set_document_name(self, document_uri: str, content: str) -> requests.Response:
+    def set_document_name(
+        self, document_uri: DocumentURIString, content: str
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
         return self._send_to_eval(vars, "set_metadata_name.xqy")
 
-    def set_judgment_date(self, judgment_uri: str, content: str) -> requests.Response:
+    def set_judgment_date(
+        self, judgment_uri: DocumentURIString, content: str
+    ) -> requests.Response:
         warnings.warn(
             "set_judgment_date() is deprecated, use set_document_work_expression_date()",
             DeprecationWarning,
@@ -384,7 +405,7 @@ class MarklogicApiClient:
         return self.set_document_work_expression_date(judgment_uri, content)
 
     def set_document_work_expression_date(
-        self, document_uri: str, content: str
+        self, document_uri: DocumentURIString, content: str
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataWorkExpressionDateDict = {
@@ -395,7 +416,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "set_metadata_work_expression_date.xqy")
 
     def set_judgment_citation(
-        self, judgment_uri: str, content: str
+        self, judgment_uri: DocumentURIString, content: str
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetMetadataCitationDict = {
@@ -405,13 +426,17 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_citation.xqy")
 
-    def set_document_court(self, document_uri: str, content: str) -> requests.Response:
+    def set_document_court(
+        self, document_uri: DocumentURIString, content: str
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.SetMetadataCourtDict = {"uri": uri, "content": content}
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
 
-    def set_judgment_this_uri(self, judgment_uri: str) -> requests.Response:
+    def set_judgment_this_uri(
+        self, judgment_uri: DocumentURIString
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         content_with_id = (
             f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
@@ -430,7 +455,10 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
 
     def save_locked_judgment_xml(
-        self, judgment_uri: str, judgment_xml: bytes, annotation: Optional[str] = None
+        self,
+        judgment_uri: DocumentURIString,
+        judgment_xml: bytes,
+        annotation: Optional[str] = None,
     ) -> requests.Response:
         """assumes the judgment is already locked, does not unlock/check in
         note this version assumes the XML is raw bytes, rather than a tree..."""
@@ -445,7 +473,10 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
     def save_judgment_xml(
-        self, judgment_uri: str, judgment_xml: Element, annotation: Optional[str] = None
+        self,
+        judgment_uri: DocumentURIString,
+        judgment_xml: Element,
+        annotation: Optional[str] = None,
     ) -> requests.Response:
         """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
         xml = ElementTree.tostring(judgment_xml)
@@ -460,7 +491,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "update_judgment.xqy")
 
     def insert_document_xml(
-        self, document_uri: str, document_xml: Element
+        self, document_uri: DocumentURIString, document_xml: Element
     ) -> requests.Response:
         xml = ElementTree.tostring(document_xml)
 
@@ -472,14 +503,19 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "insert_document.xqy")
 
-    def list_judgment_versions(self, judgment_uri: str) -> requests.Response:
+    def list_judgment_versions(
+        self, judgment_uri: DocumentURIString
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.ListJudgmentVersionsDict = {"uri": uri}
 
         return self._send_to_eval(vars, "list_judgment_versions.xqy")
 
     def checkout_judgment(
-        self, judgment_uri: str, annotation: str = "", expires_at_midnight: bool = False
+        self,
+        judgment_uri: DocumentURIString,
+        annotation: str = "",
+        expires_at_midnight: bool = False,
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.CheckoutJudgmentDict = {
@@ -494,19 +530,23 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "checkout_judgment.xqy")
 
-    def checkin_judgment(self, judgment_uri: str) -> requests.Response:
+    def checkin_judgment(self, judgment_uri: DocumentURIString) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.CheckinJudgmentDict = {"uri": uri}
 
         return self._send_to_eval(vars, "checkin_judgment.xqy")
 
-    def get_judgment_checkout_status(self, judgment_uri: str) -> requests.Response:
+    def get_judgment_checkout_status(
+        self, judgment_uri: DocumentURIString
+    ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetJudgmentCheckoutStatusDict = {"uri": uri}
 
         return self._send_to_eval(vars, "get_judgment_checkout_status.xqy")
 
-    def get_judgment_checkout_status_message(self, judgment_uri: str) -> Optional[str]:
+    def get_judgment_checkout_status_message(
+        self, judgment_uri: DocumentURIString
+    ) -> Optional[str]:
         """Return the annotation of the lock or `None` if there is no lock."""
         response = self.get_judgment_checkout_status(judgment_uri)
         if not response.content:
@@ -520,7 +560,7 @@ class MarklogicApiClient:
         ).text  # type: ignore
 
     def get_judgment_version(
-        self, judgment_uri: str, version: int
+        self, judgment_uri: DocumentURIString, version: int
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetJudgmentVersionDict = {"uri": uri, "version": str(version)}
@@ -594,14 +634,20 @@ class MarklogicApiClient:
 
     def eval_xslt(
         self,
-        judgment_uri: str,
-        version_uri: Optional[str] = None,
+        judgment_uri: DocumentURIString,
+        version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
         xsl_filename: str = DEFAULT_XSL_TRANSFORM,
     ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        if version_uri:
-            version_uri = self._format_uri_for_marklogic(version_uri)
+        marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
+        marklogic_document_version_uri = (
+            MarkLogicDocumentVersionURIString(
+                self._format_uri_for_marklogic(version_uri)
+            )
+            if version_uri
+            else None
+        )
+
         if os.getenv("XSLT_IMAGE_LOCATION"):
             image_location = os.getenv("XSLT_IMAGE_LOCATION")
         else:
@@ -610,8 +656,8 @@ class MarklogicApiClient:
         show_unpublished = self.verify_show_unpublished(show_unpublished)
 
         vars: query_dicts.XsltTransformDict = {
-            "uri": uri,
-            "version_uri": version_uri,
+            "uri": marklogic_document_uri,
+            "version_uri": marklogic_document_version_uri,
             "show_unpublished": show_unpublished,
             "img_location": image_location,
             "xsl_filename": xsl_filename,
@@ -621,8 +667,8 @@ class MarklogicApiClient:
 
     def accessible_judgment_transformation(
         self,
-        judgment_uri: str,
-        version_uri: Optional[str] = None,
+        judgment_uri: DocumentURIString,
+        version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
     ) -> requests.Response:
         return self.eval_xslt(
@@ -634,8 +680,8 @@ class MarklogicApiClient:
 
     def original_judgment_transformation(
         self,
-        judgment_uri: str,
-        version_uri: Optional[str] = None,
+        judgment_uri: DocumentURIString,
+        version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
     ) -> requests.Response:
         return self.eval_xslt(
@@ -645,7 +691,7 @@ class MarklogicApiClient:
             xsl_filename="as-handed-down.xsl",
         )
 
-    def get_property(self, judgment_uri: str, name: str) -> str:
+    def get_property(self, judgment_uri: DocumentURIString, name: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyDict = {
             "uri": uri,
@@ -654,9 +700,9 @@ class MarklogicApiClient:
         return self._eval_and_decode(vars, "get_property.xqy")
 
     def set_property(
-        self, judgment_uri: str, name: str, value: str
+        self, judgment_uri: DocumentURIString, name: str, value: str
     ) -> requests.Response:
-        uri = f"/{judgment_uri.lstrip('/')}.xml"
+        uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetPropertyDict = {
             "uri": uri,
             "value": value,
@@ -666,7 +712,7 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "set_property.xqy")
 
     def set_boolean_property(
-        self, judgment_uri: str, name: str, value: bool
+        self, judgment_uri: DocumentURIString, name: str, value: bool
     ) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         string_value = "true" if value else "false"
@@ -677,19 +723,19 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "set_boolean_property.xqy")
 
-    def get_boolean_property(self, judgment_uri: str, name: str) -> bool:
+    def get_boolean_property(self, judgment_uri: DocumentURIString, name: str) -> bool:
         content = self.get_property(judgment_uri, name)
         return content == "true"
 
     def set_published(
-        self, judgment_uri: str, published: bool = False
+        self, judgment_uri: DocumentURIString, published: bool = False
     ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "published", published)
 
-    def get_published(self, judgment_uri: str) -> bool:
+    def get_published(self, judgment_uri: DocumentURIString) -> bool:
         return self.get_boolean_property(judgment_uri, "published")
 
-    def get_last_modified(self, judgment_uri: str) -> str:
+    def get_last_modified(self, judgment_uri: DocumentURIString) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetLastModifiedDict = {
             "uri": uri,
@@ -703,12 +749,14 @@ class MarklogicApiClient:
         content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
         return content
 
-    def delete_judgment(self, judgment_uri: str) -> requests.Response:
+    def delete_judgment(self, judgment_uri: DocumentURIString) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.DeleteJudgmentDict = {"uri": uri}
         return self._send_to_eval(vars, "delete_judgment.xqy")
 
-    def copy_document(self, old: str, new: str) -> requests.Response:
+    def copy_document(
+        self, old: DocumentURIString, new: DocumentURIString
+    ) -> requests.Response:
         old_uri = self._format_uri_for_marklogic(old)
         new_uri = self._format_uri_for_marklogic(new)
 
@@ -718,7 +766,7 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "copy_document.xqy")
 
-    def break_checkout(self, judgment_uri: str) -> requests.Response:
+    def break_checkout(self, judgment_uri: DocumentURIString) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.BreakJudgmentCheckoutDict = {
             "uri": uri,
@@ -726,7 +774,10 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "break_judgment_checkout.xqy")
 
     def user_has_privilege(
-        self, username: str, privilege_uri: str, privilege_action: str
+        self,
+        username: str,
+        privilege_uri: MarkLogicPrivilegeURIString,
+        privilege_action: str,
     ) -> requests.Response:
         vars: query_dicts.UserHasPrivilegeDict = {
             "user": username,
@@ -741,7 +792,9 @@ class MarklogicApiClient:
 
         check_privilege = self.user_has_privilege(
             username,
-            "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents",
+            MarkLogicPrivilegeURIString(
+                "https://caselaw.nationalarchives.gov.uk/custom/privileges/can-view-unpublished-documents"
+            ),
             "execute",
         )
         return (
@@ -787,7 +840,9 @@ class MarklogicApiClient:
             return False
         return show_unpublished
 
-    def get_properties_for_search_results(self, judgment_uris: list[str]) -> str:
+    def get_properties_for_search_results(
+        self, judgment_uris: list[DocumentURIString]
+    ) -> str:
         uris = [
             self._format_uri_for_marklogic(judgment_uri)
             for judgment_uri in judgment_uris

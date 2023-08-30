@@ -1,6 +1,6 @@
 import datetime
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
@@ -34,6 +34,9 @@ DOCUMENT_COLLECTION_URI_PRESS_SUMMARY = "press-summary"
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient
+
+
+DocumentURIString = NewType("DocumentURIString", str)
 
 
 class CannotPublishUnpublishableDocument(Exception):
@@ -110,9 +113,11 @@ class Document:
 
     def __init__(self, uri: str, api_client: "MarklogicApiClient"):
         """
+        :param uri: For historical reasons this accepts a pseudo-URI which may include leading or trailing slashes.
+
         :raises DocumentNotFoundError: The document does not exist within MarkLogic
         """
-        self.uri = uri.strip("/")
+        self.uri = DocumentURIString(uri.strip("/"))
         self.api_client = api_client
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
@@ -226,7 +231,7 @@ class Document:
     def content_as_xml_tree(self) -> Any:
         return etree.fromstring(self.content_as_xml_bytestring)
 
-    def content_as_html(self, version_uri: Optional[str] = None) -> str:
+    def content_as_html(self, version_uri: Optional[DocumentURIString] = None) -> str:
         results = self.api_client.eval_xslt(
             self.uri, version_uri, show_unpublished=True
         )
