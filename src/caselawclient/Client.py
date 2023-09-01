@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import logging
 import os
@@ -46,6 +47,12 @@ from .errors import (
 env = environ.Env()
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
+
+try:
+    VERSION = importlib.metadata.version("ds-caselaw-marklogic-api-client")
+except importlib.metadata.PackageNotFoundError:
+    VERSION = "0"
+DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
 
 class MultipartResponseLongerThanExpected(Exception):
@@ -167,7 +174,12 @@ class MarklogicApiClient:
     default_http_error_class = MarklogicCommunicationError
 
     def __init__(
-        self, host: str, username: str, password: str, use_https: bool
+        self,
+        host: str,
+        username: str,
+        password: str,
+        use_https: bool,
+        user_agent: str = DEFAULT_USER_AGENT,
     ) -> None:
         self.host = host
         self.username = username
@@ -176,6 +188,7 @@ class MarklogicApiClient:
         # Apply auth / common headers to the session
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
+        self.session.headers.update({"User-Agent": user_agent})
 
     def get_document_by_uri(self, uri: str) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
