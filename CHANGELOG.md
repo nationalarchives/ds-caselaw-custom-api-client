@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Unreleased]
+## [Release 14.1.0]
+
+- Add default user agent string
+- Add functions for overwriting and moving judgments
 
 ## [Release 14.0.2]
 
