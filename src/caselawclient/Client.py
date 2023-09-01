@@ -23,6 +23,7 @@ from caselawclient.models.documents import (
 )
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
+from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 
 from . import xml_tools
@@ -804,6 +805,19 @@ class MarklogicApiClient:
     ) -> str:
         search_parameters.collections = [DOCUMENT_COLLECTION_URI_JUDGMENT]
         return self.search_and_decode_response(search_parameters)
+
+    def overwrite_document(self, old_uri: str, new_citation: str) -> str:
+        """Move the judgment at old_uri on top of the new citation, which must already exist
+        Compare to update_document_uri"""
+        return move.overwrite_document(old_uri, new_citation, api_client=self)
+
+    def update_document_uri(self, old_uri: str, new_citation: str) -> str:
+        """
+        Move the document at old_uri to the correct location based on the neutral citation
+        The new neutral citation *must* not already exist (that is handled elsewhere)
+        This might not be needed; changing the URI/neutral citation is vanishingly rare
+        """
+        return move.update_document_uri(old_uri, new_citation, api_client=self)
 
 
 api_client = MarklogicApiClient(
