@@ -12,8 +12,12 @@ These classes are automatically generated using the `script/build_xquery_type_di
 checks. They are used to enforce appropriately typed variables being passed in to MarkLogic XQuery functions.
 \"\"\"
 
-from typing import Any, Optional, TypedDict
+from typing import Any, NewType, Optional, TypedDict
 
+MarkLogicDocumentURIString = NewType("MarkLogicDocumentURIString", str)
+MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
+
+MarkLogicPrivilegeURIString = NewType("MarkLogicPrivilegeURIString", str)
 
 class MarkLogicAPIDict(TypedDict):
     pass"""
@@ -38,12 +42,26 @@ def file_name_to_class_name(file_name: str):
     return file_name.split(".")[0].title().replace("_", "") + "Dict"
 
 
-def ml_type_to_python_type(type: str):
-    if type[-1] == "?":
-        type = ML_TYPES_TO_PYTHON_TYPES_DICT[type[:-1]]
-        return f"Optional[{type}]"
+def ml_type_to_python_type_declaration(variable_name: str, variable_type: str):
+    if variable_type[-1] == "?":
+        variable_optional = True
+        variable_type = variable_type[:-1]
     else:
-        return ML_TYPES_TO_PYTHON_TYPES_DICT[type]
+        variable_optional = False
+
+    if variable_name == "version_uri":
+        variable_type = "MarkLogicDocumentVersionURIString"
+    elif variable_name == "privilege_uri":
+        variable_type = "MarkLogicPrivilegeURIString"
+    elif variable_name == "uri" or variable_name.endswith("_uri"):
+        variable_type = "MarkLogicDocumentURIString"
+    else:
+        variable_type = ML_TYPES_TO_PYTHON_TYPES_DICT[variable_type]
+
+    if variable_optional:
+        variable_type = f"Optional[{variable_type}]"
+
+    return f"{variable_name}: {variable_type}"
 
 
 xquery_files = [f for f in listdir(XQY_FILES_PATCH) if f.endswith(".xqy")]
@@ -68,8 +86,9 @@ class {class_name}(MarkLogicAPIDict):"""
                 )
 
                 for match in sorted(matches):
-                    variable_name = match[0]
-                    variable_type = ml_type_to_python_type(match[1])
-                    dicts_file.write(f"\n    {variable_name}: {variable_type}")
+                    type_declaration = ml_type_to_python_type_declaration(
+                        variable_name=match[0], variable_type=match[1]
+                    )
+                    dicts_file.write(f"\n    {type_declaration}")
 
     dicts_file.write("\n")
