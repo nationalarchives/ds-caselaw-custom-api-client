@@ -175,6 +175,9 @@ class TestDocumentValidation:
         successful_document = Document("test/1234", mock_api_client)
         failing_document = Document("failures/test/1234", mock_api_client)
 
+        successful_document.failed_to_parse = False
+        failing_document.failed_to_parse = True
+
         assert successful_document.is_failure is False
         assert failing_document.is_failure is True
 
