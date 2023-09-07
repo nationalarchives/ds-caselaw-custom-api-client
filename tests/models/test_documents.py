@@ -459,3 +459,55 @@ class TestDocumentMetadata:
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
+
+    def test_dates(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRManifestation>
+                                <FRBRdate date="2024-08-31T16:41:01" name="tna-enriched"/>
+                                <FRBRdate date="2023-08-31T16:41:01" name="tna-enriched"/>
+                                <FRBRdate date="2025-08-31T16:41:01" name="transform"/>
+                                <FRBRdate date="2026-08-31T16:41:01" name="transform"/>
+                            </FRBRManifestation>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.enrichment_datetime.year == 2024
+        assert document.transformation_datetime.year == 2026
+        assert [
+            x.year for x in document.get_manifestation_datetimes("tna-enriched")
+        ] == [2024, 2023]
+
+    def test_no_dates(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRManifestation>
+                            </FRBRManifestation>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.enrichment_datetime is None
+        assert document.transformation_datetime is None
+        assert document.get_manifestation_datetimes("any") == []

@@ -11,3 +11,4 @@ src/caselawclient/__pycache__/
 __pycache__
 __pypackages__
 .coverage
+.gradle

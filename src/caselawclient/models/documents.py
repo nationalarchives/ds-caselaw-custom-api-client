@@ -8,7 +8,7 @@ from lxml import etree
 from requests_toolbelt.multipart import decoder
 
 from ..errors import DocumentNotFoundError
-from ..xml_helpers import get_xpath_match_string
+from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
     delete_documents_from_private_bucket,
@@ -169,6 +169,31 @@ class Document:
         return datetime.datetime.strptime(
             self.document_date_as_string, "%Y-%m-%d"
         ).date()
+
+    def get_manifestation_datetimes(self, name: str) -> list[datetime.datetime]:
+        iso_datetimes = self._get_xpath_match_strings(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
+            f"/akn:FRBRdate[@name='{name}']/@date",
+            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
+        )
+        return [datetime.datetime.fromisoformat(event) for event in iso_datetimes]
+
+    def get_latest_manifestation_datetime(
+        self, name: str
+    ) -> Optional[datetime.datetime]:
+        events = self.get_manifestation_datetimes(name)
+        if not events:
+            return None
+        else:
+            return max(events)
+
+    @cached_property
+    def transformation_datetime(self) -> Optional[datetime.datetime]:
+        return self.get_latest_manifestation_datetime("transform")
+
+    @cached_property
+    def enrichment_datetime(self) -> Optional[datetime.datetime]:
+        return self.get_latest_manifestation_datetime("tna-enriched")
 
     @cached_property
     def is_published(self) -> bool:
@@ -366,6 +391,11 @@ class Document:
 
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
         return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
+
+    def _get_xpath_match_strings(
+        self, xpath: str, namespaces: Dict[str, str]
+    ) -> list[str]:
+        return get_xpath_match_strings(self.content_as_xml_tree, xpath, namespaces)
 
     def overwrite(self, new_citation: str) -> None:
         self.api_client.overwrite_document(self.uri, new_citation)
