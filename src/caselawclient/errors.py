@@ -83,3 +83,9 @@ class DocumentNotFoundError(MarklogicAPIError):
     # This error does not come from Marklogic, but is an error raised by this API...
     status_code = 404
     default_message = "The document was not found"
+
+
+class NotSupportedOnVersion(MarklogicAPIError):
+    # This error does not come from Marklogic, but is an error raised by this API...
+    status_code = 400
+    default_message = "An operation was attempted on a version of a document which cannot occur on a version."
