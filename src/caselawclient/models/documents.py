@@ -70,11 +70,6 @@ class Document:
             "This document failed to parse",
         ),
         (
-            "is_failure",
-            False,
-            "This {document_noun} does not have a valid URI",
-        ),
-        (
             "is_parked",
             False,
             "This {document_noun} is currently parked at a temporary URI",
@@ -240,7 +235,14 @@ class Document:
 
     @cached_property
     def is_failure(self) -> bool:
-        if "failures" in self.uri:
+        """
+        Is this document in a 'failure' state from which no recovery is possible? This is considered to be the case if:
+
+        - The document entirely failed to parse
+
+        :return: `True` if this document is in a 'failure' state, otherwise `False`
+        """
+        if self.failed_to_parse:
             return True
         return False
 
