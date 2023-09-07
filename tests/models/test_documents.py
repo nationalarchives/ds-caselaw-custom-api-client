@@ -485,6 +485,9 @@ class TestDocumentMetadata:
 
         assert document.enrichment_datetime.year == 2024
         assert document.transformation_datetime.year == 2026
+        assert [
+            x.year for x in document.get_manifestation_datetimes("tna-enriched")
+        ] == [2024, 2023]
 
     def test_no_dates(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = """
@@ -507,3 +510,4 @@ class TestDocumentMetadata:
 
         assert document.enrichment_datetime is None
         assert document.transformation_datetime is None
+        assert document.get_manifestation_datetimes("any") == []

@@ -170,29 +170,30 @@ class Document:
             self.document_date_as_string, "%Y-%m-%d"
         ).date()
 
-    @cached_property
-    def transformation_datetime(self) -> Optional[datetime.datetime]:
+    def get_manifestation_datetimes(self, name: str) -> list[datetime.datetime]:
         iso_datetimes = self._get_xpath_match_strings(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
-            "/akn:FRBRdate[@name='transform']/@date",
+            f"/akn:FRBRdate[@name='{name}']/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
-        if iso_datetimes:
-            return datetime.datetime.fromisoformat(max(iso_datetimes))
-        else:
+        return [datetime.datetime.fromisoformat(event) for event in iso_datetimes]
+
+    def get_latest_manifestation_datetime(
+        self, name: str
+    ) -> Optional[datetime.datetime]:
+        events = self.get_manifestation_datetimes(name)
+        if not events:
             return None
+        else:
+            return max(events)
+
+    @cached_property
+    def transformation_datetime(self) -> Optional[datetime.datetime]:
+        return self.get_latest_manifestation_datetime("transform")
 
     @cached_property
     def enrichment_datetime(self) -> Optional[datetime.datetime]:
-        iso_datetimes = self._get_xpath_match_strings(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
-            "/akn:FRBRdate[@name='tna-enriched']/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
-        )
-        if iso_datetimes:
-            return datetime.datetime.fromisoformat(max(iso_datetimes))
-        else:
-            return None
+        return self.get_latest_manifestation_datetime("tna-enriched")
 
     @cached_property
     def is_published(self) -> bool:
