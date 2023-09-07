@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## [Release 14.1.1]
+
+- `Document.is_failure` now cares about the state of the document itself, not the URI
+- Added some database integrity tests which can be run manually
+- Typing improvements for strings passed to interfaces
+
 ## [Release 14.1.0]
 
 - Add default user agent string
@@ -294,7 +300,9 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.2...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.1.1...HEAD
+[Release 14.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.1.0...v14.1.1
+[Release 14.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.2...v14.1.0
 [Release 14.0.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.1...v14.0.2
 [Release 14.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.0...v14.0.1
 [Release 14.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v13.2.1...v14.0.0
