@@ -7,7 +7,13 @@ from ds_caselaw_utils.courts import CourtNotFoundException
 from lxml import etree
 from requests_toolbelt.multipart import decoder
 
-from ..errors import DocumentNotFoundError
+from caselawclient.models.utilities import extract_version
+
+from ..errors import (
+    DocumentNotFoundError,
+    NotSupportedOnVersion,
+    OnlySupportedOnVersion,
+)
 from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
@@ -236,6 +242,44 @@ class Document:
             return render_versions(decoded_versions.parts)
         except AttributeError:
             return []
+
+    @cached_property
+    def versions_as_documents(self) -> list[Any]:
+        """
+        Returns a list of `Document` subclasses corresponding to the versions of the document. The first entry is:
+           * the most recent
+           * the highest numbered
+
+        Note that this is only valid on the managed document -- a `DLS-DOCUMENTVERSION` error will occur if the document
+        this is called on is itself a version.
+        """
+        if self.is_version:
+            raise NotSupportedOnVersion(
+                "Cannot get versions of a version for {self.uri}"
+            )
+        docs = []
+        for version in self.versions:
+            doc_uri = DocumentURIString(version["uri"])
+            docs.append(self.api_client.get_document_by_uri(doc_uri))
+        return docs
+
+    @cached_property
+    def version_number(self) -> int:
+        """
+        Note that the highest number is the most recent version.
+        Raises an exception if it is not a version (e.g. /2022/eat/1 is not a version)
+        """
+        version = extract_version(self.uri)
+        if version == 0:
+            raise OnlySupportedOnVersion(
+                f"Version number requested for {self.uri} which is not a version"
+            )
+        return version
+
+    @cached_property
+    def is_version(self) -> bool:
+        "Is this document a potentially historic version of a document, or is it the main document itself?"
+        return extract_version(self.uri) != 0
 
     @cached_property
     def content_as_xml(self) -> str:

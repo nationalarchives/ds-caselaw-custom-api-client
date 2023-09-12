@@ -5,7 +5,11 @@ import pytest
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.errors import DocumentNotFoundError
+from caselawclient.errors import (
+    DocumentNotFoundError,
+    NotSupportedOnVersion,
+    OnlySupportedOnVersion,
+)
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
     DOCUMENT_STATUS_IN_PROGRESS,
@@ -168,6 +172,32 @@ class TestDocument:
     def test_document_best_identifier(self, mock_api_client):
         example_document = Document("uri", mock_api_client)
         assert example_document.best_human_identifier is None
+
+    def test_document_version_of_a_version_fails(self, mock_api_client):
+        version_document = Document("test/1234_xml_versions/9-1234", mock_api_client)
+        with pytest.raises(NotSupportedOnVersion):
+            version_document.versions_as_documents
+
+    def test_document_versions_happy_case(self, mock_api_client):
+        version_document = Document("test/1234", mock_api_client)
+        version_document.versions = [
+            {"uri": "test/1234_xml_versions/2-1234.xml"},
+            {"uri": "test/1234_xml_versions/1-1234.xml"},
+        ]
+        version_document.versions_as_documents[
+            0
+        ].uri = "test/1234_xml_versions/2-1234.xml"
+
+    def test_document_version_number_when_not_version(self, mock_api_client):
+        base_document = Document("test/1234", mock_api_client)
+        with pytest.raises(OnlySupportedOnVersion):
+            base_document.version_number
+        assert not base_document.is_version
+
+    def test_document_version_number_when_is_version(self, mock_api_client):
+        version_document = Document("test/1234_xml_versions/9-1234", mock_api_client)
+        assert version_document.version_number == 9
+        assert version_document.is_version
 
 
 class TestDocumentValidation:
