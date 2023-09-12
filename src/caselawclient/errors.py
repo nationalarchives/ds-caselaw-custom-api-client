@@ -89,3 +89,8 @@ class NotSupportedOnVersion(MarklogicAPIError):
     # This error does not come from Marklogic, but is an error raised by this API...
     status_code = 400
     default_message = "An operation was attempted on a version of a document which cannot occur on a version."
+
+
+class OnlySupportedOnVersion(MarklogicAPIError):
+    status_code = 400
+    default_message = "The operation requested cannot be performed on a document that is not a version."

@@ -9,7 +9,11 @@ from requests_toolbelt.multipart import decoder
 
 from caselawclient.models.utilities import extract_version
 
-from ..errors import DocumentNotFoundError, NotSupportedOnVersion
+from ..errors import (
+    DocumentNotFoundError,
+    NotSupportedOnVersion,
+    OnlySupportedOnVersion,
+)
 from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
@@ -261,13 +265,21 @@ class Document:
 
     @cached_property
     def version_number(self) -> int:
-        "Zero if the version is current, otherwise the highest number is the most recent version"
-        return extract_version(self.uri)
+        """
+        Note that the highest number is the most recent version.
+        Raises an exception if it is not a version (e.g. /2022/eat/1 is not a version)
+        """
+        version = extract_version(self.uri)
+        if version == 0:
+            raise OnlySupportedOnVersion(
+                f"Version number requested for {self.uri} which is not a version"
+            )
+        return version
 
     @cached_property
     def is_version(self) -> bool:
         "Is this document a potentially historic version of a document, or is it the main document itself?"
-        return self.version_number != 0
+        return extract_version(self.uri) != 0
 
     @cached_property
     def content_as_xml(self) -> str:

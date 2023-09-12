@@ -5,7 +5,11 @@ import pytest
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.errors import DocumentNotFoundError, NotSupportedOnVersion
+from caselawclient.errors import (
+    DocumentNotFoundError,
+    NotSupportedOnVersion,
+    OnlySupportedOnVersion,
+)
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
     DOCUMENT_STATUS_IN_PROGRESS,
@@ -186,7 +190,8 @@ class TestDocument:
 
     def test_document_version_number_when_not_version(self, mock_api_client):
         base_document = Document("test/1234", mock_api_client)
-        assert base_document.version_number == 0
+        with pytest.raises(OnlySupportedOnVersion):
+            base_document.version_number
         assert not base_document.is_version
 
     def test_document_version_number_when_is_version(self, mock_api_client):
