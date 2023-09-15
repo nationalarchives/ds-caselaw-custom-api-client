@@ -172,15 +172,17 @@ class SearchResult:
     @property
     def neutral_citation(self) -> str:
         """
-        :return: The neutral citation of the search result
+        :return: The neutral citation of the search result, or the judgment it is a press summary of.
         """
 
-        return self._get_xpath_match_string("search:extracted/uk:cite/text()")
+        return self._get_xpath_match_string(
+            "search:extracted/uk:cite/text()"
+        ) or self._get_xpath_match_string("search:extracted/akn:neutralCitation/text()")
 
     @property
     def name(self) -> str:
         """
-        :return: The neutral citation of the search result
+        :return: The title of the search result's document
         """
 
         return self._get_xpath_match_string("search:extracted/akn:FRBRname/@value")
