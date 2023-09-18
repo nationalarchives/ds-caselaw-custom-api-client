@@ -13,6 +13,7 @@ from caselawclient.errors import (
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
     DOCUMENT_STATUS_IN_PROGRESS,
+    DOCUMENT_STATUS_NEW,
     DOCUMENT_STATUS_PUBLISHED,
     CannotPublishUnpublishableDocument,
     Document,
@@ -155,19 +156,28 @@ class TestDocument:
         assert etree.tostring(document.content_as_xml_tree) == b"<xml/>"
 
     def test_document_status(self, mock_api_client):
+        new_document = Document("test/1234", mock_api_client)
+        new_document.is_held = False
+        new_document.is_published = False
+        new_document.assigned_to = ""
+        assert new_document.status == DOCUMENT_STATUS_NEW
+
         in_progress_document = Document("test/1234", mock_api_client)
         in_progress_document.is_held = False
         in_progress_document.is_published = False
+        in_progress_document.assigned_to = "duck"
         assert in_progress_document.status == DOCUMENT_STATUS_IN_PROGRESS
 
         on_hold_document = Document("test/1234", mock_api_client)
         on_hold_document.is_held = True
         on_hold_document.is_published = False
+        on_hold_document.assigned_to = "duck"
         assert on_hold_document.status == DOCUMENT_STATUS_HOLD
 
         published_document = Document("test/1234", mock_api_client)
         published_document.is_held = False
         published_document.is_published = True
+        published_document.assigned_to = "duck"
         assert published_document.status == DOCUMENT_STATUS_PUBLISHED
 
     def test_document_best_identifier(self, mock_api_client):

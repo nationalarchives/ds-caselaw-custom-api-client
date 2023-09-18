@@ -22,6 +22,7 @@ class EditorStatus(Enum):
     NEW = "new"
     IN_PROGRESS = "in progress"
     HOLD = "hold"
+    PUBLISHED = "published"
 
 
 class EditorPriority(Enum):
@@ -98,6 +99,13 @@ class SearchResultMetadata:
         return self._get_xpath_match_string("//editor-hold/text()")
 
     @property
+    def is_published(self) -> bool:
+        """
+        :return:
+        """
+        return self._get_xpath_match_string("//published/text()") == "true"
+
+    @property
     def editor_priority(self) -> str:
         """
         :return: The editor priority
@@ -130,6 +138,8 @@ class SearchResultMetadata:
         :return: The editor status based on the metadata
         """
 
+        if self.is_published:
+            return EditorStatus.PUBLISHED.value
         if self.editor_hold == "true":
             return EditorStatus.HOLD.value
         if self.assigned_to:

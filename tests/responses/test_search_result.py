@@ -113,6 +113,7 @@ class TestSearchResultMeta:
             "<transfer-consignment-reference>test_consignment_reference</transfer-consignment-reference>"
             "<editor-hold>false</editor-hold>"
             "<editor-priority>30</editor-priority>"
+            "<published>true</published>"
             "<transfer-received-at>2023-01-26T14:17:02Z</transfer-received-at>"
             "</property-result>"
             "</property-results>"
@@ -127,6 +128,7 @@ class TestSearchResultMeta:
         assert meta.editor_priority == "30"
         assert meta.submission_datetime == datetime.datetime(2023, 1, 26, 14, 17, 2)
         assert meta.last_modified == "test_last_modified"
+        assert meta.is_published is True
 
     def test_empty_properties_init(self):
         """
@@ -150,17 +152,24 @@ class TestSearchResultMeta:
         assert meta.editor_priority == EditorPriority.MEDIUM.value
         assert meta.submission_datetime == datetime.datetime.min
         assert meta.last_modified == "test_last_modified"
+        assert meta.is_published is False
 
     @pytest.mark.parametrize(
-        "editor_hold, assigned_to, expected_editor_status",
+        "published_string, editor_hold, assigned_to, expected_editor_status",
         [
-            ("false", "", EditorStatus.NEW),
-            ("false", "TestEditor", EditorStatus.IN_PROGRESS),
-            ("true", "", EditorStatus.HOLD),
-            ("true", "TestEditor", EditorStatus.HOLD),
+            ("", "false", "", EditorStatus.NEW),
+            ("", "false", "TestEditor", EditorStatus.IN_PROGRESS),
+            ("", "true", "", EditorStatus.HOLD),
+            ("", "true", "TestEditor", EditorStatus.HOLD),
+            ("true", "false", "", EditorStatus.PUBLISHED),
+            ("true", "false", "TestEditor", EditorStatus.PUBLISHED),
+            ("true", "true", "", EditorStatus.PUBLISHED),
+            ("true", "true", "TestEditor", EditorStatus.PUBLISHED),
         ],
     )
-    def test_editor_status(self, assigned_to, editor_hold, expected_editor_status):
+    def test_editor_status(
+        self, published_string, assigned_to, editor_hold, expected_editor_status
+    ):
         """
         GIVEN editor_hold and assigned_to values
         WHEN creating a SearchResultMetadata instance
@@ -171,6 +180,7 @@ class TestSearchResultMeta:
             "<property-result>"
             f"<assigned-to>{assigned_to}</assigned-to>"
             f"<editor-hold>{editor_hold}</editor-hold>"
+            f"<published>{published_string}</published>"
             "</property-result>"
             "</property-results>"
         )
