@@ -17,6 +17,7 @@ from caselawclient.models.documents import (
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
+    UnparsableDate,
 )
 
 
@@ -489,6 +490,54 @@ class TestDocumentMetadata:
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_bad_date_as_string(self, opening_tag, closing_tag, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRdate date="kitten"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.document_date_as_string == "kitten"
+        with pytest.warns(UnparsableDate):
+            assert document.document_date_as_date is None
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
+
+    def test_absent_date_as_string(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.document_date_as_string == ""
+        assert document.document_date_as_date is None
 
     def test_dates(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = """
