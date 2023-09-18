@@ -386,6 +386,10 @@ class Document:
                 exception_list.append(message.format(document_noun=self.document_noun))
         return sorted(exception_list)
 
+    @cached_property
+    def annotation(self) -> str:
+        return self.api_client.get_annotation(self.uri)
+
     @property
     def status(self) -> str:
         if self.is_published:

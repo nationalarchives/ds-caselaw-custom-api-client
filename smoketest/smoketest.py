@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 import caselawclient.Client as Client
 from caselawclient.errors import DocumentNotFoundError
+from caselawclient.models.documents import Document
 
 load_dotenv()
 env = environ.Env()
@@ -39,3 +40,4 @@ def test_set_metadata():
 @pytest.mark.write
 def test_get_annotations():
     assert api_client.get_annotation(FIRST_VERSION_URI) == "this is an annotation"
+    assert Document(FIRST_VERSION_URI, api_client).annotation == "this is an annotation"
