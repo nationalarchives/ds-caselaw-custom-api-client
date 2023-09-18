@@ -1,4 +1,5 @@
 import datetime
+import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
@@ -25,6 +26,11 @@ from .utilities.aws import (
     unpublish_documents,
     uri_for_s3,
 )
+
+
+class UnparsableDate(Warning):
+    pass
+
 
 DOCUMENT_STATUS_HOLD = "On hold"
 """ This document has been placed on hold to actively prevent publication. """
@@ -171,10 +177,19 @@ class Document:
         )
 
     @cached_property
-    def document_date_as_date(self) -> datetime.date:
-        return datetime.datetime.strptime(
-            self.document_date_as_string, "%Y-%m-%d"
-        ).date()
+    def document_date_as_date(self) -> Optional[datetime.date]:
+        if not self.document_date_as_string:
+            return None
+        try:
+            return datetime.datetime.strptime(
+                self.document_date_as_string, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            warnings.warn(
+                f"Unparsable date encountered: {self.document_date_as_string}",
+                UnparsableDate,
+            )
+            return None
 
     def get_manifestation_datetimes(self, name: str) -> list[datetime.datetime]:
         iso_datetimes = self._get_xpath_match_strings(
