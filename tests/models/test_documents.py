@@ -574,6 +574,7 @@ class TestDocumentMetadata:
 
         assert document.enrichment_datetime.year == 2024
         assert document.transformation_datetime.year == 2026
+        assert document.get_latest_manifestation_datetime().year == 2026
         assert [
             x.year for x in document.get_manifestation_datetimes("tna-enriched")
         ] == [2024, 2023]
@@ -599,4 +600,5 @@ class TestDocumentMetadata:
 
         assert document.enrichment_datetime is None
         assert document.transformation_datetime is None
+        assert document.get_latest_manifestation_datetime() is None
         assert document.get_manifestation_datetimes("any") == []
