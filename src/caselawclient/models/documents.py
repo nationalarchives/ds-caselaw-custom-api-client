@@ -196,16 +196,19 @@ class Document:
             )
             return None
 
-    def get_manifestation_datetimes(self, name: str) -> list[datetime.datetime]:
+    def get_manifestation_datetimes(
+        self, name: Optional[str] = None
+    ) -> list[datetime.datetime]:
+        name_filter = f"[@name='{name}']" if name else ""
         iso_datetimes = self._get_xpath_match_strings(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
-            f"/akn:FRBRdate[@name='{name}']/@date",
+            f"/akn:FRBRdate{name_filter}/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
         return [datetime.datetime.fromisoformat(event) for event in iso_datetimes]
 
     def get_latest_manifestation_datetime(
-        self, name: str
+        self, name: Optional[str] = None
     ) -> Optional[datetime.datetime]:
         events = self.get_manifestation_datetimes(name)
         if not events:
