@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 15.1.0]
+
+- Search results for press summaries now include NCNs
+- Search results now correctly include document status information
+- Latest manifestation datetime is available for documents (including versions)
+
 ## [Release 15.0.1]
 - Bugfix: document_date_as_date shouldn't fail hard if we can't parse it.
 
@@ -311,7 +317,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.0...HEAD
+[Release 15.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.1...v15.1.0
 [Release 15.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.0...v15.0.1
 [Release 15.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.1.0...v15.0.0
 [Release 14.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v14.0.2...v14.1.0
