@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ds-caselaw-marklogic-api-client"
-version = "15.0.1"
+version = "15.1.0"
 description = "An API client for interacting with the underlying data in Find Caselaw."
 authors = ["The National Archives"]
 homepage = "https://github.com/nationalarchives/ds-caselaw-custom-api-client"
