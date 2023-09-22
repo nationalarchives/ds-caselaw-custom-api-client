@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 
 import caselawclient.Client as Client
 from caselawclient.errors import DocumentNotFoundError
+from caselawclient.models.documents import Document
 
 load_dotenv()
 env = environ.Env()
 
-URI = "smoketest/1001/1"
+URI = "smoketest/1001/2"
+FIRST_VERSION_URI = "smoketest/1001/2_xml_versions/1-2"
 
 api_client = Client.MarklogicApiClient(
     host=env("MARKLOGIC_HOST"),
@@ -33,3 +35,9 @@ def test_set_metadata():
     assert doc.court == "EWHC-Chancellery"
     assert doc.name == "cats v dogs"
     assert doc.document_date_as_string == "1001-02-03"
+
+
+@pytest.mark.write
+def test_get_annotations():
+    assert api_client.get_annotation(FIRST_VERSION_URI) == "this is an annotation"
+    assert Document(FIRST_VERSION_URI, api_client).annotation == "this is an annotation"

@@ -55,6 +55,11 @@ class DocumentExistsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_annotation.xqy
+class GetAnnotationDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     show_unpublished: Optional[bool]
