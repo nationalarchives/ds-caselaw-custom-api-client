@@ -216,6 +216,16 @@ class Document:
         else:
             return max(events)
 
+    def get_latest_manifestation_type(self) -> Optional[str]:
+        return max(
+            (
+                (type, time)
+                for type in ["transform", "tna-enriched"]
+                if (time := self.get_latest_manifestation_datetime(type))
+            ),
+            key=lambda x: x[1],
+        )[0]
+
     @cached_property
     def transformation_datetime(self) -> Optional[datetime.datetime]:
         return self.get_latest_manifestation_datetime("transform")
