@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 15.1.2]
+- Get annotation for a single document
+- Skipping 15.1.1 because a release for that was accidently made on Github
+
 ## [Release 15.1.0]
 
 - Search results for press summaries now include NCNs
