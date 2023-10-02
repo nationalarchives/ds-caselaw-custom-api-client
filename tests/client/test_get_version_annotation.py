@@ -4,11 +4,11 @@ from unittest.mock import patch
 from caselawclient.Client import MarklogicApiClient
 
 
-class TestGetAnnotation(unittest.TestCase):
+class TestGetVersionAnnotation(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
 
-    def test_get_annotation(self):
+    def test_get_version_annotation(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
                 "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
@@ -22,6 +22,6 @@ class TestGetAnnotation(unittest.TestCase):
                 b"\r\nthis is an annotation\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_annotation("/judgment/uri")
+            result = self.client.get_version_annotation("/judgment/uri")
 
             assert "this is an annotation" == result
