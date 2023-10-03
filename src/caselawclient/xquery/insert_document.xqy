@@ -4,6 +4,7 @@ import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls
 
 declare variable $uri as xs:string external;
 declare variable $document as xs:string external;
+declare variable $annotation as xs:string external;
 
 let $document_xml := xdmp:unquote($document)
 
@@ -12,4 +13,11 @@ let $collections :=
   then ("press-summary")
   else ("judgment")
 
-return dls:document-insert-and-manage($uri, fn:true(), $document_xml, (), (), $collections)
+return dls:document-insert-and-manage(
+  $uri,
+  fn:true(),
+  $document_xml,
+  $annotation,
+  (),
+  $collections
+)

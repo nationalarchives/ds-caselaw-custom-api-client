@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- New versions of a document created with `insert_document_xml` can now be annotated
+
 ## [Release 15.1.2
 - Expose the creation date of a version
 

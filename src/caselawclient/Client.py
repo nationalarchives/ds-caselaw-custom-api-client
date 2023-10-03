@@ -491,14 +491,27 @@ class MarklogicApiClient:
         return self._send_to_eval(vars, "update_judgment.xqy")
 
     def insert_document_xml(
-        self, document_uri: DocumentURIString, document_xml: Element
+        self,
+        document_uri: DocumentURIString,
+        document_xml: Element,
+        annotation: Optional[str] = None,
     ) -> requests.Response:
+        """
+        Insert a new XML document into MarkLogic.
+
+        :param document_uri: The URI to insert the document at
+        :param document_xml: The XML of the document to insert
+        :param annotation: Annotations to record alongside this version
+
+        :return: The response object from MarkLogic
+        """
         xml = ElementTree.tostring(document_xml)
 
         uri = self._format_uri_for_marklogic(document_uri)
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
             "document": xml.decode("utf-8"),
+            "annotation": annotation or "inserted by insert_document_xml",
         }
 
         return self._send_to_eval(vars, "insert_document.xqy")

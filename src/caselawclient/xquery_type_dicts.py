@@ -101,6 +101,7 @@ class GetVersionCreatedDict(MarkLogicAPIDict):
 
 # insert_document.xqy
 class InsertDocumentDict(MarkLogicAPIDict):
+    annotation: str
     document: str
     uri: MarkLogicDocumentURIString
 

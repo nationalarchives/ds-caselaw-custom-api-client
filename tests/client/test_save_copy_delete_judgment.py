@@ -79,6 +79,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
                 "document": document_str,
+                "annotation": "inserted by insert_document_xml",
             }
             self.client.insert_document_xml(uri, document_xml)
 
