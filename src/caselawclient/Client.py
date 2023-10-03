@@ -472,24 +472,6 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
-    def save_judgment_xml(
-        self,
-        judgment_uri: DocumentURIString,
-        judgment_xml: Element,
-        annotation: Optional[str] = None,
-    ) -> requests.Response:
-        """update_judgment uses dls:document-checkout-update-checkin as a single operation"""
-        xml = ElementTree.tostring(judgment_xml)
-
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.UpdateJudgmentDict = {
-            "uri": uri,
-            "judgment": xml.decode("utf-8"),
-            "annotation": annotation or "edited by save_judgment_xml",
-        }
-
-        return self._send_to_eval(vars, "update_judgment.xqy")
-
     def insert_document_xml(
         self,
         document_uri: DocumentURIString,
@@ -515,6 +497,34 @@ class MarklogicApiClient:
         }
 
         return self._send_to_eval(vars, "insert_document.xqy")
+
+    def update_document_xml(
+        self,
+        document_uri: DocumentURIString,
+        document_xml: Element,
+        annotation: Optional[str] = None,
+    ) -> requests.Response:
+        """
+        Updates an existing XML document in MarkLogic with a new version.
+
+        This uses `dls:document-checkout-update-checkin` to perform this in a single operation.
+
+        :param document_uri: The URI of the document to update
+        :param document_xml: The new XML content of the document
+        :param annotation: Annotations to record alongside this version
+
+        :return: The response object from MarkLogic
+        """
+        xml = ElementTree.tostring(document_xml)
+
+        uri = self._format_uri_for_marklogic(document_uri)
+        vars: query_dicts.UpdateDocumentDict = {
+            "uri": uri,
+            "judgment": xml.decode("utf-8"),
+            "annotation": annotation or "edited by update_document_xml",
+        }
+
+        return self._send_to_eval(vars, "update_document.xqy")
 
     def list_judgment_versions(
         self, judgment_uri: DocumentURIString

@@ -15,7 +15,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
 
-    def test_save_judgment_xml(self):
+    def test_update_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = "/ewca/civ/2004/632"
             judgment_str = "<root>My updated judgment</root>"
@@ -25,10 +25,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 "judgment": judgment_str,
                 "annotation": "my annotation",
             }
-            self.client.save_judgment_xml(uri, judgment_xml, "my annotation")
+            self.client.update_document_xml(uri, judgment_xml, "my annotation")
 
             assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "update_judgment.xqy")
+                os.path.join(ROOT_DIR, "xquery", "update_document.xqy")
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 

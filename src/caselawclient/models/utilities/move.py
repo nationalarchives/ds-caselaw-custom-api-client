@@ -49,7 +49,7 @@ def overwrite_document(
     old_doc = api_client.get_document_by_uri_or_404(source_uri)
     try:
         old_doc_xml = old_doc.content_as_xml
-        api_client.save_judgment_xml(
+        api_client.update_document_xml(
             new_uri,
             old_doc_xml,
             annotation=f"overwritten from {source_uri}",

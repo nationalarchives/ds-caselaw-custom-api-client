@@ -157,8 +157,8 @@ class SetPropertyDict(MarkLogicAPIDict):
     value: str
 
 
-# update_judgment.xqy
-class UpdateJudgmentDict(MarkLogicAPIDict):
+# update_document.xqy
+class UpdateDocumentDict(MarkLogicAPIDict):
     annotation: str
     judgment: str
     uri: MarkLogicDocumentURIString

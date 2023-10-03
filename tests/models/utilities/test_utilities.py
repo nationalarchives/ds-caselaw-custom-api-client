@@ -121,7 +121,7 @@ class TestOverwrite:
         fake_api_client.get_document_by_uri_or_404.return_value = fake_judgment
 
         result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
-        fake_api_client.save_judgment_xml.assert_called_with(
+        fake_api_client.update_document_xml.assert_called_with(
             "new/uri", ANY, annotation="overwritten from old/uri"
         )
         fake_api_client.delete_judgment.assert_called_with("old/uri")
