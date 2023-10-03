@@ -699,12 +699,22 @@ class MarklogicApiClient:
         }
         return self._eval_and_decode(vars, "get_property.xqy")
 
-    def get_annotation(self, judgment_uri: DocumentURIString) -> str:
+    def get_version_annotation(self, judgment_uri: DocumentURIString) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.GetAnnotationDict = {
+        vars: query_dicts.GetVersionAnnotationDict = {
             "uri": uri,
         }
-        return self._eval_and_decode(vars, "get_annotation.xqy")
+        return self._eval_and_decode(vars, "get_version_annotation.xqy")
+
+    def get_version_created_datetime(self, judgment_uri: DocumentURIString) -> datetime:
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.GetVersionCreatedDict = {
+            "uri": uri,
+        }
+        return datetime.strptime(
+            self._eval_and_decode(vars, "get_version_created.xqy"),
+            "%Y-%m-%dT%H:%M:%S.%f%z",
+        )
 
     def set_property(
         self, judgment_uri: DocumentURIString, name: str, value: str

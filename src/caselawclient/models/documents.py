@@ -398,7 +398,11 @@ class Document:
 
     @cached_property
     def annotation(self) -> str:
-        return self.api_client.get_annotation(self.uri)
+        return self.api_client.get_version_annotation(self.uri)
+
+    @cached_property
+    def version_created_datetime(self) -> datetime.datetime:
+        return self.api_client.get_version_created_datetime(self.uri)
 
     @property
     def status(self) -> str:
