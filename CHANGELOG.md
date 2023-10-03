@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 15.1.2
+- Expose the creation date of a version
+
 ## [Release 15.1.1]
 - Get version annotation for a single document
 - Expose the type of the latest manifestation date of a document
@@ -321,7 +324,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...HEAD
+[Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.1...v15.1.2
 [Release 15.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.0...v15.1.1
 [Release 15.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.1...v15.1.0
 [Release 15.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.0...v15.0.1
