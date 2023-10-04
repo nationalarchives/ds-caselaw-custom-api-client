@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- New versions of a document created with `insert_document_xml` can now be annotated
+- BREAKING: Renamed `save_judgment_xml` to `update_document_xml`
+- BREAKING: All annotations for versions are now mandatory instances of the new `VersionAnnotation` class
+
 ## [Release 15.1.2
 - Expose the creation date of a version
 
