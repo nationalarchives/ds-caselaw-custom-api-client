@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 16.0.0]
+
 - New versions of a document created with `insert_document_xml` can now be annotated
 - BREAKING: Renamed `save_judgment_xml` to `update_document_xml`
 - BREAKING: All annotations for versions are now mandatory instances of the new `VersionAnnotation` class
 
-## [Release 15.1.2
+## [Release 15.1.2]
 - Expose the creation date of a version
 
 ## [Release 15.1.1]
@@ -328,7 +330,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...HEAD
+[Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...v16.0.0
 [Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.1...v15.1.2
 [Release 15.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.0...v15.1.1
 [Release 15.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.1...v15.1.0
