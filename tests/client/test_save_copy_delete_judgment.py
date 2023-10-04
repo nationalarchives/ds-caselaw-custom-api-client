@@ -8,6 +8,7 @@ import pytest
 
 import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError
 
 
@@ -23,9 +24,22 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
                 "judgment": judgment_str,
-                "annotation": "my annotation",
+                "annotation": json.dumps(
+                    {
+                        "type": "edit",
+                        "calling_function": "update_document_xml",
+                        "message": "test_update_document_xml",
+                    }
+                ),
             }
-            self.client.update_document_xml(uri, judgment_xml, "my annotation")
+            self.client.update_document_xml(
+                uri,
+                judgment_xml,
+                VersionAnnotation(
+                    VersionType.EDIT,
+                    message="test_update_document_xml",
+                ),
+            )
 
             assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "update_document.xqy")
@@ -46,9 +60,22 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 expected_vars = {
                     "uri": "/ewca/civ/2004/632.xml",
                     "judgment": judgment_str,
-                    "annotation": "my annotation",
+                    "annotation": json.dumps(
+                        {
+                            "type": "enrichment",
+                            "calling_function": "save_locked_judgment_xml",
+                            "message": "test_save_locked_judgment_xml",
+                        }
+                    ),
                 }
-                self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
+                self.client.save_locked_judgment_xml(
+                    uri,
+                    judgment_xml,
+                    VersionAnnotation(
+                        VersionType.ENRICHMENT,
+                        message="test_save_locked_judgment_xml",
+                    ),
+                )
 
                 assert mock_eval.call_args.args[0] == (
                     os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
@@ -69,7 +96,14 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             judgment_xml = judgment_str.encode("utf-8")
             mock_validate_hash.side_effect = InvalidContentHashError()
             with pytest.raises(InvalidContentHashError):
-                self.client.save_locked_judgment_xml(uri, judgment_xml, "my annotation")
+                self.client.save_locked_judgment_xml(
+                    uri,
+                    judgment_xml,
+                    VersionAnnotation(
+                        VersionType.SUBMISSION,
+                        message="test_save_locked_judgment_xml_checks_content_hash",
+                    ),
+                )
 
     def test_insert_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
@@ -79,9 +113,22 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
                 "document": document_str,
-                "annotation": "inserted by insert_document_xml",
+                "annotation": json.dumps(
+                    {
+                        "type": "submission",
+                        "calling_function": "insert_document_xml",
+                        "message": "test_insert_document_xml",
+                    }
+                ),
             }
-            self.client.insert_document_xml(uri, document_xml)
+            self.client.insert_document_xml(
+                uri,
+                document_xml,
+                VersionAnnotation(
+                    VersionType.SUBMISSION,
+                    message="test_insert_document_xml",
+                ),
+            )
 
             assert mock_eval.call_args.args[0] == (
                 os.path.join(ROOT_DIR, "xquery", "insert_document.xqy")
