@@ -434,6 +434,13 @@ class Document:
 
         publish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, True)
+        self.api_client.set_property(
+            self.uri,
+            "published-at",
+            datetime.datetime.now(datetime.timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
+        )
         notify_changed(
             uri=self.uri,
             status="published",
@@ -444,6 +451,7 @@ class Document:
         self.api_client.break_checkout(self.uri)
         unpublish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, False)
+        self.api_client.set_property(self.uri, "published-at", "")
         notify_changed(
             uri=self.uri,
             status="not published",

@@ -318,6 +318,8 @@ class TestDocumentValidation:
 
 
 class TestDocumentPublication:
+    epoch = datetime.datetime.fromisoformat("2000-01-01T00:00:00-00:00")
+
     def test_publish_fails_if_not_publishable(self, mock_api_client):
         with pytest.raises(CannotPublishUnpublishableDocument):
             document = Document("test/1234", mock_api_client)
@@ -327,14 +329,23 @@ class TestDocumentPublication:
 
     @patch("caselawclient.models.documents.notify_changed")
     @patch("caselawclient.models.documents.publish_documents")
+    @patch("datetime.datetime")
     def test_publish(
-        self, mock_publish_documents, mock_notify_changed, mock_api_client
+        self,
+        mock_datetime,
+        mock_publish_documents,
+        mock_notify_changed,
+        mock_api_client,
     ):
+        mock_datetime.now.return_value = self.epoch
         document = Document("test/1234", mock_api_client)
         document.is_publishable = True
         document.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234", "published-at", "2000-01-01T00:00:00Z"
+        )
         mock_notify_changed.assert_called_once_with(
             uri="test/1234", status="published", enrich=True
         )
@@ -348,6 +359,9 @@ class TestDocumentPublication:
         document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234", "published-at", ""
+        )
         mock_api_client.break_checkout.assert_called_once_with("test/1234")
         mock_notify_changed.assert_called_once_with(
             uri="test/1234", status="not published", enrich=False
