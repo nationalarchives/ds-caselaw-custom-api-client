@@ -50,6 +50,9 @@ class VersionAnnotation:
         self.message = message
         self.payload = payload
 
+        self.calling_function: Optional[str] = None
+        self.calling_agent: Optional[str] = None
+
     def set_calling_function(self, calling_function: str) -> None:
         """
         Set the name of the calling function for tracing purposes
