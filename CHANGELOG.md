@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - BREAKING: `VersionAnnotation` now requires a statement of if the action is automated or not
 - `VersionAnnotation` can now accept an optional dict of structured `payload` data
+- `VersionAnnotation` can now record a user agent string
 
 ## [Release 16.0.0]
 
