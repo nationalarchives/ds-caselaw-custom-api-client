@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- BREAKING: `VersionAnnotation` now requires a statement of if the action is automated or not
+- `VersionAnnotation` can now accept an optional dict of structured `payload` data
+
 ## [Release 16.0.0]
 
 - New versions of a document created with `insert_document_xml` can now be annotated

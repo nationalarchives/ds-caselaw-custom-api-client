@@ -9,4 +9,5 @@ class TestSaveCopyDeleteJudgment:
             VersionAnnotation(
                 VersionType.SUBMISSION,
                 message="test_structured_annotation_dict_raises_on_no_calling_function_name",
+                automated=False,
             ).structured_annotation_dict
