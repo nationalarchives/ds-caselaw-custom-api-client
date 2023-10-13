@@ -14,7 +14,13 @@ from caselawclient.errors import InvalidContentHashError
 
 class TestSaveCopyDeleteJudgment(unittest.TestCase):
     def setUp(self):
-        self.client = MarklogicApiClient("", "", "", False)
+        self.client = MarklogicApiClient(
+            host="",
+            username="",
+            password="",
+            use_https=False,
+            user_agent="marklogic-api-client-test",
+        )
 
     def test_update_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
@@ -28,6 +34,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     {
                         "type": "edit",
                         "calling_function": "update_document_xml",
+                        "calling_agent": "marklogic-api-client-test",
                         "automated": False,
                         "message": "test_update_document_xml",
                         "payload": {"test_payload": True},
@@ -68,6 +75,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         {
                             "type": "enrichment",
                             "calling_function": "save_locked_judgment_xml",
+                            "calling_agent": "marklogic-api-client-test",
                             "automated": True,
                             "message": "test_save_locked_judgment_xml",
                             "payload": {"test_payload": True},
@@ -127,6 +135,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     {
                         "type": "submission",
                         "calling_function": "insert_document_xml",
+                        "calling_agent": "marklogic-api-client-test",
                         "automated": False,
                         "message": "test_insert_document_xml",
                         "payload": {"test_payload": True},

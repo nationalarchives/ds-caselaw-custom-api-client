@@ -197,6 +197,7 @@ class MarklogicApiClient:
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.headers.update({"User-Agent": user_agent})
+        self.user_agent = user_agent
 
     def get_document_by_uri(self, uri: DocumentURIString) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
@@ -468,6 +469,7 @@ class MarklogicApiClient:
         uri = self._format_uri_for_marklogic(judgment_uri)
 
         annotation.set_calling_function("save_locked_judgment_xml")
+        annotation.set_calling_agent(self.user_agent)
 
         vars: query_dicts.UpdateLockedJudgmentDict = {
             "uri": uri,
@@ -497,6 +499,7 @@ class MarklogicApiClient:
         uri = self._format_uri_for_marklogic(document_uri)
 
         annotation.set_calling_function("insert_document_xml")
+        annotation.set_calling_agent(self.user_agent)
 
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
@@ -528,6 +531,7 @@ class MarklogicApiClient:
         uri = self._format_uri_for_marklogic(document_uri)
 
         annotation.set_calling_function("update_document_xml")
+        annotation.set_calling_agent(self.user_agent)
 
         vars: query_dicts.UpdateDocumentDict = {
             "uri": uri,

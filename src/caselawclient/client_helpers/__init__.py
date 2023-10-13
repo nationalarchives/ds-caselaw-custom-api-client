@@ -8,6 +8,7 @@ from typing_extensions import NotRequired
 class AnnotationDataDict(TypedDict):
     type: str
     calling_function: str
+    calling_agent: str
     message: NotRequired[str]
     payload: NotRequired[dict[str, Any]]
     automated: bool
@@ -57,21 +58,36 @@ class VersionAnnotation:
         """
         self.calling_function = calling_function
 
+    def set_calling_agent(self, calling_agent: str) -> None:
+        """
+        Set the name of the calling agent for tracing purposes
+
+        :param calling_agent: The name of the agent which is performing the database write
+        """
+        self.calling_agent = calling_agent
+
     @property
     def structured_annotation_dict(self) -> AnnotationDataDict:
         """
         :return: A structured dict representing this `VersionAnnotation`
 
         :raises AttributeError: The name of the calling function has not been set; use `set_calling_function()`
+        :raises AttributeError: The name of the calling agent has not been set; use `set_calling_agent()`
         """
         if not self.calling_function:
             raise AttributeError(
                 "The name of the calling function has not been set; use set_calling_function()"
             )
 
+        if not self.calling_agent:
+            raise AttributeError(
+                "The name of the calling agent has not been set; use set_calling_agent()"
+            )
+
         annotation_data: AnnotationDataDict = {
             "type": self.version_type.value,
             "calling_function": self.calling_function,
+            "calling_agent": self.calling_agent,
             "automated": self.automated,
         }
 
