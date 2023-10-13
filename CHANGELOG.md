@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 17.0.0]
+
 - BREAKING: `VersionAnnotation` now requires a statement of if the action is automated or not
 - `VersionAnnotation` can now accept an optional dict of structured `payload` data
 - `VersionAnnotation` can now record a user agent string
@@ -334,8 +336,9 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...HEAD
-[Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...v16.0.0
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...HEAD
+[Release 17.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...v17.0.0
+[Release 16.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...v16.0.0
 [Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.1...v15.1.2
 [Release 15.1.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.0...v15.1.1
 [Release 15.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.0.1...v15.1.0
