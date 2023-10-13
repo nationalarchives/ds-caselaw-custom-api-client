@@ -28,7 +28,9 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     {
                         "type": "edit",
                         "calling_function": "update_document_xml",
+                        "automated": False,
                         "message": "test_update_document_xml",
+                        "payload": {"test_payload": True},
                     }
                 ),
             }
@@ -38,6 +40,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 VersionAnnotation(
                     VersionType.EDIT,
                     message="test_update_document_xml",
+                    automated=False,
+                    payload={"test_payload": True},
                 ),
             )
 
@@ -64,7 +68,9 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         {
                             "type": "enrichment",
                             "calling_function": "save_locked_judgment_xml",
+                            "automated": True,
                             "message": "test_save_locked_judgment_xml",
+                            "payload": {"test_payload": True},
                         }
                     ),
                 }
@@ -74,6 +80,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     VersionAnnotation(
                         VersionType.ENRICHMENT,
                         message="test_save_locked_judgment_xml",
+                        automated=True,
+                        payload={"test_payload": True},
                     ),
                 )
 
@@ -102,6 +110,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     VersionAnnotation(
                         VersionType.SUBMISSION,
                         message="test_save_locked_judgment_xml_checks_content_hash",
+                        automated=False,
+                        payload={"test_payload": True},
                     ),
                 )
 
@@ -117,7 +127,9 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     {
                         "type": "submission",
                         "calling_function": "insert_document_xml",
+                        "automated": False,
                         "message": "test_insert_document_xml",
+                        "payload": {"test_payload": True},
                     }
                 ),
             }
@@ -127,6 +139,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 VersionAnnotation(
                     VersionType.SUBMISSION,
                     message="test_insert_document_xml",
+                    automated=False,
+                    payload={"test_payload": True},
                 ),
             )
 

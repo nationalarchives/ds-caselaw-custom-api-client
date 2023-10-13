@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Optional, TypedDict
+from typing import Any, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -9,6 +9,8 @@ class AnnotationDataDict(TypedDict):
     type: str
     calling_function: str
     message: NotRequired[str]
+    payload: NotRequired[dict[str, Any]]
+    automated: bool
 
 
 class VersionType(Enum):
@@ -27,14 +29,25 @@ class VersionType(Enum):
 class VersionAnnotation:
     """A class holding structured data about the reason for a version."""
 
-    def __init__(self, version_type: VersionType, message: Optional[str] = None):
+    def __init__(
+        self,
+        version_type: VersionType,
+        automated: bool,
+        message: Optional[str] = None,
+        payload: Optional[dict[str, Any]] = None,
+    ):
         """
         :param version_type: The type of version being created
+        :param automated: `True` if this action has happened as the result of an automated process, rather than a human
+            action
         :param message: A human-readable string containing information about the version which can't be expressed in the
             structured data.
+        :param payload: A dict containing additional information relevant to this version change
         """
         self.version_type = version_type
+        self.automated = automated
         self.message = message
+        self.payload = payload
 
     def set_calling_function(self, calling_function: str) -> None:
         """
@@ -59,10 +72,14 @@ class VersionAnnotation:
         annotation_data: AnnotationDataDict = {
             "type": self.version_type.value,
             "calling_function": self.calling_function,
+            "automated": self.automated,
         }
 
         if self.message:
             annotation_data["message"] = self.message
+
+        if self.payload:
+            annotation_data["payload"] = self.payload
 
         return annotation_data
 
