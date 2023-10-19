@@ -63,6 +63,12 @@ except importlib.metadata.PackageNotFoundError:
 DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
 
+class NoResponse(Exception):
+    """A requests HTTPError has no response. We expect this will never happen."""
+
+    pass
+
+
 class MultipartResponseLongerThanExpected(Exception):
     """
     MarkLogic has returned a multipart response with more than one part, where only a single part was expected.
@@ -236,6 +242,8 @@ class MarklogicApiClient:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            if e.response is None:
+                raise NoResponse
             status_code = e.response.status_code
             new_error_class = self.http_error_classes.get(
                 status_code, self.default_http_error_class
