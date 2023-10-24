@@ -20,6 +20,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     UnparsableDate,
 )
+from tests.test_helpers import MockMultipartResponse
 
 
 @pytest.fixture
@@ -209,6 +210,38 @@ class TestDocument:
         version_document = Document("test/1234_xml_versions/9-1234", mock_api_client)
         assert version_document.version_number == 9
         assert version_document.is_version
+
+    def test_number_of_mentions_when_no_mentions(self, mock_api_client):
+        mock_api_client.eval_xslt.return_value = MockMultipartResponse(
+            """
+            <article>
+                <p>An article with no mark elements.</p>
+            </article>
+        """.encode(
+                "utf-8"
+            )
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.number_of_mentions("some") == 0
+
+    def test_number_of_mentions_when_mentions(self, mock_api_client):
+        mock_api_client.eval_xslt.return_value = MockMultipartResponse(
+            """
+            <article>
+                <p>
+                    An article with <mark id="mark_0">some</mark> mark elements, and <mark id="mark_1">some</mark> more.
+                </p>
+            </article>
+        """.encode(
+                "utf-8"
+            )
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.number_of_mentions("some") == 2
 
 
 class TestDocumentValidation:

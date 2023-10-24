@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from lxml import etree
+from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.models.utilities import extract_version
 
 from ..errors import (
     DocumentNotFoundError,
+    GatewayTimeoutError,
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
@@ -29,6 +31,10 @@ from .utilities.aws import (
 
 
 class UnparsableDate(Warning):
+    pass
+
+
+class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
     pass
 
 
@@ -328,12 +334,36 @@ class Document:
     def content_as_xml_tree(self) -> Any:
         return etree.fromstring(self.content_as_xml_bytestring)
 
-    def content_as_html(self, version_uri: Optional[DocumentURIString] = None) -> str:
-        results = self.api_client.eval_xslt(
-            self.uri, version_uri, show_unpublished=True
-        )
-        multipart_data = decoder.MultipartDecoder.from_response(results)
-        return str(multipart_data.parts[0].text)
+    def content_as_html(
+        self,
+        version_uri: Optional[DocumentURIString] = None,
+        query: Optional[str] = None,
+    ) -> str:
+        try:
+            results = self.api_client.eval_xslt(
+                self.uri, version_uri, show_unpublished=True, query=query
+            )
+            multipart_data = decoder.MultipartDecoder.from_response(results)
+            return str(multipart_data.parts[0].text)
+        except GatewayTimeoutError as e:
+            if query is not None:
+                warnings.warn(
+                    (
+                        "Gateway timeout when getting content with query"
+                        "highlighting for document %s, version %s, and query"
+                        '"%s", falling back to unhighlighted content...'
+                    )
+                    % (self.uri, version_uri, query),
+                    GatewayTimeoutGettingHTMLWithQuery,
+                )
+                return self.content_as_html(version_uri)
+            else:
+                raise e
+
+    def number_of_mentions(self, query: str) -> int:
+        html = self.content_as_html(query=query)
+        tree = html_parser.fromstring(html.encode("utf-8"))
+        return len(tree.findall(".//mark"))
 
     @cached_property
     def is_failure(self) -> bool:

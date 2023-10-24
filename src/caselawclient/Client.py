@@ -205,7 +205,9 @@ class MarklogicApiClient:
         self.session.headers.update({"User-Agent": user_agent})
         self.user_agent = user_agent
 
-    def get_document_by_uri(self, uri: DocumentURIString) -> Document:
+    def get_document_by_uri(
+        self, uri: DocumentURIString, query: Optional[str] = None
+    ) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
         return document_type_class(uri, self)
 
@@ -684,6 +686,7 @@ class MarklogicApiClient:
         version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
         xsl_filename: str = DEFAULT_XSL_TRANSFORM,
+        query: Optional[str] = None,
     ) -> requests.Response:
         marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
         marklogic_document_version_uri = (
@@ -707,6 +710,7 @@ class MarklogicApiClient:
             "show_unpublished": show_unpublished,
             "img_location": image_location,
             "xsl_filename": xsl_filename,
+            "query": query,
         }
 
         return self._send_to_eval(vars, "xslt_transform.xqy")
