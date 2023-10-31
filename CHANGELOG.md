@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 17.1.0]
+- New `Client.get_combined_stats_table` method to run a combined statistics query against MarkLogic.
+
 ## [Release 17.0.0]
 
 - BREAKING: `VersionAnnotation` now requires a statement of if the action is automated or not
@@ -336,7 +339,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.1...HEAD
+[Release 17.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...v17.1.0
 [Release 17.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...v17.0.0
 [Release 16.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...v16.0.0
 [Release 15.1.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.1...v15.1.2
