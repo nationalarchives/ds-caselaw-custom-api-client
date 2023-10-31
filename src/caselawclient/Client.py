@@ -937,6 +937,17 @@ class MarklogicApiClient:
         """
         return move.update_document_uri(old_uri, new_citation, api_client=self)
 
+    def get_combined_stats_table(self) -> list[list[Any]]:
+        """Run the combined statistics table xquery and return the result as a list of lists, each representing a table
+        row."""
+        results: list[list[Any]] = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval({}, "get_combined_stats_table.xqy")
+            )
+        )
+
+        return results
+
 
 api_client = MarklogicApiClient(
     host=env("MARKLOGIC_HOST", default=None),
