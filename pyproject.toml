@@ -30,7 +30,7 @@ mypy-boto3-sns = "^1.26.69"
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
 pytest = "^7.3.2"
-responses = "^0.23.1"
+responses = "^0.24.0"
 python-dotenv = "^1.0.0"
 
 [tool.poetry.group.docs]
