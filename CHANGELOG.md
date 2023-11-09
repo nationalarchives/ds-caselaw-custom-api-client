@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+
+## [Release 17.2.0]
 - `document.content_as_html` now takes an optional `query=` string parameter, which, when supplied, highlights instances of the query within the document with `<mark>` tags, each of which has a numbered id indicating its sequence in the document.
 - `document.number_of_mentions` method which takes a `query=` string parameter, and returns the number of highlighted mentions in the html.
 
@@ -342,7 +344,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...HEAD
+[Release 17.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.1.0...v17.2.0
 [Release 17.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...v17.1.0
 [Release 17.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...v17.0.0
 [Release 16.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v15.1.2...v16.0.0
