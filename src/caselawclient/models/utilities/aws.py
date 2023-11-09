@@ -110,7 +110,7 @@ def publish_documents(uri: str) -> None:
 
         if not key.endswith("parser.log") and not key.endswith(".tar.gz"):
             source: CopySourceTypeDef = {"Bucket": private_bucket, "Key": key}
-            extra_args = {"ACL": "public-read"}
+            extra_args: dict[str, str] = {}
             try:
                 client.copy(source, public_bucket, key, extra_args)
             except botocore.client.ClientError as e:
