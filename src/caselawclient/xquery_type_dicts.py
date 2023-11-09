@@ -192,6 +192,7 @@ class XsltDict(MarkLogicAPIDict):
 # xslt_transform.xqy
 class XsltTransformDict(MarkLogicAPIDict):
     img_location: Optional[str]
+    query: Optional[str]
     show_unpublished: Optional[bool]
     uri: MarkLogicDocumentURIString
     version_uri: Optional[MarkLogicDocumentVersionURIString]

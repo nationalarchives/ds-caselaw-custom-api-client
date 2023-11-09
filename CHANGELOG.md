@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
+- `document.content_as_html` now takes an optional `query=` string parameter, which, when supplied, highlights instances of the query within the document with `<mark>` tags, each of which has a numbered id indicating its sequence in the document.
+- `document.number_of_mentions` method which takes a `query=` string parameter, and returns the number of highlighted mentions in the html.
 
 ## [Release 17.1.0]
 - New `Client.get_combined_stats_table` method to run a combined statistics query against MarkLogic.
+
 
 ## [Release 17.0.0]
 
