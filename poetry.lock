@@ -522,13 +522,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.28.72"
-description = "Type annotations for boto3.SNS 1.28.72 service generated with mypy-boto3-builder 7.19.0"
+version = "1.29.0"
+description = "Type annotations for boto3.SNS 1.29.0 service generated with mypy-boto3-builder 7.20.3"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mypy-boto3-sns-1.28.72.tar.gz", hash = "sha256:26222c5ea8db67f645a3e57ea5e21709462c2ff28b0826e77e7c257d42d7fbd6"},
-    {file = "mypy_boto3_sns-1.28.72-py3-none-any.whl", hash = "sha256:e242b6fce31c816bdcc2590b179b00fe6e3ca726fd0f7d94c01f11491e40eb1e"},
+    {file = "mypy-boto3-sns-1.29.0.tar.gz", hash = "sha256:744a16c9508640f8bba8c2eca83bd2d61d7215aaeafea3c57cf0ac5b9d502ab1"},
+    {file = "mypy_boto3_sns-1.29.0-py3-none-any.whl", hash = "sha256:4d61e3e05d86824b474f55dc0976707154fd60dd532e8a232eccaff0a9302f26"},
 ]
 
 [package.dependencies]
