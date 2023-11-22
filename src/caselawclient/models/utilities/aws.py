@@ -1,6 +1,8 @@
+import datetime
 import json
 import logging
-from typing import Any, Literal, Union, overload
+import uuid
+from typing import Any, Literal, Optional, Union, overload
 
 import boto3
 import botocore.client
@@ -64,10 +66,14 @@ def generate_signed_asset_url(key: str) -> str:
     )
 
 
-def generate_docx_url(uri: str) -> str:
-    key = f'{uri}/{uri.replace("/", "_")}.docx'
+def generate_docx_key(uri: str) -> str:
+    """from a canonical caselaw URI (eat/2022/1) return the S3 key of the associated docx"""
+    return f'{uri}/{uri.replace("/", "_")}.docx'
 
-    return generate_signed_asset_url(key)
+
+def generate_docx_url(uri: str) -> str:
+    """from a canonical caselaw URI (eat/2022/1) return a signed S3 link for the front end"""
+    return generate_signed_asset_url(generate_docx_key(uri))
 
 
 def generate_pdf_url(uri: str) -> str:
@@ -146,7 +152,7 @@ def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
         }
 
     client.publish(
-        TopicArn=env("SNS_TOPIC"),
+        TopicArn=env("SNS_TOPIC"),  # this is the ANNOUNCE SNS topic
         Message=json.dumps({"uri_reference": uri, "status": status}),
         Subject=f"Updated: {uri} {status}",
         MessageAttributes=message_attributes,
@@ -189,3 +195,40 @@ def build_new_key(old_key: str, new_uri: str) -> str:
         return f"{new_uri}/{new_filename}.{old_filename.split('.')[-1]}"
     else:
         return f"{new_uri}/{old_filename}"
+
+
+def request_parse(
+    uri: str,
+    reference: Optional[str],
+    parser_instructions: Optional[dict[str, Any]] = None,
+) -> None:
+    client = create_sns_client()
+
+    if parser_instructions is None:
+        parser_instructions = {}
+
+    message_to_send = {
+        "properties": {
+            "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
+            "timestamp": datetime.datetime.now(datetime.timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "function": "fcl-judgment-parse-request",
+            "producer": "FCL",
+            "executionId": f"fcl_ex_id_{uuid.uuid4()}",
+            "parentExecutionId": None,
+        },
+        "parameters": {
+            "s3Bucket": env("PRIVATE_ASSET_BUCKET"),
+            "s3Key": generate_docx_key(uri),
+            "reference": reference or f"FCL-{uuid.uuid4()}",
+            "originator": "FCL",
+            "parserInstructions": parser_instructions,
+        },
+    }
+
+    client.publish(
+        TopicArn=env("REPARSE_SNS_TOPIC"),
+        Message=json.dumps(message_to_send),
+        Subject=f"Reparse request: {uri}",
+    )

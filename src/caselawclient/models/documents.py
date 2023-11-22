@@ -25,6 +25,7 @@ from .utilities.aws import (
     generate_pdf_url,
     notify_changed,
     publish_documents,
+    request_parse,
     unpublish_documents,
     uri_for_s3,
 )
@@ -520,3 +521,39 @@ class Document:
 
     def move(self, new_citation: str) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)
+
+    def reparse(self) -> None:
+        "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
+
+        # do we correctly support press summaries? It's OK to remove this if we do.
+        if self.document_noun != "judgment":
+            raise RuntimeError(f"Tried to reparse a {self.document_noun}")
+
+        parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[
+            self.document_noun
+        ]
+        checked_date = (
+            self.document_date_as_string
+            if self.document_date_as_string > "1001"
+            else None
+        )
+
+        # the keys of parser_instructions should exactly match the parser output
+        # in the *-metadata.json files by the parser. Whilst typically empty
+        # values are "" from the API, we should pass None instead in this case.
+
+        parser_instructions = {
+            "name": self.name or None,
+            "cite": self.best_human_identifier or None,
+            "court": self.court or None,
+            "date": checked_date,
+            "uri": self.uri,
+            "documentType": parser_type_noun,
+            "published": self.is_published,
+        }
+
+        request_parse(
+            uri=self.uri,
+            reference=self.consignment_reference,
+            parser_instructions=parser_instructions,
+        )
