@@ -73,6 +73,8 @@ class SearchParameters:
             "ewhc/kb": "ewhc/qb",
             "ewhc/scco": "ewhc/costs",
             "ewhc/costs": "ewhc/scco",
+            "ukait": "ukut/iac",
+            "ukut/iac": "ukait",
         }
         alternative_court_names = set()
         for primary_name, secondary_name in ALTERNATIVE_COURT_NAMES_MAP.items():
