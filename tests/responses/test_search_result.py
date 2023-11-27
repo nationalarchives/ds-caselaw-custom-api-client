@@ -188,36 +188,6 @@ class TestSearchResultMeta:
 
         assert meta.editor_status == expected_editor_status.value
 
-    @patch("caselawclient.responses.search_result.api_client")
-    def test_create_from_uri(self, mock_api_client):
-        """
-        GIVEN a uri and a mock API client
-        WHEN SearchResultMetadata.create_from_uri is called with the uri
-        THEN a SearchResultMetadata object is returned with expected attributes
-        """
-        mock_api_client.get_properties_for_search_results.return_value = (
-            "<property-results>"
-            "<property-result>"
-            "<assigned-to>test_assigned_to</assigned-to>"
-            "<source-name>test_author</source-name>"
-            "<source-email>test_author_email</source-email>"
-            "<transfer-consignment-reference>test_consignment_reference</transfer-consignment-reference>"
-            "<editor-hold>false</editor-hold>"
-            "<editor-priority>30</editor-priority>"
-            "<transfer-received-at>2023-01-26T14:17:02Z</transfer-received-at>"
-            "</property-result>"
-            "</property-results>"
-        )
-        mock_api_client.get_last_modified.return_value = "test_last_modified"
-
-        meta = SearchResultMetadata.create_from_uri("test_uri")
-
-        assert (
-            etree.tostring(meta.node).decode()
-            == mock_api_client.get_properties_for_search_results.return_value
-        )
-        assert meta.last_modified == "test_last_modified"
-
     def test_submission_date_is_min_when_transfer_received_at_empty(self):
         """
         GIVEN a node where the `transfer-received-at` element is empty

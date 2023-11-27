@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 from enum import Enum
+from functools import cached_property
 from typing import Dict, Optional
 
 from dateutil import parser as dateparser
@@ -43,20 +44,6 @@ class SearchResultMetadata:
     def __init__(self, node: etree._Element, last_modified: str):
         self.node = node
         self.last_modified = last_modified
-
-    @staticmethod
-    def create_from_uri(uri: DocumentURIString) -> "SearchResultMetadata":
-        """
-        Create a SearchResultMetadata instance from a search result URI.
-
-        :param uri: The URI of the search result
-
-        :return: The created SearchResultMetadata instance
-        """
-        response_text = api_client.get_properties_for_search_results([uri])
-        last_modified = api_client.get_last_modified(uri)
-        root = etree.fromstring(response_text)
-        return SearchResultMetadata(root, last_modified)
 
     @property
     def author(self) -> str:
@@ -259,15 +246,15 @@ class SearchResult:
         xslt_transform = etree.XSLT(etree.parse(file_path))
         return str(xslt_transform(self.node))
 
-    @property
+    @cached_property
     def metadata(self) -> SearchResultMetadata:
         """
-        :return: The metadata of the search result
+        :return: A `SearchResultMetadata` instance representing the metadata of this result
         """
-
-        return SearchResultMetadata.create_from_uri(
-            self.uri,
-        )
+        response_text = api_client.get_properties_for_search_results([self.uri])
+        last_modified = api_client.get_last_modified(self.uri)
+        root = etree.fromstring(response_text)
+        return SearchResultMetadata(root, last_modified)
 
     def _get_xpath_match_string(self, path: str) -> str:
         return get_xpath_match_string(self.node, path, namespaces=self.NAMESPACES)
