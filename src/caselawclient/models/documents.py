@@ -391,12 +391,9 @@ class Document:
 
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
-        if "error" in self._get_root():
+        if "error" in get_judgment_root(self.content_as_xml_bytestring):
             return True
         return False
-
-    def _get_root(self) -> str:
-        return get_judgment_root(self.content_as_xml_bytestring)
 
     @cached_property
     def has_name(self) -> bool:
