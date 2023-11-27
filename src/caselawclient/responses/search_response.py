@@ -21,15 +21,6 @@ class SearchResponse:
         """
         self.node = node
 
-    @staticmethod
-    def from_response_string(xml: str) -> "SearchResponse":
-        """
-        Constructs a SearchResponse instance from an xml response string.
-
-        :param xml: The XML data as a string
-        """
-        return SearchResponse(etree.fromstring(xml))
-
     @property
     def total(self) -> str:
         """
