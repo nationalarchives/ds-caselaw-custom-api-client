@@ -4,36 +4,10 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 import ds_caselaw_utils
 import pytest
 
-from caselawclient.models.utilities import (
-    extract_version,
-    get_judgment_root,
-    move,
-    render_versions,
-)
+from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import build_new_key, copy_assets
 
 from ...factories import JudgmentFactory
-
-
-class TestUtils:
-    def test_get_judgment_root_error(self):
-        xml = "<error>parser.log contents</error>"
-        assert get_judgment_root(xml) == "error"
-
-    def test_get_judgment_root_akomantoso(self):
-        xml = (
-            "<akomaNtoso xmlns:uk='https://caselaw.nationalarchives.gov.uk/akn' "
-            "xmlns='http://docs.oasis-open.org/legaldocml/ns/akn/3.0'>judgment</akomaNtoso>"
-        )
-        assert (
-            get_judgment_root(xml)
-            == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}akomaNtoso"
-        )
-
-    def test_get_judgment_root_malformed_xml(self):
-        # Should theoretically never happen but test anyway
-        xml = "<error>malformed xml"
-        assert get_judgment_root(xml) == "error"
 
 
 class TestVersionUtils:

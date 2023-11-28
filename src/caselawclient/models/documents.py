@@ -1,5 +1,6 @@
 import datetime
 import warnings
+import xml.etree.ElementTree as ET
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
@@ -18,7 +19,7 @@ from ..errors import (
     OnlySupportedOnVersion,
 )
 from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
-from .utilities import VersionsDict, get_judgment_root, render_versions
+from .utilities import VersionsDict, render_versions
 from .utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
@@ -393,12 +394,17 @@ class Document:
 
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
-        if "error" in self._get_root():
+        if "error" in self.xml_root_element:
             return True
         return False
 
-    def _get_root(self) -> str:
-        return get_judgment_root(self.content_as_xml_bytestring)
+    @property
+    def xml_root_element(self) -> str:
+        try:
+            parsed_xml = ET.XML(self.content_as_xml_bytestring)
+            return parsed_xml.tag
+        except ET.ParseError:
+            return "error"
 
     @cached_property
     def has_name(self) -> bool:
