@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- **Breaking:**: Fully remove the deprecated `caselawclient.api_client` instance.
+
 ## [Release 17.3.0]
 
 - **Feature:** `Document.enrich()` method will send a message to the announce SNS, requesting that a document be enriched.
