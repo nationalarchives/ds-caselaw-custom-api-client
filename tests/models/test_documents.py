@@ -362,31 +362,31 @@ class TestDocumentPublication:
             document.publish()
             mock_api_client.set_published.assert_not_called()
 
-    @patch("caselawclient.models.documents.notify_changed")
+    @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     def test_publish(
-        self, mock_publish_documents, mock_notify_changed, mock_api_client
+        self, mock_publish_documents, mock_announce_document_event, mock_api_client
     ):
         document = Document("test/1234", mock_api_client)
         document.is_publishable = True
         document.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
-        mock_notify_changed.assert_called_once_with(
+        mock_announce_document_event.assert_called_once_with(
             uri="test/1234", status="published", enrich=True
         )
 
-    @patch("caselawclient.models.documents.notify_changed")
+    @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.unpublish_documents")
     def test_unpublish(
-        self, mock_unpublish_documents, mock_notify_changed, mock_api_client
+        self, mock_unpublish_documents, mock_announce_document_event, mock_api_client
     ):
         document = Document("test/1234", mock_api_client)
         document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
         mock_api_client.break_checkout.assert_called_once_with("test/1234")
-        mock_notify_changed.assert_called_once_with(
+        mock_announce_document_event.assert_called_once_with(
             uri="test/1234", status="not published", enrich=False
         )
 
