@@ -19,7 +19,8 @@ def search_judgments_and_parse_response(
     return SearchResponse(
         etree.fromstring(
             api_client.search_judgments_and_decode_response(search_parameters)
-        )
+        ),
+        api_client,
     )
 
 
@@ -35,5 +36,6 @@ def search_and_parse_response(
     :return: The parsed search response as a SearchResponse object
     """
     return SearchResponse(
-        etree.fromstring(api_client.search_and_decode_response(search_parameters))
+        etree.fromstring(api_client.search_and_decode_response(search_parameters)),
+        api_client,
     )

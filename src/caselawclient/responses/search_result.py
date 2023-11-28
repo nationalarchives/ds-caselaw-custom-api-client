@@ -10,7 +10,7 @@ from dateutil.parser import ParserError
 from ds_caselaw_utils.courts import Court, CourtNotFoundException, courts
 from lxml import etree
 
-from caselawclient.Client import api_client
+from caselawclient.Client import MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
 
@@ -149,12 +149,13 @@ class SearchResult:
     }
     """ Namespace mappings used in XPath expressions. """
 
-    def __init__(self, node: etree._Element):
+    def __init__(self, node: etree._Element, client: MarklogicApiClient):
         """
         :param node: The XML element representing the search result
         """
 
         self.node = node
+        self.client = client
 
     @property
     def uri(self) -> DocumentURIString:
@@ -251,8 +252,8 @@ class SearchResult:
         """
         :return: A `SearchResultMetadata` instance representing the metadata of this result
         """
-        response_text = api_client.get_properties_for_search_results([self.uri])
-        last_modified = api_client.get_last_modified(self.uri)
+        response_text = self.client.get_properties_for_search_results([self.uri])
+        last_modified = self.client.get_last_modified(self.uri)
         root = etree.fromstring(response_text)
         return SearchResultMetadata(root, last_modified)
 

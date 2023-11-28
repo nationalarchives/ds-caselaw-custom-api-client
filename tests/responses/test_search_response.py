@@ -1,10 +1,20 @@
 import pytest
 from lxml import etree
 
+from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_response import SearchResponse
 
 
 class TestSearchResponse:
+    def setup_method(self):
+        self.client = MarklogicApiClient(
+            host="",
+            username="",
+            password="",
+            use_https=False,
+            user_agent="marklogic-api-client-test",
+        )
+
     def test_total(
         self,
     ):
@@ -18,7 +28,8 @@ class TestSearchResponse:
                 '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'  # noqa: E501
                 "foo"
                 "</search:response>"
-            )
+            ),
+            self.client,
         )
 
         assert search_response.total == "5"
@@ -35,7 +46,8 @@ class TestSearchResponse:
         And each element's node attribute should be as expected
         """
         search_response = SearchResponse(
-            etree.fromstring(generate_search_response_xml(2 * valid_search_result_xml))
+            etree.fromstring(generate_search_response_xml(2 * valid_search_result_xml)),
+            self.client,
         )
 
         results = search_response.results
@@ -66,4 +78,4 @@ class TestSearchResponse:
             etree.XMLSyntaxError,
             match="Namespace prefix search on response is not defined",
         ):
-            SearchResponse(etree.fromstring(xml_without_namespace))
+            SearchResponse(etree.fromstring(xml_without_namespace), self.client)
