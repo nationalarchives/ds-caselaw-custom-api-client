@@ -354,7 +354,7 @@ class TestDocumentValidation:
         )
 
 
-class TestDocumentPublication:
+class TestDocumentPublish:
     def test_publish_fails_if_not_publishable(self, mock_api_client):
         with pytest.raises(CannotPublishUnpublishableDocument):
             document = Document("test/1234", mock_api_client)
@@ -364,8 +364,13 @@ class TestDocumentPublication:
 
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
     def test_publish(
-        self, mock_publish_documents, mock_announce_document_event, mock_api_client
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
     ):
         document = Document("test/1234", mock_api_client)
         document.is_publishable = True
@@ -373,9 +378,12 @@ class TestDocumentPublication:
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
         mock_announce_document_event.assert_called_once_with(
-            uri="test/1234", status="published", enrich=True
+            uri="test/1234", status="publish"
         )
+        mock_enrich.assert_called_once()
 
+
+class TestDocumentUnpublish:
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.unpublish_documents")
     def test_unpublish(
@@ -387,7 +395,17 @@ class TestDocumentPublication:
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
         mock_api_client.break_checkout.assert_called_once_with("test/1234")
         mock_announce_document_event.assert_called_once_with(
-            uri="test/1234", status="not published", enrich=False
+            uri="test/1234", status="unpublish"
+        )
+
+
+class TestDocumentEnrich:
+    @patch("caselawclient.models.documents.announce_document_event")
+    def test_enrich(self, mock_announce_document_event, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.enrich()
+        mock_announce_document_event.assert_called_once_with(
+            uri="test/1234", status="enrich", enrich=True
         )
 
 

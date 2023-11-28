@@ -450,9 +450,12 @@ class Document:
         return DOCUMENT_STATUS_NEW
 
     def enrich(self) -> None:
+        """
+        Announces to the ANNOUNCE SNS that the document is waiting to be enriched.
+        """
         announce_document_event(
             uri=self.uri,
-            status="published",
+            status="enrich",
             enrich=True,
         )
 
@@ -468,9 +471,9 @@ class Document:
         self.api_client.set_published(self.uri, True)
         announce_document_event(
             uri=self.uri,
-            status="published",
-            enrich=True,
+            status="publish",
         )
+        self.enrich()
 
     def unpublish(self) -> None:
         self.api_client.break_checkout(self.uri)
@@ -478,8 +481,7 @@ class Document:
         self.api_client.set_published(self.uri, False)
         announce_document_event(
             uri=self.uri,
-            status="not published",
-            enrich=False,
+            status="unpublish",
         )
 
     def hold(self) -> None:

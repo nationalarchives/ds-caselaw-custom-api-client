@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+- **Feature:** `Document.enrich()` method will send a message to the announce SNS, requesting that a document be enriched.
+
 ## [Release 17.2.0]
 - `document.content_as_html` now takes an optional `query=` string parameter, which, when supplied, highlights instances of the query within the document with `<mark>` tags, each of which has a numbered id indicating its sequence in the document.
 - `document.number_of_mentions` method which takes a `query=` string parameter, and returns the number of highlighted mentions in the html.
