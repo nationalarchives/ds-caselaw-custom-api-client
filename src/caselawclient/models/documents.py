@@ -526,10 +526,6 @@ class Document:
     def reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
 
-        # do we correctly support press summaries? It's OK to remove this if we do.
-        if self.document_noun != "judgment":
-            raise RuntimeError(f"Tried to reparse a {self.document_noun}")
-
         parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[
             self.document_noun
         ]
