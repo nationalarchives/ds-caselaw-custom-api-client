@@ -13,6 +13,8 @@ from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 from typing_extensions import NotRequired
 
+from caselawclient.models.documents import DocumentURIString
+
 env = environ.Env()
 
 
