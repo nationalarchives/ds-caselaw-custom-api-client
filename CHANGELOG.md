@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Unreleased]
 
+## [Release 17.3.0]
+
 - **Feature:** `Document.enrich()` method will send a message to the announce SNS, requesting that a document be enriched.
 
 ## [Release 17.2.0]
@@ -346,7 +348,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...HEAD
+[Release 17.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...v17.3.0
 [Release 17.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.1.0...v17.2.0
 [Release 17.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...v17.1.0
 [Release 17.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v16.0.0...v17.0.0
