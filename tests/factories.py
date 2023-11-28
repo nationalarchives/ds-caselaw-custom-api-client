@@ -14,8 +14,9 @@ class DocumentFactory:
         "uri": ("uri", "test/2023/123"),
         "name": ("name", "Judgment v Judgement"),
         "neutral_citation": ("neutral_citation", "[2023] Test 123"),
+        "best_human_identifier": ("neutral_citation", "[2023] Test 123"),
         "court": ("court", "Court of Testing"),
-        "judgment_date_as_string": ("judgment_date_as_string", "2023-02-03"),
+        "document_date_as_string": ("document_date_as_string", "2023-02-03"),
         "is_published": ("is_published", False),
         "is_sensitive": ("is_sensitive", False),
         "is_anonymised": ("is_anonymised", False),
@@ -26,6 +27,7 @@ class DocumentFactory:
         "consignment_reference": ("consignment_reference", "TDR-12345"),
         "assigned_to": ("assigned_to", ""),
         "versions": ("versions", []),
+        "document_noun": ("document_noun", "judgment"),
     }
 
     @classmethod
@@ -48,9 +50,10 @@ class DocumentFactory:
 
         for map_to, map_from in cls.PARAMS_MAP.items():
             if map_from[0] in kwargs:
-                setattr(judgment_mock.return_value, map_to, kwargs[map_from[0]])
+                value = kwargs[map_from[0]]
             else:
-                setattr(judgment_mock.return_value, map_to, map_from[1])
+                value = map_from[1]
+            setattr(judgment_mock.return_value, map_to, value)
 
         return judgment_mock()
 

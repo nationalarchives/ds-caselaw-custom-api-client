@@ -1,4 +1,6 @@
 import datetime
+import json
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -20,6 +22,8 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     UnparsableDate,
 )
+from caselawclient.models.judgments import Judgment
+from tests.factories import JudgmentFactory
 from tests.test_helpers import MockMultipartResponse
 
 
@@ -636,3 +640,92 @@ class TestDocumentMetadata:
         assert document.transformation_datetime is None
         assert document.get_latest_manifestation_datetime() is None
         assert document.get_manifestation_datetimes("any") == []
+
+    @patch("caselawclient.models.utilities.aws.create_sns_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
+    def test_reparse_empty(self, sns):
+        document = JudgmentFactory().build(
+            is_published=False,
+            name="",
+            neutral_citation="",
+            court="",
+            document_date_as_string="1000-01-01",
+            document_noun="judgment",
+        )
+
+        Judgment.reparse(document)
+        # first call, second argument (the kwargs), so [0][1]
+        returned_message = json.loads(
+            sns.return_value.publish.call_args_list[0][1]["Message"]
+        )
+        # hide random parameters
+        del returned_message["properties"]["timestamp"]
+        del returned_message["properties"]["executionId"]
+
+        assert returned_message == {
+            "properties": {
+                "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
+                # "timestamp":
+                "function": "fcl-judgment-parse-request",
+                "producer": "FCL",
+                # "executionId":
+                "parentExecutionId": None,
+            },
+            "parameters": {
+                "s3Bucket": "MY_BUCKET",
+                "s3Key": "test/2023/123/test_2023_123.docx",
+                "reference": "TDR-12345",
+                "originator": "FCL",
+                "parserInstructions": {
+                    "name": None,
+                    "cite": None,
+                    "court": None,
+                    "date": None,
+                    "uri": "test/2023/123",
+                    "documentType": "judgment",
+                    "published": False,
+                },
+            },
+        }
+
+    @patch("caselawclient.models.utilities.aws.create_sns_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
+    def test_reparse_full(self, sns):
+        document = JudgmentFactory().build(is_published=True)
+
+        Judgment.reparse(document)
+        # first call, second argument (the kwargs), so [0][1]
+        returned_message = json.loads(
+            sns.return_value.publish.call_args_list[0][1]["Message"]
+        )
+        # hide random parameters
+        del returned_message["properties"]["timestamp"]
+        del returned_message["properties"]["executionId"]
+
+        assert returned_message == {
+            "properties": {
+                "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
+                # "timestamp":
+                "function": "fcl-judgment-parse-request",
+                "producer": "FCL",
+                # "executionId":
+                "parentExecutionId": None,
+            },
+            "parameters": {
+                "s3Bucket": "MY_BUCKET",
+                "s3Key": "test/2023/123/test_2023_123.docx",
+                "reference": "TDR-12345",
+                "originator": "FCL",
+                "parserInstructions": {
+                    "name": "Judgment v Judgement",
+                    "cite": "[2023] Test 123",
+                    "court": "Court of Testing",
+                    "date": "2023-02-03",
+                    "uri": "test/2023/123",
+                    "documentType": "judgment",
+                    "published": True,
+                },
+            },
+        }
