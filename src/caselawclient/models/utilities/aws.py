@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import Any, Literal, Optional, Union, overload
+from typing import Any, Literal, Optional, TypedDict, Union, overload
 
 import boto3
 import botocore.client
@@ -11,8 +11,19 @@ from mypy_boto3_s3.client import S3Client
 from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef
 from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
+from typing_extensions import NotRequired
 
 env = environ.Env()
+
+
+class ParserInstructionsDict(TypedDict):
+    name: NotRequired[Optional[str]]
+    cite: NotRequired[Optional[str]]
+    court: NotRequired[Optional[str]]
+    date: NotRequired[Optional[str]]
+    uri: NotRequired[Optional[DocumentURIString]]
+    documentType: NotRequired[Optional[str]]
+    published: NotRequired[bool]
 
 
 @overload
@@ -200,12 +211,12 @@ def build_new_key(old_key: str, new_uri: str) -> str:
 def request_parse(
     uri: str,
     reference: Optional[str],
-    parser_instructions: Optional[dict[str, Any]] = None,
+    parser_instructions: Optional[ParserInstructionsDict] = None,
 ) -> None:
     client = create_sns_client()
 
     if parser_instructions is None:
-        parser_instructions = {}
+        parser_instructions = ParserInstructionsDict({})
 
     message_to_send = {
         "properties": {

@@ -20,6 +20,7 @@ from ..errors import (
 from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
+    ParserInstructionsDict,
     delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
@@ -542,7 +543,7 @@ class Document:
         # in the *-metadata.json files by the parser. Whilst typically empty
         # values are "" from the API, we should pass None instead in this case.
 
-        parser_instructions = {
+        parser_instructions: ParserInstructionsDict = {
             "name": self.name or None,
             "cite": self.best_human_identifier or None,
             "court": self.court or None,
