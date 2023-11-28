@@ -20,6 +20,7 @@ from caselawclient.models.documents import (
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
+    NonXMLDocumentError,
     UnparsableDate,
 )
 from caselawclient.models.judgments import Judgment
@@ -89,7 +90,8 @@ class TestDocument:
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.xml_root_element == "error"
+        with pytest.raises(NonXMLDocumentError):
+            document.xml_root_element
 
     def test_document_parsed(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = """

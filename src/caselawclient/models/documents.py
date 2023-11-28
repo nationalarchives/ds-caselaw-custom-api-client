@@ -77,6 +77,12 @@ class DocumentNotSafeForDeletion(Exception):
     pass
 
 
+class NonXMLDocumentError(Exception):
+    """A document cannot be parsed as XML."""
+
+    pass
+
+
 class Document:
     """
     A base class from which all other document types are extensions. This class includes the essential methods for
@@ -400,11 +406,16 @@ class Document:
 
     @property
     def xml_root_element(self) -> str:
+        """
+        :return: The name of the root tag in the XML
+
+        :raises NonXMLDocumentError: This document is not valid XML
+        """
         try:
             parsed_xml = ET.XML(self.content_as_xml_bytestring)
             return parsed_xml.tag
         except ET.ParseError:
-            return "error"
+            raise NonXMLDocumentError
 
     @cached_property
     def has_name(self) -> bool:
