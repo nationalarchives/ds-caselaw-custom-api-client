@@ -144,7 +144,7 @@ def delete_documents_from_private_bucket(uri: str) -> None:
     delete_from_bucket(uri, env("PRIVATE_ASSET_BUCKET"))
 
 
-def notify_changed(uri: str, status: str, enrich: bool = False) -> None:
+def announce_document_event(uri: str, status: str, enrich: bool = False) -> None:
     client = create_sns_client()
 
     message_attributes: dict[str, MessageAttributeValueTypeDef] = {}

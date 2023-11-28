@@ -21,10 +21,10 @@ from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
 from .utilities import VersionsDict, get_judgment_root, render_versions
 from .utilities.aws import (
     ParserInstructionsDict,
+    announce_document_event,
     delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
-    notify_changed,
     publish_documents,
     request_parse,
     unpublish_documents,
@@ -450,9 +450,12 @@ class Document:
         return DOCUMENT_STATUS_NEW
 
     def enrich(self) -> None:
-        notify_changed(
+        """
+        Announces to the ANNOUNCE SNS that the document is waiting to be enriched.
+        """
+        announce_document_event(
             uri=self.uri,
-            status="published",
+            status="enrich",
             enrich=True,
         )
 
@@ -466,20 +469,19 @@ class Document:
 
         publish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, True)
-        notify_changed(
+        announce_document_event(
             uri=self.uri,
-            status="published",
-            enrich=True,
+            status="publish",
         )
+        self.enrich()
 
     def unpublish(self) -> None:
         self.api_client.break_checkout(self.uri)
         unpublish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, False)
-        notify_changed(
+        announce_document_event(
             uri=self.uri,
-            status="not published",
-            enrich=False,
+            status="unpublish",
         )
 
     def hold(self) -> None:
