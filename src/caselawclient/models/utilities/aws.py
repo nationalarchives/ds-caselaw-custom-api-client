@@ -13,8 +13,6 @@ from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 from typing_extensions import NotRequired
 
-from caselawclient.models.documents import DocumentURIString
-
 env = environ.Env()
 
 
@@ -23,7 +21,7 @@ class ParserInstructionsDict(TypedDict):
     cite: NotRequired[Optional[str]]
     court: NotRequired[Optional[str]]
     date: NotRequired[Optional[str]]
-    uri: NotRequired[Optional[DocumentURIString]]
+    uri: NotRequired[Optional[str]]
     documentType: NotRequired[Optional[str]]
     published: NotRequired[bool]
 
