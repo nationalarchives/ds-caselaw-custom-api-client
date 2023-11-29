@@ -4,7 +4,6 @@ import os
 from unittest.mock import Mock, patch
 
 import pytest
-from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.errors import (
@@ -20,7 +19,6 @@ from caselawclient.models.documents import (
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
-    NonXMLDocumentError,
     UnparsableDate,
 )
 from caselawclient.models.judgments import Judgment
@@ -61,37 +59,6 @@ class TestDocument:
         document = Document("test/1234", mock_api_client)
 
         assert document.failed_to_parse is True
-
-    def test_xml_root_element_akomantoso(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = "<akomaNtoso xmlns:uk='https://caselaw.nationalarchives.gov.uk/akn' xmlns='http://docs.oasis-open.org/legaldocml/ns/akn/3.0'>judgment</akomaNtoso>".encode(
-            "utf-8"
-        )
-
-        document = Document("test/1234", mock_api_client)
-
-        assert (
-            document.xml.root_element
-            == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}akomaNtoso"
-        )
-
-    def test_xml_root_element_error(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = (
-            "<error>parser.log contents</error>".encode("utf-8")
-        )
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.xml.root_element == "error"
-
-    def test_xml_root_element_malformed(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = (
-            "<error>malformed xml".encode("utf-8")
-        )
-
-        document = Document("test/1234", mock_api_client)
-
-        with pytest.raises(NonXMLDocumentError):
-            document.xml.root_element
 
     def test_document_parsed(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = """
@@ -173,24 +140,6 @@ class TestDocument:
 
         assert document.assigned_to == "testuser"
         mock_api_client.get_property.assert_called_once_with("test/1234", "assigned-to")
-
-    def test_judgment_content_as_xml(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = b"<xml></xml>"
-
-        document = Document("test/1234", mock_api_client)
-
-        assert document.content_as_xml == "<xml></xml>"
-        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
-        )
-
-    def test_judgment_content_as_xml_tree(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = (
-            b'<?xml version="1.0" encoding="UTF-8"?><xml></xml>'
-        )
-
-        document = Document("test/1234", mock_api_client)
-        assert etree.tostring(document.content_as_xml_tree) == b"<xml/>"
 
     def test_document_status(self, mock_api_client):
         new_document = Document("test/1234", mock_api_client)

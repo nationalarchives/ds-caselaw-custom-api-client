@@ -338,14 +338,6 @@ class Document:
     def content_as_xml(self) -> str:
         return self.xml.xml_as_string
 
-    @cached_property
-    def content_as_xml_bytestring(self) -> bytes:
-        return self.xml.xml_as_bytestring
-
-    @cached_property
-    def content_as_xml_tree(self) -> Any:
-        return self.xml.xml_as_tree
-
     def content_as_html(
         self,
         version_uri: Optional[DocumentURIString] = None,
@@ -519,12 +511,12 @@ class Document:
             raise DocumentNotSafeForDeletion()
 
     def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
-        return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
+        return get_xpath_match_string(self.xml.xml_as_tree, xpath, namespaces)
 
     def _get_xpath_match_strings(
         self, xpath: str, namespaces: Dict[str, str]
     ) -> list[str]:
-        return get_xpath_match_strings(self.content_as_xml_tree, xpath, namespaces)
+        return get_xpath_match_strings(self.xml.xml_as_tree, xpath, namespaces)
 
     def overwrite(self, new_citation: str) -> None:
         self.api_client.overwrite_document(self.uri, new_citation)
