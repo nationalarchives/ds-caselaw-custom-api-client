@@ -1,11 +1,10 @@
 import datetime
 import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
-from caselawclient.Client import MarklogicApiClient
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
@@ -24,11 +23,6 @@ from caselawclient.models.documents import (
 from caselawclient.models.judgments import Judgment
 from tests.factories import JudgmentFactory
 from tests.test_helpers import MockMultipartResponse
-
-
-@pytest.fixture
-def mock_api_client():
-    return Mock(spec=MarklogicApiClient)
 
 
 class TestDocument:

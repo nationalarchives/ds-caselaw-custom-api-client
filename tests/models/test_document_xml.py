@@ -32,8 +32,6 @@ class TestDocumentXml:
 
         assert document_xml.root_element == "error"
 
-    def test_root_element_malformed(self):
-        document_xml = Document.XML(b"<error>malformed xml")
-
+    def test_catch_malformed_xml(self):
         with pytest.raises(NonXMLDocumentError):
-            document_xml.root_element
+            Document.XML(b"<error>malformed xml")

@@ -561,10 +561,14 @@ class Document:
         Represents the XML of a document, and should contain all methods for interacting with it.
         """
 
-        xml_as_bytestring: bytes
-
         def __init__(self, xml_bytestring: bytes):
-            self.xml_as_bytestring = xml_bytestring
+            """
+            :raises NonXMLDocumentError: This document is not valid XML
+            """
+            try:
+                self.xml_as_tree: etree.Element = etree.fromstring(xml_bytestring)
+            except etree.XMLSyntaxError:
+                raise NonXMLDocumentError
 
         @property
         def xml_as_string(self) -> str:
@@ -573,18 +577,6 @@ class Document:
             """
             return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
 
-        @cached_property
-        def xml_as_tree(self) -> etree.Element:
-            return etree.fromstring(self.xml_as_bytestring)
-
         @property
         def root_element(self) -> str:
-            """
-            :return: The name of the root tag in the XML
-
-            :raises NonXMLDocumentError: This document is not valid XML
-            """
-            try:
-                return str(self.xml_as_tree.tag)
-            except etree.XMLSyntaxError:
-                raise NonXMLDocumentError
+            return str(self.xml_as_tree.tag)

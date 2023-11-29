@@ -1,14 +1,6 @@
-from unittest.mock import Mock
-
 import pytest
 
-from caselawclient.Client import MarklogicApiClient
 from caselawclient.models.press_summaries import PressSummary
-
-
-@pytest.fixture
-def mock_api_client():
-    return Mock(spec=MarklogicApiClient)
 
 
 class TestPressSummary:

@@ -3,6 +3,8 @@ from unittest.mock import Mock
 
 import pytest
 
+from caselawclient.Client import MarklogicApiClient
+
 
 @pytest.fixture(name="valid_search_result_xml")
 def valid_search_result_xml_fixture() -> str:
@@ -109,3 +111,11 @@ def generate_mock_response_fixture() -> Callable:
         return mock_response
 
     return _generate_mock_response
+
+
+@pytest.fixture
+def mock_api_client():
+    mock_client = Mock(spec=MarklogicApiClient)
+    mock_client.get_judgment_xml_bytestring.return_value = b"<xml>content</xml>"
+
+    return mock_client
