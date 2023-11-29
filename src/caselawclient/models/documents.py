@@ -1,6 +1,5 @@
 import datetime
 import warnings
-import xml.etree.ElementTree as ET
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
@@ -404,22 +403,9 @@ class Document:
 
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
-        if "error" in self.xml_root_element:
+        if "error" in self.xml.root_element:
             return True
         return False
-
-    @property
-    def xml_root_element(self) -> str:
-        """
-        :return: The name of the root tag in the XML
-
-        :raises NonXMLDocumentError: This document is not valid XML
-        """
-        try:
-            parsed_xml = ET.XML(self.content_as_xml_bytestring)
-            return parsed_xml.tag
-        except ET.ParseError:
-            raise NonXMLDocumentError
 
     @cached_property
     def has_name(self) -> bool:
@@ -593,5 +579,17 @@ class Document:
             return self.xml_as_bytestring.decode(encoding="utf-8")
 
         @cached_property
-        def xml_as_tree(self) -> Any:
+        def xml_as_tree(self) -> etree.Element:
             return etree.fromstring(self.xml_as_bytestring)
+
+        @property
+        def root_element(self) -> str:
+            """
+            :return: The name of the root tag in the XML
+
+            :raises NonXMLDocumentError: This document is not valid XML
+            """
+            try:
+                return str(self.xml_as_tree.tag)
+            except etree.XMLSyntaxError:
+                raise NonXMLDocumentError

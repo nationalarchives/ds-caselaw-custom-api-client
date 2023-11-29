@@ -70,7 +70,7 @@ class TestDocument:
         document = Document("test/1234", mock_api_client)
 
         assert (
-            document.xml_root_element
+            document.xml.root_element
             == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}akomaNtoso"
         )
 
@@ -81,7 +81,7 @@ class TestDocument:
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.xml_root_element == "error"
+        assert document.xml.root_element == "error"
 
     def test_xml_root_element_malformed(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = (
@@ -91,7 +91,7 @@ class TestDocument:
         document = Document("test/1234", mock_api_client)
 
         with pytest.raises(NonXMLDocumentError):
-            document.xml_root_element
+            document.xml.root_element
 
     def test_document_parsed(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = """
