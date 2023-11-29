@@ -21,7 +21,7 @@ class Judgment(NeutralCitationMixin, Document):
     @cached_property
     def neutral_citation(self) -> str:
         return get_xpath_match_string(
-            self.content_as_xml_tree,
+            self.xml.xml_as_tree,
             "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",

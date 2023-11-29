@@ -1,6 +1,5 @@
 import datetime
 import warnings
-import xml.etree.ElementTree as ET
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
@@ -149,6 +148,12 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
+        self.xml = self.XML(
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
+                self.uri, show_unpublished=True
+            )
+        )
+
     def document_exists(self) -> bool:
         """Helper method to verify the existence of a document within MarkLogic.
 
@@ -174,14 +179,14 @@ class Document:
 
     @cached_property
     def name(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
     def court(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",
@@ -191,7 +196,7 @@ class Document:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
@@ -215,7 +220,7 @@ class Document:
         self, name: Optional[str] = None
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
-        iso_datetimes = self._get_xpath_match_strings(
+        iso_datetimes = self.xml.get_xpath_match_strings(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
             f"/akn:FRBRdate{name_filter}/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
@@ -331,17 +336,7 @@ class Document:
 
     @cached_property
     def content_as_xml(self) -> str:
-        return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
-
-    @cached_property
-    def content_as_xml_bytestring(self) -> bytes:
-        return self.api_client.get_judgment_xml_bytestring(
-            self.uri, show_unpublished=True
-        )
-
-    @cached_property
-    def content_as_xml_tree(self) -> Any:
-        return etree.fromstring(self.content_as_xml_bytestring)
+        return self.xml.xml_as_string
 
     def content_as_html(
         self,
@@ -400,22 +395,9 @@ class Document:
 
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
-        if "error" in self.xml_root_element:
+        if "error" in self.xml.root_element:
             return True
         return False
-
-    @property
-    def xml_root_element(self) -> str:
-        """
-        :return: The name of the root tag in the XML
-
-        :raises NonXMLDocumentError: This document is not valid XML
-        """
-        try:
-            parsed_xml = ET.XML(self.content_as_xml_bytestring)
-            return parsed_xml.tag
-        except ET.ParseError:
-            raise NonXMLDocumentError
 
     @cached_property
     def has_name(self) -> bool:
@@ -528,14 +510,6 @@ class Document:
         else:
             raise DocumentNotSafeForDeletion()
 
-    def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
-        return get_xpath_match_string(self.content_as_xml_tree, xpath, namespaces)
-
-    def _get_xpath_match_strings(
-        self, xpath: str, namespaces: Dict[str, str]
-    ) -> list[str]:
-        return get_xpath_match_strings(self.content_as_xml_tree, xpath, namespaces)
-
     def overwrite(self, new_citation: str) -> None:
         self.api_client.overwrite_document(self.uri, new_citation)
 
@@ -573,3 +547,36 @@ class Document:
             reference=self.consignment_reference,
             parser_instructions=parser_instructions,
         )
+
+    class XML:
+        """
+        Represents the XML of a document, and should contain all methods for interacting with it.
+        """
+
+        def __init__(self, xml_bytestring: bytes):
+            """
+            :raises NonXMLDocumentError: This document is not valid XML
+            """
+            try:
+                self.xml_as_tree: etree.Element = etree.fromstring(xml_bytestring)
+            except etree.XMLSyntaxError:
+                raise NonXMLDocumentError
+
+        @property
+        def xml_as_string(self) -> str:
+            """
+            :return: A string representation of this document's XML tree.
+            """
+            return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
+
+        @property
+        def root_element(self) -> str:
+            return str(self.xml_as_tree.tag)
+
+        def get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
+            return get_xpath_match_string(self.xml_as_tree, xpath, namespaces)
+
+        def get_xpath_match_strings(
+            self, xpath: str, namespaces: Dict[str, str]
+        ) -> list[str]:
+            return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)

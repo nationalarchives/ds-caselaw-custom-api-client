@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Breaking:** Fully remove the deprecated `caselawclient.api_client` instance.
 - **Feature:** New `Document.xml_root_element` function to replace `get_judgment_root`
 - **Feature:** Documents which are not valid XML are now identified by the raising of a new `Document.NonXMLDocumentError` exception
+- **Breaking:** Remove top-level methods for interacting with a document's XML representation. These are now all encapsulated in `document.xml`, which is an instance of `Document.XML`.
 
 ## [Release 17.3.0]
 
