@@ -1,10 +1,20 @@
 import pytest
 from lxml import etree
 
+from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_response import SearchResponse
 
 
 class TestSearchResponse:
+    def setup_method(self):
+        self.client = MarklogicApiClient(
+            host="",
+            username="",
+            password="",
+            use_https=False,
+            user_agent="marklogic-api-client-test",
+        )
+
     def test_total(
         self,
     ):
@@ -13,10 +23,13 @@ class TestSearchResponse:
         When calling 'total' on it
         Then it should return a string representing the total number of results
         """
-        search_response = SearchResponse.from_response_string(
-            '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'  # noqa: E501
-            "foo"
-            "</search:response>"
+        search_response = SearchResponse(
+            etree.fromstring(
+                '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'  # noqa: E501
+                "foo"
+                "</search:response>"
+            ),
+            self.client,
         )
 
         assert search_response.total == "5"
@@ -32,8 +45,9 @@ class TestSearchResponse:
         Then it should return a list of n SearchResult elements
         And each element's node attribute should be as expected
         """
-        search_response = SearchResponse.from_response_string(
-            generate_search_response_xml(2 * valid_search_result_xml)
+        search_response = SearchResponse(
+            etree.fromstring(generate_search_response_xml(2 * valid_search_result_xml)),
+            self.client,
         )
 
         results = search_response.results
@@ -64,4 +78,4 @@ class TestSearchResponse:
             etree.XMLSyntaxError,
             match="Namespace prefix search on response is not defined",
         ):
-            SearchResponse.from_response_string(xml_without_namespace)
+            SearchResponse(etree.fromstring(xml_without_namespace), self.client)

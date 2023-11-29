@@ -1,3 +1,5 @@
+from lxml import etree
+
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_response import SearchResponse
 from caselawclient.search_parameters import SearchParameters
@@ -14,8 +16,11 @@ def search_judgments_and_parse_response(
 
     :return: The parsed search response as a SearchResponse object
     """
-    return SearchResponse.from_response_string(
-        api_client.search_judgments_and_decode_response(search_parameters)
+    return SearchResponse(
+        etree.fromstring(
+            api_client.search_judgments_and_decode_response(search_parameters)
+        ),
+        api_client,
     )
 
 
@@ -30,6 +35,7 @@ def search_and_parse_response(
 
     :return: The parsed search response as a SearchResponse object
     """
-    return SearchResponse.from_response_string(
-        api_client.search_and_decode_response(search_parameters)
+    return SearchResponse(
+        etree.fromstring(api_client.search_and_decode_response(search_parameters)),
+        api_client,
     )
