@@ -179,14 +179,14 @@ class Document:
 
     @cached_property
     def name(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
     def court(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",
@@ -196,7 +196,7 @@ class Document:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self._get_xpath_match_string(
+        return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
@@ -220,7 +220,7 @@ class Document:
         self, name: Optional[str] = None
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
-        iso_datetimes = self._get_xpath_match_strings(
+        iso_datetimes = self.xml.get_xpath_match_strings(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
             f"/akn:FRBRdate{name_filter}/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
@@ -510,14 +510,6 @@ class Document:
         else:
             raise DocumentNotSafeForDeletion()
 
-    def _get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
-        return get_xpath_match_string(self.xml.xml_as_tree, xpath, namespaces)
-
-    def _get_xpath_match_strings(
-        self, xpath: str, namespaces: Dict[str, str]
-    ) -> list[str]:
-        return get_xpath_match_strings(self.xml.xml_as_tree, xpath, namespaces)
-
     def overwrite(self, new_citation: str) -> None:
         self.api_client.overwrite_document(self.uri, new_citation)
 
@@ -580,3 +572,11 @@ class Document:
         @property
         def root_element(self) -> str:
             return str(self.xml_as_tree.tag)
+
+        def get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
+            return get_xpath_match_string(self.xml_as_tree, xpath, namespaces)
+
+        def get_xpath_match_strings(
+            self, xpath: str, namespaces: Dict[str, str]
+        ) -> list[str]:
+            return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)
