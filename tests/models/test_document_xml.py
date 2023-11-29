@@ -6,9 +6,9 @@ from caselawclient.models.documents import Document, NonXMLDocumentError
 
 class TestDocumentXml:
     def test_xml_as_string(self):
-        document_xml = Document.XML(b"<xml></xml>")
+        document_xml = Document.XML(b"<xml>content</xml>")
 
-        assert document_xml.xml_as_string == "<xml></xml>"
+        assert document_xml.xml_as_string == "<xml>content</xml>"
 
     def test_xml_as_tree(self):
         document_xml = Document.XML(

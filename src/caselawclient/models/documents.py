@@ -566,9 +566,12 @@ class Document:
         def __init__(self, xml_bytestring: bytes):
             self.xml_as_bytestring = xml_bytestring
 
-        @cached_property
+        @property
         def xml_as_string(self) -> str:
-            return self.xml_as_bytestring.decode(encoding="utf-8")
+            """
+            :return: A string representation of this document's XML tree.
+            """
+            return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
 
         @cached_property
         def xml_as_tree(self) -> etree.Element:
