@@ -37,24 +37,4 @@ client = MarklogicApiClient(
 
 ```
 
-## (Deprecated) Use in-library client instance
-
-This library will automatically initialise an instance of the client. This functionality is deprecated, and will be
-removed.
-
-The client expects the following environment variables to be set or defined in a `.env` file:
-
-```bash
-MARKLOGIC_HOST
-MARKLOGIC_USER
-MARKLOGIC_PASSWORD
-MARKLOGIC_USE_HTTPS # Optional, defaults to False
-```
-
-Then import `api_client` from `caselawclient.Client`:
-
-```python
-from caselawclient.Client import api_client
-```
-
 """

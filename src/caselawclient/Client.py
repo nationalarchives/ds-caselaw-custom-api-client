@@ -951,17 +951,3 @@ class MarklogicApiClient:
         )
 
         return results
-
-
-api_client = MarklogicApiClient(
-    host=env("MARKLOGIC_HOST", default=None),
-    username=env("MARKLOGIC_USER", default=None),
-    password=env("MARKLOGIC_PASSWORD", default=None),
-    use_https=env("MARKLOGIC_USE_HTTPS", default=False),
-)
-"""
-An instance of the API client which is automatically initialised on importing the library.
-
-.. deprecated:: 13.0.1
-   You should instead initialise your own instance of `MarklogicApiClient`
-"""
