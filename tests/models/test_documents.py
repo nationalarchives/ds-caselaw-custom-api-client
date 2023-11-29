@@ -175,12 +175,12 @@ class TestDocument:
         mock_api_client.get_property.assert_called_once_with("test/1234", "assigned-to")
 
     def test_judgment_content_as_xml(self, mock_api_client):
-        mock_api_client.get_judgment_xml.return_value = "<xml></xml>"
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"<xml></xml>"
 
         document = Document("test/1234", mock_api_client)
 
         assert document.content_as_xml == "<xml></xml>"
-        mock_api_client.get_judgment_xml.assert_called_once_with(
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )
 

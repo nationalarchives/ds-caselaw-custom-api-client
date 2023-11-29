@@ -149,6 +149,12 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
+        self.xml = self.XML(
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
+                self.uri, show_unpublished=True
+            )
+        )
+
     def document_exists(self) -> bool:
         """Helper method to verify the existence of a document within MarkLogic.
 
@@ -331,17 +337,15 @@ class Document:
 
     @cached_property
     def content_as_xml(self) -> str:
-        return self.api_client.get_judgment_xml(self.uri, show_unpublished=True)
+        return self.xml.xml_as_string
 
     @cached_property
     def content_as_xml_bytestring(self) -> bytes:
-        return self.api_client.get_judgment_xml_bytestring(
-            self.uri, show_unpublished=True
-        )
+        return self.xml.xml_as_bytestring
 
     @cached_property
     def content_as_xml_tree(self) -> Any:
-        return etree.fromstring(self.content_as_xml_bytestring)
+        return self.xml.xml_as_tree
 
     def content_as_html(
         self,
@@ -573,3 +577,21 @@ class Document:
             reference=self.consignment_reference,
             parser_instructions=parser_instructions,
         )
+
+    class XML:
+        """
+        Represents the XML of a document, and should contain all methods for interacting with it.
+        """
+
+        xml_as_bytestring: bytes
+
+        def __init__(self, xml_bytestring: bytes):
+            self.xml_as_bytestring = xml_bytestring
+
+        @cached_property
+        def xml_as_string(self) -> str:
+            return self.xml_as_bytestring.decode(encoding="utf-8")
+
+        @cached_property
+        def xml_as_tree(self) -> Any:
+            return etree.fromstring(self.xml_as_bytestring)
