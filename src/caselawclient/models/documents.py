@@ -263,6 +263,14 @@ class Document:
         return self.api_client.get_property(self.uri, "editor-hold") == "true"
 
     @cached_property
+    def is_locked(self) -> bool:
+        return self.checkout_message is not None
+
+    @cached_property
+    def checkout_message(self) -> Optional[str]:
+        return self.api_client.get_judgment_checkout_status_message(self.uri)
+
+    @cached_property
     def source_name(self) -> str:
         return self.api_client.get_property(self.uri, "source-name")
 

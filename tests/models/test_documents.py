@@ -81,6 +81,20 @@ class TestDocument:
         assert document.is_held is False
         mock_api_client.get_property.assert_called_once_with("test/1234", "editor-hold")
 
+    def test_judgment_is_locked(self, mock_api_client):
+        mock_api_client.get_judgment_checkout_status_message.return_value = (
+            "Judgment locked"
+        )
+        document = Document("test/1234", mock_api_client)
+
+        assert document.is_locked is True
+
+    def test_judgment_is_not_locked(self, mock_api_client):
+        mock_api_client.get_judgment_checkout_status_message.return_value = None
+        document = Document("test/1234", mock_api_client)
+
+        assert document.is_locked is False
+
     def test_judgment_source_name(self, mock_api_client):
         mock_api_client.get_property.return_value = "Test Name"
 
