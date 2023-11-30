@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## [Unreleased]
+## [Release 18.0.0]
 
 - **Breaking:** Fully remove the deprecated `caselawclient.api_client` instance.
+- **Breaking:** Remove top-level methods for interacting with a document's XML representation. These are now all encapsulated in `document.xml`, which is an instance of `Document.XML`.
 - **Feature:** New `Document.xml_root_element` function to replace `get_judgment_root`
 - **Feature:** Documents which are not valid XML are now identified by the raising of a new `Document.NonXMLDocumentError` exception
-- **Breaking:** Remove top-level methods for interacting with a document's XML representation. These are now all encapsulated in `document.xml`, which is an instance of `Document.XML`.
+- **Feature:** Add method to return document's lock status and message.
 
 ## [Release 17.3.0]
 
@@ -353,7 +354,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v18.0.0...HEAD
+[Release 18.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...v18.0.0
 [Release 17.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...v17.3.0
 [Release 17.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.1.0...v17.2.0
 [Release 17.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.0.0...v17.1.0
