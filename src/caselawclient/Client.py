@@ -795,7 +795,7 @@ class MarklogicApiClient:
         return content == "true"
 
     def set_published(
-        self, judgment_uri: DocumentURIString, published: bool = False
+        self, judgment_uri: DocumentURIString, published: bool
     ) -> requests.Response:
         return self.set_boolean_property(judgment_uri, "published", published)
 
