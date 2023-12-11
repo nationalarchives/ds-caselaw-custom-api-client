@@ -24,6 +24,7 @@ from caselawclient.models.documents import (
     Document,
     DocumentURIString,
 )
+from caselawclient.models.history import HistoryEvent
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
@@ -951,3 +952,14 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def append_history(self, uri: DocumentURIString, history: HistoryEvent) -> None:
+        formatted_uri = self._format_uri_for_marklogic(uri)
+
+        vars: query_dicts.AppendHistoryDict = {
+            "uri": formatted_uri,
+            "attributes": history.attributes,
+            "flags": history.flags,
+            "payload": history.payload,
+        }
+        self._send_to_eval(vars, "append_history.xqy")

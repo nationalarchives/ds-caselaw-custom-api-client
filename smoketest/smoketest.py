@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import caselawclient.Client as Client
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.documents import Document
+from caselawclient.models.history import HistoryEvent
 
 load_dotenv()
 env = environ.Env()
@@ -43,3 +44,11 @@ def test_get_version_annotation():
         api_client.get_version_annotation(FIRST_VERSION_URI) == "this is an annotation"
     )
     assert Document(FIRST_VERSION_URI, api_client).annotation == "this is an annotation"
+
+
+@pytest.mark.write
+def test_append_history():
+    api_client.append_history(
+        URI, HistoryEvent({"id": "1"}, ["flag"], "<kittens>1<cat/></kittens>")
+    )
+    # assert api_client.get_history() ...

@@ -28,6 +28,7 @@ DICTS_FILES_PATCH = join("src", "caselawclient", "xquery_type_dicts.py")
 ML_TYPES_TO_PYTHON_TYPES_DICT = {
     "xs:string": "str",
     "json:array": "list[Any]",
+    "json:object": "dict[Any, Any]",
     "xs:boolean": "bool",
     "xs:int": "int",
 }
