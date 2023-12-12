@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
 import environ
+import lxml.etree
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
@@ -743,6 +744,7 @@ class MarklogicApiClient:
         )
 
     def get_property(self, judgment_uri: DocumentURIString, name: str) -> str:
+        """This only gets the text of a property"""
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyDict = {
             "uri": uri,
@@ -963,3 +965,14 @@ class MarklogicApiClient:
             "payload": history.payload,
         }
         self._send_to_eval(vars, "append_history.xqy")
+
+    def get_history(self, uri: DocumentURIString) -> list[HistoryEvent]:
+        formatted_uri = self._format_uri_for_marklogic(uri)
+        vars: query_dicts.GetHistoryDict = {"uri": formatted_uri}
+        response = self._send_to_eval(vars, "get_history.xqy")
+        bytes = get_single_bytestring_from_marklogic_response(response)
+        breakpoint()
+        events = []
+        for event in lxml.etree.fromstring(bytes).xpath("/history/event"):
+            events.append(HistoryEvent.from_xml(event))
+        return events

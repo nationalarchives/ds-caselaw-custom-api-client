@@ -63,6 +63,11 @@ class DocumentExistsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_history.xqy
+class GetHistoryDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     show_unpublished: Optional[bool]

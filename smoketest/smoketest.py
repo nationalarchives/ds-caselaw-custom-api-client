@@ -51,4 +51,5 @@ def test_append_history():
     api_client.append_history(
         URI, HistoryEvent({"id": "1"}, ["flag"], "<kittens>1<cat/></kittens>")
     )
-    # assert api_client.get_history() ...
+    event = api_client.get_history(URI)[-1]
+    assert event.attributes["id"] == "1"

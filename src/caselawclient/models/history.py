@@ -16,3 +16,8 @@ class HistoryEvent:
             self.payload = lxml.etree.tostring(payload)
         else:
             self.payload = payload
+
+    @classmethod
+    def from_xml(cls, element: lxml.etree._Element) -> "HistoryEvent":
+        flags = [a for a in element.attrib.keys() if element.attrib[a] == "true"]
+        return cls(element.attrib, flags, element)
