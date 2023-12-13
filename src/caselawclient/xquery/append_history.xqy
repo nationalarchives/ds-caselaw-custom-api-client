@@ -2,6 +2,7 @@ xquery version "1.0-ml";
 
 import module namespace json="http://marklogic.com/xdmp/json" at "/MarkLogic/json/json.xqy";
 declare namespace basic="http://marklogic.com/xdmp/json/basic";
+declare namespace flag="http://caselaw.nationalarchives.gov.uk/history/flags";
 
 (: let $attributes := json:transform-from-json(xdmp:unquote('{"id": "3", "type": "telemetry", "service": "ingester"}'))
 let $flags := json:transform-from-json(xdmp:unquote('["failed", "automated"]'))
@@ -18,7 +19,7 @@ let $payload := xdmp:unquote($payload)
 let $event := <event>
         {for $i in $attributes-as-xml/* return attribute {$i/name()} {$i/text()} }
         {attribute {"datetime"} {fn:current-dateTime()}}
-        {for $i in $flags-as-xml//basic:item return attribute {$i/text()} {"true"}}
+        {for $i in $flags-as-xml//basic:item return attribute {fn:QName("http://caselaw.nationalarchives.gov.uk/history/flags", $i/text())} {"true"}}
         {$payload}
       </event>
 
@@ -27,4 +28,4 @@ let $history := xdmp:document-get-properties($uri, xs:QName("history"))
 return if (fn:exists($history)) then
    xdmp:node-insert-child($history, $event)
 else
-   xdmp:document-set-property($uri, <history>{$event}</history>)
+   xdmp:document-set-property($uri, <history xmlns:flag="http://caselaw.nationalarchives.gov.uk/history/flags">{$event}</history>)
