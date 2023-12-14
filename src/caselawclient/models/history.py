@@ -2,6 +2,8 @@ from typing import Union
 
 import lxml.etree
 
+namespaces = {"flag": "http://caselaw.nationalarchives.gov.uk/history/flags"}
+
 
 class HistoryEvent:
     def __init__(
@@ -20,4 +22,5 @@ class HistoryEvent:
     @classmethod
     def from_xml(cls, element: lxml.etree._Element) -> "HistoryEvent":
         flags = [a for a in element.attrib.keys() if element.attrib[a] == "true"]
+        flags = element.attrib.keys()
         return cls(element.attrib, flags, element)

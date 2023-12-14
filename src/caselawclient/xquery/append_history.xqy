@@ -16,7 +16,7 @@ let $attributes-as-xml := json:transform-from-json($attributes)
 let $flags-as-xml := json:transform-from-json($flags)
 let $payload := xdmp:unquote($payload)
 
-let $event := <event>
+let $event := <event xmlns:flag="http://caselaw.nationalarchives.gov.uk/history/flags">
         {for $i in $attributes-as-xml/* return attribute {$i/name()} {$i/text()} }
         {attribute {"datetime"} {fn:current-dateTime()}}
         {for $i in $flags-as-xml//basic:item return attribute {fn:QName("http://caselaw.nationalarchives.gov.uk/history/flags", $i/text())} {"true"}}
@@ -28,4 +28,4 @@ let $history := xdmp:document-get-properties($uri, xs:QName("history"))
 return if (fn:exists($history)) then
    xdmp:node-insert-child($history, $event)
 else
-   xdmp:document-set-property($uri, <history xmlns:flag="http://caselaw.nationalarchives.gov.uk/history/flags">{$event}</history>)
+   xdmp:document-set-property($uri, <history>{$event}</history>)
