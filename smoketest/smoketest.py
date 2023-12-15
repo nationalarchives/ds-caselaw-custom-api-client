@@ -49,7 +49,17 @@ def test_get_version_annotation():
 @pytest.mark.write
 def test_append_history():
     api_client.append_history(
-        URI, HistoryEvent({"id": "1"}, ["flag"], "<kittens>1<cat/></kittens>")
+        URI,
+        HistoryEvent(
+            {"id": "1"}, ["flag"], "<payload><kittens>1<cat/></kittens></payload>"
+        ),
     )
     event = api_client.get_history(URI)[-1]
     assert event.attributes["id"] == "1"
+    assert "datetime" in event.attributes
+    assert "flag" not in event.attributes
+    assert event.flags == ["flag"]
+    assert (
+        event.payload
+        == '<payload xmlns:flag="http://caselaw.nationalarchives.gov.uk/history/flags" xmlns:prop="http://marklogic.com/xdmp/property"><kittens>1<cat/></kittens></payload>'
+    )

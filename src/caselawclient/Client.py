@@ -971,8 +971,9 @@ class MarklogicApiClient:
         vars: query_dicts.GetHistoryDict = {"uri": formatted_uri}
         response = self._send_to_eval(vars, "get_history.xqy")
         bytes = get_single_bytestring_from_marklogic_response(response)
+        events = [
+            HistoryEvent.from_xml(event)
+            for event in lxml.etree.fromstring(bytes).xpath("/history/event")
+        ]
         breakpoint()
-        events = []
-        for event in lxml.etree.fromstring(bytes).xpath("/history/event"):
-            events.append(HistoryEvent.from_xml(event))
         return events
