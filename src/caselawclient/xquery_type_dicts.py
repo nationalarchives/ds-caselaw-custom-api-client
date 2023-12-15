@@ -17,6 +17,14 @@ class MarkLogicAPIDict(TypedDict):
     pass
 
 
+# append_history.xqy
+class AppendHistoryDict(MarkLogicAPIDict):
+    attributes: dict[Any, Any]
+    flags: list[Any]
+    payload: str
+    uri: MarkLogicDocumentURIString
+
+
 # break_judgment_checkout.xqy
 class BreakJudgmentCheckoutDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
@@ -52,6 +60,11 @@ class DocumentCollectionsDict(MarkLogicAPIDict):
 
 # document_exists.xqy
 class DocumentExistsDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
+# get_history.xqy
+class GetHistoryDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 

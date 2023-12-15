@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
 import environ
+import lxml.etree
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
@@ -24,6 +25,7 @@ from caselawclient.models.documents import (
     Document,
     DocumentURIString,
 )
+from caselawclient.models.history import HistoryEvent
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
@@ -742,6 +744,7 @@ class MarklogicApiClient:
         )
 
     def get_property(self, judgment_uri: DocumentURIString, name: str) -> str:
+        """This only gets the text of a property"""
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyDict = {
             "uri": uri,
@@ -951,3 +954,26 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def append_history(self, uri: DocumentURIString, history: HistoryEvent) -> None:
+        formatted_uri = self._format_uri_for_marklogic(uri)
+
+        vars: query_dicts.AppendHistoryDict = {
+            "uri": formatted_uri,
+            "attributes": history.attributes,
+            "flags": history.flags,
+            "payload": history.payload,
+        }
+        self._send_to_eval(vars, "append_history.xqy")
+
+    def get_history(self, uri: DocumentURIString) -> list[HistoryEvent]:
+        formatted_uri = self._format_uri_for_marklogic(uri)
+        vars: query_dicts.GetHistoryDict = {"uri": formatted_uri}
+        response = self._send_to_eval(vars, "get_history.xqy")
+        bytes = get_single_bytestring_from_marklogic_response(response)
+        events = [
+            HistoryEvent.from_xml(event)
+            for event in lxml.etree.fromstring(bytes).xpath("/history/event")
+        ]
+        breakpoint()
+        return events
