@@ -508,13 +508,13 @@ files = [
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.33.2"
-description = "Type annotations for boto3.S3 1.33.2 service generated with mypy-boto3-builder 7.20.3"
+version = "1.34.0"
+description = "Type annotations for boto3.S3 1.34.0 service generated with mypy-boto3-builder 7.21.0"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mypy-boto3-s3-1.33.2.tar.gz", hash = "sha256:f54a3ad3288f4e4719ebada3dde68c320507b0fc451d59bc68af7e6ab15cbdad"},
-    {file = "mypy_boto3_s3-1.33.2-py3-none-any.whl", hash = "sha256:9d463df6def30de31a467d49ab92ff7795d46709d56eff6f52216a08bac27918"},
+    {file = "mypy-boto3-s3-1.34.0.tar.gz", hash = "sha256:7644a00e096ebb1c3292551059f64ff8329625dacd40827ced9481b14d64c733"},
+    {file = "mypy_boto3_s3-1.34.0-py3-none-any.whl", hash = "sha256:633876d2a96dbb924f9667084316c1759bff40c19a9a38313d5a4e825c5fc641"},
 ]
 
 [package.dependencies]
@@ -522,13 +522,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.33.0"
-description = "Type annotations for boto3.SNS 1.33.0 service generated with mypy-boto3-builder 7.20.3"
+version = "1.34.0"
+description = "Type annotations for boto3.SNS 1.34.0 service generated with mypy-boto3-builder 7.21.0"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mypy-boto3-sns-1.33.0.tar.gz", hash = "sha256:e4f7a0a49d67789fd1d735d58f5ef35ba4b82aaf04225b3419818452bf9d402e"},
-    {file = "mypy_boto3_sns-1.33.0-py3-none-any.whl", hash = "sha256:85e10fb6a1257256040c9557b09a9d2c632bd482e9de678285ac45ebf0a60966"},
+    {file = "mypy-boto3-sns-1.34.0.tar.gz", hash = "sha256:aba3feb8f7721e3b596339c1c2d5a68d26c17708f7e50c7691d0c7df95e00132"},
+    {file = "mypy_boto3_sns-1.34.0-py3-none-any.whl", hash = "sha256:9a10f3d77a9ac03abab5401e8b8dcd0b0364cea4801546b8cdc309853940d745"},
 ]
 
 [package.dependencies]
@@ -547,13 +547,13 @@ files = [
 
 [[package]]
 name = "pdoc"
-version = "14.1.0"
+version = "14.2.0"
 description = "API Documentation for Python Projects"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pdoc-14.1.0-py3-none-any.whl", hash = "sha256:e8869dffe21296b3bd5545b28e7f07cae0656082aca43f8915323187e541b126"},
-    {file = "pdoc-14.1.0.tar.gz", hash = "sha256:3a0bd921a05c39a82b1505089eb6dc99d857b71b856aa60d1aca4d9086d0e18c"},
+    {file = "pdoc-14.2.0-py3-none-any.whl", hash = "sha256:c9c0aa79090dcdcdb0a6c7e367cb0e241e891a836348ef741a8847397dcf98cc"},
+    {file = "pdoc-14.2.0.tar.gz", hash = "sha256:a6fac864b2690391e89cb16b280603646eddaa5a2a3057c2973261b9a398416e"},
 ]
 
 [package.dependencies]
@@ -562,7 +562,7 @@ MarkupSafe = "*"
 pygments = ">=2.12.0"
 
 [package.extras]
-dev = ["black", "hypothesis", "mypy", "pygments (>=2.14.0)", "pytest", "pytest-cov", "pytest-timeout", "ruff", "tox", "types-pygments"]
+dev = ["hypothesis", "mypy", "pdoc-pyo3-sample-library (==1.0.11)", "pygments (>=2.14.0)", "pytest", "pytest-cov", "pytest-timeout", "ruff", "tox", "types-pygments"]
 
 [[package]]
 name = "pluggy"
