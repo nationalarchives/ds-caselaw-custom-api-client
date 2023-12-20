@@ -458,8 +458,13 @@ class Document:
 
     def enrich(self) -> None:
         """
-        Announces to the ANNOUNCE SNS that the document is waiting to be enriched.
+        Request enrichment of the document
         """
+
+        self.api_client.set_property(
+            self.uri, "last_sent_to_enrichment", datetime.datetime.now().isoformat()
+        )
+
         announce_document_event(
             uri=self.uri,
             status="enrich",
