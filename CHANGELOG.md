@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+- **Feature:** New `Client.get_pending_enrichment_for_version` method finds documents which are not yet enriched with a given version, and which haven't recently been sent for enrichment.
+
 ## [Release 18.0.0]
 
 - **Breaking:** Fully remove the deprecated `caselawclient.api_client` instance.

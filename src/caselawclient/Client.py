@@ -951,3 +951,21 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def get_pending_enrichment_for_version(
+        self, target_version: int
+    ) -> list[list[Any]]:
+        """Retrieve documents which are not yet enriched with a given version."""
+        vars: query_dicts.GetPendingEnrichmentForVersionDict = {
+            "target_version": target_version
+        }
+        results: list[list[Any]] = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval(
+                    vars,
+                    "get_pending_enrichment_for_version.xqy",
+                )
+            )
+        )
+
+        return results

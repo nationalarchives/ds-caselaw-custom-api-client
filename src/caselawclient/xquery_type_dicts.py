@@ -78,6 +78,11 @@ class GetLastModifiedDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_pending_enrichment_for_version.xqy
+class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
+    target_version: int
+
+
 # get_properties_for_search_results.xqy
 class GetPropertiesForSearchResultsDict(MarkLogicAPIDict):
     uris: list[Any]
