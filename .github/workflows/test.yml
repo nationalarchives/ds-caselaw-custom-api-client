@@ -1,6 +1,11 @@
 name: Run tests
 
-on: push
+on:
+  push:
+    branches: ["main"]
+  merge_group:
+  pull_request:
+    branches: ["main"]
 
 jobs:
   linter:
