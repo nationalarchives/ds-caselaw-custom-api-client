@@ -17,10 +17,13 @@
         <xsl:apply-templates select="search:match"/>
     </xsl:template>
 
-    <xsl:template match="search:match">
+    <xsl:template match="search:match[position() &lt; 5]">
         <p data-path="{@path}">
             <xsl:apply-templates/>
         </p>
+    </xsl:template>
+
+    <xsl:template match="search:match[position() &gt;= 5]">
     </xsl:template>
 
     <xsl:template match="search:highlight">

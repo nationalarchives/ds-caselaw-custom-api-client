@@ -45,6 +45,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         "show_unpublished": "false",
                         "only_unpublished": "false",
                         "collections": "",
+                        "quoted_phrases": [],
                     }
                 ),
             )
@@ -97,6 +98,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         "show_unpublished": "false",
                         "only_unpublished": "false",
                         "collections": "foo,abcdef,bar",
+                        "quoted_phrases": [],
                     }
                 ),
             )
@@ -157,6 +159,7 @@ class TestAdvancedSearch(unittest.TestCase):
                     "show_unpublished": "false",
                     "only_unpublished": "false",
                     "collections": "",
+                    "quoted_phrases": [],
                 }
 
                 mock_invoke.assert_called_with(

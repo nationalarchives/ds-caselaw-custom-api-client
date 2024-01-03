@@ -1,7 +1,9 @@
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
 
 RESULTS_PER_PAGE = 10
+QUOTED_PHRASE_REGEX = '"([^"]*)"'
 
 
 @dataclass
@@ -43,6 +45,7 @@ class SearchParameters:
             "show_unpublished": str(self.show_unpublished).lower(),
             "only_unpublished": str(self.only_unpublished).lower(),
             "collections": self._marklogic_collections,
+            "quoted_phrases": self._quoted_phrases,
         }
 
     @property
@@ -57,6 +60,12 @@ class SearchParameters:
         courts = self._court_list_splitter(court_text)
         alternative_court_names = self._get_alternative_court_names(courts)
         return list(courts | alternative_court_names)
+
+    @property
+    def _quoted_phrases(self) -> List[str]:
+        if self.query is None:
+            return []
+        return re.findall(QUOTED_PHRASE_REGEX, self.query)
 
     @staticmethod
     def _join_court_text(court_text: str) -> str:
