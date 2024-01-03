@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 19.0.0]
+
+- **Breaking**: `Client.set_published` no longer has a default argument; you must always be explicit.
 - **Feature:** New `Client.get_pending_enrichment_for_version` method finds documents which are not yet enriched with a given version, and which haven't recently been sent for enrichment.
 
 ## [Release 18.0.0]
@@ -358,7 +361,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v18.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.0.0...HEAD
+[Release 19.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v18.0.0...v19.0.0
 [Release 18.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...v18.0.0
 [Release 17.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...v17.3.0
 [Release 17.2.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.1.0...v17.2.0
