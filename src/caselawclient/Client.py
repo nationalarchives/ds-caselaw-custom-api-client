@@ -952,6 +952,21 @@ class MarklogicApiClient:
 
         return results
 
+    def get_highest_enrichment_version(self) -> int:
+        """This gets the highest enrichment version in the database,
+        so if nothing has been enriched with the most recent version of enrichment,
+        this won't reflect that change."""
+        table = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval(
+                    {},
+                    "get_highest_enrichment_version.xqy",
+                )
+            )
+        )
+
+        return int(table[1][1])
+
     def get_pending_enrichment_for_version(
         self, target_version: int
     ) -> list[list[Any]]:
