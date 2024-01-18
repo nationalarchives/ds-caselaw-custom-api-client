@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- Add support for quoted phrase prioritisation in result snippets
+
 ## [Release 19.0.0]
 
 - **Breaking**: `Client.set_published` no longer has a default argument; you must always be explicit.

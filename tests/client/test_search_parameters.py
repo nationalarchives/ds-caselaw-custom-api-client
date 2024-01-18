@@ -26,6 +26,7 @@ class TestSearchParametersToMarklogicData:
             "show_unpublished": "false",
             "only_unpublished": "false",
             "collections": "",
+            "quoted_phrases": [],
         }
 
     def test_specified_parameters(self):
@@ -65,6 +66,7 @@ class TestSearchParametersToMarklogicData:
             "show_unpublished": "false",
             "only_unpublished": "false",
             "collections": "foo,abcdef,bar",
+            "quoted_phrases": [],
         }
 
     @pytest.mark.parametrize(
@@ -85,3 +87,27 @@ class TestSearchParametersToMarklogicData:
         """
         search_parameters = SearchParameters(court=test_input)
         assert set(search_parameters.as_marklogic_payload()["court"]) == set(expected)
+
+    @pytest.mark.parametrize(
+        "test_input, expected",
+        [
+            ['"Reasonable adjustment" transport', ["Reasonable adjustment"]],
+            ['"Reasonable adjustment"', ["Reasonable adjustment"]],
+            ['transport "Reasonable adjustment"', ["Reasonable adjustment"]],
+            [
+                '"Reasonable adjustment" transport "Contractual obligation"',
+                ["Reasonable adjustment", "Contractual obligation"],
+            ],
+        ],
+    )
+    def test_quoted_phrases(self, test_input, expected):
+        """
+        GIVEN a SearchParameters with a `query` containing a quoted phrase
+        WHEN calling the as_marklogic_payload() method
+        THEN the as_marklogic_payload() method should return a list of the quote phrases in the query.
+        AND these phrases should remain in the query itself.
+        """
+        search_parameters = SearchParameters(query=test_input)
+        payload = search_parameters.as_marklogic_payload()
+        assert payload["quoted_phrases"] == expected
+        assert payload["q"] == test_input
