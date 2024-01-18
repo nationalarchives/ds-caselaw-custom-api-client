@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 19.1.0]
+
 - Add support for quoted phrase prioritisation in result snippets
 
 ## [Release 19.0.0]
@@ -363,7 +365,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.1.0...HEAD
+[Release 19.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.0.0...v19.1.0
 [Release 19.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v18.0.0...v19.0.0
 [Release 18.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...v18.0.0
 [Release 17.3.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.2.0...v17.3.0
