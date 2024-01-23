@@ -154,6 +154,10 @@ class Document:
             )
         )
 
+    def __repr__(self) -> str:
+        name = self.name or "un-named"
+        return f"<{self.document_noun} {self.uri}: {name}>"
+
     def document_exists(self) -> bool:
         """Helper method to verify the existence of a document within MarkLogic.
 

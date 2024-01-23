@@ -26,6 +26,30 @@ from tests.test_helpers import MockMultipartResponse
 
 
 class TestDocument:
+    def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = """
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork><FRBRname value="Document Name"/></FRBRWork>
+                            <FRBRManifestation>
+                            </FRBRManifestation>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+        document = Judgment("test/1234", mock_api_client)
+        assert str(document) == "<judgment test/1234: Document Name>"
+
+    def test_has_sensible_repr_without_name_or_subclass(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        assert str(document) == "<document test/1234: un-named>"
+
     def test_uri_strips_slashes(self, mock_api_client):
         document = Document("////test/1234/////", mock_api_client)
 
