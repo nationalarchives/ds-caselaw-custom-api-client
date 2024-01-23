@@ -43,3 +43,9 @@ def test_get_version_annotation():
         api_client.get_version_annotation(FIRST_VERSION_URI) == "this is an annotation"
     )
     assert Document(FIRST_VERSION_URI, api_client).annotation == "this is an annotation"
+
+
+@pytest.mark.write
+def test_get_highest_enrichment_version():
+    value = api_client.get_highest_enrichment_version()
+    assert int(value)
