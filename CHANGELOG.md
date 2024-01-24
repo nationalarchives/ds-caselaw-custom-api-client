@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 20.0.0]
+
 - **Feature:** New `Client.get_pending_parse_for_version` and `Client.get_highest_parser_version` methods to help find documents in need of re-parsing.
 - **Breaking:** `Client.get_pending_enrichment_for_version` now accepts a tuple of `(major_version, minor_version)` rather than a single major version.
 
@@ -368,7 +370,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.1.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v20.0.0...HEAD
+[Release 19.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.1.0...v20.0.0
 [Release 19.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.0.0...v19.1.0
 [Release 19.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v18.0.0...v19.0.0
 [Release 18.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v17.3.0...v18.0.0
