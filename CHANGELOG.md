@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- **Feature:** New `Client.get_pending_parse_for_version` and `Client.get_highest_parser_version` methods to help find documents in need of re-parsing.
+
 ## [Release 19.1.0]
 
 - Add support for quoted phrase prioritisation in result snippets
