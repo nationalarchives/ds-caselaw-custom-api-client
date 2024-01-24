@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ## Unreleased
 
 - **Feature:** New `Client.get_pending_parse_for_version` and `Client.get_highest_parser_version` methods to help find documents in need of re-parsing.
+- **Breaking:** `Client.get_pending_enrichment_for_version` now accepts a tuple of `(major_version, minor_version)` rather than a single major version.
 
 ## [Release 19.1.0]
 

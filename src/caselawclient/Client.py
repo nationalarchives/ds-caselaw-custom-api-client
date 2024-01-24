@@ -952,7 +952,7 @@ class MarklogicApiClient:
 
         return results
 
-    def get_highest_enrichment_version(self) -> int:
+    def get_highest_enrichment_version(self) -> tuple[int, int]:
         """This gets the highest enrichment version in the database,
         so if nothing has been enriched with the most recent version of enrichment,
         this won't reflect that change."""
@@ -965,14 +965,15 @@ class MarklogicApiClient:
             )
         )
 
-        return int(table[1][1])
+        return (int(table[1][1]), int(table[1][2]))
 
     def get_pending_enrichment_for_version(
-        self, target_version: int
+        self, target_version: tuple[int, int]
     ) -> list[list[Any]]:
         """Retrieve documents which are not yet enriched with a given version."""
         vars: query_dicts.GetPendingEnrichmentForVersionDict = {
-            "target_version": target_version
+            "target_major_version": target_version[0],
+            "target_minor_version": target_version[1],
         }
         results: list[list[Any]] = json.loads(
             get_single_string_from_marklogic_response(
