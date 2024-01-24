@@ -80,7 +80,14 @@ class GetLastModifiedDict(MarkLogicAPIDict):
 
 # get_pending_enrichment_for_version.xqy
 class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
-    target_version: int
+    target_major_version: int
+    target_minor_version: int
+
+
+# get_pending_parse_for_version.xqy
+class GetPendingParseForVersionDict(MarkLogicAPIDict):
+    target_major_version: int
+    target_minor_version: int
 
 
 # get_properties_for_search_results.xqy
