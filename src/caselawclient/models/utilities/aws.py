@@ -17,11 +17,11 @@ env = environ.Env()
 
 
 class ParserInstructionsMetadataDict(TypedDict):
-    name: NotRequired[Optional[str]]
-    cite: NotRequired[Optional[str]]
-    court: NotRequired[Optional[str]]
-    date: NotRequired[Optional[str]]
-    uri: NotRequired[Optional[str]]
+    name: Optional[str]
+    cite: Optional[str]
+    court: Optional[str]
+    date: Optional[str]
+    uri: Optional[str]
 
 
 class ParserInstructionsDict(TypedDict):
