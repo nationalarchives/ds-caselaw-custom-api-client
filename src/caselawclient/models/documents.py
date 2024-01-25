@@ -550,13 +550,14 @@ class Document:
         # values are "" from the API, we should pass None instead in this case.
 
         parser_instructions: ParserInstructionsDict = {
-            "name": self.name or None,
-            "cite": self.best_human_identifier or None,
-            "court": self.court or None,
-            "date": checked_date,
-            "uri": self.uri,
             "documentType": parser_type_noun,
-            "published": self.is_published,
+            "metadata": {
+                "name": self.name or None,
+                "cite": self.best_human_identifier or None,
+                "court": self.court or None,
+                "date": checked_date,
+                "uri": self.uri,
+            },
         }
 
         request_parse(

@@ -16,14 +16,17 @@ from typing_extensions import NotRequired
 env = environ.Env()
 
 
+class ParserInstructionsMetadataDict(TypedDict):
+    name: Optional[str]
+    cite: Optional[str]
+    court: Optional[str]
+    date: Optional[str]
+    uri: Optional[str]
+
+
 class ParserInstructionsDict(TypedDict):
-    name: NotRequired[Optional[str]]
-    cite: NotRequired[Optional[str]]
-    court: NotRequired[Optional[str]]
-    date: NotRequired[Optional[str]]
-    uri: NotRequired[Optional[str]]
     documentType: NotRequired[Optional[str]]
-    published: NotRequired[bool]
+    metadata: NotRequired[ParserInstructionsMetadataDict]
 
 
 @overload

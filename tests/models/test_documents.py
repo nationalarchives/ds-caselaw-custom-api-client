@@ -697,10 +697,8 @@ class TestDocumentMetadata:
         assert returned_message == {
             "properties": {
                 "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
-                # "timestamp":
                 "function": "fcl-judgment-parse-request",
                 "producer": "FCL",
-                # "executionId":
                 "parentExecutionId": None,
             },
             "parameters": {
@@ -709,13 +707,14 @@ class TestDocumentMetadata:
                 "reference": "TDR-12345",
                 "originator": "FCL",
                 "parserInstructions": {
-                    "name": None,
-                    "cite": None,
-                    "court": None,
-                    "date": None,
-                    "uri": "test/2023/123",
                     "documentType": "judgment",
-                    "published": False,
+                    "metadata": {
+                        "name": None,
+                        "cite": None,
+                        "court": None,
+                        "date": None,
+                        "uri": "test/2023/123",
+                    },
                 },
             },
         }
@@ -738,10 +737,8 @@ class TestDocumentMetadata:
         assert returned_message == {
             "properties": {
                 "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
-                # "timestamp":
                 "function": "fcl-judgment-parse-request",
                 "producer": "FCL",
-                # "executionId":
                 "parentExecutionId": None,
             },
             "parameters": {
@@ -750,13 +747,14 @@ class TestDocumentMetadata:
                 "reference": "TDR-12345",
                 "originator": "FCL",
                 "parserInstructions": {
-                    "name": "Judgment v Judgement",
-                    "cite": "[2023] Test 123",
-                    "court": "Court of Testing",
-                    "date": "2023-02-03",
-                    "uri": "test/2023/123",
                     "documentType": "judgment",
-                    "published": True,
+                    "metadata": {
+                        "name": "Judgment v Judgement",
+                        "cite": "[2023] Test 123",
+                        "court": "Court of Testing",
+                        "date": "2023-02-03",
+                        "uri": "test/2023/123",
+                    },
                 },
             },
         }
