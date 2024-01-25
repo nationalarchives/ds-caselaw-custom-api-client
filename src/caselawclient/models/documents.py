@@ -536,6 +536,10 @@ class Document:
     def reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
 
+        self.api_client.set_property(
+            self.uri, "last_sent_to_parser", datetime.datetime.now().isoformat()
+        )
+
         parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[
             self.document_noun
         ]

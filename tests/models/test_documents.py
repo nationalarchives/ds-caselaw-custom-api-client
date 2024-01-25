@@ -4,6 +4,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+import time_machine
 
 from caselawclient.errors import (
     DocumentNotFoundError,
@@ -413,10 +414,16 @@ class TestDocumentUnpublish:
 
 
 class TestDocumentEnrich:
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     def test_enrich(self, mock_announce_document_event, mock_api_client):
         document = Document("test/1234", mock_api_client)
         document.enrich()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234", "last_sent_to_enrichment", "1955-11-05T06:00:00"
+        )
+
         mock_announce_document_event.assert_called_once_with(
             uri="test/1234", status="enrich", enrich=True
         )
@@ -672,10 +679,11 @@ class TestDocumentMetadata:
         assert document.get_latest_manifestation_datetime() is None
         assert document.get_manifestation_datetimes("any") == []
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
-    def test_reparse_empty(self, sns):
+    def test_reparse_empty(self, sns, mock_api_client):
         document = JudgmentFactory().build(
             is_published=False,
             name="",
@@ -685,7 +693,13 @@ class TestDocumentMetadata:
             document_noun="judgment",
         )
 
+        document.api_client = mock_api_client
         Judgment.reparse(document)
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00"
+        )
+
         # first call, second argument (the kwargs), so [0][1]
         returned_message = json.loads(
             sns.return_value.publish.call_args_list[0][1]["Message"]
@@ -719,13 +733,20 @@ class TestDocumentMetadata:
             },
         }
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
-    def test_reparse_full(self, sns):
+    def test_reparse_full(self, sns, mock_api_client):
         document = JudgmentFactory().build(is_published=True)
+        document.api_client = mock_api_client
 
         Judgment.reparse(document)
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00"
+        )
+
         # first call, second argument (the kwargs), so [0][1]
         returned_message = json.loads(
             sns.return_value.publish.call_args_list[0][1]["Message"]

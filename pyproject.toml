@@ -32,6 +32,7 @@ coverage = "^7.2.3"
 pytest = "^7.3.2"
 responses = "^0.24.0"
 python-dotenv = "^1.0.0"
+time-machine = "^2.13.0"
 
 [tool.poetry.group.docs]
 optional = true
