@@ -101,6 +101,11 @@ class GetPropertyDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_schema.xqy
+class GetSchemaDict(MarkLogicAPIDict):
+    schema_uri: MarkLogicDocumentURIString
+
+
 # get_version_annotation.xqy
 class GetVersionAnnotationDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString

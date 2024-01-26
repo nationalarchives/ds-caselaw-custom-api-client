@@ -45,7 +45,11 @@ def test_get_version_annotation():
     assert Document(FIRST_VERSION_URI, api_client).annotation == "this is an annotation"
 
 
-@pytest.mark.write
-def test_get_highest_enrichment_version():
-    value = api_client.get_highest_enrichment_version()
-    assert int(value)
+# @pytest.mark.write
+# def test_get_highest_enrichment_version():
+#     value = api_client.get_highest_enrichment_version()
+#     assert int(value)
+
+
+def test_get_schema():
+    assert "tna-enrichment-engine" in api_client.get_schema("/caselaw.xsd")

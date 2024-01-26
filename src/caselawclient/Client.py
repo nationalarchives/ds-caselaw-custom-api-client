@@ -1017,3 +1017,17 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def get_schema(self, schema_uri: str) -> str:
+        """Retrieve contents of schema from the schema database."""
+        vars: query_dicts.GetSchema = {
+            "schema_uri": schema_uri,
+        }
+        results: str = get_single_string_from_marklogic_response(
+            self._send_to_eval(
+                vars,
+                "get_schema.xqy",
+            )
+        )
+
+        return results
