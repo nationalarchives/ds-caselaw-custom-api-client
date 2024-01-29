@@ -421,7 +421,7 @@ class TestDocumentEnrich:
         document.enrich()
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/1234", "last_sent_to_enrichment", "1955-11-05T06:00:00"
+            "test/1234", "last_sent_to_enrichment", "1955-11-05T06:00:00+00:00"
         )
 
         mock_announce_document_event.assert_called_once_with(
@@ -697,7 +697,7 @@ class TestDocumentMetadata:
         Judgment.reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00"
+            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"
         )
 
         # first call, second argument (the kwargs), so [0][1]
@@ -744,7 +744,7 @@ class TestDocumentMetadata:
         Judgment.reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00"
+            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"
         )
 
         # first call, second argument (the kwargs), so [0][1]
