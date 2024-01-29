@@ -144,6 +144,12 @@ class SetMetadataCourtDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# set_metadata_jurisdiction.xqy
+class SetMetadataJurisdictionDict(MarkLogicAPIDict):
+    content: str
+    uri: MarkLogicDocumentURIString
+
+
 # set_metadata_name.xqy
 class SetMetadataNameDict(MarkLogicAPIDict):
     content: str

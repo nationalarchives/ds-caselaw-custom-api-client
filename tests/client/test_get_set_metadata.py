@@ -64,6 +64,70 @@ class TestGetSetMetadata(unittest.TestCase):
             )
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
+    def test_set_document_jurisdiction(self):
+        with patch.object(self.client, "eval") as mock_eval:
+            uri = "judgment/uri"
+            content = "new jurisdiction"
+            expected_vars = {"uri": "/judgment/uri.xml", "content": content}
+            self.client.set_document_jurisdiction(uri, content)
+
+            assert mock_eval.call_args.args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_jurisdiction.xqy")
+            )
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+
+    def test_set_document_court_and_jurisdiction_when_both_passed(self):
+        # It splits the provided value on '/'
+        # and sets both court and jurisdiction
+        with patch.object(self.client, "eval") as mock_eval:
+            uri = "judgment/uri"
+            court_content = "court"
+            jurisdiction_content = "jurisdiction"
+            court_expected_vars = {"uri": "/judgment/uri.xml", "content": court_content}
+            jurisdiction_expected_vars = {
+                "uri": "/judgment/uri.xml",
+                "content": jurisdiction_content,
+            }
+            self.client.set_document_court_and_jurisdiction(uri, "court/jurisdiction")
+
+            assert mock_eval.call_args_list[0].args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_court.xqy")
+            )
+            assert mock_eval.call_args_list[0].kwargs["vars"] == json.dumps(
+                court_expected_vars
+            )
+
+            assert mock_eval.call_args_list[1].args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_jurisdiction.xqy")
+            )
+            assert mock_eval.call_args_list[1].kwargs["vars"] == json.dumps(
+                jurisdiction_expected_vars
+            )
+
+    def test_set_document_court_and_jurisdiction_when_just_court_passed(self):
+        # When no jurisdiction is included
+        # It sets the court and deletes the jurisdiction.
+        with patch.object(self.client, "eval") as mock_eval:
+            uri = "judgment/uri"
+            content = "court"
+            court_expected_vars = {"uri": "/judgment/uri.xml", "content": content}
+            jurisdiction_expected_vars = {"uri": "/judgment/uri.xml", "content": ""}
+            self.client.set_document_court_and_jurisdiction(uri, content)
+
+            assert mock_eval.call_args_list[0].args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_court.xqy")
+            )
+            assert mock_eval.call_args_list[0].kwargs["vars"] == json.dumps(
+                court_expected_vars
+            )
+
+            assert mock_eval.call_args_list[1].args[0] == (
+                os.path.join(ROOT_DIR, "xquery", "set_metadata_jurisdiction.xqy")
+            )
+            assert mock_eval.call_args_list[1].kwargs["vars"] == json.dumps(
+                jurisdiction_expected_vars
+            )
+
     def test_set_document_date(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = "judgment/uri"
