@@ -199,6 +199,20 @@ class Document:
         )
 
     @cached_property
+    def jurisdiction(self) -> str:
+        return self.xml.get_xpath_match_string(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()",
+            {
+                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+            },
+        )
+
+    @property
+    def court_and_jurisdiction(self) -> str:
+        return "/".join((self.court, self.jurisdiction))
+
+    @cached_property
     def document_date_as_string(self) -> str:
         return self.xml.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",

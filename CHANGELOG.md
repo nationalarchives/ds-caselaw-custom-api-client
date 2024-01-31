@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ## Unreleased
 
 - **Breaking:** `Client.get_pending_enrichment_for_version` now requires both a target enrichment version and a target parser version, and will not include documents which have not been parsed with the target version.
+- **Feature:** Add accessors for judgment jurisdiction
 
 ## [Release 20.0.0]
 

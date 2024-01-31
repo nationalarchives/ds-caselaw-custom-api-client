@@ -446,6 +446,24 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_court.xqy")
 
+    def set_document_jurisdiction(
+        self, document_uri: DocumentURIString, content: str
+    ) -> requests.Response:
+        uri = self._format_uri_for_marklogic(document_uri)
+        vars: query_dicts.SetMetadataJurisdictionDict = {"uri": uri, "content": content}
+        return self._send_to_eval(vars, "set_metadata_jurisdiction.xqy")
+
+    def set_document_court_and_jurisdiction(
+        self, document_uri: DocumentURIString, content: str
+    ) -> requests.Response:
+        if "/" in content:
+            court, jurisdiction = re.split("\\s*/\\s*", content)
+            self.set_document_court(document_uri, court)
+            return self.set_document_jurisdiction(document_uri, jurisdiction)
+        else:
+            self.set_document_court(document_uri, content)
+            return self.set_document_jurisdiction(document_uri, "")
+
     def set_judgment_this_uri(
         self, judgment_uri: DocumentURIString
     ) -> requests.Response:
