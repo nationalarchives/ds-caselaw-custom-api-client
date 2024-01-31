@@ -297,7 +297,12 @@ class TestDocumentValidation:
         document_without_court = Document("test/1234", mock_api_client)
         document_without_court.court = ""
 
+        document_with_court_and_jurisdiction = Document("test/1234", mock_api_client)
+        document_with_court_and_jurisdiction.court = "UKFTT-GRC"
+        document_with_court_and_jurisdiction.jurisdiction = "InformationRights"
+
         assert document_with_court.has_valid_court is True
+        assert document_with_court_and_jurisdiction.has_valid_court is True
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
@@ -580,7 +585,9 @@ class TestDocumentMetadata:
             ('doc name="pressSummary"', "doc"),
         ],
     )
-    def test_court_and_jurisdiction(self, opening_tag, closing_tag, mock_api_client):
+    def test_court_and_jurisdiction_with_jurisdiction(
+        self, opening_tag, closing_tag, mock_api_client
+    ):
         mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
@@ -599,7 +606,42 @@ class TestDocumentMetadata:
 
         document = Document("test/1234", mock_api_client)
 
-        assert document.court_and_jurisdiction == "UKFTT-CourtOfTesting/SoftwareTesting"
+        assert (
+            document.court_and_jurisdiction_identifier_string
+            == "UKFTT-CourtOfTesting/SoftwareTesting"
+        )
+        mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
+            "test/1234", show_unpublished=True
+        )
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_court_and_jurisdiction_without_jurisdiction(
+        self, opening_tag, closing_tag, mock_api_client
+    ):
+        mock_api_client.get_judgment_xml_bytestring.return_value = f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:court>CourtOfTesting</uk:court>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode(
+            "utf-8"
+        )
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.court_and_jurisdiction_identifier_string == "CourtOfTesting"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234", show_unpublished=True
         )

@@ -93,6 +93,30 @@ class TestSearchResult:
         assert isinstance(search_result.court, Court)
         assert search_result.court.name == "United Kingdom Supreme Court"
 
+    def test_create_from_node_with_valid_court_and_jurisdiction_code(self):
+        """
+        GIVEN an XML node with a valid court code
+        AND a valid jurisdiction code
+        WHEN creating a SearchResult object from the node
+        THEN the court attribute is set to the corresponding Court object
+        """
+        xml = (
+            '<search:result xmlns:search="http://marklogic.com/appservices/search" uri="/uksc/2015/20.xml">\n '
+            '<search:extracted kind="element">'
+            '<uk:court xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">UKFTT-GRC</uk:court>'
+            '<uk:jurisdiction xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">InformationRights</uk:jurisdiction>'
+            "</search:extracted>"
+            "</search:result>"
+        )
+        node = etree.fromstring(xml)
+        search_result = SearchResult(node, self.client)
+
+        assert isinstance(search_result.court, Court)
+        assert (
+            search_result.court.name
+            == "First-tier Tribunal (General Regulatory Chamber) – Information Rights"
+        )
+
     def test_create_from_node_with_invalid_court_code(self):
         """
         GIVEN an XML node with an invalid court code

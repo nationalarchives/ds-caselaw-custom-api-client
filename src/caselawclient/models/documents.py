@@ -62,6 +62,7 @@ if TYPE_CHECKING:
 
 
 DocumentURIString = NewType("DocumentURIString", str)
+CourtIdentifierString = NewType("CourtIdentifierString", str)
 
 
 class CannotPublishUnpublishableDocument(Exception):
@@ -209,8 +210,11 @@ class Document:
         )
 
     @property
-    def court_and_jurisdiction(self) -> str:
-        return "/".join((self.court, self.jurisdiction))
+    def court_and_jurisdiction_identifier_string(self) -> CourtIdentifierString:
+        if self.jurisdiction != "":
+            return CourtIdentifierString("/".join((self.court, self.jurisdiction)))
+        else:
+            return CourtIdentifierString(self.court)
 
     @cached_property
     def document_date_as_string(self) -> str:
@@ -435,7 +439,9 @@ class Document:
     @cached_property
     def has_valid_court(self) -> bool:
         try:
-            return bool(courts.get_by_code(self.court))
+            return bool(
+                courts.get_by_code(self.court_and_jurisdiction_identifier_string)
+            )
         except CourtNotFoundException:
             return False
 
