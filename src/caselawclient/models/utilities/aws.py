@@ -30,13 +30,11 @@ class ParserInstructionsDict(TypedDict):
 
 
 @overload
-def create_aws_client(service: Literal["s3"]) -> S3Client:
-    ...
+def create_aws_client(service: Literal["s3"]) -> S3Client: ...
 
 
 @overload
-def create_aws_client(service: Literal["sns"]) -> SNSClient:
-    ...
+def create_aws_client(service: Literal["sns"]) -> SNSClient: ...
 
 
 def create_aws_client(service: Union[Literal["s3"], Literal["sns"]]) -> Any:
