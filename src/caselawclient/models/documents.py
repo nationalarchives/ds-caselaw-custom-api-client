@@ -435,7 +435,7 @@ class Document:
     @cached_property
     def has_valid_court(self) -> bool:
         try:
-            return bool(courts.get_by_code(self.court))
+            return bool(courts.get_by_code(self.court_and_jurisdiction))
         except CourtNotFoundException:
             return False
 

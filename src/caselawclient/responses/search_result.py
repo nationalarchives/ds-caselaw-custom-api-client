@@ -194,8 +194,15 @@ class SearchResult:
         """
 
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
+        jurisdiction_code = self._get_xpath_match_string(
+            "search:extracted/uk:jurisdiction/text()"
+        )
+
+        if jurisdiction_code:
+            court_code = "%s/%s" % (court_code, jurisdiction_code)
+
         try:
-            court = courts.get_by_code(court_code)
+            court = courts.get_by_code_and_jurisdiction(court_code)
         except CourtNotFoundException:
             court = None
 
