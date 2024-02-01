@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 22.0.0]
+
 - Expose court jurisdictions in search results
 
 ## [Release 21.0.0]
@@ -377,7 +379,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v21.0.0...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.0.0...HEAD
+[Release 22.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v21.0.0...v22.0.0
 [Release 21.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v20.0.0...v21.0.0
 [Release 20.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.1.0...v20.0.0
 [Release 19.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v19.0.0...v19.1.0
