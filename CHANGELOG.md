@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- Ensure that we log a warning and do not error when a judgment has an unrecognised jurisdiction
+
 ## [Release 22.0.0]
 
 - Expose court jurisdictions in search results
