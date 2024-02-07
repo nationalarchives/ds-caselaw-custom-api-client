@@ -133,7 +133,30 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
 
-        assert search_result.date is None
+        assert search_result.court is None
+
+    def test_create_from_node_with_invalid_jurisdiction_code(self):
+        """
+        GIVEN an XML node with an valid court code
+        AND an invalid jurisdiction code
+        WHEN creating a SearchResult object from the node
+        THEN the court attribute is set to the court without a jurisdiction
+        """
+        xml = (
+            '<search:result xmlns:search="http://marklogic.com/appservices/search" index="2" uri="/a/c/2015/20.xml">\n '
+            '<search:extracted kind="element">'
+            '<uk:court xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">UKFTT-GRC</uk:court>'
+            '<uk:jurisdiction xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">DoesntExist</uk:jurisdiction>'
+            "</search:extracted>"
+            "</search:result>"
+        )
+        node = etree.fromstring(xml)
+        search_result = SearchResult(node, self.client)
+
+        assert (
+            search_result.court.name
+            == "First-tier Tribunal (General Regulatory Chamber)"
+        )
 
 
 class TestSearchResultMeta:

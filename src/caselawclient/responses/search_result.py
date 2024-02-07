@@ -192,20 +192,29 @@ class SearchResult:
         """
         :return: The court of the search result
         """
-
+        court = None
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
         jurisdiction_code = self._get_xpath_match_string(
             "search:extracted/uk:jurisdiction/text()"
         )
-
         if jurisdiction_code:
-            court_code = "%s/%s" % (court_code, jurisdiction_code)
-
-        try:
-            court = courts.get_by_code(court_code)
-        except CourtNotFoundException:
-            court = None
-
+            court_code_with_jurisdiction = "%s/%s" % (court_code, jurisdiction_code)
+            try:
+                court = courts.get_by_code(court_code_with_jurisdiction)
+            except CourtNotFoundException:
+                logging.warning(
+                    "Court not found with court code %s and jurisdiction code %s for judgment with NCN %s, falling back to court."
+                    % (court_code, jurisdiction_code, self.neutral_citation)
+                )
+        if court is None:
+            try:
+                court = courts.get_by_code(court_code)
+            except CourtNotFoundException:
+                logging.warning(
+                    "Court not found with court code %s for judgment with NCN %s, returning None."
+                    % (court_code, self.neutral_citation)
+                )
+                court = None
         return court
 
     @property
