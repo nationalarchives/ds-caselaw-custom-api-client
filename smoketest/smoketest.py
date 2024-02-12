@@ -49,3 +49,10 @@ def test_get_version_annotation():
 def test_get_highest_enrichment_version():
     value = api_client.get_highest_enrichment_version()
     assert int(value)
+
+
+@pytest.mark.write
+def test_get_press_summaries_for_document_uri():
+    result = api_client.get_press_summaries_for_document_uri("/uksc/2023/35")
+    assert len(result) == 1
+    assert result[0].uri == "uksc/2023/35/press-summary/1"

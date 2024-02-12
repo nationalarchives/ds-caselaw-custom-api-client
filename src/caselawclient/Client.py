@@ -205,6 +205,20 @@ class MarklogicApiClient:
         self.session.headers.update({"User-Agent": user_agent})
         self.user_agent = user_agent
 
+    def get_press_summaries_for_document_uri(
+        self, uri: DocumentURIString
+    ) -> list[PressSummary]:
+        """
+        Returns a list of PressSummary objects associated with a given Document URI
+        """
+        vars: query_dicts.GetComponentsForDocumentDict = {
+            "parent_uri": DocumentURIString(uri if uri.startswith("/") else "/" + uri),
+            "component": "pressSummary",
+        }
+        response = self._send_to_eval(vars, "get_components_for_document.xqy")
+        uris = get_multipart_strings_from_marklogic_response(response)
+        return [PressSummary(uri.strip(".xml"), self) for uri in uris]
+
     def get_document_by_uri(
         self, uri: DocumentURIString, query: Optional[str] = None
     ) -> Document:
