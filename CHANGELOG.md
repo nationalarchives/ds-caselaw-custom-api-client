@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- Add a method to allow fetching press summaries for a given document
+
 ## [Release 22.0.1]
 
 - Ensure that we log a warning and do not error when a judgment has an unrecognised jurisdiction

@@ -7,6 +7,7 @@ checks. They are used to enforce appropriately typed variables being passed in t
 """
 
 from typing import Any, NewType, Optional, TypedDict
+from caselawclient.models.documents import DocumentURIString
 
 MarkLogicDocumentURIString = NewType("MarkLogicDocumentURIString", str)
 MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
@@ -53,6 +54,12 @@ class DocumentCollectionsDict(MarkLogicAPIDict):
 # document_exists.xqy
 class DocumentExistsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
+
+
+# get_components_for_document.xqy
+class GetComponentsForDocumentDict(MarkLogicAPIDict):
+    component: str
+    parent_uri: DocumentURIString
 
 
 # get_judgment.xqy
