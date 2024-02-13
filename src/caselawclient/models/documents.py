@@ -31,6 +31,8 @@ from .utilities.aws import (
     uri_for_s3,
 )
 
+MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+
 
 class UnparsableDate(Warning):
     pass
@@ -480,9 +482,9 @@ class Document:
 
         return DOCUMENT_STATUS_NEW
 
-    def enrich(self) -> None:
+    def force_enrich(self) -> None:
         """
-        Request enrichment of the document
+        Request enrichment of the document, but do no checks
         """
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(
@@ -494,6 +496,26 @@ class Document:
             status="enrich",
             enrich=True,
         )
+
+    def enrich(self) -> bool:
+        """
+        Request enrichment of a document, if it's sensible to do so.
+        """
+        if self.can_enrich:
+            self.force_enrich()
+            return True
+        return False
+
+    @cached_property
+    def can_enrich(self) -> bool:
+        """
+        Is it sensible to enrich this document?
+        """
+        last_enrichment = self.enrichment_datetime
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        if last_enrichment and now - last_enrichment > MINIMUM_ENRICHMENT_TIME:
+            return True
+        return False
 
     def publish(self) -> None:
         """
