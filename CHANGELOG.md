@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 22.0.2]
+
 - Add a method to allow fetching press summaries for a given document
 
 ## [Release 22.0.1]
