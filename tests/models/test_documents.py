@@ -421,9 +421,9 @@ class TestDocumentUnpublish:
 class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
-    def test_enrich(self, mock_announce_document_event, mock_api_client):
+    def test_force_enrich(self, mock_announce_document_event, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrich()
+        document.force_enrich()
 
         mock_api_client.set_property.assert_called_once_with(
             "test/1234", "last_sent_to_enrichment", "1955-11-05T06:00:00+00:00"
@@ -432,6 +432,24 @@ class TestDocumentEnrich:
         mock_announce_document_event.assert_called_once_with(
             uri="test/1234", status="enrich", enrich=True
         )
+
+    @patch("caselawclient.models.documents.Document.force_enrich")
+    def test_no_enrich_within_cooldown(self, force_enrich, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.enrichment_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(seconds=30)
+        document.enrich()
+        force_enrich.assert_not_called()
+
+    @patch("caselawclient.models.documents.Document.force_enrich")
+    def test_enrich_outside_cooldown(self, force_enrich, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.enrichment_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(days=2)
+        document.enrich()
+        force_enrich.assert_called()
 
 
 class TestDocumentHold:
