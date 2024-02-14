@@ -647,6 +647,22 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "get_judgment_version.xqy")
 
+    def validate_document(self, document_uri: DocumentURIString) -> bool:
+        vars: query_dicts.ValidateDocumentDict = {
+            "uri": self._format_uri_for_marklogic(document_uri)
+        }
+        response = self._send_to_eval(vars, "validate_document.xqy")
+        content = decoder.MultipartDecoder.from_response(response).parts[0].text
+        xml = ElementTree.fromstring(content)
+        return (
+            len(
+                xml.findall(
+                    ".//error:error", {"error": "http://marklogic.com/xdmp/error"}
+                ),
+            )
+            == 0
+        )
+
     def eval(
         self, xquery_path: str, vars: str, accept_header: str = "multipart/mixed"
     ) -> requests.Response:

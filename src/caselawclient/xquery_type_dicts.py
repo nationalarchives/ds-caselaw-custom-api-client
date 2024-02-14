@@ -211,6 +211,11 @@ class UserHasRoleDict(MarkLogicAPIDict):
     user: str
 
 
+# validate_document.xqy
+class ValidateDocumentDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # xslt.xqy
 class XsltDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
