@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 import time_machine
@@ -427,6 +427,71 @@ class TestDocumentUnpublish:
         )
 
 
+class TestDocumentEnrichedRecently:
+    def test_enriched_recently_returns_false_when_never_enriched(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+
+        assert document.enriched_recently is False
+
+    def test_enriched_recently_returns_true_within_cooldown(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.enrichment_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(seconds=30)
+
+        assert document.enriched_recently is True
+
+    def test_enriched_recently_returns_false_outside_cooldown(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.enrichment_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(days=2)
+
+        assert document.enriched_recently is False
+
+
+class TestCanEnrich:
+    @pytest.mark.parametrize(
+        "enriched_recently, validates_against_schema, can_enrich",
+        [
+            (
+                True,
+                True,
+                False,
+            ),  # Enriched recently and validates against schema - Can't enrich
+            (
+                True,
+                False,
+                False,
+            ),  # Enriched recently and does not validate against schema - Can't enrich
+            (
+                False,
+                False,
+                False,
+            ),  # Not enriched recently and does not validate against schema - Can't enrich
+            (
+                False,
+                True,
+                True,
+            ),  # Not Enriched recently and validates against schema - Can enrich
+        ],
+    )
+    def test_returns_true_when_enriched_recently_is_true_and_validates_against_schema_is_true(
+        self, mock_api_client, enriched_recently, validates_against_schema, can_enrich
+    ):
+        document = Document("test/1234", mock_api_client)
+        with patch.object(
+            Document, "enriched_recently", new_callable=PropertyMock
+        ) as mock_enriched_recently:
+            with patch.object(
+                Document, "validates_against_schema", new_callable=PropertyMock
+            ) as mock_validates_against_schema:
+                mock_enriched_recently.return_value = enriched_recently
+                mock_validates_against_schema.return_value = validates_against_schema
+
+                assert document.can_enrich is can_enrich
+
+
 class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
@@ -443,22 +508,24 @@ class TestDocumentEnrich:
         )
 
     @patch("caselawclient.models.documents.Document.force_enrich")
-    def test_no_enrich_within_cooldown(self, force_enrich, mock_api_client):
+    def test_no_enrich_when_can_enrich_is_false(self, force_enrich, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
-        ) - datetime.timedelta(seconds=30)
-        document.enrich()
-        force_enrich.assert_not_called()
+        with patch.object(
+            Document, "can_enrich", new_callable=PropertyMock
+        ) as can_enrich:
+            can_enrich.return_value = False
+            document.enrich()
+            force_enrich.assert_not_called()
 
     @patch("caselawclient.models.documents.Document.force_enrich")
-    def test_enrich_outside_cooldown(self, force_enrich, mock_api_client):
+    def test_enrich_when_can_enrich_is_true(self, force_enrich, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
-        ) - datetime.timedelta(days=2)
-        document.enrich()
-        force_enrich.assert_called()
+        with patch.object(
+            Document, "can_enrich", new_callable=PropertyMock
+        ) as can_enrich:
+            can_enrich.return_value = True
+            document.enrich()
+            force_enrich.assert_called()
 
 
 class TestDocumentHold:

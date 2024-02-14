@@ -511,9 +511,18 @@ class Document:
         """
         Is it sensible to enrich this document?
         """
+        if (self.enriched_recently is False) and self.validates_against_schema:
+            return True
+        return False
+
+    @cached_property
+    def enriched_recently(self) -> bool:
+        """
+        Has this document been enriched recently?
+        """
         last_enrichment = self.enrichment_datetime
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        if last_enrichment and now - last_enrichment > MINIMUM_ENRICHMENT_TIME:
+        if last_enrichment and now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
             return True
         return False
 
