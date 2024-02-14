@@ -56,3 +56,13 @@ def test_get_press_summaries_for_document_uri():
     result = api_client.get_press_summaries_for_document_uri("/uksc/2023/35")
     assert len(result) == 1
     assert result[0].uri == "uksc/2023/35/press-summary/1"
+
+
+@pytest.mark.write
+@pytest.mark.parametrize(
+    "document_uri,validates_against_schema",
+    [("/ewca/civ/2004/632", False), ("/eat/2023/38", True)],
+)
+def test_invalid_document_is_invalid(document_uri, validates_against_schema):
+    document = api_client.get_document_by_uri(document_uri)
+    assert document.validates_against_schema is validates_against_schema

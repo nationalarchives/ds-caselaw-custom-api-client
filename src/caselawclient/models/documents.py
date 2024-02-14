@@ -517,6 +517,13 @@ class Document:
             return True
         return False
 
+    @cached_property
+    def validates_against_schema(self) -> bool:
+        """
+        Does the document validate against the most recent schema?
+        """
+        return self.api_client.validate_document(self.uri)
+
     def publish(self) -> None:
         """
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as

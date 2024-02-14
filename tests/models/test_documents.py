@@ -261,6 +261,15 @@ class TestDocument:
 
         assert document.number_of_mentions("some") == 2
 
+    def test_validates_against_schema(self, mock_api_client):
+        mock_api_client.validate_document.return_value = True
+
+        document = Document("test/1234", mock_api_client)
+
+        assert document.validates_against_schema is True
+
+        mock_api_client.validate_document.assert_called_with(document.uri)
+
 
 class TestDocumentValidation:
     def test_judgment_is_failure(self, mock_api_client):
