@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Add a `can_enrich` property
 - Only enrich if not recently enriched and valid against current schema
 - Allow fetching linked docuements for `Judgement`s and `PressSummary`s
+- Add function to check if the docx exists for a judgment
 
 ## [Release 22.0.2]
 

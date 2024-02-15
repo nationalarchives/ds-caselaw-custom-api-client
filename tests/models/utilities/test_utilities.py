@@ -1,11 +1,18 @@
+import io
 import os
 from unittest.mock import ANY, MagicMock, Mock, patch
 
+import boto3
 import ds_caselaw_utils
 import pytest
+from moto import mock_aws
 
 from caselawclient.models.utilities import extract_version, move, render_versions
-from caselawclient.models.utilities.aws import build_new_key, copy_assets
+from caselawclient.models.utilities.aws import (
+    build_new_key,
+    check_docx_exists,
+    copy_assets,
+)
 
 from ...factories import JudgmentFactory
 
@@ -136,3 +143,18 @@ class TestMove:
         fake_copy.assert_called_with("old/uri", "new/uri")
         fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
         fake_api_client.delete_judgment.assert_called_with("old/uri")
+
+
+class TestCheckDocx:
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "bucket"})
+    @mock_aws
+    def test_check_docx(aws):
+        """Make a fake docx, then check if it exists, and for one that doesn't"""
+        url = "ewhc/2023/1"
+        docx = "ewhc/2023/1/ewhc_2023_1.docx"
+        s3 = boto3.resource("s3", region_name="us-east-1")
+        bucket = s3.create_bucket(Bucket="bucket")
+        fobj = io.BytesIO(b"placeholder docx")
+        bucket.upload_fileobj(Key=docx, Fileobj=fobj)
+        assert check_docx_exists(url)
+        assert not (check_docx_exists("not/the/url"))

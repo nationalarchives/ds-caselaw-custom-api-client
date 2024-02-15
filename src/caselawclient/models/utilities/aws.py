@@ -78,6 +78,20 @@ def generate_signed_asset_url(key: str) -> str:
     )
 
 
+def check_docx_exists(uri: str) -> bool:
+    """Does the docx for a document URI actually exist?"""
+    bucket = env("PRIVATE_ASSET_BUCKET", None)
+    s3_key = generate_docx_key(uri)
+    client = create_s3_client()
+    try:
+        client.head_object(Bucket=bucket, Key=s3_key)
+        return True
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            return False
+        raise
+
+
 def generate_docx_key(uri: str) -> str:
     """from a canonical caselaw URI (eat/2022/1) return the S3 key of the associated docx"""
     return f'{uri}/{uri.replace("/", "_")}.docx'
