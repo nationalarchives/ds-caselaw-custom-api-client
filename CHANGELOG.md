@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- Add an `enriched_recently` property
+- Add a `validates_against_schema` property
+- Add a `can_enrich` property
+- Only enrich if not recently enriched and valid against current schema
+
 ## [Release 22.0.2]
 
 - Add a method to allow fetching press summaries for a given document
