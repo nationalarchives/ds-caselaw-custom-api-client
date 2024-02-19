@@ -2,17 +2,17 @@
 
 [[package]]
 name = "boto3"
-version = "1.34.36"
+version = "1.34.44"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.36-py3-none-any.whl", hash = "sha256:1e38a4ea4bb8bc66fbb858abb411820709fda5d6c5604c2da0f696653d49c684"},
-    {file = "boto3-1.34.36.tar.gz", hash = "sha256:7ec36deb7ccc9c4943510692303cf93883ef61dc2c79f8bd4d75ee42209559d3"},
+    {file = "boto3-1.34.44-py3-none-any.whl", hash = "sha256:40f89fb2acee0a0879effe81badffcd801a348e715483227223241ae311c48fc"},
+    {file = "boto3-1.34.44.tar.gz", hash = "sha256:86bcf79a56631609a9f8023fe8f53e2869702bdd4c9047c6d9f091eb39c9b0fa"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.36,<1.35.0"
+botocore = ">=1.34.44,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -21,13 +21,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.36"
+version = "1.34.44"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.36-py3-none-any.whl", hash = "sha256:3f39ae0165f1a27f621fc91a46fb59f87e819671fad106c230dadcc724892f70"},
-    {file = "botocore-1.34.36.tar.gz", hash = "sha256:89c3dc15b6ffae146029df636d51b9952740051204c444ec765286b081c917bc"},
+    {file = "botocore-1.34.44-py3-none-any.whl", hash = "sha256:8d9837fb33256e70b9c8955a32d3e60fa70a0b72849a909737cf105fcc3b5deb"},
+    {file = "botocore-1.34.44.tar.gz", hash = "sha256:b0f40c54477e8e0a5c43377a927b8959a86bb8824aaef2d28db7c9c367cdefaa"},
 ]
 
 [package.dependencies]
@@ -508,13 +508,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.34.0"
-description = "Type annotations for boto3.SNS 1.34.0 service generated with mypy-boto3-builder 7.21.0"
+version = "1.34.44"
+description = "Type annotations for boto3.SNS 1.34.44 service generated with mypy-boto3-builder 7.23.1"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-sns-1.34.0.tar.gz", hash = "sha256:aba3feb8f7721e3b596339c1c2d5a68d26c17708f7e50c7691d0c7df95e00132"},
-    {file = "mypy_boto3_sns-1.34.0-py3-none-any.whl", hash = "sha256:9a10f3d77a9ac03abab5401e8b8dcd0b0364cea4801546b8cdc309853940d745"},
+    {file = "mypy-boto3-sns-1.34.44.tar.gz", hash = "sha256:a985b5281d00a156dd7c9093e5813c10c4ea6b91f2ebb71567fe7bb7b210a652"},
+    {file = "mypy_boto3_sns-1.34.44-py3-none-any.whl", hash = "sha256:677dc30884075f65e5bda71e5affb87316e7c21ad7c869246b5ba8087ab2399b"},
 ]
 
 [package.dependencies]
