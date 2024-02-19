@@ -1,7 +1,12 @@
+import importlib
 from functools import cached_property
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
+from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
+
+if TYPE_CHECKING:
+    from caselawclient.models.press_summaries import PressSummary
 
 from ..xml_helpers import get_xpath_match_string
 from .documents import Document
@@ -32,3 +37,18 @@ class Judgment(NeutralCitationMixin, Document):
     @property
     def best_human_identifier(self) -> str:
         return self.neutral_citation
+
+    @cached_property
+    def linked_document(self) -> Optional["PressSummary"]:
+        """
+        Attempt to fetch a linked press summary, and return it, if it exists
+        """
+        try:
+            uri = self.uri + "/press-summary/1"
+            PressSummary = getattr(
+                importlib.import_module("caselawclient.models.press_summaries"),
+                "PressSummary",
+            )
+            return PressSummary(uri, self.api_client)  # type: ignore
+        except DocumentNotFoundError:
+            return None

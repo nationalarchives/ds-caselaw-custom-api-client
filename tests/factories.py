@@ -108,3 +108,7 @@ class SearchResultFactory(SimpleFactory):
 
 class JudgmentFactory(DocumentFactory):
     pass
+
+
+class PressSummaryFactory(DocumentFactory):
+    pass
