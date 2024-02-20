@@ -1,6 +1,10 @@
+from unittest.mock import patch
+
 import pytest
 
+from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.judgments import Judgment
+from tests.factories import PressSummaryFactory
 
 
 class TestJudgment:
@@ -92,3 +96,26 @@ class TestJudgmentValidation:
                 "The court for this judgment is not valid",
             ]
         )
+
+
+class TestLinkedDocuments:
+    @patch("caselawclient.models.press_summaries.PressSummary")
+    def test_linked_document(self, document_mock, mock_api_client):
+        press_summary = PressSummaryFactory.build()
+        document_mock.return_value = press_summary
+
+        judgment = Judgment("/test/1234", mock_api_client)
+
+        assert judgment.linked_document == press_summary
+        document_mock.assert_called_once_with(
+            "test/1234/press-summary/1", mock_api_client
+        )
+
+    @patch("caselawclient.models.press_summaries.PressSummary")
+    def test_linked_document_returns_nothing_when_does_not_exist(
+        self, document_mock, mock_api_client
+    ):
+        document_mock.side_effect = DocumentNotFoundError()
+
+        judgment = Judgment("/test/1234", mock_api_client)
+        assert judgment.linked_document is None
