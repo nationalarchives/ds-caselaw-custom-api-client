@@ -6,10 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 22.1.0]
+
 - Add an `enriched_recently` property
 - Add a `validates_against_schema` property
 - Add a `can_enrich` property
 - Only enrich if not recently enriched and valid against current schema
+- Allow fetching linked docuements for `Judgement`s and `PressSummary`s
 
 ## [Release 22.0.2]
 
