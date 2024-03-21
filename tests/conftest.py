@@ -34,6 +34,18 @@ def valid_search_result_xml_fixture() -> str:
     )
 
 
+@pytest.fixture(name="valid_facets_fixture_xml")
+def valid_facets_xml_fixture() -> str:
+    return (
+        '<search:facet name="court" type="xs:string">'
+        '<search:facet-value name="" count="14"/>'
+        '<search:facet-value name=" UKUT-AAC" count="1"> UKUT-AAC</search:facet-value>'
+        '<search:facet-value name="EAT" count="649">EAT</search:facet-value>'
+        '<search:facet-value name="EWCA-Civil" count="5768">EWCA-Civil</search:facet-value>'
+        "</search:facet>"
+    )
+
+
 @pytest.fixture(name="generate_search_response_xml")
 def generate_search_response_xml_fixture() -> Callable:
     """
@@ -43,7 +55,7 @@ def generate_search_response_xml_fixture() -> Callable:
         Callable: Function that generates search response XML.
     """
 
-    def _generate_search_response_xml(response_content: str) -> str:
+    def _generate_search_response_xml(response_content: str, facets="") -> str:
         """
         Generate a search response XML string.
 
@@ -56,6 +68,7 @@ def generate_search_response_xml_fixture() -> Callable:
         return (
             '<search:response xmlns:search="http://marklogic.com/appservices/search" total="2">'  # noqa: E501
             f"{response_content}"
+            f"{facets}"
             "</search:response>"
         )
 
