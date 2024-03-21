@@ -45,3 +45,13 @@ class SearchResponse:
             "//search:response/search:result", namespaces=self.NAMESPACES
         )
         return [SearchResult(result, self.client) for result in results]
+
+    @property
+    def facets(self) -> dict[str, int]:
+        results = self.node.xpath(
+            "//search:response/search:facet/search:facet-value", namespaces={"search": "http://marklogic.com/appservices/search"}
+        )
+        dictionary = {}
+        for r in results:
+            dictionary[r.items()[0][1]] = r.items()[1][1]
+        return dictionary
