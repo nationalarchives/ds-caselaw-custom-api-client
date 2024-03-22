@@ -33,6 +33,7 @@ from .utilities.aws import (
 )
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+MINIMUM_REPARSE_TIME = datetime.timedelta(minutes=20)
 
 
 class UnparsableDate(Warning):
@@ -286,6 +287,24 @@ class Document:
         return self.get_latest_manifestation_datetime("tna-enriched")
 
     @cached_property
+    def request_reparse_datetime(self) -> Optional[datetime.datetime]:
+        """When was a reparse request last sent to TDR?"""
+        date_as_string = self.api_client.get_property(self.uri, "last_sent_to_parser")
+        try:
+            return datetime.datetime.fromisoformat(date_as_string)
+        except ValueError:
+            return None
+
+    @cached_property
+    def request_enrich_datetime(self) -> Optional[datetime.datetime]:
+        """When was a reparse request last sent to TDR?"""
+        date_as_string = self.api_client.get_property(self.uri, "last_sent_to_parser")
+        try:
+            return datetime.datetime.fromisoformat(date_as_string)
+        except ValueError:
+            return None
+
+    @cached_property
     def is_published(self) -> bool:
         return self.api_client.get_published(self.uri)
 
@@ -525,9 +544,9 @@ class Document:
     @cached_property
     def enriched_recently(self) -> bool:
         """
-        Has this document been enriched recently?
+        Has this document been sent for enrichment recently?
         """
-        last_enrichment = self.enrichment_datetime
+        last_enrichment = self.request_enrich_datetime
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         if last_enrichment and now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
             return True
@@ -645,7 +664,18 @@ class Document:
         """
         Is it sensible to reparse this document?
         """
-        if self.docx_exists():
+        if (self.reparsed_recently is False) and self.docx_exists():
+            return True
+        return False
+
+    @cached_property
+    def reparsed_recently(self) -> bool:
+        """
+        Has this document been sent to reparsing recently?
+        """
+        last_reparse = self.request_reparse_datetime
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        if last_reparse and now - last_reparse < MINIMUM_REPARSE_TIME:
             return True
         return False
 
