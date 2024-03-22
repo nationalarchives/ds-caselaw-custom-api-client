@@ -430,6 +430,7 @@ class TestDocumentUnpublish:
 class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_false_when_never_enriched(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
+        mock_api_client.get_property.return_value = ""
 
         assert document.enriched_recently is False
 
@@ -876,11 +877,13 @@ class TestDocumentMetadata:
         assert document.get_latest_manifestation_datetime() is None
         assert document.get_manifestation_datetimes("any") == []
 
+
+class TestReparse:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
-    def test_reparse_empty(self, sns, mock_api_client):
+    def test_force_reparse_empty(self, sns, mock_api_client):
         document = JudgmentFactory().build(
             is_published=False,
             name="",
@@ -891,7 +894,7 @@ class TestDocumentMetadata:
         )
 
         document.api_client = mock_api_client
-        Judgment.reparse(document)
+        Judgment.force_reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"
@@ -934,11 +937,11 @@ class TestDocumentMetadata:
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
-    def test_reparse_full(self, sns, mock_api_client):
+    def test_force_reparse_full(self, sns, mock_api_client):
         document = JudgmentFactory().build(is_published=True)
         document.api_client = mock_api_client
 
-        Judgment.reparse(document)
+        Judgment.force_reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"

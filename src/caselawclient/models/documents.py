@@ -22,6 +22,7 @@ from .utilities import VersionsDict, render_versions
 from .utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
+    check_docx_exists,
     delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
@@ -167,13 +168,17 @@ class Document:
         :return: `True` if the document exists, `False` otherwise."""
         return self.api_client.document_exists(self.uri)
 
+    def docx_exists(self) -> bool:
+        """There is a docx in S3 private bucket for this Document"""
+        return check_docx_exists(self.uri)
+
     @property
     def best_human_identifier(self) -> Optional[str]:
         """
         Some identifier that is understood by legal professionals to refer to this legal event
         that is not the name of the document.
         Typically, this will be the neutral citation number, should it exist.
-        Should typically overridden in subclasses.
+        Should typically be overridden in subclasses.
         """
         return None
 
@@ -272,10 +277,12 @@ class Document:
 
     @cached_property
     def transformation_datetime(self) -> Optional[datetime.datetime]:
+        """When was this document successfully parsed or reparsed (date from XML)"""
         return self.get_latest_manifestation_datetime("transform")
 
     @cached_property
     def enrichment_datetime(self) -> Optional[datetime.datetime]:
+        """When was this document successfully enriched (date from XML)"""
         return self.get_latest_manifestation_datetime("tna-enriched")
 
     @cached_property
@@ -591,7 +598,7 @@ class Document:
     def move(self, new_citation: str) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)
 
-    def reparse(self) -> None:
+    def force_reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
 
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -626,6 +633,21 @@ class Document:
             reference=self.consignment_reference,
             parser_instructions=parser_instructions,
         )
+
+    def reparse(self) -> bool:
+        if self.can_reparse:
+            self.force_reparse()
+            return True
+        return False
+
+    @cached_property
+    def can_reparse(self) -> bool:
+        """
+        Is it sensible to reparse this document?
+        """
+        if self.docx_exists():
+            return True
+        return False
 
     class XML:
         """
