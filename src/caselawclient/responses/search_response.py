@@ -47,7 +47,7 @@ class SearchResponse:
         return [SearchResult(result, self.client) for result in results]
 
     @property
-    def facets(self) -> dict[str, int]:
+    def facets(self) -> dict[str, str]:
         results = self.node.xpath(
             "//search:response/search:facet/search:facet-value", namespaces={"search": "http://marklogic.com/appservices/search"}
         )
