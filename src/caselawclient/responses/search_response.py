@@ -45,3 +45,20 @@ class SearchResponse:
             "//search:response/search:result", namespaces=self.NAMESPACES
         )
         return [SearchResult(result, self.client) for result in results]
+
+    @property
+    def facets(self) -> dict[str, str]:
+        """
+        Returns search facets from the SearchResponse as a dictionary
+
+        :return: A flattened dictionary of search facet values
+        """
+        # TODO: preserve the name of the facet (e.g. "court", "year")
+        results = self.node.xpath(
+            "//search:response/search:facet/search:facet-value",
+            namespaces={"search": "http://marklogic.com/appservices/search"},
+        )
+        facets_dictionary = {
+            result.attrib["name"]: result.attrib["count"] for result in results
+        }
+        return facets_dictionary

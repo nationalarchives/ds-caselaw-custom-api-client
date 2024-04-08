@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
+
 - Remove fcl_ex_id_ prefix from UUID of reparse execution ID
+- Implement handling of facets received from MarkLogic search results
 
 ## [Release 22.1.0]
 
@@ -13,7 +15,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - Add a `validates_against_schema` property
 - Add a `can_enrich` property
 - Only enrich if not recently enriched and valid against current schema
-- Allow fetching linked docuements for `Judgement`s and `PressSummary`s
+- Allow fetching linked documents for `Judgement`s and `PressSummary`s
 - Add function to check if the docx exists for a judgment
 
 ## [Release 22.0.2]
