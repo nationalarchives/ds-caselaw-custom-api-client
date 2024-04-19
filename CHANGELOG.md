@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 23.0.2]
+- Remove explicit urllib3 v1 dependency, rely on implicit dependency only
+
 ## [Release 23.0.1]
 
 - Remove fcl_ex_id_ prefix from UUID of reparse execution ID
@@ -401,7 +404,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ## [Release 1.0.5]
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.1...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.2...HEAD
+[Release 23.0.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.1...v23.0.2
 [Release 23.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.1.0...v23.0.1
 [Release 22.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.0.1...v22.1.0
 [Release 22.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.0.0...v22.0.1
