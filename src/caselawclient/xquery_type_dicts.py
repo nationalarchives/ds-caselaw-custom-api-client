@@ -91,6 +91,11 @@ class GetMissingFclidDict(MarkLogicAPIDict):
     maximum_records: Optional[int]
 
 
+# get_linked_caselaw.xqy
+class GetLinkedCaselawDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_pending_enrichment_for_version.xqy
 class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
     maximum_records: Optional[int]
