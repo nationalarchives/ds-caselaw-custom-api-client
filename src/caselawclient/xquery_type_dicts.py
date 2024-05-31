@@ -85,6 +85,11 @@ class GetLastModifiedDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_linked_caselaw.xqy
+class GetLinkedCaselawDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_pending_enrichment_for_version.xqy
 class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
     target_enrichment_major_version: int
