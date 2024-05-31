@@ -1255,3 +1255,11 @@ class MarklogicApiClient:
     def get_next_document_sequence_number(self) -> int:
         """Increment the MarkLogic sequence number by one and return the value."""
         return int(self._eval_and_decode({}, "get_next_document_sequence_number.xqy"))
+
+    def get_linked_caselaw(self, uri: DocumentURIString) -> bytes:
+        vars: query_dicts.GetLinkedCaselawDict = {
+            "uri": self._format_uri_for_marklogic(uri)
+        }
+        results: Any = self._send_to_eval(vars, "get_linked_caselaw.xqy")
+        result_xml = get_single_bytestring_from_marklogic_response(results)
+        return result_xml
