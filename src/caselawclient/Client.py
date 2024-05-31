@@ -1132,3 +1132,11 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def get_linked_caselaw(self, uri: DocumentURIString) -> bytes:
+        vars: query_dicts.GetLinkedCaselawDict = {
+            "uri": self._format_uri_for_marklogic(uri)
+        }
+        results: Any = self._send_to_eval(vars, "get_linked_caselaw.xqy")
+        result_xml = get_single_bytestring_from_marklogic_response(results)
+        return result_xml
