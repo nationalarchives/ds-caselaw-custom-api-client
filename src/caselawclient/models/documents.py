@@ -528,7 +528,10 @@ class Document:
         Has this document been enriched recently?
         """
         last_enrichment = self.enrichment_datetime
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+
+        # The date the document was last enriched is not timezone aware, therefore the
+        # current time must also not be timezone aware.
+        now = datetime.datetime.now()
         if last_enrichment and now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
             return True
         return False
