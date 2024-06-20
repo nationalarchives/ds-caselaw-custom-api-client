@@ -30,7 +30,7 @@ declare function local:get-linked-caselaw($source-uri as xs:string) (: as return
   let $ml-uris := for $uri in $external-uris return local:public-to-marklogic($uri)
   let $list := for $uri in $ml-uris return <cite href="{$uri}" available="{fn:doc-available($uri)}"/>
   (: fn:doc-available(@uri) :)
-  return <x>{$list}</x>
+  return $list
 };
 
 let $judgment_published_property := xdmp:document-get-properties($uri, xs:QName("published"))[1]
