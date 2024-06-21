@@ -846,19 +846,6 @@ class MarklogicApiClient:
             xsl_filename=DEFAULT_XSL_TRANSFORM,
         )
 
-    def original_judgment_transformation(
-        self,
-        judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
-        show_unpublished: bool = False,
-    ) -> requests.Response:
-        return self.eval_xslt(
-            judgment_uri,
-            version_uri,
-            show_unpublished,
-            xsl_filename="as-handed-down.xsl",
-        )
-
     def get_property(self, judgment_uri: DocumentURIString, name: str) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyDict = {
