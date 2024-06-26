@@ -635,6 +635,10 @@ class Document:
         )
 
     def reparse(self) -> bool:
+        # note that we set 'last_sent_to_parser' even if we can't send it to the parser
+        # it means 'last tried to reparse' much more consistently.
+        now = datetime.datetime.now(datetime.timezone.utc)
+        self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
         if self.can_reparse:
             self.force_reparse()
             return True
