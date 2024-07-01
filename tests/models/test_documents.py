@@ -436,17 +436,17 @@ class TestDocumentEnrichedRecently:
 
     def test_enriched_recently_returns_true_within_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
-        ) - datetime.timedelta(seconds=30)
+        document.enrichment_datetime = datetime.datetime.now() - datetime.timedelta(
+            seconds=30
+        )
 
         assert document.enriched_recently is True
 
     def test_enriched_recently_returns_false_outside_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
-        ) - datetime.timedelta(days=2)
+        document.enrichment_datetime = datetime.datetime.now() - datetime.timedelta(
+            days=2
+        )
 
         assert document.enriched_recently is False
 
