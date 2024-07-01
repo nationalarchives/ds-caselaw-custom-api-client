@@ -427,7 +427,7 @@ class TestDocumentUnpublish:
         )
 
 
-class TestDocumentEnrichedRecently:
+class TestDocumentEnrichedOrReparsedRecently:
     def test_enriched_recently_returns_false_when_never_enriched(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
         mock_api_client.get_property.return_value = ""
@@ -436,7 +436,7 @@ class TestDocumentEnrichedRecently:
 
     def test_enriched_recently_returns_true_within_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
+        document.request_enrich_datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         ) - datetime.timedelta(seconds=30)
 
@@ -444,11 +444,33 @@ class TestDocumentEnrichedRecently:
 
     def test_enriched_recently_returns_false_outside_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
-        document.enrichment_datetime = datetime.datetime.now(
+        document.request_enrich_datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         ) - datetime.timedelta(days=2)
 
         assert document.enriched_recently is False
+
+    def test_reparsed_recently_returns_false_when_never_enriched(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        mock_api_client.get_property.return_value = ""
+
+        assert document.reparsed_recently is False
+
+    def test_reparsed_recently_returns_true_within_cooldown(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.request_reparse_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(seconds=30)
+
+        assert document.reparsed_recently is True
+
+    def test_reparsed_recently_returns_false_outside_cooldown(self, mock_api_client):
+        document = Document("test/1234", mock_api_client)
+        document.request_reparse_datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(days=2)
+
+        assert document.reparsed_recently is False
 
 
 class TestCanEnrich:
@@ -491,6 +513,46 @@ class TestCanEnrich:
                 mock_validates_against_schema.return_value = validates_against_schema
 
                 assert document.can_enrich is can_enrich
+
+
+class TestCanReparse:
+    @pytest.mark.parametrize(
+        "reparsed_recently, docx_exists, can_reparse",
+        [
+            (
+                True,
+                True,
+                False,
+            ),  # Reparsed recently and docx exists - Can't reparse
+            (
+                True,
+                False,
+                False,
+            ),  # Reparsed recently and no docx- Can't reparse
+            (
+                False,
+                False,
+                False,
+            ),  # Not reparsed recently and no docx - Can't reparse
+            (
+                False,
+                True,
+                True,
+            ),  # Not reparsed recently and docx exists - Can reparse
+        ],
+    )
+    def test_can_reparse_logic(
+        self, mock_api_client, reparsed_recently, docx_exists, can_reparse
+    ):
+        document = Document("test/1234", mock_api_client)
+        with patch.object(
+            Document, "reparsed_recently", new_callable=PropertyMock
+        ) as mock_reparsed_recently:
+            with patch.object(Document, "docx_exists") as mock_docx_exists:
+                mock_reparsed_recently.return_value = reparsed_recently
+                mock_docx_exists.return_value = docx_exists
+
+                assert document.can_reparse is can_reparse
 
 
 class TestDocumentEnrich:
