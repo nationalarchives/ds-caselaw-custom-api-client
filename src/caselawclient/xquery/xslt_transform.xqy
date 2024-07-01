@@ -1,6 +1,8 @@
 xquery version "1.0-ml";
 
 import module namespace helper = "https://caselaw.nationalarchives.gov.uk/helper" at "/judgments/search/helper.xqy";
+declare namespace akn = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0";
+declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn";
 
 declare variable $show_unpublished as xs:boolean? external;
 declare variable $uri as xs:string external;
@@ -8,6 +10,28 @@ declare variable $version_uri as xs:string? external;
 declare variable $img_location as xs:string? external;
 declare variable $xsl_filename as xs:string? external;
 declare variable $query as xs:string? external;
+
+declare function local:public-to-marklogic($uri as xs:string) as xs:string
+{
+  (: inspired by https://stackoverflow.com/questions/27745/getting-parts-of-a-url-regex :)
+  (: https://caselaw.nationalarchives.gov.uk/uksc/2024/1 -> /uksc/2024/1.xml :)
+  fn:replace($uri, "^.*//[^/]*", "")||".xml"
+};
+
+declare function local:marklogic-to-public($uri as xs:string) as xs:string
+{
+  "https://caselaw.nationalarchives.gov.uk/"||fn:replace($uri, ".xml$", "")
+};
+
+declare function local:get-linked-caselaw($source-uri as xs:string) (: as returnDatatype:)
+{
+  let $xml := fn:document($source-uri)
+  let $external-uris := $xml//akn:ref[@uk:isNeutral=fn:true()]/@href
+  let $ml-uris := for $uri in $external-uris return local:public-to-marklogic($uri)
+  let $list := for $uri in $ml-uris return <cite href="{$uri}" available="{fn:doc-available($uri)}"/>
+  (: fn:doc-available(@uri) :)
+  return $list
+};
 
 let $judgment_published_property := xdmp:document-get-properties($uri, xs:QName("published"))[1]
 let $is_published := $judgment_published_property/text()
@@ -71,3 +95,4 @@ let $return_value := if($query) then
       $retrieved_value
 
 return $return_value
+(: return local:get-linked-caselaw($uri) :)
