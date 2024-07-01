@@ -2,11 +2,10 @@ import datetime
 from typing import Any
 from unittest.mock import Mock
 
-from typing_extensions import TypeAlias
-
 from caselawclient.models.documents import Document
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
+from typing_extensions import TypeAlias
 
 
 class DocumentFactory:
@@ -38,9 +37,7 @@ class DocumentFactory:
         if "html" in kwargs:
             judgment_mock.return_value.content_as_html.return_value = kwargs.pop("html")
         else:
-            judgment_mock.return_value.content_as_html.return_value = (
-                "<p>This is a judgment.</p>"
-            )
+            judgment_mock.return_value.content_as_html.return_value = "<p>This is a judgment.</p>"
 
         if "xml" in kwargs:
             xml_string = kwargs.pop("xml")
@@ -48,7 +45,7 @@ class DocumentFactory:
             xml_string = "<akomantoso>This is some XML of a judgment.</akomantoso>"
 
         judgment_mock.return_value.xml = Document.XML(
-            xml_bytestring=xml_string.encode(encoding="utf-8")
+            xml_bytestring=xml_string.encode(encoding="utf-8"),
         )
 
         for map_to, map_from in cls.PARAMS_MAP.items():

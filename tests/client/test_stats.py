@@ -12,7 +12,7 @@ class TestStats(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = '[["R1C1","R1C2"],["R2C1","R2C2"]]'
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"

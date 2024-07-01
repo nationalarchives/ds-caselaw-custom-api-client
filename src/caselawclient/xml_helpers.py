@@ -14,7 +14,9 @@ def get_xpath_match_string(
 
 
 def get_xpath_match_strings(
-    node: etree._Element, path: str, namespaces: Optional[Dict[str, str]] = None
+    node: etree._Element,
+    path: str,
+    namespaces: Optional[Dict[str, str]] = None,
 ) -> list[str]:
     kwargs = {"namespaces": namespaces} if namespaces else {}
     return [str(x) for x in node.xpath(path, **kwargs)]

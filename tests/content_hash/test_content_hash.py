@@ -1,5 +1,4 @@
 import pytest
-
 from caselawclient.content_hash import (
     get_hash_from_document,
     get_hashable_text,
@@ -26,9 +25,7 @@ VALID_DOC = b"""<?xml version="1.0" encoding="UTF-8"?>
 
 INVALID_DOC = VALID_DOC.replace(b"Do", b"Do not").replace(b"valid", b"invalid")
 
-VALID_DOC_CONTENT_HASH = (
-    "c4367ebc0937f4dc2d6b372d9a09670e3606a5b3da77a070149755db5f942565"
-)
+VALID_DOC_CONTENT_HASH = "c4367ebc0937f4dc2d6b372d9a09670e3606a5b3da77a070149755db5f942565"
 
 
 class TestIdentifyHashableString:
@@ -66,6 +63,7 @@ class TestCorrectlyRaisesExceptions:
 
     def test_no_content_hash(self):
         with pytest.raises(
-            InvalidContentHashError, match="Document did not have a content hash tag"
+            InvalidContentHashError,
+            match="Document did not have a content hash tag",
         ):
             validate_content_hash(b"<dog></dog>")

@@ -5,14 +5,13 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 import boto3
 import ds_caselaw_utils
 import pytest
-from moto import mock_aws
-
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
     build_new_key,
     check_docx_exists,
     copy_assets,
 )
+from moto import mock_aws
 
 from ...factories import JudgmentFactory
 
@@ -73,7 +72,7 @@ class TestAWSUtils:
         """
 
         client.return_value.list_objects.return_value = {
-            "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]
+            "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}],
         }
         copy_assets("uksc/2023/1", "ukpc/1999/9")
         client.return_value.copy.assert_called_with(
@@ -103,7 +102,9 @@ class TestOverwrite:
 
         result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
         fake_api_client.update_document_xml.assert_called_with(
-            "new/uri", ANY, annotation="overwritten from old/uri"
+            "new/uri",
+            ANY,
+            annotation="overwritten from old/uri",
         )
         fake_api_client.delete_judgment.assert_called_with("old/uri")
         assert result == "new/uri"
@@ -114,7 +115,9 @@ class TestOverwrite:
 
         with pytest.raises(move.NeutralCitationToUriError):
             move.overwrite_document(
-                "old/uri", "Wrong neutral citation", fake_api_client
+                "old/uri",
+                "Wrong neutral citation",
+                fake_api_client,
             )
 
 

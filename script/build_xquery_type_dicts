@@ -85,12 +85,13 @@ with open(DICTS_FILES_PATCH, "w") as dicts_file:
 
 
 # {xquery_file}
-class {class_name}(MarkLogicAPIDict):"""
+class {class_name}(MarkLogicAPIDict):""",
                 )
 
                 for match in sorted(matches):
                     type_declaration = ml_type_to_python_type_declaration(
-                        variable_name=match[0], variable_type=match[1]
+                        variable_name=match[0],
+                        variable_type=match[1],
                     )
                     dicts_file.write(f"\n    {type_declaration}")
 

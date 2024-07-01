@@ -22,15 +22,13 @@ class TestUserPrivileges(unittest.TestCase):
             }
             self.client.user_has_privilege(user, privilege_uri, privilege_action)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "user_has_privilege.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_user_can_view_unpublished_judgments_true(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -45,7 +43,7 @@ class TestUserPrivileges(unittest.TestCase):
     def test_user_can_view_unpublished_judgments_false(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"

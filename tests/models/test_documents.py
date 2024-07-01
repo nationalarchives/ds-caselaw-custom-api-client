@@ -5,7 +5,6 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 import time_machine
-
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
@@ -22,13 +21,14 @@ from caselawclient.models.documents import (
     UnparsableDate,
 )
 from caselawclient.models.judgments import Judgment
+
 from tests.factories import JudgmentFactory
 from tests.test_helpers import MockMultipartResponse
 
 
 class TestDocument:
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment>
@@ -41,9 +41,7 @@ class TestDocument:
                     </meta>
                 </judgment>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
         document = Judgment("test/1234", mock_api_client)
         assert str(document) == "<judgment test/1234: Document Name>"
 
@@ -59,9 +57,7 @@ class TestDocument:
     def test_public_uri(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
 
-        assert (
-            document.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
-        )
+        assert document.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
 
     def test_document_exists_check(self, mock_api_client):
         mock_api_client.document_exists.return_value = False
@@ -69,22 +65,18 @@ class TestDocument:
             Document("not_a_real_judgment", mock_api_client)
 
     def test_document_failed_to_parse(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <error>Parsing failed</error>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
 
         assert document.failed_to_parse is True
 
     def test_document_parsed(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso>Parsing succeeded</akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
 
@@ -107,9 +99,7 @@ class TestDocument:
         mock_api_client.get_property.assert_called_once_with("test/1234", "editor-hold")
 
     def test_judgment_is_locked(self, mock_api_client):
-        mock_api_client.get_judgment_checkout_status_message.return_value = (
-            "Judgment locked"
-        )
+        mock_api_client.get_judgment_checkout_status_message.return_value = "Judgment locked"
         document = Document("test/1234", mock_api_client)
 
         assert document.is_locked is True
@@ -135,7 +125,8 @@ class TestDocument:
 
         assert document.source_email == "testemail@example.com"
         mock_api_client.get_property.assert_called_once_with(
-            "test/1234", "source-email"
+            "test/1234",
+            "source-email",
         )
 
     def test_judgment_consignment_reference(self, mock_api_client):
@@ -145,7 +136,8 @@ class TestDocument:
 
         assert document.consignment_reference == "TDR-2023-ABC"
         mock_api_client.get_property.assert_called_once_with(
-            "test/1234", "transfer-consignment-reference"
+            "test/1234",
+            "transfer-consignment-reference",
         )
 
     @patch("caselawclient.models.documents.generate_docx_url")
@@ -214,9 +206,7 @@ class TestDocument:
             {"uri": "test/1234_xml_versions/2-1234.xml"},
             {"uri": "test/1234_xml_versions/1-1234.xml"},
         ]
-        version_document.versions_as_documents[0].uri = (
-            "test/1234_xml_versions/2-1234.xml"
-        )
+        version_document.versions_as_documents[0].uri = "test/1234_xml_versions/2-1234.xml"
 
     def test_document_version_number_when_not_version(self, mock_api_client):
         base_document = Document("test/1234", mock_api_client)
@@ -231,13 +221,11 @@ class TestDocument:
 
     def test_number_of_mentions_when_no_mentions(self, mock_api_client):
         mock_api_client.eval_xslt.return_value = MockMultipartResponse(
-            """
+            b"""
             <article>
                 <p>An article with no mark elements.</p>
             </article>
-        """.encode(
-                "utf-8"
-            )
+        """,
         )
 
         document = Document("test/1234", mock_api_client)
@@ -246,15 +234,13 @@ class TestDocument:
 
     def test_number_of_mentions_when_mentions(self, mock_api_client):
         mock_api_client.eval_xslt.return_value = MockMultipartResponse(
-            """
+            b"""
             <article>
                 <p>
                     An article with <mark id="mark_0">some</mark> mark elements, and <mark id="mark_1">some</mark> more.
                 </p>
             </article>
-        """.encode(
-                "utf-8"
-            )
+        """,
         )
 
         document = Document("test/1234", mock_api_client)
@@ -345,16 +331,14 @@ class TestDocumentValidation:
         assert document.is_publishable is publishable
 
     def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                         xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment><meta><identification><FRBRWork>
                 <FRBRname value="Test Claimant v Test Defendant"/>
                 </FRBRWork></identification></meta></judgment>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
         document.is_parked = False
@@ -378,7 +362,7 @@ class TestDocumentValidation:
                 "This document is currently on hold",
                 "This document has no name",
                 "The court for this document is not valid",
-            ]
+            ],
         )
 
 
@@ -406,7 +390,8 @@ class TestDocumentPublish:
         mock_publish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", True)
         mock_announce_document_event.assert_called_once_with(
-            uri="test/1234", status="publish"
+            uri="test/1234",
+            status="publish",
         )
         mock_enrich.assert_called_once()
 
@@ -415,7 +400,10 @@ class TestDocumentUnpublish:
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.unpublish_documents")
     def test_unpublish(
-        self, mock_unpublish_documents, mock_announce_document_event, mock_api_client
+        self,
+        mock_unpublish_documents,
+        mock_announce_document_event,
+        mock_api_client,
     ):
         document = Document("test/1234", mock_api_client)
         document.unpublish()
@@ -423,7 +411,8 @@ class TestDocumentUnpublish:
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
         mock_api_client.break_checkout.assert_called_once_with("test/1234")
         mock_announce_document_event.assert_called_once_with(
-            uri="test/1234", status="unpublish"
+            uri="test/1234",
+            status="unpublish",
         )
 
 
@@ -437,7 +426,7 @@ class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_true_within_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
         document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
+            tz=datetime.timezone.utc,
         ) - datetime.timedelta(seconds=30)
 
         assert document.enriched_recently is True
@@ -445,7 +434,7 @@ class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_false_outside_cooldown(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
         document.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc
+            tz=datetime.timezone.utc,
         ) - datetime.timedelta(days=2)
 
         assert document.enriched_recently is False
@@ -478,14 +467,22 @@ class TestCanEnrich:
         ],
     )
     def test_returns_true_when_enriched_recently_is_true_and_validates_against_schema_is_true(
-        self, mock_api_client, enriched_recently, validates_against_schema, can_enrich
+        self,
+        mock_api_client,
+        enriched_recently,
+        validates_against_schema,
+        can_enrich,
     ):
         document = Document("test/1234", mock_api_client)
         with patch.object(
-            Document, "enriched_recently", new_callable=PropertyMock
+            Document,
+            "enriched_recently",
+            new_callable=PropertyMock,
         ) as mock_enriched_recently:
             with patch.object(
-                Document, "validates_against_schema", new_callable=PropertyMock
+                Document,
+                "validates_against_schema",
+                new_callable=PropertyMock,
             ) as mock_validates_against_schema:
                 mock_enriched_recently.return_value = enriched_recently
                 mock_validates_against_schema.return_value = validates_against_schema
@@ -501,18 +498,24 @@ class TestDocumentEnrich:
         document.force_enrich()
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/1234", "last_sent_to_enrichment", "1955-11-05T06:00:00+00:00"
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
         )
 
         mock_announce_document_event.assert_called_once_with(
-            uri="test/1234", status="enrich", enrich=True
+            uri="test/1234",
+            status="enrich",
+            enrich=True,
         )
 
     @patch("caselawclient.models.documents.Document.force_enrich")
     def test_no_enrich_when_can_enrich_is_false(self, force_enrich, mock_api_client):
         document = Document("test/1234", mock_api_client)
         with patch.object(
-            Document, "can_enrich", new_callable=PropertyMock
+            Document,
+            "can_enrich",
+            new_callable=PropertyMock,
         ) as can_enrich:
             can_enrich.return_value = False
             document.enrich()
@@ -522,7 +525,9 @@ class TestDocumentEnrich:
     def test_enrich_when_can_enrich_is_true(self, force_enrich, mock_api_client):
         document = Document("test/1234", mock_api_client)
         with patch.object(
-            Document, "can_enrich", new_callable=PropertyMock
+            Document,
+            "can_enrich",
+            new_callable=PropertyMock,
         ) as can_enrich:
             can_enrich.return_value = True
             document.enrich()
@@ -534,14 +539,18 @@ class TestDocumentHold:
         document = Document("test/1234", mock_api_client)
         document.hold()
         mock_api_client.set_property.assert_called_once_with(
-            "test/1234", "editor-hold", "true"
+            "test/1234",
+            "editor-hold",
+            "true",
         )
 
     def test_unhold(self, mock_api_client):
         document = Document("test/1234", mock_api_client)
         document.unhold()
         mock_api_client.set_property.assert_called_once_with(
-            "test/1234", "editor-hold", "false"
+            "test/1234",
+            "editor-hold",
+            "false",
         )
 
 
@@ -602,15 +611,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
         assert document.name == "Test Claimant v Test Defendant"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -632,15 +640,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
         assert document.court == "Court of Testing"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -662,15 +669,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
         assert document.jurisdiction == "SoftwareTesting"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -681,7 +687,10 @@ class TestDocumentMetadata:
         ],
     )
     def test_court_and_jurisdiction_with_jurisdiction(
-        self, opening_tag, closing_tag, mock_api_client
+        self,
+        opening_tag,
+        closing_tag,
+        mock_api_client,
     ):
         mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
@@ -695,18 +704,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
-        assert (
-            document.court_and_jurisdiction_identifier_string
-            == "UKFTT-CourtOfTesting/SoftwareTesting"
-        )
+        assert document.court_and_jurisdiction_identifier_string == "UKFTT-CourtOfTesting/SoftwareTesting"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -717,7 +722,10 @@ class TestDocumentMetadata:
         ],
     )
     def test_court_and_jurisdiction_without_jurisdiction(
-        self, opening_tag, closing_tag, mock_api_client
+        self,
+        opening_tag,
+        closing_tag,
+        mock_api_client,
     ):
         mock_api_client.get_judgment_xml_bytestring.return_value = f"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
@@ -730,15 +738,14 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
         assert document.court_and_jurisdiction_identifier_string == "CourtOfTesting"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -762,16 +769,15 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
         assert document.document_date_as_string == "2023-02-03"
         assert document.document_date_as_date == datetime.date(2023, 2, 3)
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     @pytest.mark.parametrize(
@@ -795,9 +801,7 @@ class TestDocumentMetadata:
                     </meta>
                 </{closing_tag}>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """.encode()
 
         document = Document("test/1234", mock_api_client)
 
@@ -805,17 +809,16 @@ class TestDocumentMetadata:
         with pytest.warns(UnparsableDate):
             assert document.document_date_as_date is None
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
-            "test/1234", show_unpublished=True
+            "test/1234",
+            show_unpublished=True,
         )
 
     def test_absent_date_as_string(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
 
@@ -823,7 +826,7 @@ class TestDocumentMetadata:
         assert document.document_date_as_date is None
 
     def test_dates(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment>
@@ -839,9 +842,7 @@ class TestDocumentMetadata:
                     </meta>
                 </judgment>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
 
@@ -849,12 +850,10 @@ class TestDocumentMetadata:
         assert document.transformation_datetime.year == 2026
         assert document.get_latest_manifestation_datetime().year == 2026
         assert document.get_latest_manifestation_type() == "transform"
-        assert [
-            x.year for x in document.get_manifestation_datetimes("tna-enriched")
-        ] == [2024, 2023]
+        assert [x.year for x in document.get_manifestation_datetimes("tna-enriched")] == [2024, 2023]
 
     def test_no_dates(self, mock_api_client):
-        mock_api_client.get_judgment_xml_bytestring.return_value = """
+        mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
                 xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
                 <judgment>
@@ -866,9 +865,7 @@ class TestDocumentMetadata:
                     </meta>
                 </judgment>
             </akomaNtoso>
-        """.encode(
-            "utf-8"
-        )
+        """
 
         document = Document("test/1234", mock_api_client)
 
@@ -897,12 +894,14 @@ class TestReparse:
         Judgment.force_reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"
+            "test/2023/123",
+            "last_sent_to_parser",
+            "1955-11-05T06:00:00+00:00",
         )
 
         # first call, second argument (the kwargs), so [0][1]
         returned_message = json.loads(
-            sns.return_value.publish.call_args_list[0][1]["Message"]
+            sns.return_value.publish.call_args_list[0][1]["Message"],
         )
         # hide random parameters
         del returned_message["properties"]["timestamp"]
@@ -944,12 +943,14 @@ class TestReparse:
         Judgment.force_reparse(document)
 
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "1955-11-05T06:00:00+00:00"
+            "test/2023/123",
+            "last_sent_to_parser",
+            "1955-11-05T06:00:00+00:00",
         )
 
         # first call, second argument (the kwargs), so [0][1]
         returned_message = json.loads(
-            sns.return_value.publish.call_args_list[0][1]["Message"]
+            sns.return_value.publish.call_args_list[0][1]["Message"],
         )
         # hide random parameters
         del returned_message["properties"]["timestamp"]

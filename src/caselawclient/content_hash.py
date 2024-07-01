@@ -23,9 +23,7 @@ def get_hashable_text(doc: bytes) -> bytes:
         "//akn:meta",
         namespaces={"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
     )
-    for (
-        metadata
-    ) in metadatas:  # there should be no more than one, but handle zero case gracefully
+    for metadata in metadatas:  # there should be no more than one, but handle zero case gracefully
         metadata.getparent().remove(metadata)
     text = "".join(root.itertext())
     spaceless = re.sub(r"\s", "", text)
@@ -57,6 +55,6 @@ def validate_content_hash(doc: bytes) -> str:
     hash_from_tag = get_hash_from_tag(doc)
     if hash_from_document != hash_from_tag:
         raise InvalidContentHashError(
-            f'Hash of existing tag is "{hash_from_tag}" but the hash of the document is "{hash_from_document}"'
+            f'Hash of existing tag is "{hash_from_tag}" but the hash of the document is "{hash_from_document}"',
         )
     return hash_from_document

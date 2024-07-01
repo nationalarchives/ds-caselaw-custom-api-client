@@ -27,7 +27,9 @@ class TestVerifyShowUnpublished(unittest.TestCase):
     def test_show_unpublished_if_authorised_and_asks_for_unpublished(self):
         # User can view unpublished and is asking to view unpublished judgments
         with patch.object(
-            self.client, "user_can_view_unpublished_judgments", return_value=True
+            self.client,
+            "user_can_view_unpublished_judgments",
+            return_value=True,
         ):
             result = self.client.verify_show_unpublished(True)
             assert result is True
@@ -39,7 +41,9 @@ class TestVerifyShowUnpublished(unittest.TestCase):
         of show_unpublished first
         """
         with patch.object(
-            self.client, "user_can_view_unpublished_judgments", return_value=True
+            self.client,
+            "user_can_view_unpublished_judgments",
+            return_value=True,
         ) as mock_client:
             result = self.client.verify_show_unpublished(False)
             mock_client.user_can_view_unpublished_judgments.assert_not_called()

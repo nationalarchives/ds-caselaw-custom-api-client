@@ -6,7 +6,8 @@ from caselawclient.search_parameters import SearchParameters
 
 
 def search_judgments_and_parse_response(
-    api_client: MarklogicApiClient, search_parameters: SearchParameters
+    api_client: MarklogicApiClient,
+    search_parameters: SearchParameters,
 ) -> SearchResponse:
     """
     Search for judgments using the given search parameters and parse the response into a SearchResponse object.
@@ -18,14 +19,15 @@ def search_judgments_and_parse_response(
     """
     return SearchResponse(
         etree.fromstring(
-            api_client.search_judgments_and_decode_response(search_parameters)
+            api_client.search_judgments_and_decode_response(search_parameters),
         ),
         api_client,
     )
 
 
 def search_and_parse_response(
-    api_client: MarklogicApiClient, search_parameters: SearchParameters
+    api_client: MarklogicApiClient,
+    search_parameters: SearchParameters,
 ) -> SearchResponse:
     """
     Search using the given search parameters and parse the response into a SearchResponse object.

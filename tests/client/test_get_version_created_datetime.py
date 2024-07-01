@@ -12,7 +12,7 @@ class TestGetVersionCreatedDatetime(unittest.TestCase):
     def test_get_version_created_datetime(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"

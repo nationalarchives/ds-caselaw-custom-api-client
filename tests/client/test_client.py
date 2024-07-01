@@ -6,8 +6,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 import responses
-from requests import Request
-
 from caselawclient.Client import (
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
@@ -15,6 +13,7 @@ from caselawclient.Client import (
     get_single_string_from_marklogic_response,
 )
 from caselawclient.errors import GatewayTimeoutError
+from requests import Request
 
 
 class TestErrors(unittest.TestCase):
@@ -38,14 +37,15 @@ class TestErrors(unittest.TestCase):
 class TestMarklogicResponseHandlers(unittest.TestCase):
     @patch("caselawclient.Client.decoder.MultipartDecoder.from_response")
     def test_get_multipart_strings_from_marklogic_response(
-        self, mock_multipart_decoder
+        self,
+        mock_multipart_decoder,
     ):
         mock_multipart_decoder.return_value.parts = (
             SimpleNamespace(text="string 1"),
             SimpleNamespace(text="string 2"),
         )
         assert get_multipart_strings_from_marklogic_response(
-            MagicMock(requests.Response)
+            MagicMock(requests.Response),
         ) == ["string 1", "string 2"]
 
     def test_get_multipart_strings_from_marklogic_response_if_no_content(self):
@@ -55,27 +55,24 @@ class TestMarklogicResponseHandlers(unittest.TestCase):
 
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
     def test_get_single_string_from_marklogic_response(
-        self, mock_multipart_strings_handler
+        self,
+        mock_multipart_strings_handler,
     ):
         mock_multipart_strings_handler.return_value = ["test string"]
-        assert (
-            get_single_string_from_marklogic_response(MagicMock(requests.Response))
-            == "test string"
-        )
+        assert get_single_string_from_marklogic_response(MagicMock(requests.Response)) == "test string"
 
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
     def test_get_single_string_from_marklogic_response_if_empty_set(
-        self, mock_multipart_strings_handler
+        self,
+        mock_multipart_strings_handler,
     ):
         mock_multipart_strings_handler.return_value = []
-        assert (
-            get_single_string_from_marklogic_response(MagicMock(requests.Response))
-            == ""
-        )
+        assert get_single_string_from_marklogic_response(MagicMock(requests.Response)) == ""
 
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
     def test_get_single_string_from_marklogic_response_if_multiple_strings(
-        self, mock_multipart_strings_handler
+        self,
+        mock_multipart_strings_handler,
     ):
         mock_multipart_strings_handler.return_value = [
             "test string",
@@ -92,7 +89,7 @@ class ApiClientTest(unittest.TestCase):
     @patch("caselawclient.Client.MarklogicApiClient._send_to_eval")
     def test_eval_and_decode(self, mock_eval):
         mock_eval.return_value.headers = {
-            "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+            "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
         }
         mock_eval.return_value.content = (
             b"\r\n--595658fa1db1aa98\r\n"
@@ -102,16 +99,15 @@ class ApiClientTest(unittest.TestCase):
             b"true\r\n"
             b"--595658fa1db1aa98--\r\n"
         )
-        assert (
-            self.client._eval_and_decode({"url": "/2029/eat/1"}, "myfile.xqy") == "true"
-        )
+        assert self.client._eval_and_decode({"url": "/2029/eat/1"}, "myfile.xqy") == "true"
 
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
     def test_document_exists(self, mock_decode):
         mock_decode.return_value = "true"
         assert self.client.document_exists("/2029/eat/1") is True
         mock_decode.assert_called_with(
-            {"uri": "/2029/eat/1.xml"}, "document_exists.xqy"
+            {"uri": "/2029/eat/1.xml"},
+            "document_exists.xqy",
         )
 
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
@@ -119,7 +115,8 @@ class ApiClientTest(unittest.TestCase):
         mock_decode.return_value = "false"
         assert self.client.document_exists("/2029/eat/1") is False
         mock_decode.assert_called_with(
-            {"uri": "/2029/eat/1.xml"}, "document_exists.xqy"
+            {"uri": "/2029/eat/1.xml"},
+            "document_exists.xqy",
         )
 
     @patch("caselawclient.Client.Path")
@@ -178,6 +175,6 @@ class ApiClientTest(unittest.TestCase):
 
     def test_user_agent(self):
         user_agent = self.client.session.prepare_request(
-            Request("GET", "http://example.invalid")
+            Request("GET", "http://example.invalid"),
         ).headers["user-agent"]
         assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", user_agent)

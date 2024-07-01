@@ -53,7 +53,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -72,7 +72,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = "my-content"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -85,14 +85,14 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
             )
             result = self.client.get_property("/judgment/uri", "my-property")
 
-            assert "my-content" == result
+            assert result == "my-content"
 
     def test_get_unset_property(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.content = ""
             result = self.client.get_property("/judgment/uri", "my-property")
 
-            assert "" == result
+            assert result == ""
 
     def test_set_property(self):
         with patch.object(self.client, "eval") as mock_eval:

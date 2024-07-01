@@ -31,7 +31,7 @@ class TestSearchAndDecodeResponse:
         """
         with patch.object(self.client, "advanced_search") as mock_advanced_search:
             mock_advanced_search.return_value = generate_mock_search_response(
-                valid_search_response_xml
+                valid_search_response_xml,
             )
 
             search_response = self.client.search_judgments_and_decode_response(
@@ -46,7 +46,7 @@ class TestSearchAndDecodeResponse:
                     date_to="2022-01-31",
                     page=1,
                     page_size=10,
-                )
+                ),
             )
 
             mock_advanced_search.assert_called_once_with(
@@ -65,7 +65,7 @@ class TestSearchAndDecodeResponse:
                     show_unpublished=False,
                     only_unpublished=False,
                     collections=["judgment"],
-                )
+                ),
             )
 
             assert search_response == valid_search_response_xml

@@ -12,7 +12,7 @@ class TestValidateDocument(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=c878f7cb55370005"
+                "content-type": "multipart/mixed; boundary=c878f7cb55370005",
             }
             mock_eval.return_value.content = (
                 b"\r\n--c878f7cb55370005\r\n"
@@ -29,7 +29,7 @@ class TestValidateDocument(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=c878f7cb55370005"
+                "content-type": "multipart/mixed; boundary=c878f7cb55370005",
             }
             mock_eval.return_value.content = (
                 b"\r\n--c878f7cb55370005\r\n"

@@ -1,9 +1,8 @@
 import glob
 
 import environ
+from caselawclient import Client
 from dotenv import load_dotenv
-
-import caselawclient.Client as Client
 
 load_dotenv()
 env = environ.Env()

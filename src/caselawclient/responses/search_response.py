@@ -31,7 +31,7 @@ class SearchResponse:
         :return: The total number of search results
         """
         return str(
-            self.node.xpath("//search:response/@total", namespaces=self.NAMESPACES)[0]
+            self.node.xpath("//search:response/@total", namespaces=self.NAMESPACES)[0],
         )
 
     @property
@@ -42,7 +42,8 @@ class SearchResponse:
         :return: The list of search results
         """
         results = self.node.xpath(
-            "//search:response/search:result", namespaces=self.NAMESPACES
+            "//search:response/search:result",
+            namespaces=self.NAMESPACES,
         )
         return [SearchResult(result, self.client) for result in results]
 
@@ -58,7 +59,5 @@ class SearchResponse:
             "//search:response/search:facet/search:facet-value",
             namespaces={"search": "http://marklogic.com/appservices/search"},
         )
-        facets_dictionary = {
-            result.attrib["name"]: result.attrib["count"] for result in results
-        }
+        facets_dictionary = {result.attrib["name"]: result.attrib["count"] for result in results}
         return facets_dictionary

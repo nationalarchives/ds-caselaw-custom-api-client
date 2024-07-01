@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import patch
 
 import pytest
-
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.search_parameters import SearchParameters
 
@@ -46,7 +45,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         "only_unpublished": "false",
                         "collections": "",
                         "quoted_phrases": [],
-                    }
+                    },
                 ),
             )
 
@@ -77,7 +76,7 @@ class TestAdvancedSearch(unittest.TestCase):
                     show_unpublished=False,
                     only_unpublished=False,
                     collections=[" foo ", "abc def", " bar"],
-                )
+                ),
             )
 
             self.client.invoke.assert_called_with(
@@ -99,7 +98,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         "only_unpublished": "false",
                         "collections": "foo,abcdef,bar",
                         "quoted_phrases": [],
-                    }
+                    },
                 ),
             )
 
@@ -130,7 +129,9 @@ class TestAdvancedSearch(unittest.TestCase):
         """
         with patch.object(self.client, "invoke") as mock_invoke:
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=True
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
             ):
                 self.client.advanced_search(
                     SearchParameters(
@@ -141,7 +142,7 @@ class TestAdvancedSearch(unittest.TestCase):
                         page=2,
                         page_size=20,
                         show_unpublished=False,
-                    )
+                    ),
                 )
 
                 expected_vars = {
@@ -163,7 +164,8 @@ class TestAdvancedSearch(unittest.TestCase):
                 }
 
                 mock_invoke.assert_called_with(
-                    "/judgments/search/search-v2.xqy", json.dumps(expected_vars)
+                    "/judgments/search/search-v2.xqy",
+                    json.dumps(expected_vars),
                 )
 
     def test_user_can_view_unpublished_and_show_unpublished_is_true(
@@ -177,7 +179,9 @@ class TestAdvancedSearch(unittest.TestCase):
         """
         with patch.object(self.client, "invoke"):
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=True
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
             ):
                 self.client.advanced_search(
                     SearchParameters(
@@ -188,11 +192,9 @@ class TestAdvancedSearch(unittest.TestCase):
                         page=2,
                         page_size=20,
                         show_unpublished=True,
-                    )
+                    ),
                 )
-                assert (
-                    '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
-                )
+                assert '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
 
     def test_user_cannot_view_unpublished_but_show_unpublished_is_true(
         self,
@@ -205,7 +207,9 @@ class TestAdvancedSearch(unittest.TestCase):
         """
         with patch.object(self.client, "invoke"):
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=False
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=False,
             ):
                 with patch.object(logging, "warning") as mock_logging:
                     self.client.advanced_search(
@@ -217,13 +221,10 @@ class TestAdvancedSearch(unittest.TestCase):
                             page=2,
                             page_size=20,
                             show_unpublished=True,
-                        )
+                        ),
                     )
 
-                    assert (
-                        '"show_unpublished": "false"'
-                        in self.client.invoke.call_args.args[1]
-                    )
+                    assert '"show_unpublished": "false"' in self.client.invoke.call_args.args[1]
                     mock_logging.assert_called()
 
     def test_no_page_0(self):
@@ -237,7 +238,7 @@ class TestAdvancedSearch(unittest.TestCase):
             self.client.advanced_search(
                 SearchParameters(
                     page=0,
-                )
+                ),
             )
 
             assert ', "page": 1,' in self.client.invoke.call_args.args[1]
