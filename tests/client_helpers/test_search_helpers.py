@@ -1,15 +1,15 @@
 from unittest.mock import Mock
 
-from lxml import etree
-
 from caselawclient.client_helpers.search_helpers import (
     search_judgments_and_parse_response,
 )
 from caselawclient.search_parameters import SearchParameters
+from lxml import etree
 
 
 def test_search_judgments_and_parse_results(
-    generate_search_response_xml, valid_search_result_xml
+    generate_search_response_xml,
+    valid_search_result_xml,
 ):
     """
     Given the search parameters for search_judgments_and_parse_response are valid
@@ -24,9 +24,7 @@ def test_search_judgments_and_parse_results(
     """
     mock_api_client = Mock()
     search_response_xml = generate_search_response_xml(2 * valid_search_result_xml)
-    mock_api_client.search_judgments_and_decode_response.return_value = (
-        search_response_xml
-    )
+    mock_api_client.search_judgments_and_decode_response.return_value = search_response_xml
 
     search_parameters = SearchParameters(
         query="test query",
@@ -42,13 +40,14 @@ def test_search_judgments_and_parse_results(
     )
 
     search_response = search_judgments_and_parse_response(
-        mock_api_client, search_parameters
+        mock_api_client,
+        search_parameters,
     )
 
     mock_api_client.search_judgments_and_decode_response.assert_called_once_with(
-        search_parameters
+        search_parameters,
     )
 
     assert etree.tostring(search_response.node) == etree.tostring(
-        etree.fromstring(search_response_xml)
+        etree.fromstring(search_response_xml),
     )

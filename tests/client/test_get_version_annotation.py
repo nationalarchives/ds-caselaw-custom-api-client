@@ -11,7 +11,7 @@ class TestGetVersionAnnotation(unittest.TestCase):
     def test_get_version_annotation(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -24,4 +24,4 @@ class TestGetVersionAnnotation(unittest.TestCase):
             )
             result = self.client.get_version_annotation("/judgment/uri")
 
-            assert "this is an annotation" == result
+            assert result == "this is an annotation"

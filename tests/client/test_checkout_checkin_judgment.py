@@ -31,7 +31,9 @@ class TestGetCheckoutStatus(unittest.TestCase):
     def test_checkout_judgment_with_timeout(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
-                self.client, "calculate_seconds_until_midnight", return_value=3600
+                self.client,
+                "calculate_seconds_until_midnight",
+                return_value=3600,
             ):
                 uri = "/ewca/civ/2004/632"
                 annotation = "locked by A KITTEN"
@@ -43,9 +45,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 }
                 self.client.checkout_judgment(uri, annotation, expires_at_midnight)
 
-                assert mock_eval.call_args.args[0] == (
-                    os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy")
-                )
+                assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"))
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_checkin_judgment(self):
@@ -54,9 +54,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             self.client.checkin_judgment(uri)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "checkin_judgment.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_get_checkout_status(self):
@@ -65,16 +63,14 @@ class TestGetCheckoutStatus(unittest.TestCase):
             expected_vars = {"uri": "/judgment/uri.xml"}
             self.client.get_judgment_checkout_status(uri)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "get_judgment_checkout_status.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_get_checkout_status_message(self):
         with patch.object(MarklogicApiClient, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -97,7 +93,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
         with patch.object(MarklogicApiClient, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -112,7 +108,8 @@ class TestGetCheckoutStatus(unittest.TestCase):
 
     def test_calculate_seconds_until_midnight(self):
         dt = datetime.strptime(
-            "2020-01-01 23:00", "%Y-%m-%d %H:%M"
+            "2020-01-01 23:00",
+            "%Y-%m-%d %H:%M",
         )  # 1 hour until midnight
         result = self.client.calculate_seconds_until_midnight(dt)
         expected_result = 3600  # 1 hour in seconds

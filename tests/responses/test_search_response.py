@@ -1,8 +1,7 @@
 import pytest
-from lxml import etree
-
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_response import SearchResponse
+from lxml import etree
 
 
 class TestSearchResponse:
@@ -25,9 +24,9 @@ class TestSearchResponse:
         """
         search_response = SearchResponse(
             etree.fromstring(
-                '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'  # noqa: E501
+                '<search:response xmlns:search="http://marklogic.com/appservices/search" total="5">'
                 "foo"
-                "</search:response>"
+                "</search:response>",
             ),
             self.client,
         )
@@ -54,10 +53,10 @@ class TestSearchResponse:
 
         assert len(results) == 2
         assert etree.tostring(results[0].node) == etree.tostring(
-            etree.fromstring(valid_search_result_xml)
+            etree.fromstring(valid_search_result_xml),
         )
         assert etree.tostring(results[1].node) == etree.tostring(
-            etree.fromstring(valid_search_result_xml)
+            etree.fromstring(valid_search_result_xml),
         )
 
     def test_when_search_namespace_prefix_not_defined_on_response_xml_syntax_error_raised(
@@ -69,7 +68,7 @@ class TestSearchResponse:
         Then a XMLSyntaxError with the expected message should be raised
         """
         xml_without_namespace = (
-            '<search:response xmlns:foo="http://marklogic.com/appservices/search" total="2">'  # noqa: E501
+            '<search:response xmlns:foo="http://marklogic.com/appservices/search" total="2">'
             "<search:result>Result 1</search:result>"
             "<search:result>Result 2</search:result>"
             "</search:response>"
@@ -95,8 +94,9 @@ class TestSearchResponse:
         search_response = SearchResponse(
             etree.fromstring(
                 generate_search_response_xml(
-                    valid_search_result_xml, valid_facets_fixture_xml
-                )
+                    valid_search_result_xml,
+                    valid_facets_fixture_xml,
+                ),
             ),
             self.client,
         )

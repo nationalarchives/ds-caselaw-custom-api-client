@@ -4,9 +4,8 @@ import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree
 
-import pytest
-
 import caselawclient.Client
+import pytest
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError
@@ -38,7 +37,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         "automated": False,
                         "message": "test_update_document_xml",
                         "payload": {"test_payload": True},
-                    }
+                    },
                 ),
             }
             self.client.update_document_xml(
@@ -52,9 +51,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 ),
             )
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "update_document.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "update_document.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_save_locked_judgment_xml(self):
@@ -79,7 +76,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                             "automated": True,
                             "message": "test_save_locked_judgment_xml",
                             "payload": {"test_payload": True},
-                        }
+                        },
                     ),
                 }
                 self.client.save_locked_judgment_xml(
@@ -93,9 +90,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     ),
                 )
 
-                assert mock_eval.call_args.args[0] == (
-                    os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy")
-                )
+                assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy"))
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_save_locked_judgment_xml_checks_content_hash(self):
@@ -105,7 +100,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         Then the error is raised.
         """
         with patch.object(
-            caselawclient.Client, "validate_content_hash"
+            caselawclient.Client,
+            "validate_content_hash",
         ) as mock_validate_hash:
             uri = "/ewca/civ/2004/632"
             judgment_str = "<root>My updated judgment</root>"
@@ -139,7 +135,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         "automated": False,
                         "message": "test_insert_document_xml",
                         "payload": {"test_payload": True},
-                    }
+                    },
                 ),
             }
             self.client.insert_document_xml(
@@ -153,9 +149,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 ),
             )
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "insert_document.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "insert_document.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_delete_document(self):
@@ -166,9 +160,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             self.client.delete_judgment(uri)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "delete_judgment.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_copy_document(self):
@@ -181,7 +173,5 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             }
             self.client.copy_document(old_uri, new_uri)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "copy_document.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "copy_document.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

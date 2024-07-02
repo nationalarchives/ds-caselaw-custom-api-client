@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import Any, Literal, Optional, TypedDict, Union, overload
+from typing import Any, Literal, Optional, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -37,7 +37,7 @@ def create_aws_client(service: Literal["s3"]) -> S3Client: ...
 def create_aws_client(service: Literal["sns"]) -> SNSClient: ...
 
 
-def create_aws_client(service: Union[Literal["s3"], Literal["sns"]]) -> Any:
+def create_aws_client(service: Literal["s3", "sns"]) -> Any:
     aws = boto3.session.Session(
         aws_access_key_id=env("AWS_ACCESS_KEY_ID", default=None),
         aws_secret_access_key=env("AWS_SECRET_KEY", default=None),
@@ -73,8 +73,9 @@ def generate_signed_asset_url(key: str) -> str:
 
     return str(
         client.generate_presigned_url(
-            "get_object", Params={"Bucket": bucket, "Key": key}
-        )
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+        ),
     )
 
 
@@ -113,9 +114,7 @@ def delete_from_bucket(uri: str, bucket: str) -> None:
     response = client.list_objects(Bucket=bucket, Prefix=uri)
 
     if response.get("Contents"):
-        objects_to_delete: list[ObjectIdentifierTypeDef] = [
-            {"Key": obj["Key"]} for obj in response.get("Contents", [])
-        ]
+        objects_to_delete: list[ObjectIdentifierTypeDef] = [{"Key": obj["Key"]} for obj in response.get("Contents", [])]
         client.delete_objects(
             Bucket=bucket,
             Delete={
@@ -147,7 +146,7 @@ def publish_documents(uri: str) -> None:
                 client.copy(source, public_bucket, key, extra_args)
             except botocore.client.ClientError as e:
                 logging.warning(
-                    f"Unable to copy file {key} to new location {public_bucket}, error: {e}"
+                    f"Unable to copy file {key} to new location {public_bucket}, error: {e}",
                 )
 
 
@@ -207,7 +206,7 @@ def copy_assets(old_uri: str, new_uri: str) -> None:
             client.copy(source, bucket, new_key)
         except botocore.client.ClientError as e:
             logging.warning(
-                f"Unable to copy file {old_key} to new location {new_key}, error: {e}"
+                f"Unable to copy file {old_key} to new location {new_key}, error: {e}",
             )
 
 
@@ -236,9 +235,7 @@ def request_parse(
     message_to_send = {
         "properties": {
             "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
-            "timestamp": datetime.datetime.now(datetime.timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z"),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
             "function": "fcl-judgment-parse-request",
             "producer": "FCL",
             "executionId": str(uuid.uuid4()),

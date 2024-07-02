@@ -31,7 +31,7 @@ def get_element(
 ) -> Element:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
-        "Use methods from MarklogicApiClient.Client instead."
+        "Use methods from MarklogicApiClient.Client instead.",
     )
     name = xml.find(
         xpath,
@@ -58,7 +58,7 @@ def get_neutral_citation_name_value(xml: ElementTree) -> Optional[str]:
 def get_judgment_date_element(xml: ElementTree) -> Element:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
-        "Use methods from MarklogicApiClient.Client instead."
+        "Use methods from MarklogicApiClient.Client instead.",
     )
     name = xml.find(
         ".//akn:FRBRWork/akn:FRBRdate",
@@ -102,7 +102,7 @@ def get_metadata_name_value(xml: ElementTree) -> str:
 def get_search_matches(element: ElementTree) -> List[str]:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
-        "Use methods from MarklogicApiClient.Client instead."
+        "Use methods from MarklogicApiClient.Client instead.",
     )
     nodes = element.findall(".//search:match", namespaces=search_namespace)
     results = []
@@ -115,14 +115,15 @@ def get_search_matches(element: ElementTree) -> List[str]:
 def get_error_code(content_as_xml: Optional[str]) -> str:
     logging.warning(
         "XMLTools is deprecated and will be removed in later versions. "
-        "Use methods from MarklogicApiClient.Client instead."
+        "Use methods from MarklogicApiClient.Client instead.",
     )
     if not content_as_xml:
         return "Unknown error, Marklogic returned a null or empty response"
     try:
         xml = fromstring(content_as_xml)
         return xml.find(
-            "message-code", namespaces={"": "http://marklogic.com/xdmp/error"}
+            "message-code",
+            namespaces={"": "http://marklogic.com/xdmp/error"},
         ).text  # type: ignore
     except (ParseError, TypeError, AttributeError):
         return "Unknown error, Marklogic returned a null or empty response"

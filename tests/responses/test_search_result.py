@@ -2,9 +2,6 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-from ds_caselaw_utils.courts import Court
-from lxml import etree
-
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_result import (
     EditorPriority,
@@ -12,6 +9,8 @@ from caselawclient.responses.search_result import (
     SearchResult,
     SearchResultMetadata,
 )
+from ds_caselaw_utils.courts import Court
+from lxml import etree
 
 
 class TestSearchResult:
@@ -32,7 +31,8 @@ class TestSearchResult:
         """
         with (
             patch.object(
-                self.client, "get_properties_for_search_results"
+                self.client,
+                "get_properties_for_search_results",
             ) as mock_get_properties_for_search_results,
             patch.object(self.client, "get_last_modified") as mock_get_last_modified,
         ):
@@ -112,10 +112,7 @@ class TestSearchResult:
         search_result = SearchResult(node, self.client)
 
         assert isinstance(search_result.court, Court)
-        assert (
-            search_result.court.name
-            == "First-tier Tribunal (General Regulatory Chamber) – Information Rights"
-        )
+        assert search_result.court.name == "First-tier Tribunal (General Regulatory Chamber) – Information Rights"
 
     def test_create_from_node_with_invalid_court_code(self):
         """
@@ -153,10 +150,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
 
-        assert (
-            search_result.court.name
-            == "First-tier Tribunal (General Regulatory Chamber)"
-        )
+        assert search_result.court.name == "First-tier Tribunal (General Regulatory Chamber)"
 
 
 class TestSearchResultMeta:
@@ -178,7 +172,7 @@ class TestSearchResultMeta:
             "<published>true</published>"
             "<transfer-received-at>2023-01-26T14:17:02Z</transfer-received-at>"
             "</property-result>"
-            "</property-results>"
+            "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
 
@@ -199,10 +193,7 @@ class TestSearchResultMeta:
         THEN all properties are set correctly
         """
         node = etree.fromstring(
-            "<property-results>"
-            "<property-result>"
-            "</property-result>"
-            "</property-results>"
+            "<property-results>" "<property-result>" "</property-result>" "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
 
@@ -230,7 +221,11 @@ class TestSearchResultMeta:
         ],
     )
     def test_editor_status(
-        self, published_string, assigned_to, editor_hold, expected_editor_status
+        self,
+        published_string,
+        assigned_to,
+        editor_hold,
+        expected_editor_status,
     ):
         """
         GIVEN editor_hold and assigned_to values
@@ -244,7 +239,7 @@ class TestSearchResultMeta:
             f"<editor-hold>{editor_hold}</editor-hold>"
             f"<published>{published_string}</published>"
             "</property-result>"
-            "</property-results>"
+            "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="foo")
 
@@ -262,7 +257,7 @@ class TestSearchResultMeta:
             "<property-result>"
             "<transfer-received-at></transfer-received-at>"
             "</property-result>"
-            "</property-results>"
+            "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="foo")
 

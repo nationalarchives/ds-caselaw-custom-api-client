@@ -1,30 +1,25 @@
 exclude: "src/caselawclient/xquery"
-default_stages: [commit]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-xml
       - id: check-yaml
+      - id: end-of-file-fixer
+      - id: forbid-submodules
+      - id: mixed-line-ending
+      - id: no-commit-to-branch
+      - id: trailing-whitespace
 
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
     hooks:
-      - id: black
-
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.0
-    hooks:
-      - id: flake8
-        args: ["--config=setup.cfg"]
+      - id: ruff-format
 
   - repo: local
     hooks:
@@ -39,7 +34,8 @@ repos:
     hooks:
       - id: mypy
         name: mypy-src
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+        additional_dependencies:
+          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^src/
         args: ["--strict"]
 
@@ -49,11 +45,12 @@ repos:
     hooks:
       - id: mypy
         name: mypy-tests
-        additional_dependencies: [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+        additional_dependencies:
+          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^tests/
 
-# sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
-ci:
-  autoupdate_schedule: weekly
-  skip: []
-  submodules: false
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [yaml, json, xml, markdown, scss, javascript]

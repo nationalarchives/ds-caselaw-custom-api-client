@@ -99,7 +99,8 @@ class SearchResultMetadata:
         """
 
         return self._get_xpath_match_string(
-            "//editor-priority/text()", EditorPriority.MEDIUM.value
+            "//editor-priority/text()",
+            EditorPriority.MEDIUM.value,
         )
 
     @property
@@ -109,7 +110,7 @@ class SearchResultMetadata:
         """
 
         extracted_submission_datetime = self._get_xpath_match_string(
-            "//transfer-received-at/text()"
+            "//transfer-received-at/text()",
         )
         return (
             datetime.strptime(extracted_submission_datetime, "%Y-%m-%dT%H:%M:%SZ")
@@ -164,7 +165,7 @@ class SearchResult:
         """
 
         return DocumentURIString(
-            self._get_xpath_match_string("@uri").lstrip("/").split(".xml")[0]
+            self._get_xpath_match_string("@uri").lstrip("/").split(".xml")[0],
         )
 
     @property
@@ -174,7 +175,7 @@ class SearchResult:
         """
 
         return self._get_xpath_match_string(
-            "search:extracted/uk:cite/text()"
+            "search:extracted/uk:cite/text()",
         ) or self._get_xpath_match_string("search:extracted/akn:neutralCitation/text()")
 
     @property
@@ -195,7 +196,7 @@ class SearchResult:
         court = None
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
         jurisdiction_code = self._get_xpath_match_string(
-            "search:extracted/uk:jurisdiction/text()"
+            "search:extracted/uk:jurisdiction/text()",
         )
         if jurisdiction_code:
             court_code_with_jurisdiction = "%s/%s" % (court_code, jurisdiction_code)
@@ -204,7 +205,7 @@ class SearchResult:
             except CourtNotFoundException:
                 logging.warning(
                     "Court not found with court code %s and jurisdiction code %s for judgment with NCN %s, falling back to court."
-                    % (court_code, jurisdiction_code, self.neutral_citation)
+                    % (court_code, jurisdiction_code, self.neutral_citation),
                 )
         if court is None:
             try:
@@ -212,7 +213,7 @@ class SearchResult:
             except CourtNotFoundException:
                 logging.warning(
                     "Court not found with court code %s for judgment with NCN %s, returning None."
-                    % (court_code, self.neutral_citation)
+                    % (court_code, self.neutral_citation),
                 )
                 court = None
         return court
@@ -224,13 +225,13 @@ class SearchResult:
         """
 
         date_string = self._get_xpath_match_string(
-            "search:extracted/akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+            "search:extracted/akn:FRBRdate[(@name='judgment' or @name='decision')]/@date",
         )
         try:
             date = dateparser.parse(date_string)
         except ParserError as e:
             logging.warning(
-                f'Unable to parse document date "{date_string}". Full error: {e}'
+                f'Unable to parse document date "{date_string}". Full error: {e}',
             )
             date = None
         return date
@@ -242,7 +243,7 @@ class SearchResult:
         """
 
         return self._get_xpath_match_string(
-            "search:extracted/akn:FRBRdate[@name='transform']/@date"
+            "search:extracted/akn:FRBRdate[@name='transform']/@date",
         )
 
     @property

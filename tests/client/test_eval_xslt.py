@@ -16,7 +16,9 @@ class TestEvalXslt(unittest.TestCase):
     def test_eval_xslt_user_can_view_unpublished(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=True
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
             ):
                 uri = "/judgment/uri"
                 expected_vars: XsltTransformDict = {
@@ -29,9 +31,7 @@ class TestEvalXslt(unittest.TestCase):
                 }
                 self.client.eval_xslt(uri, show_unpublished=True)
 
-                assert mock_eval.call_args.args[0] == (
-                    os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
-                )
+                assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"))
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
@@ -56,11 +56,9 @@ class TestEvalXslt(unittest.TestCase):
                     }
                     self.client.eval_xslt(uri, show_unpublished=True)
 
-                    assert mock_eval.call_args.args[0] == (
-                        os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
-                    )
+                    assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"))
                     assert mock_eval.call_args.kwargs["vars"] == json.dumps(
-                        expected_vars
+                        expected_vars,
                     )
                     mock_logging.assert_called()
 
@@ -68,7 +66,9 @@ class TestEvalXslt(unittest.TestCase):
     def test_eval_xslt_with_filename(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=True
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
             ):
                 uri = "/judgment/uri"
                 expected_vars: XsltTransformDict = {
@@ -80,19 +80,21 @@ class TestEvalXslt(unittest.TestCase):
                     "query": None,
                 }
                 self.client.eval_xslt(
-                    uri, show_unpublished=True, xsl_filename="as-handed-down.xsl"
+                    uri,
+                    show_unpublished=True,
+                    xsl_filename="as-handed-down.xsl",
                 )
 
-                assert mock_eval.call_args.args[0] == (
-                    os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
-                )
+                assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"))
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_with_query(self):
         with patch.object(self.client, "eval") as mock_eval:
             with patch.object(
-                self.client, "user_can_view_unpublished_judgments", return_value=True
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
             ):
                 uri = "/judgment/uri"
                 query = "the query string"
@@ -111,8 +113,6 @@ class TestEvalXslt(unittest.TestCase):
                     query=query,
                 )
 
-                assert mock_eval.call_args.args[0] == (
-                    os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy")
-                )
+                assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "xslt_transform.xqy"))
 
                 assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

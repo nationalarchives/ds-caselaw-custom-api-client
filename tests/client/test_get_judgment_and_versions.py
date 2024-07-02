@@ -14,7 +14,7 @@ class TestGetJudgment(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.text = "true"
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--6bfe89fc4493c0e3\r\n"
@@ -46,9 +46,7 @@ class TestGetJudgment(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml", "version": "3"}
             self.client.get_judgment_version(uri, version)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "get_judgment_version.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_list_judgment_versions(self):
@@ -57,7 +55,5 @@ class TestGetJudgment(unittest.TestCase):
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             self.client.list_judgment_versions(uri)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "list_judgment_versions.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)

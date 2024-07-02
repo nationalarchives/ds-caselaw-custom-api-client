@@ -17,15 +17,13 @@ class TestUserRoles(unittest.TestCase):
             expected_vars = {"user": "laura", "role": "admin"}
             self.client.user_has_role(user, role)
 
-            assert mock_eval.call_args.args[0] == (
-                os.path.join(ROOT_DIR, "xquery", "user_has_role.xqy")
-            )
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "user_has_role.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_user_has_admin_role_true(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"
@@ -40,7 +38,7 @@ class TestUserRoles(unittest.TestCase):
     def test_user_has_admin_role_false(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.headers = {
-                "content-type": "multipart/mixed; boundary=595658fa1db1aa98"
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
             }
             mock_eval.return_value.content = (
                 b"\r\n--595658fa1db1aa98\r\n"

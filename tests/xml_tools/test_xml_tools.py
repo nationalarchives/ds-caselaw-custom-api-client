@@ -3,7 +3,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
-import caselawclient.xml_tools as xml_tools
+from caselawclient import xml_tools
 
 
 class XmlToolsTests(unittest.TestCase):
@@ -66,7 +66,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_element(xml)
         self.assertEqual(
-            result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}cite"
+            result.tag,
+            "{https://caselaw.nationalarchives.gov.uk/akn}cite",
         )
         self.assertEqual(result.text, "[2022] EWHC 482 (QB)")
 
@@ -113,7 +114,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_element(xml)
         self.assertEqual(
-            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
+            result.tag,
+            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname",
         )
         self.assertEqual(result.attrib, {"value": "My Judgment Name"})
 
@@ -130,7 +132,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_element(xml)
         self.assertEqual(
-            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
+            result.tag,
+            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname",
         )
         self.assertEqual(result.attrib, {"value": ""})
 
@@ -186,7 +189,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_element(xml)
         self.assertEqual(
-            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
+            result.tag,
+            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate",
         )
         self.assertEqual(result.attrib, {"date": "2022-03-10", "name": "judgment"})
 
@@ -206,7 +210,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_element(xml)
         self.assertEqual(
-            result.tag, "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
+            result.tag,
+            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate",
         )
         self.assertEqual(result.attrib, {"date": "", "name": "judgment"})
 
@@ -253,7 +258,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_element(xml)
         self.assertEqual(
-            result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}court"
+            result.tag,
+            "{https://caselaw.nationalarchives.gov.uk/akn}court",
         )
         self.assertEqual(result.text, "EWHC-QBD")
 
@@ -270,7 +276,8 @@ class XmlToolsTests(unittest.TestCase):
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_element(xml)
         self.assertEqual(
-            result.tag, "{https://caselaw.nationalarchives.gov.uk/akn}court"
+            result.tag,
+            "{https://caselaw.nationalarchives.gov.uk/akn}court",
         )
         self.assertEqual(result.text, None)
 
@@ -322,21 +329,24 @@ class XmlToolsTests(unittest.TestCase):
         """
         result = xml_tools.get_error_code(xml_string)
         self.assertEqual(
-            result, "Unknown error, Marklogic returned a null or empty response"
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
         )
 
     def test_get_error_code_xml_empty_string(self):
         xml_string = ""
         result = xml_tools.get_error_code(xml_string)
         self.assertEqual(
-            result, "Unknown error, Marklogic returned a null or empty response"
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
         )
 
     def test_get_error_code_xml_none(self):
         xml_string = None
         result = xml_tools.get_error_code(xml_string)
         self.assertEqual(
-            result, "Unknown error, Marklogic returned a null or empty response"
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
         )
 
     def test_deprecation_warning(self):
@@ -357,5 +367,5 @@ class XmlToolsTests(unittest.TestCase):
             self.assertEqual(result, "My Judgment Name")
             mock_logging.assert_called_with(
                 "XMLTools is deprecated and will be removed in later versions. "
-                "Use methods from MarklogicApiClient.Client instead."
+                "Use methods from MarklogicApiClient.Client instead.",
             )

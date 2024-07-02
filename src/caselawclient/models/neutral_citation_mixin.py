@@ -19,21 +19,18 @@ class NeutralCitationMixin:
     """
 
     def __init__(self, document_noun: str, *args: Any, **kwargs: Any) -> None:
-        self.attributes_to_validate: list[tuple[str, bool, str]] = (
-            self.attributes_to_validate
-            + [
-                (
-                    "has_ncn",
-                    True,
-                    f"This {document_noun} has no neutral citation number",
-                ),
-                (
-                    "has_valid_ncn",
-                    True,
-                    f"The neutral citation number of this {document_noun} is not valid",
-                ),
-            ]
-        )
+        self.attributes_to_validate: list[tuple[str, bool, str]] = self.attributes_to_validate + [
+            (
+                "has_ncn",
+                True,
+                f"This {document_noun} has no neutral citation number",
+            ),
+            (
+                "has_valid_ncn",
+                True,
+                f"The neutral citation number of this {document_noun} is not valid",
+            ),
+        ]
 
         super(NeutralCitationMixin, self).__init__(*args, **kwargs)
 

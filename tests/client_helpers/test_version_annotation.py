@@ -1,5 +1,4 @@
 import pytest
-
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 
 
@@ -34,10 +33,7 @@ class TestVersionAnnotation:
         with pytest.raises(AttributeError) as e:
             annotation.structured_annotation_dict
 
-        assert (
-            str(e.value)
-            == "The name of the calling function has not been set; use set_calling_function()"
-        )
+        assert str(e.value) == "The name of the calling function has not been set; use set_calling_function()"
 
     def test_structured_annotation_dict_raises_on_no_calling_agent(self):
         annotation = VersionAnnotation(
@@ -50,7 +46,4 @@ class TestVersionAnnotation:
         with pytest.raises(AttributeError) as e:
             annotation.structured_annotation_dict
 
-        assert (
-            str(e.value)
-            == "The name of the calling agent has not been set; use set_calling_agent()"
-        )
+        assert str(e.value) == "The name of the calling agent has not been set; use set_calling_agent()"

@@ -12,7 +12,10 @@ class TestGetPressSummariesForDocumentUri(TestCase):
     @patch("caselawclient.Client.MarklogicApiClient._send_to_eval")
     @patch("caselawclient.Client.get_multipart_strings_from_marklogic_response")
     def test_get_press_summaries_for_document_uri(
-        self, mock_get_marklogic_response, mock_eval, mock_press_summary
+        self,
+        mock_get_marklogic_response,
+        mock_eval,
+        mock_press_summary,
     ):
         mock_eval.return_value = "EVAL"
         mock_get_marklogic_response.return_value = ["/foo/bar/baz/1", "/foo/bar/baz/2"]

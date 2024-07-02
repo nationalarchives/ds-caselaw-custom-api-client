@@ -12,3 +12,4 @@ __pycache__
 __pypackages__
 .coverage
 .gradle
+node_modules/

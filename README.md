@@ -54,12 +54,12 @@ to main alone will **not** trigger a release to PyPI.
 To create a release:
 
 0. Update the version number in `pyproject.toml`
-0. Create a branch `release/v{major}.{minor}.{patch}`
-0. Update `CHANGELOG.md` for the release
-0. Commit and push
-0. Open a PR from that branch to main
-0. Get approval on the PR
-0. Merge the PR to main and push
-0. Tag the merge commit on `main` with `v{major}.{minor}.{patch}` and push the tag
-0. Create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
-using the created tag
+1. Create a branch `release/v{major}.{minor}.{patch}`
+2. Update `CHANGELOG.md` for the release
+3. Commit and push
+4. Open a PR from that branch to main
+5. Get approval on the PR
+6. Merge the PR to main and push
+7. Tag the merge commit on `main` with `v{major}.{minor}.{patch}` and push the tag
+8. Create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
+   using the created tag

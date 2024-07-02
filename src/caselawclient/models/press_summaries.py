@@ -40,16 +40,13 @@ class PressSummary(NeutralCitationMixin, Document):
         return self.neutral_citation
 
     @cached_property
-    def linked_document(self) -> Optional["Judgment"]:
+    def linked_document(self) -> Optional[Judgment]:
         """
         Attempt to fetch a linked judgement, and return it, if it exists
         """
         try:
             uri = self.uri.removesuffix("/press-summary/1")
-            Judgment = getattr(
-                importlib.import_module("caselawclient.models.judgments"),
-                "Judgment",
-            )
+            Judgment = importlib.import_module("caselawclient.models.judgments").Judgment
             return Judgment(uri, self.api_client)  # type: ignore
         except DocumentNotFoundError:
             return None

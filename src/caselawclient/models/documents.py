@@ -71,19 +71,13 @@ CourtIdentifierString = NewType("CourtIdentifierString", str)
 class CannotPublishUnpublishableDocument(Exception):
     """A document which has failed publication safety checks in `Document.is_publishable` cannot be published."""
 
-    pass
-
 
 class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
 
-    pass
-
 
 class NonXMLDocumentError(Exception):
     """A document cannot be parsed as XML."""
-
-    pass
 
 
 class Document:
@@ -154,8 +148,9 @@ class Document:
 
         self.xml = self.XML(
             xml_bytestring=self.api_client.get_judgment_xml_bytestring(
-                self.uri, show_unpublished=True
-            )
+                self.uri,
+                show_unpublished=True,
+            ),
         )
 
     def __repr__(self) -> str:
@@ -187,7 +182,7 @@ class Document:
         """
         :return: The absolute, public URI at which a copy of this document can be found
         """
-        return "https://caselaw.nationalarchives.gov.uk/{uri}".format(uri=self.uri)
+        return f"https://caselaw.nationalarchives.gov.uk/{self.uri}"
 
     @cached_property
     def name(self) -> str:
@@ -236,7 +231,8 @@ class Document:
             return None
         try:
             return datetime.datetime.strptime(
-                self.document_date_as_string, "%Y-%m-%d"
+                self.document_date_as_string,
+                "%Y-%m-%d",
             ).date()
         except ValueError:
             warnings.warn(
@@ -246,7 +242,8 @@ class Document:
             return None
 
     def get_manifestation_datetimes(
-        self, name: Optional[str] = None
+        self,
+        name: Optional[str] = None,
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
         iso_datetimes = self.xml.get_xpath_match_strings(
@@ -257,7 +254,8 @@ class Document:
         return [datetime.datetime.fromisoformat(event) for event in iso_datetimes]
 
     def get_latest_manifestation_datetime(
-        self, name: Optional[str] = None
+        self,
+        name: Optional[str] = None,
     ) -> Optional[datetime.datetime]:
         events = self.get_manifestation_datetimes(name)
         if not events:
@@ -347,7 +345,7 @@ class Document:
         """
         if self.is_version:
             raise NotSupportedOnVersion(
-                "Cannot get versions of a version for {self.uri}"
+                "Cannot get versions of a version for {self.uri}",
             )
         docs = []
         for version in self.versions:
@@ -364,7 +362,7 @@ class Document:
         version = extract_version(self.uri)
         if version == 0:
             raise OnlySupportedOnVersion(
-                f"Version number requested for {self.uri} which is not a version"
+                f"Version number requested for {self.uri} which is not a version",
             )
         return version
 
@@ -384,7 +382,10 @@ class Document:
     ) -> str:
         try:
             results = self.api_client.eval_xslt(
-                self.uri, version_uri, show_unpublished=True, query=query
+                self.uri,
+                version_uri,
+                show_unpublished=True,
+                query=query,
             )
             multipart_data = decoder.MultipartDecoder.from_response(results)
             return str(multipart_data.parts[0].text)
@@ -449,7 +450,7 @@ class Document:
     def has_valid_court(self) -> bool:
         try:
             return bool(
-                courts.get_by_code(self.court_and_jurisdiction_identifier_string)
+                courts.get_by_code(self.court_and_jurisdiction_identifier_string),
             )
         except CourtNotFoundException:
             return False
@@ -495,7 +496,9 @@ class Document:
         """
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(
-            self.uri, "last_sent_to_enrichment", now.isoformat()
+            self.uri,
+            "last_sent_to_enrichment",
+            now.isoformat(),
         )
 
         announce_document_event(
@@ -590,7 +593,7 @@ class Document:
             self.api_client.delete_judgment(self.uri)
             delete_documents_from_private_bucket(self.uri)
         else:
-            raise DocumentNotSafeForDeletion()
+            raise DocumentNotSafeForDeletion
 
     def overwrite(self, new_citation: str) -> None:
         self.api_client.overwrite_document(self.uri, new_citation)
@@ -604,14 +607,8 @@ class Document:
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
-        parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[
-            self.document_noun
-        ]
-        checked_date = (
-            self.document_date_as_string
-            if self.document_date_as_string > "1001"
-            else None
-        )
+        parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[self.document_noun]
+        checked_date = self.document_date_as_string if self.document_date_as_string > "1001" else None
 
         # the keys of parser_instructions should exactly match the parser output
         # in the *-metadata.json files by the parser. Whilst typically empty
@@ -682,6 +679,8 @@ class Document:
             return get_xpath_match_string(self.xml_as_tree, xpath, namespaces)
 
         def get_xpath_match_strings(
-            self, xpath: str, namespaces: Dict[str, str]
+            self,
+            xpath: str,
+            namespaces: Dict[str, str],
         ) -> list[str]:
             return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)

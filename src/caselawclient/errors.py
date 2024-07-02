@@ -60,13 +60,12 @@ class MarklogicValidationFailedError(MarklogicAPIError):
 
 class MarklogicCommunicationError(MarklogicAPIError):
     status_code = 500
-    default_message = (
-        "Something unexpected happened when communicating with the Marklogic server."
-    )
+    default_message = "Something unexpected happened when communicating with the Marklogic server."
 
 
 class GatewayTimeoutError(MarklogicAPIError):
     "This will not contain XML, because it is a failure to connect to the Marklogic server."
+
     status_code = 504
     default_message = "The gateway to MarkLogic timed out."
 
@@ -74,9 +73,7 @@ class GatewayTimeoutError(MarklogicAPIError):
 class InvalidContentHashError(MarklogicAPIError):
     # This error does not come from Marklogic, but is an error raised by this API...
     status_code = 422
-    default_message = (
-        "The content hash in the document did not match the hash of the content"
-    )
+    default_message = "The content hash in the document did not match the hash of the content"
 
 
 class DocumentNotFoundError(MarklogicAPIError):

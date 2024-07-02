@@ -79,12 +79,12 @@ class VersionAnnotation:
         """
         if not self.calling_function:
             raise AttributeError(
-                "The name of the calling function has not been set; use set_calling_function()"
+                "The name of the calling function has not been set; use set_calling_function()",
             )
 
         if not self.calling_agent:
             raise AttributeError(
-                "The name of the calling agent has not been set; use set_calling_agent()"
+                "The name of the calling agent has not been set; use set_calling_agent()",
             )
 
         annotation_data: AnnotationDataDict = {
