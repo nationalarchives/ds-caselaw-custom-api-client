@@ -48,3 +48,9 @@ repos:
         additional_dependencies:
           [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
         files: ^tests/
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [yaml, json, xml, markdown, scss, javascript]
