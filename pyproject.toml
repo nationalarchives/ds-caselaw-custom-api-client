@@ -25,6 +25,8 @@ boto3 = "^1.26.112"
 typing-extensions = "^4.7.1"
 mypy-boto3-s3 = "^1.26.104"
 mypy-boto3-sns = "^1.26.69"
+pytz = "^2024.1"
+python-dateutil = "^2.9.0.post0"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"

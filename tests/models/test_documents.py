@@ -4,6 +4,7 @@ import os
 from unittest.mock import PropertyMock, patch
 
 import pytest
+import pytz
 import time_machine
 from caselawclient.errors import (
     DocumentNotFoundError,

@@ -3,6 +3,7 @@ import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
 
+import pytz
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from lxml import etree
@@ -10,6 +11,7 @@ from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.models.utilities import extract_version
+from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from ..errors import (
     DocumentNotFoundError,
@@ -251,7 +253,8 @@ class Document:
             f"/akn:FRBRdate{name_filter}/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
-        return [datetime.datetime.fromisoformat(event) for event in iso_datetimes]
+
+        return [parse_string_date_as_utc(event, pytz.UTC) for event in iso_datetimes]
 
     def get_latest_manifestation_datetime(
         self,
@@ -530,9 +533,13 @@ class Document:
         """
         Has this document been enriched recently?
         """
+
         last_enrichment = self.enrichment_datetime
+        if not last_enrichment:
+            return False
+
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        if last_enrichment and now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
+        if now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
             return True
         return False
 

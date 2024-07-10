@@ -35,7 +35,12 @@ repos:
       - id: mypy
         name: mypy-src
         additional_dependencies:
-          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+          [
+            types-requests,
+            "boto3-stubs[s3,sns]",
+            "types-python-dateutil",
+            "types-pytz",
+          ]
         files: ^src/
         args: ["--strict"]
 
@@ -46,7 +51,12 @@ repos:
       - id: mypy
         name: mypy-tests
         additional_dependencies:
-          [types-requests, "boto3-stubs[s3,sns]", "types-python-dateutil"]
+          [
+            types-requests,
+            "boto3-stubs[s3,sns]",
+            "types-python-dateutil",
+            "types-pytz",
+          ]
         files: ^tests/
 
   - repo: https://github.com/pre-commit/mirrors-prettier
