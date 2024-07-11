@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+## [Release 24.0.0]
+
+- Always set last sent date to parser, even on failed parses
+- [FCL-176] Tooling configuration audit
+- [FCL-195] Skip pre-commit branch check in CI
+- Make enrichment date maths not care about timezones
+
 ## [Release 23.0.2]
 
 - Remove explicit urllib3 v1 dependency, rely on implicit dependency only
@@ -463,7 +470,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.2...HEAD
+[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.0...HEAD
+[Release 24.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.0...v24.0.0
 [Release 23.0.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.1...v23.0.2
 [Release 23.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.1.0...v23.0.1
 [Release 22.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.0.1...v22.1.0
