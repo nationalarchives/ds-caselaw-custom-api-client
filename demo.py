@@ -30,7 +30,7 @@ raw_bytes = Client.get_single_bytestring_from_marklogic_response(
 )
 root = lxml.html.fromstring(raw_bytes)
 print(raw_bytes)
-links = root.xpath("//ref[contains(@href, 'caselaw')]", namespaces=namespaces)
+links = root.xpath("//ref[contains(@href, '')]", namespaces=namespaces)
 for link in links:
     link.tail = ""
     print(lxml.html.tostring(link))
