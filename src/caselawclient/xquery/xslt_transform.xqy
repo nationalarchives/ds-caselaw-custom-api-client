@@ -53,7 +53,16 @@ let $tag-existing-caselaw-transform :=  <xsl:stylesheet xmlns:xsl="http://www.w3
     <xsl:param name="existingcaselaw" as="xs:string*" select="()" />
 
     <xsl:template match="ref">
-      <xsl:variable name="exists" select="if(./@href=$existingcaselaw) then 'yes' else 'no'"/>
+      <xsl:param name="exists">
+      <xsl:choose>
+        <xsl:when test="./@href=$existingcaselaw">yes</xsl:when>
+        <xsl:when test="starts-with(./@href, 'http://www.legislation.gov.uk/')">leg</xsl:when>
+        <xsl:when test="starts-with(./@href, 'https://www.legislation.gov.uk/')">leg</xsl:when>
+        <xsl:when test="starts-with(./@href, '#')">absent</xsl:when>
+        <xsl:otherwise>no</xsl:otherwise>
+      </xsl:choose>
+      </xsl:param>
+      <!--<xsl:variable name="exists" select="if(./@href=$existingcaselaw) then 'yes' else 'no'"/> -->
       <xsl:copy>
       
       <xsl:apply-templates select="@*"/> 
