@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+- Truncate reparse references to avoid overlong step function names in TRE
+
 ## [Release 24.0.0]
 
 - Always set last sent date to parser, even on failed parses

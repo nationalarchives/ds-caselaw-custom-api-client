@@ -244,7 +244,7 @@ def request_parse(
         "parameters": {
             "s3Bucket": env("PRIVATE_ASSET_BUCKET"),
             "s3Key": generate_docx_key(uri),
-            "reference": reference or f"FCL-{uuid.uuid4()}",
+            "reference": reference or f"FCL-{str(uuid.uuid4())[:-13]}",  # uuid truncated at request of TRE
             "originator": "FCL",
             "parserInstructions": parser_instructions,
         },
