@@ -63,3 +63,5 @@ To create a release:
 7. Tag the merge commit on `main` with `v{major}.{minor}.{patch}` and push the tag
 8. Create a release in [Github releases](https://github.com/nationalarchives/ds-caselaw-custom-api-client/releases)
    using the created tag
+
+If the release fails to push to PyPI, you can delete the tag with `git pull`, `git push --delete origin v1.2.3` and try again.
