@@ -13,15 +13,15 @@ from requests_toolbelt.multipart import decoder
 from caselawclient.models.utilities import extract_version
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
-from ..errors import (
+from caselawclient.errors import (
     DocumentNotFoundError,
     GatewayTimeoutError,
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
-from ..xml_helpers import get_xpath_match_string, get_xpath_match_strings
-from .utilities import VersionsDict, render_versions
-from .utilities.aws import (
+from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
+from caselawclient.models.utilities import VersionsDict, render_versions
+from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
     check_docx_exists,
