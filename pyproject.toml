@@ -62,6 +62,9 @@ extend-select = ["W", "B", "Q", "C90", "I", "UP", "YTT", "ASYNC", "S", "BLE", "A
                  "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "RUF"]
 unfixable = ["ERA"]
 
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*" = ["S101"]  # `assert` is fine in tests
+
 # things skipped:
 # N: naming, possibly good
 # D: docstrings missing throughout
