@@ -2,10 +2,11 @@ import datetime
 from typing import Any
 from unittest.mock import Mock
 
+from typing_extensions import TypeAlias
+
 from caselawclient.models.documents import Document
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
-from typing_extensions import TypeAlias
 
 
 class DocumentFactory:

@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pytest
+
 from caselawclient.Client import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,

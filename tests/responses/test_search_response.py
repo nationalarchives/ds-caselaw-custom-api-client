@@ -1,7 +1,8 @@
 import pytest
+from lxml import etree
+
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_response import SearchResponse
-from lxml import etree
 
 
 class TestSearchResponse:

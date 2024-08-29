@@ -5,13 +5,14 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 import boto3
 import ds_caselaw_utils
 import pytest
+from moto import mock_aws
+
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
     build_new_key,
     check_docx_exists,
     copy_assets,
 )
-from moto import mock_aws
 
 from ...factories import JudgmentFactory
 

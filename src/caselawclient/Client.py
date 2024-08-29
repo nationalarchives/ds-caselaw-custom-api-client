@@ -129,7 +129,7 @@ def get_single_string_from_marklogic_response(
         # relies on "" being falsy.
         return ""
 
-    elif part_count > 1:
+    if part_count > 1:
         raise MultipartResponseLongerThanExpected(
             f"Response returned {part_count} multipart items, expected 1",
         )
@@ -148,7 +148,7 @@ def get_single_bytestring_from_marklogic_response(
         # relies on "" being falsy.
         return b""
 
-    elif part_count > 1:
+    if part_count > 1:
         raise MultipartResponseLongerThanExpected(
             f"Response returned {part_count} multipart items, expected 1",
         )
@@ -231,12 +231,11 @@ class MarklogicApiClient:
 
         if DOCUMENT_COLLECTION_URI_JUDGMENT in collections:
             return Judgment
-        elif DOCUMENT_COLLECTION_URI_PRESS_SUMMARY in collections:
+        if DOCUMENT_COLLECTION_URI_PRESS_SUMMARY in collections:
             return PressSummary
-        else:
-            raise DocumentHasNoTypeCollection(
-                f"The document at URI {uri} is not part of a valid document type collection.",
-            )
+        raise DocumentHasNoTypeCollection(
+            f"The document at URI {uri} is not part of a valid document type collection.",
+        )
 
     def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
         """
@@ -498,9 +497,8 @@ class MarklogicApiClient:
             court, jurisdiction = re.split("\\s*/\\s*", content)
             self.set_document_court(document_uri, court)
             return self.set_document_jurisdiction(document_uri, jurisdiction)
-        else:
-            self.set_document_court(document_uri, content)
-            return self.set_document_jurisdiction(document_uri, "")
+        self.set_document_court(document_uri, content)
+        return self.set_document_jurisdiction(document_uri, "")
 
     def set_judgment_this_uri(
         self,

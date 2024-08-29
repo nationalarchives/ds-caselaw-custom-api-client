@@ -1,6 +1,7 @@
 import pytest
-from caselawclient.models.documents import Document, NonXMLDocumentError
 from lxml import etree
+
+from caselawclient.models.documents import Document, NonXMLDocumentError
 
 
 class TestDocumentXml:

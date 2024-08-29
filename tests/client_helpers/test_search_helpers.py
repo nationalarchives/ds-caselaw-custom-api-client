@@ -1,10 +1,11 @@
 from unittest.mock import Mock
 
+from lxml import etree
+
 from caselawclient.client_helpers.search_helpers import (
     search_judgments_and_parse_response,
 )
 from caselawclient.search_parameters import SearchParameters
-from lxml import etree
 
 
 def test_search_judgments_and_parse_results(

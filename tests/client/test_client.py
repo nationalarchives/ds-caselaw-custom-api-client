@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 import responses
+from requests import Request
+
 from caselawclient.Client import (
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
@@ -13,7 +15,6 @@ from caselawclient.Client import (
     get_single_string_from_marklogic_response,
 )
 from caselawclient.errors import GatewayTimeoutError
-from requests import Request
 
 
 class TestErrors(unittest.TestCase):

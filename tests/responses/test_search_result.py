@@ -2,6 +2,9 @@ import datetime
 from unittest.mock import patch
 
 import pytest
+from ds_caselaw_utils.courts import Court
+from lxml import etree
+
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_result import (
     EditorPriority,
@@ -9,8 +12,6 @@ from caselawclient.responses.search_result import (
     SearchResult,
     SearchResultMetadata,
 )
-from ds_caselaw_utils.courts import Court
-from lxml import etree
 
 
 class TestSearchResult:
@@ -193,7 +194,7 @@ class TestSearchResultMeta:
         THEN all properties are set correctly
         """
         node = etree.fromstring(
-            "<property-results>" "<property-result>" "</property-result>" "</property-results>",
+            "<property-results><property-result></property-result></property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
 

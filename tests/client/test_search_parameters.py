@@ -1,4 +1,5 @@
 import pytest
+
 from caselawclient.search_parameters import SearchParameters
 
 

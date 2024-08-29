@@ -217,8 +217,7 @@ class Document:
     def court_and_jurisdiction_identifier_string(self) -> CourtIdentifierString:
         if self.jurisdiction != "":
             return CourtIdentifierString("/".join((self.court, self.jurisdiction)))
-        else:
-            return CourtIdentifierString(self.court)
+        return CourtIdentifierString(self.court)
 
     @cached_property
     def document_date_as_string(self) -> str:
@@ -263,8 +262,7 @@ class Document:
         events = self.get_manifestation_datetimes(name)
         if not events:
             return None
-        else:
-            return max(events)
+        return max(events)
 
     def get_latest_manifestation_type(self) -> Optional[str]:
         return max(
@@ -404,8 +402,7 @@ class Document:
                     GatewayTimeoutGettingHTMLWithQuery,
                 )
                 return self.content_as_html(version_uri)
-            else:
-                raise e
+            raise e
 
     def number_of_mentions(self, query: str) -> int:
         html = self.content_as_html(query=query)

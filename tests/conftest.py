@@ -2,6 +2,7 @@ from typing import Callable
 from unittest.mock import Mock
 
 import pytest
+
 from caselawclient.Client import MarklogicApiClient
 
 
@@ -124,7 +125,7 @@ def generate_mock_response_fixture() -> Callable:
     return _generate_mock_response
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_api_client():
     mock_client = Mock(spec=MarklogicApiClient)
     mock_client.get_judgment_xml_bytestring.return_value = b"<xml>content</xml>"
