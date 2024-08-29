@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
 
-from caselawclient.models.documents import Document
+from caselawclient.models.documents import XML
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 
@@ -45,7 +45,7 @@ class DocumentFactory:
         else:
             xml_string = "<akomantoso>This is some XML of a judgment.</akomantoso>"
 
-        judgment_mock.return_value.xml = Document.XML(
+        judgment_mock.return_value.xml = XML(
             xml_bytestring=xml_string.encode(encoding="utf-8"),
         )
 

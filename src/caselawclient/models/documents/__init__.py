@@ -1,17 +1,13 @@
 import datetime
 import warnings
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, NewType, Optional
+from typing import TYPE_CHECKING, Any, NewType, Optional
 
 import pytz
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
-from lxml import etree
 from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
-
-from caselawclient.models.utilities import extract_version
-from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from caselawclient.errors import (
     DocumentNotFoundError,
@@ -19,8 +15,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
-from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
-from caselawclient.models.utilities import VersionsDict, render_versions
+from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
 from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
@@ -33,6 +28,9 @@ from caselawclient.models.utilities.aws import (
     unpublish_documents,
     uri_for_s3,
 )
+from caselawclient.models.utilities.dates import parse_string_date_as_utc
+
+from .xml import XML
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
 
@@ -76,10 +74,6 @@ class CannotPublishUnpublishableDocument(Exception):
 
 class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
-
-
-class NonXMLDocumentError(Exception):
-    """A document cannot be parsed as XML."""
 
 
 class Document:
@@ -148,7 +142,7 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-        self.xml = self.XML(
+        self.xml = XML(
             xml_bytestring=self.api_client.get_judgment_xml_bytestring(
                 self.uri,
                 show_unpublished=True,
@@ -653,38 +647,3 @@ class Document:
         if self.docx_exists():
             return True
         return False
-
-    class XML:
-        """
-        Represents the XML of a document, and should contain all methods for interacting with it.
-        """
-
-        def __init__(self, xml_bytestring: bytes):
-            """
-            :raises NonXMLDocumentError: This document is not valid XML
-            """
-            try:
-                self.xml_as_tree: etree.Element = etree.fromstring(xml_bytestring)
-            except etree.XMLSyntaxError:
-                raise NonXMLDocumentError
-
-        @property
-        def xml_as_string(self) -> str:
-            """
-            :return: A string representation of this document's XML tree.
-            """
-            return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
-
-        @property
-        def root_element(self) -> str:
-            return str(self.xml_as_tree.tag)
-
-        def get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
-            return get_xpath_match_string(self.xml_as_tree, xpath, namespaces)
-
-        def get_xpath_match_strings(
-            self,
-            xpath: str,
-            namespaces: Dict[str, str],
-        ) -> list[str]:
-            return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)
