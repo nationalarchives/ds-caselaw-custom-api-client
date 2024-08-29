@@ -8,7 +8,7 @@ from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 from xml.etree import ElementTree
-from xml.etree.ElementTree import Element
+from xml.etree.ElementTree import Element, ParseError, fromstring
 
 import environ
 import requests
@@ -34,7 +34,6 @@ from caselawclient.xquery_type_dicts import (
     MarkLogicPrivilegeURIString,
 )
 
-from . import xml_tools
 from .content_hash import validate_content_hash
 from .errors import (
     DocumentNotFoundError,
@@ -250,6 +249,23 @@ class MarklogicApiClient:
     def _path_to_request_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
 
+    @classmethod
+    def _get_error_code(cls, content_as_xml: Optional[str]) -> str:
+        logging.warning(
+            "XMLTools is deprecated and will be removed in later versions. "
+            "Use methods from MarklogicApiClient.Client instead.",
+        )
+        if not content_as_xml:
+            return "Unknown error, Marklogic returned a null or empty response"
+        try:
+            xml = fromstring(content_as_xml)
+            return xml.find(
+                "message-code",
+                namespaces={"": "http://marklogic.com/xdmp/error"},
+            ).text  # type: ignore
+        except (ParseError, TypeError, AttributeError):
+            return "Unknown error, Marklogic returned a null or empty response"
+
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
             response.raise_for_status()
@@ -268,7 +284,8 @@ class MarklogicApiClient:
 
             if new_error_class == self.default_http_error_class:
                 # Attempt to decode the error code from the response
-                error_code = xml_tools.get_error_code(response.content.decode("utf-8"))
+
+                error_code = self._get_error_code(response.content.decode("utf-8"))
 
                 new_error_class = self._get_error_code_class(error_code)
 

@@ -179,3 +179,51 @@ class ApiClientTest(unittest.TestCase):
             Request("GET", "http://example.invalid"),
         ).headers["user-agent"]
         assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", user_agent)
+
+    def test_get_error_code(self):
+        xml_string = """
+        <error-response xmlns="http://marklogic.com/xdmp/error">
+            <status-code>500</status-code>
+            <status>Internal Server Error</status>
+            <message-code>XDMP-DOCNOTFOUND</message-code>
+            <message>
+                XDMP-DOCNOTFOUND:
+                xdmp:document-get-properties("/a/fake/judgment/.xml", fn:QName("","published"))
+                 -- Document not found
+            </message>
+            <message-detail>
+                <message-title>Document not found</message-title>
+            </message-detail>
+        </error-response>
+        """
+        result = self.client._get_error_code(xml_string)
+        self.assertEqual(result, "XDMP-DOCNOTFOUND")
+
+    def test_get_error_code_missing_message(self):
+        xml_string = """
+        <error-response xmlns="http://marklogic.com/xdmp/error">
+            <status-code>500</status-code>
+            <status>Internal Server Error</status>
+        </error-response>
+        """
+        result = self.client._get_error_code(xml_string)
+        self.assertEqual(
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
+        )
+
+    def test_get_error_code_xml_empty_string(self):
+        xml_string = ""
+        result = self.client._get_error_code(xml_string)
+        self.assertEqual(
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
+        )
+
+    def test_get_error_code_xml_none(self):
+        xml_string = None
+        result = self.client._get_error_code(xml_string)
+        self.assertEqual(
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
+        )

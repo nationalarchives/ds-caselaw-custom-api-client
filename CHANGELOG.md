@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ## Unreleased
 
 - Multiple stylistic improvements, and enabling ruff to allow us to keep standards up in future
+- **Breaking:** Remove xml_tools
 
 ## [Release 24.0.1]
 
