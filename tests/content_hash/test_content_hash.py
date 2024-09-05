@@ -1,4 +1,5 @@
 import pytest
+
 from caselawclient.content_hash import (
     get_hash_from_document,
     get_hashable_text,

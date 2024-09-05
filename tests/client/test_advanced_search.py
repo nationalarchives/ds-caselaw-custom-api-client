@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import pytest
+
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.search_parameters import SearchParameters
 

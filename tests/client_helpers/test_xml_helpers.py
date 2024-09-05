@@ -1,4 +1,5 @@
 import lxml.etree
+
 from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
 
 

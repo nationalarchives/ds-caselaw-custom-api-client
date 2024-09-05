@@ -21,7 +21,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_value(xml)
-        self.assertEqual(result, "My Judgment Name")
+        assert result == "My Judgment Name"
 
     def test_neutral_citation_name_value_success(self):
         xml_string = """
@@ -36,7 +36,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_name_value(xml)
-        self.assertEqual(result, "[2022] EWHC 482 (QB)")
+        assert result == "[2022] EWHC 482 (QB)"
 
     def test_neutral_citation_name_value_failure(self):
         xml_string = """
@@ -50,7 +50,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_name_value(xml)
-        self.assertEqual(result, None)
+        assert result is None
 
     def test_neutral_citation_element_success(self):
         xml_string = """
@@ -65,11 +65,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{https://caselaw.nationalarchives.gov.uk/akn}cite",
-        )
-        self.assertEqual(result.text, "[2022] EWHC 482 (QB)")
+        assert result.tag == "{https://caselaw.nationalarchives.gov.uk/akn}cite"
+        assert result.text == "[2022] EWHC 482 (QB)"
 
     def test_neutral_citation_element_failure(self):
         xml_string = """
@@ -83,7 +80,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_neutral_citation_element(xml)
-        self.assertEqual(result.text, None)
+        assert result.text is None
 
     def test_metadata_name_value_failure(self):
         xml_string = """
@@ -97,7 +94,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_value(xml)
-        self.assertEqual(result, "")
+        assert result == ""
 
     def test_metadata_name_element_success(self):
         xml_string = """
@@ -113,11 +110,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname",
-        )
-        self.assertEqual(result.attrib, {"value": "My Judgment Name"})
+        assert result.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
+        assert result.attrib == {"value": "My Judgment Name"}
 
     def test_metadata_name_element_failure(self):
         xml_string = """
@@ -131,11 +125,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_metadata_name_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname",
-        )
-        self.assertEqual(result.attrib, {"value": ""})
+        assert result.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRname"
+        assert result.attrib == {"value": ""}
 
     def test_judgment_date_value_success(self):
         xml_string = """
@@ -153,7 +144,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_value(xml)
-        self.assertEqual(result, "2022-03-10")
+        assert result == "2022-03-10"
 
     def test_judgment_date_value_failure(self):
         xml_string = """
@@ -170,7 +161,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_value(xml)
-        self.assertEqual(result, "")
+        assert result == ""
 
     def test_judgment_date_element_success(self):
         xml_string = """
@@ -188,11 +179,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate",
-        )
-        self.assertEqual(result.attrib, {"date": "2022-03-10", "name": "judgment"})
+        assert result.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
+        assert result.attrib == {"date": "2022-03-10", "name": "judgment"}
 
     def test_judgment_date_element_failure(self):
         xml_string = """
@@ -209,11 +197,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_judgment_date_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate",
-        )
-        self.assertEqual(result.attrib, {"date": "", "name": "judgment"})
+        assert result.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}FRBRdate"
+        assert result.attrib == {"date": "", "name": "judgment"}
 
     def test_court_value_success(self):
         xml_string = """
@@ -228,7 +213,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_value(xml)
-        self.assertEqual(result, "EWHC-QBD")
+        assert result == "EWHC-QBD"
 
     def test_court_value_failure(self):
         xml_string = """
@@ -242,7 +227,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_value(xml)
-        self.assertEqual(result, None)
+        assert result is None
 
     def test_court_element_success(self):
         xml_string = """
@@ -257,11 +242,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{https://caselaw.nationalarchives.gov.uk/akn}court",
-        )
-        self.assertEqual(result.text, "EWHC-QBD")
+        assert result.tag == "{https://caselaw.nationalarchives.gov.uk/akn}court"
+        assert result.text == "EWHC-QBD"
 
     def test_court_element_failure(self):
         xml_string = """
@@ -275,11 +257,8 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_court_element(xml)
-        self.assertEqual(
-            result.tag,
-            "{https://caselaw.nationalarchives.gov.uk/akn}court",
-        )
-        self.assertEqual(result.text, None)
+        assert result.tag == "{https://caselaw.nationalarchives.gov.uk/akn}court"
+        assert result.text is None
 
     def test_search_matches(self):
         xml_string = """
@@ -299,7 +278,7 @@ class XmlToolsTests(unittest.TestCase):
         """
         xml = ET.ElementTree(ET.fromstring(xml_string))
         result = xml_tools.get_search_matches(xml)
-        self.assertEqual(result, ["HH Judge Anthony Thornton QC"])
+        assert result == ["HH Judge Anthony Thornton QC"]
 
     def test_get_error_code(self):
         xml_string = """
@@ -318,7 +297,7 @@ class XmlToolsTests(unittest.TestCase):
         </error-response>
         """
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(result, "XDMP-DOCNOTFOUND")
+        assert result == "XDMP-DOCNOTFOUND"
 
     def test_get_error_code_missing_message(self):
         xml_string = """
@@ -328,26 +307,17 @@ class XmlToolsTests(unittest.TestCase):
         </error-response>
         """
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(
-            result,
-            "Unknown error, Marklogic returned a null or empty response",
-        )
+        assert result == "Unknown error, Marklogic returned a null or empty response"
 
     def test_get_error_code_xml_empty_string(self):
         xml_string = ""
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(
-            result,
-            "Unknown error, Marklogic returned a null or empty response",
-        )
+        assert result == "Unknown error, Marklogic returned a null or empty response"
 
     def test_get_error_code_xml_none(self):
         xml_string = None
         result = xml_tools.get_error_code(xml_string)
-        self.assertEqual(
-            result,
-            "Unknown error, Marklogic returned a null or empty response",
-        )
+        assert result == "Unknown error, Marklogic returned a null or empty response"
 
     def test_deprecation_warning(self):
         with patch.object(logging, "warning") as mock_logging:
@@ -364,7 +334,7 @@ class XmlToolsTests(unittest.TestCase):
                    """
             xml = ET.ElementTree(ET.fromstring(xml_string))
             result = xml_tools.get_metadata_name_value(xml)
-            self.assertEqual(result, "My Judgment Name")
+            assert result == "My Judgment Name"
             mock_logging.assert_called_with(
                 "XMLTools is deprecated and will be removed in later versions. "
                 "Use methods from MarklogicApiClient.Client instead.",

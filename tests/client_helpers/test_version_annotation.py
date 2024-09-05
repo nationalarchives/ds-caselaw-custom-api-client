@@ -1,4 +1,5 @@
 import pytest
+
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 
 

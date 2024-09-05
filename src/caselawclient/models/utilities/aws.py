@@ -218,8 +218,7 @@ def build_new_key(old_key: str, new_uri: str) -> str:
     if old_filename.endswith(".docx") or old_filename.endswith(".pdf"):
         new_filename = new_uri.replace("/", "_")
         return f"{new_uri}/{new_filename}.{old_filename.split('.')[-1]}"
-    else:
-        return f"{new_uri}/{old_filename}"
+    return f"{new_uri}/{old_filename}"
 
 
 def request_parse(

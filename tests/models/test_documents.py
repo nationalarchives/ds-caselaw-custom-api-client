@@ -4,8 +4,8 @@ import os
 from unittest.mock import PropertyMock, patch
 
 import pytest
-import pytz
 import time_machine
+
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
@@ -22,7 +22,6 @@ from caselawclient.models.documents import (
     UnparsableDate,
 )
 from caselawclient.models.judgments import Judgment
-
 from tests.factories import JudgmentFactory
 from tests.test_helpers import MockMultipartResponse
 
@@ -989,7 +988,9 @@ class TestReparse:
         document.can_reparse = False
         assert Judgment.reparse(document) is False
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "2015-10-21T16:29:00+00:00"
+            "test/2023/123",
+            "last_sent_to_parser",
+            "2015-10-21T16:29:00+00:00",
         )
 
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
@@ -1001,5 +1002,7 @@ class TestReparse:
         # set_property is only called once because document.reparse isn't real
         assert "Mock" in str(type(document.reparse))
         mock_api_client.set_property.assert_called_once_with(
-            "test/2023/123", "last_sent_to_parser", "2015-10-21T16:29:00+00:00"
+            "test/2023/123",
+            "last_sent_to_parser",
+            "2015-10-21T16:29:00+00:00",
         )

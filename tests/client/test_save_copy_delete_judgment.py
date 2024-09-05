@@ -4,8 +4,9 @@ import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree
 
-import caselawclient.Client
 import pytest
+
+import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError

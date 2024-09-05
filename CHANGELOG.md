@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+- Multiple stylistic improvements, and enabling ruff to allow us to keep standards up in future
+
 ## [Release 24.0.1]
 
 - Truncate reparse references to avoid overlong step function names in TRE
