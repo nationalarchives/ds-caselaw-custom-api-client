@@ -31,6 +31,7 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 from .xml import XML
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -42,20 +43,6 @@ class UnparsableDate(Warning):
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
     pass
-
-
-DOCUMENT_STATUS_HOLD = "On hold"
-""" This document has been placed on hold to actively prevent publication. """
-
-DOCUMENT_STATUS_PUBLISHED = "Published"
-""" This document has been published and should be considered publicly visible. """
-
-DOCUMENT_STATUS_IN_PROGRESS = "In progress"
-""" This document has not been published or put on hold, and has been picked up by an editor and
-    should be progressing through the document pipeline. """
-
-DOCUMENT_STATUS_NEW = "New"
-""" This document isn't published, on hold, or assigned, and can be picked up by an editor in the future. """
 
 
 DOCUMENT_COLLECTION_URI_JUDGMENT = "judgment"
