@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
-from caselawclient.xml_helpers import get_xpath_match_string
 
 from .documents import Document
 
@@ -27,8 +26,7 @@ class PressSummary(NeutralCitationMixin, Document):
 
     @cached_property
     def neutral_citation(self) -> str:
-        return get_xpath_match_string(
-            self.xml.xml_as_tree,
+        return self.body.get_xpath_match_string(
             "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()",
             {
                 "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",

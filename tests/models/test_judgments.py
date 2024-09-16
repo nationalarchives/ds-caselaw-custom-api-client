@@ -76,7 +76,7 @@ class TestJudgmentValidation:
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
         judgment = Judgment("test/1234", mock_api_client)
-        judgment.failed_to_parse = True
+        judgment.is_failure = True
         judgment.is_parked = True
         judgment.is_held = True
         judgment.has_name = False

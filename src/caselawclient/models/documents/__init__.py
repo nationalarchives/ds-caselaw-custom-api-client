@@ -3,7 +3,6 @@ import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, NewType, Optional
 
-import pytz
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from lxml import html as html_parser
@@ -28,17 +27,12 @@ from caselawclient.models.utilities.aws import (
     unpublish_documents,
     uri_for_s3,
 )
-from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
+from .body import DocumentBody
 from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
-from .xml import XML
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
-
-
-class UnparsableDate(Warning):
-    pass
 
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
@@ -53,7 +47,6 @@ if TYPE_CHECKING:
 
 
 DocumentURIString = NewType("DocumentURIString", str)
-CourtIdentifierString = NewType("CourtIdentifierString", str)
 
 
 class Document:
@@ -70,7 +63,7 @@ class Document:
 
     attributes_to_validate: list[tuple[str, bool, str]] = [
         (
-            "failed_to_parse",
+            "is_failure",
             False,
             "This document failed to parse",
         ),
@@ -122,15 +115,13 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-        self.xml = XML(
-            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
-                self.uri,
-                show_unpublished=True,
-            ),
+        self.body = DocumentBody(
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(self.uri, show_unpublished=True),
         )
+        """ `Document.body` represents the XML of the document itself, without any information such as version tracking or properties. """
 
     def __repr__(self) -> str:
-        name = self.name or "un-named"
+        name = self.body.name or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -159,104 +150,6 @@ class Document:
         :return: The absolute, public URI at which a copy of this document can be found
         """
         return f"https://caselaw.nationalarchives.gov.uk/{self.uri}"
-
-    @cached_property
-    def name(self) -> str:
-        return self.xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
-        )
-
-    @cached_property
-    def court(self) -> str:
-        return self.xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
-
-    @cached_property
-    def jurisdiction(self) -> str:
-        return self.xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
-
-    @property
-    def court_and_jurisdiction_identifier_string(self) -> CourtIdentifierString:
-        if self.jurisdiction != "":
-            return CourtIdentifierString("/".join((self.court, self.jurisdiction)))
-        return CourtIdentifierString(self.court)
-
-    @cached_property
-    def document_date_as_string(self) -> str:
-        return self.xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
-        )
-
-    @cached_property
-    def document_date_as_date(self) -> Optional[datetime.date]:
-        if not self.document_date_as_string:
-            return None
-        try:
-            return datetime.datetime.strptime(
-                self.document_date_as_string,
-                "%Y-%m-%d",
-            ).date()
-        except ValueError:
-            warnings.warn(
-                f"Unparsable date encountered: {self.document_date_as_string}",
-                UnparsableDate,
-            )
-            return None
-
-    def get_manifestation_datetimes(
-        self,
-        name: Optional[str] = None,
-    ) -> list[datetime.datetime]:
-        name_filter = f"[@name='{name}']" if name else ""
-        iso_datetimes = self.xml.get_xpath_match_strings(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
-            f"/akn:FRBRdate{name_filter}/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
-        )
-
-        return [parse_string_date_as_utc(event, pytz.UTC) for event in iso_datetimes]
-
-    def get_latest_manifestation_datetime(
-        self,
-        name: Optional[str] = None,
-    ) -> Optional[datetime.datetime]:
-        events = self.get_manifestation_datetimes(name)
-        if not events:
-            return None
-        return max(events)
-
-    def get_latest_manifestation_type(self) -> Optional[str]:
-        return max(
-            (
-                (type, time)
-                for type in ["transform", "tna-enriched"]
-                if (time := self.get_latest_manifestation_datetime(type))
-            ),
-            key=lambda x: x[1],
-        )[0]
-
-    @cached_property
-    def transformation_datetime(self) -> Optional[datetime.datetime]:
-        """When was this document successfully parsed or reparsed (date from XML)"""
-        return self.get_latest_manifestation_datetime("transform")
-
-    @cached_property
-    def enrichment_datetime(self) -> Optional[datetime.datetime]:
-        """When was this document successfully enriched (date from XML)"""
-        return self.get_latest_manifestation_datetime("tna-enriched")
 
     @cached_property
     def is_published(self) -> bool:
@@ -346,10 +239,6 @@ class Document:
         "Is this document a potentially historic version of a document, or is it the main document itself?"
         return extract_version(self.uri) != 0
 
-    @cached_property
-    def content_as_xml(self) -> str:
-        return self.xml.xml_as_string
-
     def content_as_html(
         self,
         version_uri: Optional[DocumentURIString] = None,
@@ -392,7 +281,7 @@ class Document:
 
         :return: `True` if this document is in a 'failure' state, otherwise `False`
         """
-        if self.failed_to_parse:
+        if self.body.failed_to_parse:
             return True
         return False
 
@@ -403,19 +292,8 @@ class Document:
         return False
 
     @cached_property
-    def failed_to_parse(self) -> bool:
-        """
-        Did this document entirely fail to parse?
-
-        :return: `True` if there was a complete parser failure, otherwise `False`
-        """
-        if "error" in self.xml.root_element:
-            return True
-        return False
-
-    @cached_property
     def has_name(self) -> bool:
-        if not self.name:
+        if not self.body.name:
             return False
 
         return True
@@ -424,7 +302,7 @@ class Document:
     def has_valid_court(self) -> bool:
         try:
             return bool(
-                courts.get_by_code(self.court_and_jurisdiction_identifier_string),
+                courts.get_by_code(self.body.court_and_jurisdiction_identifier_string),
             )
         except CourtNotFoundException:
             return False
@@ -505,7 +383,7 @@ class Document:
         Has this document been enriched recently?
         """
 
-        last_enrichment = self.enrichment_datetime
+        last_enrichment = self.body.enrichment_datetime
         if not last_enrichment:
             return False
 
@@ -586,7 +464,9 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[self.document_noun]
-        checked_date = self.document_date_as_string if self.document_date_as_string > "1001" else None
+        checked_date = (
+            self.body.document_date_as_string if self.body.document_date_as_string > "1001" else None
+        )  # TODO: This doesn't make sense; these should really be integers
 
         # the keys of parser_instructions should exactly match the parser output
         # in the *-metadata.json files by the parser. Whilst typically empty
@@ -595,9 +475,9 @@ class Document:
         parser_instructions: ParserInstructionsDict = {
             "documentType": parser_type_noun,
             "metadata": {
-                "name": self.name or None,
+                "name": self.body.name or None,
                 "cite": self.best_human_identifier or None,
-                "court": self.court or None,
+                "court": self.body.court or None,
                 "date": checked_date,
                 "uri": self.uri,
             },

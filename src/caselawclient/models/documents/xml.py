@@ -1,5 +1,3 @@
-from typing import Dict
-
 from lxml import etree
 
 from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
@@ -11,7 +9,7 @@ class NonXMLDocumentError(Exception):
 
 class XML:
     """
-    Represents the XML of a document, and should contain all methods for interacting with it.
+    A class for interacting with the raw XML of a document.
     """
 
     def __init__(self, xml_bytestring: bytes):
@@ -34,12 +32,12 @@ class XML:
     def root_element(self) -> str:
         return str(self.xml_as_tree.tag)
 
-    def get_xpath_match_string(self, xpath: str, namespaces: Dict[str, str]) -> str:
+    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str]) -> str:
         return get_xpath_match_string(self.xml_as_tree, xpath, namespaces)
 
     def get_xpath_match_strings(
         self,
         xpath: str,
-        namespaces: Dict[str, str],
+        namespaces: dict[str, str],
     ) -> list[str]:
         return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)

@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
 
-from caselawclient.models.documents import XML
+from caselawclient.models.documents.xml import XML
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 

@@ -85,7 +85,7 @@ class TestPressSummaryValidation:
         mock_api_client,
     ):
         press_summary = PressSummary("test/1234", mock_api_client)
-        press_summary.failed_to_parse = True
+        press_summary.is_failure = True
         press_summary.is_parked = True
         press_summary.is_held = True
         press_summary.has_name = False
