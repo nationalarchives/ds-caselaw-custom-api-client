@@ -30,6 +30,7 @@ from caselawclient.models.utilities.aws import (
 )
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
+from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
 from .xml import XML
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -66,14 +67,6 @@ if TYPE_CHECKING:
 
 DocumentURIString = NewType("DocumentURIString", str)
 CourtIdentifierString = NewType("CourtIdentifierString", str)
-
-
-class CannotPublishUnpublishableDocument(Exception):
-    """A document which has failed publication safety checks in `Document.is_publishable` cannot be published."""
-
-
-class DocumentNotSafeForDeletion(Exception):
-    """A document which is not safe for deletion cannot be deleted."""
 
 
 class Document:
