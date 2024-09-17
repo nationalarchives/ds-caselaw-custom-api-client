@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## [Release 25.0.0]
 
-- Multiple stylistic improvements, and enabling ruff to allow us to keep standards up in future
 - **Breaking:** Remove xml_tools
+- Multiple stylistic improvements, and enabling ruff to allow us to keep standards up in future
 
 ## [Release 24.0.1]
 
@@ -477,8 +477,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - Initial tagged release
 
-[Unreleased]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.0...HEAD
-[Release 24.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.0...v24.0.0
+[Release 25.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.1...v25.0.0
+[Release 24.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v24.0.0...v24.0.1
+[Release 24.0.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.2...v24.0.0
 [Release 23.0.2]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v23.0.1...v23.0.2
 [Release 23.0.1]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.1.0...v23.0.1
 [Release 22.1.0]: https://github.com/nationalarchives/ds-caselaw-custom-api-client/compare/v22.0.1...v22.1.0
