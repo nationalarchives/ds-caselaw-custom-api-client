@@ -464,9 +464,11 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[self.document_noun]
-        checked_date = (
-            self.body.document_date_as_string if self.body.document_date_as_string > "1001" else None
-        )  # TODO: This doesn't make sense; these should really be integers
+        checked_date: Optional[str] = (
+            self.body.document_date_as_date.isoformat()
+            if self.body.document_date_as_date and self.body.document_date_as_date > datetime.datetime(1001, 1, 1)
+            else None
+        )
 
         # the keys of parser_instructions should exactly match the parser output
         # in the *-metadata.json files by the parser. Whilst typically empty
