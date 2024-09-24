@@ -110,12 +110,12 @@ class Document:
 
         :raises DocumentNotFoundError: The document does not exist within MarkLogic
         """
-        self.uri = DocumentURIString(uri.strip("/"))
-        self.api_client = api_client
+        self.uri: DocumentURIString = DocumentURIString(uri.strip("/"))
+        self.api_client: MarklogicApiClient = api_client
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-        self.body = DocumentBody(
+        self.body: DocumentBody = DocumentBody(
             xml_bytestring=self.api_client.get_judgment_xml_bytestring(self.uri, show_unpublished=True),
         )
         """ `Document.body` represents the XML of the document itself, without any information such as version tracking or properties. """
