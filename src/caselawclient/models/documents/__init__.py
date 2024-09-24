@@ -466,7 +466,7 @@ class Document:
         parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[self.document_noun]
         checked_date: Optional[str] = (
             self.body.document_date_as_date.isoformat()
-            if self.body.document_date_as_date and self.body.document_date_as_date > datetime.datetime(1001, 1, 1)
+            if self.body.document_date_as_date and self.body.document_date_as_date > datetime.date(1001, 1, 1)
             else None
         )
 

@@ -170,17 +170,13 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_empty(self, sns, mock_api_client):
-        document = JudgmentFactory().build(
-            is_published=False,
-            name="",
-            neutral_citation="",
-            court="",
-            document_date_as_string="1000-01-01",
-            document_noun="judgment",
-        )
+        document = Judgment("test/2023/123", mock_api_client)
 
-        document.api_client = mock_api_client
-        Judgment.force_reparse(document)
+        document.consignment_reference = "TDR-12345"
+
+        document.body.document_date_as_date = datetime.date(1001, 1, 1)
+
+        document.force_reparse()
 
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
@@ -226,10 +222,16 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_full(self, sns, mock_api_client):
-        document = JudgmentFactory().build(is_published=True)
-        document.api_client = mock_api_client
+        document = Judgment("test/2023/123", mock_api_client)
 
-        Judgment.force_reparse(document)
+        document.neutral_citation = "[2023] Test 123"
+        document.consignment_reference = "TDR-12345"
+
+        document.body.name = "Judgment v Judgement"
+        document.body.court = "Court of Testing"
+        document.body.document_date_as_date = datetime.date(2023, 2, 3)
+
+        document.force_reparse()
 
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
