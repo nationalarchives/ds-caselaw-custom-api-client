@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v26.0.0 (2024-09-25)
+
+### BREAKING CHANGE
+
+- Multiple methods which used to be within `Document` are now in `Document.body`
+
+### Feat
+
+- **FCL-268**: break functions which rely on the document body into their own subclass
+
+### Fix
+
+- **FCL-268**: update factory behaviour to match new document body model
+- **FCL-268**: use real date when testing if document date should be sent in reparse payload
+- **deps**: update dependency boto3 to v1.35.23
+
+### Refactor
+
+- **FCL-268**: move document statuses to their own submodule
+- **FCL-268**: move document exceptions into their own submodule
+- **FCL-268**: move XML manipulation into its own file
+- **FCL-268**: move the documents module in readiness for better code separation
+
 ## [Release 25.0.0]
 
 - **Breaking:** Remove xml_tools
