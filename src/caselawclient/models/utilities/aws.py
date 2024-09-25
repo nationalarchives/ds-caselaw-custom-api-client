@@ -249,6 +249,8 @@ def request_parse(
         },
     }
 
+    # breakpoint()
+
     client.publish(
         TopicArn=env("REPARSE_SNS_TOPIC"),
         Message=json.dumps(message_to_send),

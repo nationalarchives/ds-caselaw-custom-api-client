@@ -8,7 +8,6 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 if TYPE_CHECKING:
     from caselawclient.models.press_summaries import PressSummary
 
-from ..xml_helpers import get_xpath_match_string
 from .documents import Document
 
 
@@ -25,8 +24,7 @@ class Judgment(NeutralCitationMixin, Document):
 
     @cached_property
     def neutral_citation(self) -> str:
-        return get_xpath_match_string(
-            self.xml.xml_as_tree,
+        return self.body.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
             {
                 "uk": "https://caselaw.nationalarchives.gov.uk/akn",

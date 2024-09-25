@@ -20,5 +20,5 @@ files = glob.glob("*.xqy")
 for file in files:
     path = f"../../../assertions/{file}"
     print(path)
-    response = api_client._send_to_eval({}, path)
+    response = api_client._send_to_eval({}, path)  ## noqa: SLF001
     print(Client.get_multipart_strings_from_marklogic_response(response))

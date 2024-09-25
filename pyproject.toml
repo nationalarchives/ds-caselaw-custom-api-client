@@ -56,15 +56,16 @@ filterwarnings = ["ignore::DeprecationWarning"]
 line-length = 120
 
 [tool.ruff.lint]
-ignore = ["E501", "G004", "PLR2004", "RUF005", "RUF012", "UP040"] # long lines, fstrings in logs, magic values, consider not concat, mutable classbits, type instead of TypeAlias
-extend-select = ["W", "I"]
+ignore = ["E501", "G004", "PLR2004", "RUF005", "RUF012", "UP040"] # longlines, fstrings in logs, magic values, consider not concat, mutable classbits, type instead of TypeAlias
+extend-select = ["W", "I", "SLF"]
 # extend-select = [ "B", "Q", "C90", "I", "UP", "YTT", "ASYNC", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "DJ", "EM", "EXE", "FA",
-#                  "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "PTH",
+#                  "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLOT", "SIM", "TID", "TCH", "INT", "PTH",
 #                  "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "RUF"]
 unfixable = ["ERA"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = ["S101"]  # `assert` is fine in tests
+"tests/client/test_client.py" = ["SLF001"]  # TODO: This really shouldn't be the case, but it's not important to fix right now.
 
 # things skipped:
 # N: naming, possibly good

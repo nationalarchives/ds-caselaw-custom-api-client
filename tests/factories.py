@@ -4,24 +4,52 @@ from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
 
-from caselawclient.models.documents import Document
+from caselawclient.models.documents.body import DocumentBody
+from caselawclient.models.documents.xml import XML
 from caselawclient.models.judgments import Judgment
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
+
+
+class DocumentBodyFactory:
+    # "name_of_attribute": ("name of incoming param", "default value")
+    PARAMS_MAP: dict[str, tuple[str, Any]] = {
+        "name": ("name", "Judgment v Judgement"),
+        "court": ("court", "Court of Testing"),
+        "document_date_as_string": ("document_date_as_string", "2023-02-03"),
+    }
+
+    @classmethod
+    def build(cls, **kwargs) -> DocumentBody:
+        document_mock = Mock(spec=DocumentBody, autospec=True)
+
+        if "xml" in kwargs:
+            xml_string = kwargs.pop("xml")
+        else:
+            xml_string = "<akomantoso>This is some XML of a judgment.</akomantoso>"
+
+        document_mock.return_value.xml = XML(
+            xml_bytestring=xml_string.encode(encoding="utf-8"),
+        )
+
+        for map_to, map_from in cls.PARAMS_MAP.items():
+            if map_from[0] in kwargs:
+                value = kwargs[map_from[0]]
+            else:
+                value = map_from[1]
+            setattr(document_mock.return_value, map_to, value)
+
+        return document_mock()
 
 
 class DocumentFactory:
     # "name_of_attribute": ("name of incoming param", "default value")
     PARAMS_MAP: dict[str, tuple[str, Any]] = {
         "uri": ("uri", "test/2023/123"),
-        "name": ("name", "Judgment v Judgement"),
         "neutral_citation": ("neutral_citation", "[2023] Test 123"),
         "best_human_identifier": ("neutral_citation", "[2023] Test 123"),
-        "court": ("court", "Court of Testing"),
-        "document_date_as_string": ("document_date_as_string", "2023-02-03"),
         "is_published": ("is_published", False),
         "is_sensitive": ("is_sensitive", False),
         "is_anonymised": ("is_anonymised", False),
-        "has_supplementary_materials": ("has_supplementary_materials", False),
         "is_failure": ("is_failure", False),
         "source_name": ("source_name", "Example Uploader"),
         "source_email": ("source_email", "uploader@example.com"),
@@ -40,14 +68,10 @@ class DocumentFactory:
         else:
             judgment_mock.return_value.content_as_html.return_value = "<p>This is a judgment.</p>"
 
-        if "xml" in kwargs:
-            xml_string = kwargs.pop("xml")
+        if "body" in kwargs:
+            judgment_mock.return_value.body = kwargs.pop("body")
         else:
-            xml_string = "<akomantoso>This is some XML of a judgment.</akomantoso>"
-
-        judgment_mock.return_value.xml = Document.XML(
-            xml_bytestring=xml_string.encode(encoding="utf-8"),
-        )
+            judgment_mock.return_value.body = DocumentBodyFactory().build()
 
         for map_to, map_from in cls.PARAMS_MAP.items():
             if map_from[0] in kwargs:
