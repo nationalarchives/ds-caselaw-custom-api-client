@@ -128,46 +128,45 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to False
         Then it should call the MarkLogic module with the expected query parameters
         """
-        with patch.object(self.client, "invoke") as mock_invoke:
-            with patch.object(
-                self.client,
-                "user_can_view_unpublished_judgments",
-                return_value=True,
-            ):
-                self.client.advanced_search(
-                    SearchParameters(
-                        query="my-query",
-                        court="ewhc",
-                        judge="a. judge",
-                        party="a party",
-                        page=2,
-                        page_size=20,
-                        show_unpublished=False,
-                    ),
-                )
+        with patch.object(self.client, "invoke") as mock_invoke, patch.object(
+            self.client,
+            "user_can_view_unpublished_judgments",
+            return_value=True,
+        ):
+            self.client.advanced_search(
+                SearchParameters(
+                    query="my-query",
+                    court="ewhc",
+                    judge="a. judge",
+                    party="a party",
+                    page=2,
+                    page_size=20,
+                    show_unpublished=False,
+                ),
+            )
 
-                expected_vars = {
-                    "court": ["ewhc"],
-                    "judge": "a. judge",
-                    "page": 2,
-                    "page-size": 20,
-                    "q": "my-query",
-                    "party": "a party",
-                    "neutral_citation": "",
-                    "specific_keyword": "",
-                    "order": "",
-                    "from": "",
-                    "to": "",
-                    "show_unpublished": "false",
-                    "only_unpublished": "false",
-                    "collections": "",
-                    "quoted_phrases": [],
-                }
+            expected_vars = {
+                "court": ["ewhc"],
+                "judge": "a. judge",
+                "page": 2,
+                "page-size": 20,
+                "q": "my-query",
+                "party": "a party",
+                "neutral_citation": "",
+                "specific_keyword": "",
+                "order": "",
+                "from": "",
+                "to": "",
+                "show_unpublished": "false",
+                "only_unpublished": "false",
+                "collections": "",
+                "quoted_phrases": [],
+            }
 
-                mock_invoke.assert_called_with(
-                    "/judgments/search/search-v2.xqy",
-                    json.dumps(expected_vars),
-                )
+            mock_invoke.assert_called_with(
+                "/judgments/search/search-v2.xqy",
+                json.dumps(expected_vars),
+            )
 
     def test_user_can_view_unpublished_and_show_unpublished_is_true(
         self,
@@ -178,24 +177,23 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the expected query parameters
         """
-        with patch.object(self.client, "invoke"):
-            with patch.object(
-                self.client,
-                "user_can_view_unpublished_judgments",
-                return_value=True,
-            ):
-                self.client.advanced_search(
-                    SearchParameters(
-                        query="my-query",
-                        court="ewhc",
-                        judge="a. judge",
-                        party="a party",
-                        page=2,
-                        page_size=20,
-                        show_unpublished=True,
-                    ),
-                )
-                assert '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
+        with patch.object(self.client, "invoke"), patch.object(
+            self.client,
+            "user_can_view_unpublished_judgments",
+            return_value=True,
+        ):
+            self.client.advanced_search(
+                SearchParameters(
+                    query="my-query",
+                    court="ewhc",
+                    judge="a. judge",
+                    party="a party",
+                    page=2,
+                    page_size=20,
+                    show_unpublished=True,
+                ),
+            )
+            assert '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
 
     def test_user_cannot_view_unpublished_but_show_unpublished_is_true(
         self,
@@ -206,27 +204,25 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the show_unpublished parameter set to False and log a warning
         """
-        with patch.object(self.client, "invoke"):
-            with patch.object(
-                self.client,
-                "user_can_view_unpublished_judgments",
-                return_value=False,
-            ):
-                with patch.object(logging, "warning") as mock_logging:
-                    self.client.advanced_search(
-                        SearchParameters(
-                            query="my-query",
-                            court="ewhc",
-                            judge="a. judge",
-                            party="a party",
-                            page=2,
-                            page_size=20,
-                            show_unpublished=True,
-                        ),
-                    )
+        with patch.object(self.client, "invoke"), patch.object(
+            self.client,
+            "user_can_view_unpublished_judgments",
+            return_value=False,
+        ), patch.object(logging, "warning") as mock_logging:
+            self.client.advanced_search(
+                SearchParameters(
+                    query="my-query",
+                    court="ewhc",
+                    judge="a. judge",
+                    party="a party",
+                    page=2,
+                    page_size=20,
+                    show_unpublished=True,
+                ),
+            )
 
-                    assert '"show_unpublished": "false"' in self.client.invoke.call_args.args[1]
-                    mock_logging.assert_called()
+            assert '"show_unpublished": "false"' in self.client.invoke.call_args.args[1]
+            mock_logging.assert_called()
 
     def test_no_page_0(self):
         """

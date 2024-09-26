@@ -137,6 +137,4 @@ class DocumentBody:
 
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
-        if "error" in self._xml.root_element:
-            return True
-        return False
+        return "error" in self._xml.root_element

@@ -281,22 +281,15 @@ class Document:
 
         :return: `True` if this document is in a 'failure' state, otherwise `False`
         """
-        if self.body.failed_to_parse:
-            return True
-        return False
+        return self.body.failed_to_parse
 
     @cached_property
     def is_parked(self) -> bool:
-        if "parked" in self.uri:
-            return True
-        return False
+        return "parked" in self.uri
 
     @cached_property
     def has_name(self) -> bool:
-        if not self.body.name:
-            return False
-
-        return True
+        return bool(self.body.name)
 
     @cached_property
     def has_valid_court(self) -> bool:
@@ -373,9 +366,7 @@ class Document:
         """
         Is it sensible to enrich this document?
         """
-        if (self.enriched_recently is False) and self.validates_against_schema:
-            return True
-        return False
+        return (self.enriched_recently is False) and self.validates_against_schema
 
     @cached_property
     def enriched_recently(self) -> bool:
@@ -388,9 +379,8 @@ class Document:
             return False
 
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        if now - last_enrichment < MINIMUM_ENRICHMENT_TIME:
-            return True
-        return False
+
+        return now - last_enrichment < MINIMUM_ENRICHMENT_TIME
 
     @cached_property
     def validates_against_schema(self) -> bool:
@@ -506,6 +496,4 @@ class Document:
         """
         Is it sensible to reparse this document?
         """
-        if self.docx_exists():
-            return True
-        return False
+        return self.docx_exists()

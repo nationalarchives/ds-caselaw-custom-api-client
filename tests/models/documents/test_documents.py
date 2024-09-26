@@ -281,13 +281,12 @@ class TestCanEnrich:
             Document,
             "enriched_recently",
             new_callable=PropertyMock,
-        ) as mock_enriched_recently:
-            with patch.object(
-                Document,
-                "validates_against_schema",
-                new_callable=PropertyMock,
-            ) as mock_validates_against_schema:
-                mock_enriched_recently.return_value = enriched_recently
-                mock_validates_against_schema.return_value = validates_against_schema
+        ) as mock_enriched_recently, patch.object(
+            Document,
+            "validates_against_schema",
+            new_callable=PropertyMock,
+        ) as mock_validates_against_schema:
+            mock_enriched_recently.return_value = enriched_recently
+            mock_validates_against_schema.return_value = validates_against_schema
 
-                assert document.can_enrich is can_enrich
+            assert document.can_enrich is can_enrich
