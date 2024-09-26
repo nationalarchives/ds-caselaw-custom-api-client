@@ -17,12 +17,11 @@ class TestVerifyShowUnpublished(unittest.TestCase):
             self.client,
             "user_can_view_unpublished_judgments",
             return_value=False,
-        ):
-            with patch.object(logging, "warning") as mock_logger:
-                result = self.client.verify_show_unpublished(True)
-                assert result is False
-                # Check the logger was called
-                mock_logger.assert_called()
+        ), patch.object(logging, "warning") as mock_logger:
+            result = self.client.verify_show_unpublished(True)
+            assert result is False
+            # Check the logger was called
+            mock_logger.assert_called()
 
     def test_show_unpublished_if_authorised_and_asks_for_unpublished(self):
         # User can view unpublished and is asking to view unpublished judgments
