@@ -22,10 +22,9 @@ class DocumentBodyFactory:
 
     @classmethod
     def build(cls, **kwargs: Any) -> DocumentBody:
-        if "xml" in kwargs:
-            xml_string = kwargs.pop("xml")
-        else:
-            xml_string = "<akomantoso>This is some XML of a judgment.</akomantoso>"
+        xml_string = (
+            kwargs.pop("xml") if "xml" in kwargs else "<akomantoso>This is some XML of a judgment.</akomantoso>"
+        )
 
         document_body = DocumentBody(
             xml_bytestring=xml_string.encode(encoding="utf-8"),
@@ -70,10 +69,7 @@ class DocumentFactory:
             mock_content_as_html.return_value = html_patched_return
             document = cls.target_class(uri, api_client=mock_api_client)
 
-        if "body" in kwargs:
-            document.body = kwargs.pop("body")
-        else:
-            document.body = DocumentBodyFactory.build()
+        document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         for param_name, default_value in cls.PARAMS_MAP.items():
             value = kwargs.get(param_name, default_value)
