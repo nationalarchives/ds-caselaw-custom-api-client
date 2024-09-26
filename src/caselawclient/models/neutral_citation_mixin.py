@@ -40,14 +40,8 @@ class NeutralCitationMixin:
 
     @cached_property
     def has_ncn(self) -> bool:
-        if not self.neutral_citation:
-            return False
-
-        return True
+        return bool(self.neutral_citation)
 
     @cached_property
     def has_valid_ncn(self) -> bool:
-        if not self.has_ncn or not neutral_url(self.neutral_citation):
-            return False
-
-        return True
+        return self.has_ncn and neutral_url(self.neutral_citation) is not None
