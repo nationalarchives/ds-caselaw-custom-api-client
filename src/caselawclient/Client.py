@@ -800,10 +800,7 @@ class MarklogicApiClient:
             else None
         )
 
-        if os.getenv("XSLT_IMAGE_LOCATION"):
-            image_location = os.getenv("XSLT_IMAGE_LOCATION")
-        else:
-            image_location = ""
+        image_location = os.getenv("XSLT_IMAGE_LOCATION", "")
 
         show_unpublished = self.verify_show_unpublished(show_unpublished)
 

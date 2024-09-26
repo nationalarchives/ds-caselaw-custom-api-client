@@ -32,10 +32,7 @@ class DocumentBodyFactory:
         )
 
         for map_to, map_from in cls.PARAMS_MAP.items():
-            if map_from[0] in kwargs:
-                value = kwargs[map_from[0]]
-            else:
-                value = map_from[1]
+            value = kwargs[map_from[0]] if map_from[0] in kwargs else map_from[1]
             setattr(document_mock.return_value, map_to, value)
 
         return document_mock()
@@ -74,10 +71,7 @@ class DocumentFactory:
             judgment_mock.return_value.body = DocumentBodyFactory().build()
 
         for map_to, map_from in cls.PARAMS_MAP.items():
-            if map_from[0] in kwargs:
-                value = kwargs[map_from[0]]
-            else:
-                value = map_from[1]
+            value = kwargs[map_from[0]] if map_from[0] in kwargs else map_from[1]
             setattr(judgment_mock.return_value, map_to, value)
 
         return judgment_mock()
