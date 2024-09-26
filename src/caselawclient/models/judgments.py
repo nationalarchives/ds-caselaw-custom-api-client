@@ -22,7 +22,7 @@ class Judgment(NeutralCitationMixin, Document):
     document_noun_plural = "judgments"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super(Judgment, self).__init__(self.document_noun, *args, **kwargs)
+        super().__init__(self.document_noun, *args, **kwargs)
 
     @cached_property
     def neutral_citation(self) -> NeutralCitationString:
