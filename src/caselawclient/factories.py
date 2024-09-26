@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, cast
+from typing import Any, Optional, cast
 from unittest.mock import Mock, patch
 
 from typing_extensions import TypeAlias
@@ -11,6 +11,8 @@ from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 
+DEFAULT_DOCUMENT_BODY_XML = "<akomantoso>This is some XML of a judgment.</akomantoso>"
+
 
 class DocumentBodyFactory:
     # "name_of_attribute": "default value"
@@ -21,11 +23,7 @@ class DocumentBodyFactory:
     }
 
     @classmethod
-    def build(cls, **kwargs: Any) -> DocumentBody:
-        xml_string = (
-            kwargs.pop("xml") if "xml" in kwargs else "<akomantoso>This is some XML of a judgment.</akomantoso>"
-        )
-
+    def build(cls, xml_string: str = DEFAULT_DOCUMENT_BODY_XML, **kwargs: Any) -> DocumentBody:
         document_body = DocumentBody(
             xml_bytestring=xml_string.encode(encoding="utf-8"),
         )
@@ -54,20 +52,20 @@ class DocumentFactory:
     target_class: TypeAlias = Document
 
     @classmethod
-    def build(cls, uri: str = "test/2023/123", **kwargs: Any) -> target_class:
-        if "api_client" in kwargs:
-            mock_api_client = kwargs.pop("api_client")
-        else:
-            mock_api_client = Mock(spec=MarklogicApiClient)
-            mock_api_client.get_judgment_xml_bytestring.return_value = (
-                b"<akomantoso>This is some XML of a judgment.</akomantoso>"
-            )
-
-        html_patched_return = kwargs.pop("html") if "html" in kwargs else "<p>This is a judgment.</p>"
+    def build(
+        cls,
+        uri: str = "test/2023/123",
+        html: str = "<p>This is a judgment.</p>",
+        api_client: Optional[MarklogicApiClient] = None,
+        **kwargs: Any,
+    ) -> target_class:
+        if not api_client:
+            api_client = Mock(spec=MarklogicApiClient)
+            api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
 
         with patch.object(cls.target_class, "content_as_html") as mock_content_as_html:
-            mock_content_as_html.return_value = html_patched_return
-            document = cls.target_class(uri, api_client=mock_api_client)
+            mock_content_as_html.return_value = html
+            document = cls.target_class(uri, api_client=api_client)
 
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
@@ -90,8 +88,14 @@ class JudgmentFactory(DocumentFactory):
         super().__init__()
 
     @classmethod
-    def build(cls, uri: str = "test/2023/123", **kwargs: Any) -> Judgment:
-        return cast(Judgment, super().build(uri, **kwargs))
+    def build(
+        cls,
+        uri: str = "test/2023/123",
+        html: str = "<p>This is a judgment.</p>",
+        api_client: Optional[MarklogicApiClient] = None,
+        **kwargs: Any,
+    ) -> Judgment:
+        return cast(Judgment, super().build(uri, html, api_client, **kwargs))
 
 
 class PressSummaryFactory(DocumentFactory):
@@ -106,8 +110,14 @@ class PressSummaryFactory(DocumentFactory):
         super().__init__()
 
     @classmethod
-    def build(cls, uri: str = "test/2023/123/press-summary/1", **kwargs: Any) -> PressSummary:
-        return cast(PressSummary, super().build(uri, **kwargs))
+    def build(
+        cls,
+        uri: str = "test/2023/123/press-summary/1",
+        html: str = "<p>This is a judgment.</p>",
+        api_client: Optional[MarklogicApiClient] = None,
+        **kwargs: Any,
+    ) -> PressSummary:
+        return cast(PressSummary, super().build(uri, html, api_client, **kwargs))
 
 
 class SimpleFactory:
