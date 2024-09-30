@@ -1,15 +1,14 @@
 import datetime
 import warnings
 from functools import cached_property
-from typing import NewType, Optional
+from typing import Optional
 
 import pytz
+from ds_caselaw_utils.courts import CourtCode
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from .xml import XML
-
-CourtIdentifierString = NewType("CourtIdentifierString", str)
 
 
 class UnparsableDate(Warning):
@@ -56,10 +55,10 @@ class DocumentBody:
         )
 
     @property
-    def court_and_jurisdiction_identifier_string(self) -> CourtIdentifierString:
+    def court_and_jurisdiction_identifier_string(self) -> CourtCode:
         if self.jurisdiction != "":
-            return CourtIdentifierString("/".join((self.court, self.jurisdiction)))
-        return CourtIdentifierString(self.court)
+            return CourtCode("/".join((self.court, self.jurisdiction)))
+        return CourtCode(self.court)
 
     @cached_property
     def document_date_as_string(self) -> str:
