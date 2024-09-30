@@ -516,17 +516,18 @@ websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "ds-caselaw-utils"
-version = "1.6.0"
+version = "1.7.0"
 description = "Utilities for the National Archives Caselaw project"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "ds_caselaw_utils-1.6.0-py3-none-any.whl", hash = "sha256:34840a03980d633ffe95d148315b0f8f9834179964e7d760299694e2e3aa5027"},
-    {file = "ds_caselaw_utils-1.6.0.tar.gz", hash = "sha256:04870b820722a344240b72f379d4152f40a845f7373eaa6ab670f2acddc5dbf5"},
+    {file = "ds_caselaw_utils-1.7.0-py3-none-any.whl", hash = "sha256:c5df9c94164972149279bd75316d857c095dd9ee2fafcc907a0a59ae415ba0e4"},
+    {file = "ds_caselaw_utils-1.7.0.tar.gz", hash = "sha256:d97e307dd09bcb48d94cc346a4e8de64c7ad67fc92868f7cdae0e2835107a338"},
 ]
 
 [package.dependencies]
 "ruamel.yaml" = ">=0.18.0,<0.19.0"
+typing-extensions = ">=4.12.2,<5.0.0"
 
 [[package]]
 name = "exceptiongroup"
