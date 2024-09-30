@@ -34,6 +34,7 @@ repos:
           - boto3-stubs[s3,sns]
           - types-python-dateutil
           - types-pytz
+          - ds-caselaw-utils
         args:
           - --strict
         files: ^src/
@@ -47,6 +48,7 @@ repos:
           - boto3-stubs[s3,sns]
           - types-python-dateutil
           - types-pytz
+          - ds-caselaw-utils
         files: ^tests/
         id: mypy
         name: mypy-tests
