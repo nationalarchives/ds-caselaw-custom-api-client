@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 from dateutil import parser as dateparser
 from dateutil.parser import ParserError
-from ds_caselaw_utils.courts import Court, CourtNotFoundException, courts
+from ds_caselaw_utils.courts import Court, CourtCode, CourtNotFoundException, JurisdictionCode, courts
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
@@ -193,15 +193,16 @@ class SearchResult:
         """
         :return: The court of the search result
         """
-        court = None
+        court: Optional[Court] = None
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
         jurisdiction_code = self._get_xpath_match_string(
             "search:extracted/uk:jurisdiction/text()",
         )
         if jurisdiction_code:
-            court_code_with_jurisdiction = "%s/%s" % (court_code, jurisdiction_code)
             try:
-                court = courts.get_by_code(court_code_with_jurisdiction)
+                court = courts.get_court_with_jurisdiction_by_code(
+                    CourtCode(court_code), JurisdictionCode(jurisdiction_code)
+                )
             except CourtNotFoundException:
                 logging.warning(
                     "Court not found with court code %s and jurisdiction code %s for judgment with NCN %s, falling back to court."
@@ -209,7 +210,7 @@ class SearchResult:
                 )
         if court is None:
             try:
-                court = courts.get_by_code(court_code)
+                court = courts.get_by_code(CourtCode(court_code))
             except CourtNotFoundException:
                 logging.warning(
                     "Court not found with court code %s for judgment with NCN %s, returning None."
