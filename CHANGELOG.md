@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- The `models.documents.body.CourtIdentifierString` type has been replaced with the more specific `courts.CourtCode` type from ds-caselaw-utils.
+
+### Fix
+
+- **SearchResponse**: total now returns an int, not a str
+- **SearchResult**: update behaviour to meet type checking
+- **deps**: update dependency ds-caselaw-utils to v1.7.0
+- **deps**: update dependency boto3 to v1.35.28
+- **deps**: update dependency ds-caselaw-utils to v1.5.7
+- **deps**: update dependency boto3 to v1.35.25
+
+### Refactor
+
+- **DocumentBody**: replace CourtIdentifierString with utils.courts.CourtCode
+
 ## v26.0.0 (2024-09-25)
 
 ### BREAKING CHANGE
