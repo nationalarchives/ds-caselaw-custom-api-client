@@ -24,13 +24,13 @@ class SearchResponse:
         self.client = client
 
     @property
-    def total(self) -> str:
+    def total(self) -> int:
         """
         The total number of search results.
 
         :return: The total number of search results
         """
-        return str(
+        return int(
             self.node.xpath("//search:response/@total", namespaces=self.NAMESPACES)[0],
         )
 

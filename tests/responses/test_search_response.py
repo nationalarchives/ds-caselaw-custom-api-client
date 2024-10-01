@@ -21,7 +21,7 @@ class TestSearchResponse:
         """
         Given a SearchResponse instance
         When calling 'total' on it
-        Then it should return a string representing the total number of results
+        Then it should return an integer representing the total number of results
         """
         search_response = SearchResponse(
             etree.fromstring(
@@ -32,7 +32,7 @@ class TestSearchResponse:
             self.client,
         )
 
-        assert search_response.total == "5"
+        assert search_response.total == 5
 
     def test_results(
         self,
