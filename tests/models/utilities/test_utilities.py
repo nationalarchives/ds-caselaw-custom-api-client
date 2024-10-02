@@ -1,10 +1,9 @@
 import io
 import os
-from unittest.mock import ANY, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import boto3
 import ds_caselaw_utils
-import pytest
 from moto import mock_aws
 
 from caselawclient.models.utilities import extract_version, move, render_versions
@@ -13,8 +12,6 @@ from caselawclient.models.utilities.aws import (
     check_docx_exists,
     copy_assets,
 )
-
-from ...factories import JudgmentFactory
 
 
 class TestVersionUtils:
@@ -81,45 +78,6 @@ class TestAWSUtils:
             "MY_BUCKET",
             "ukpc/1999/9/ukpc_1999_9.docx",
         )
-
-
-class TestOverwrite:
-    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
-    @patch("boto3.session.Session.client")
-    def test_overwrite_success(self, fake_boto3_client):
-        """Given the target judgment does not exist,
-        we continue to move the judgment to the new location
-        (where moving is copy + delete)"""
-        ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
-        fake_api_client = MagicMock()
-        fake_api_client.judgment_exists.return_value = True
-        fake_api_client.copy_judgment.return_value = True
-        fake_api_client.delete_judgment.return_value = True
-        fake_boto3_client.list_objects.return_value = []
-
-        fake_judgment = JudgmentFactory.build()
-        fake_judgment.return_value.content_as_xml = "<xml>b</xml>"
-        fake_api_client.get_document_by_uri_or_404.return_value = fake_judgment
-
-        result = move.overwrite_document("old/uri", "[2002] EAT 1", fake_api_client)
-        fake_api_client.update_document_xml.assert_called_with(
-            "new/uri",
-            ANY,
-            annotation="overwritten from old/uri",
-        )
-        fake_api_client.delete_judgment.assert_called_with("old/uri")
-        assert result == "new/uri"
-
-    def test_overwrite_unparseable_citation(self):
-        ds_caselaw_utils.neutral_url = MagicMock(return_value=None)
-        fake_api_client = MagicMock()
-
-        with pytest.raises(move.NeutralCitationToUriError):
-            move.overwrite_document(
-                "old/uri",
-                "Wrong neutral citation",
-                fake_api_client,
-            )
 
 
 class TestMove:

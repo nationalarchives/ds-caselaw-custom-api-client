@@ -1035,12 +1035,7 @@ class MarklogicApiClient:
         search_parameters.collections = [DOCUMENT_COLLECTION_URI_JUDGMENT]
         return self.search_and_decode_response(search_parameters)
 
-    def overwrite_document(self, old_uri: str, new_citation: str) -> str:
-        """Move the judgment at old_uri on top of the new citation, which must already exist
-        Compare to update_document_uri"""
-        return move.overwrite_document(old_uri, new_citation, api_client=self)
-
-    def update_document_uri(self, old_uri: str, new_citation: str) -> str:
+    def update_document_uri(self, old_uri: DocumentURIString, new_citation: str) -> DocumentURIString:
         """
         Move the document at old_uri to the correct location based on the neutral citation
         The new neutral citation *must* not already exist (that is handled elsewhere)

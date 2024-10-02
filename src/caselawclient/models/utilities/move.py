@@ -1,16 +1,16 @@
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import ds_caselaw_utils as caselawutils
 
 from caselawclient.errors import MarklogicAPIError
+from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.utilities.aws import copy_assets
+
+if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
 
 
 class NeutralCitationToUriError(Exception):
-    pass
-
-
-class OverwriteJudgmentError(Exception):
     pass
 
 
@@ -18,62 +18,9 @@ class MoveJudgmentError(Exception):
     pass
 
 
-def overwrite_document(
-    source_uri: str,
-    target_citation: str,
-    api_client: Any,
-) -> str:
-    """Move the document at source_uri on top of the new citation, which must already exist
-    Compare to update_document_uri
-
-    :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
-    :param target_citation: The NCN (implying a URL) whose contents will be overwritten
-    :param api_client: An instance of MarklogicApiClient used to make the search request
-    :return: The URL associated with the `target_citation`
-    """
-
-    new_uri: Optional[str] = caselawutils.neutral_url(target_citation.strip())
-
-    if new_uri == source_uri:
-        raise RuntimeError(
-            f"Attempted to overwrite document {source_uri} with itself, which is not permitted.",
-        )
-    if new_uri is None:
-        raise NeutralCitationToUriError(
-            f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}",
-        )
-    if not api_client.document_exists(new_uri):
-        raise OverwriteJudgmentError(
-            f"The URI {new_uri} generated from {target_citation} does not already exist, so cannot be overwritten",
-        )
-    old_doc = api_client.get_document_by_uri_or_404(source_uri)
-    try:
-        old_doc_xml = old_doc.content_as_xml
-        api_client.update_document_xml(
-            new_uri,
-            old_doc_xml,
-            annotation=f"overwritten from {source_uri}",
-        )
-        set_metadata(source_uri, new_uri, api_client)
-        # TODO: consider deleting existing public assets at that location
-        copy_assets(source_uri, new_uri)
-        api_client.set_judgment_this_uri(new_uri)
-    except MarklogicAPIError as e:
-        raise OverwriteJudgmentError(
-            f"Failure when attempting to copy judgment from {source_uri} to {new_uri}: {e}",
-        )
-
-    try:
-        api_client.delete_judgment(source_uri)
-    except MarklogicAPIError as e:
-        raise OverwriteJudgmentError(
-            f"Failure when attempting to delete judgment from {source_uri}: {e}",
-        )
-
-    return new_uri
-
-
-def update_document_uri(source_uri: str, target_citation: str, api_client: Any) -> str:
+def update_document_uri(
+    source_uri: DocumentURIString, target_citation: str, api_client: "MarklogicApiClient"
+) -> DocumentURIString:
     """
     Move the document at source_uri to the correct location based on the neutral citation
     The new neutral citation *must* not already exist (that is handled elsewhere)
@@ -83,7 +30,8 @@ def update_document_uri(source_uri: str, target_citation: str, api_client: Any) 
     :param api_client: An instance of MarklogicApiClient used to make the search request
     :return: The URL associated with the `target_citation`
     """
-    new_uri: Optional[str] = caselawutils.neutral_url(target_citation.strip())
+    new_ncn_based_uri = caselawutils.neutral_url(target_citation.strip())
+    new_uri: Optional[DocumentURIString] = DocumentURIString(new_ncn_based_uri) if new_ncn_based_uri else None
     if new_uri is None:
         raise NeutralCitationToUriError(
             f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}",
