@@ -441,9 +441,6 @@ class Document:
         else:
             raise DocumentNotSafeForDeletion
 
-    def overwrite(self, new_citation: str) -> None:
-        self.api_client.overwrite_document(self.uri, new_citation)
-
     def move(self, new_citation: str) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)
 
