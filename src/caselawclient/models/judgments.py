@@ -7,6 +7,7 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 
 if TYPE_CHECKING:
     from caselawclient.models.press_summaries import PressSummary
+from ds_caselaw_utils.types import NeutralCitationString
 
 from .documents import Document
 
@@ -23,18 +24,20 @@ class Judgment(NeutralCitationMixin, Document):
         super(Judgment, self).__init__(self.document_noun, *args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> str:
-        return self.body.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
+    def neutral_citation(self) -> NeutralCitationString:
+        return NeutralCitationString(
+            self.body.get_xpath_match_string(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
+                {
+                    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+                },
+            )
         )
 
     @property
     def best_human_identifier(self) -> str:
-        return self.neutral_citation
+        return str(self.neutral_citation)
 
     @cached_property
     def linked_document(self) -> Optional["PressSummary"]:

@@ -1,7 +1,8 @@
 from functools import cached_property
-from typing import Any
+from typing import Any, Optional
 
 from ds_caselaw_utils import neutral_url
+from ds_caselaw_utils.types import NeutralCitationString
 
 
 class NeutralCitationMixin:
@@ -35,8 +36,8 @@ class NeutralCitationMixin:
         super(NeutralCitationMixin, self).__init__(*args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> str:
-        return ""
+    def neutral_citation(self) -> Optional[NeutralCitationString]:
+        return None
 
     @cached_property
     def has_ncn(self) -> bool:
@@ -44,4 +45,4 @@ class NeutralCitationMixin:
 
     @cached_property
     def has_valid_ncn(self) -> bool:
-        return self.has_ncn and neutral_url(self.neutral_citation) is not None
+        return self.has_ncn and self.neutral_citation is not None and neutral_url(self.neutral_citation) is not None

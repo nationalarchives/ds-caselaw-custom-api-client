@@ -26,6 +26,9 @@ class VersionType(Enum):
     EDIT = "edit"
     """ This version has been created as the result of a manual edit. """
 
+    OVERWRITE = "overwrite"
+    """ This version has been created by overwriting this document with another. """
+
 
 class VersionAnnotation:
     """A class holding structured data about the reason for a version."""

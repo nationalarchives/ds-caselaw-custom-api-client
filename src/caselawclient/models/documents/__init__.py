@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, NewType, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
+from ds_caselaw_utils.types import NeutralCitationString
 from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
 
@@ -441,10 +442,10 @@ class Document:
         else:
             raise DocumentNotSafeForDeletion
 
-    def overwrite(self, new_citation: str) -> None:
-        self.api_client.overwrite_document(self.uri, new_citation)
+    def overwrite(self, new_citation: NeutralCitationString, automated: bool = False) -> None:
+        self.api_client.overwrite_document(self.uri, new_citation, automated)
 
-    def move(self, new_citation: str) -> None:
+    def move(self, new_citation: NeutralCitationString) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)
 
     def force_reparse(self) -> None:
