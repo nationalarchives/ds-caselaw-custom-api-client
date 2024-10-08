@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import Optional
 
 import pytz
-from ds_caselaw_utils.courts import CourtCode
+from ds_caselaw_utils.types import CourtCode
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 

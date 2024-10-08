@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 import ds_caselaw_utils as caselawutils
+from ds_caselaw_utils.types import NeutralCitationString
 
 from caselawclient.errors import MarklogicAPIError
 from caselawclient.models.documents import DocumentURIString
@@ -19,7 +20,7 @@ class MoveJudgmentError(Exception):
 
 
 def update_document_uri(
-    source_uri: DocumentURIString, target_citation: str, api_client: "MarklogicApiClient"
+    source_uri: DocumentURIString, target_citation: NeutralCitationString, api_client: "MarklogicApiClient"
 ) -> DocumentURIString:
     """
     Move the document at source_uri to the correct location based on the neutral citation
@@ -30,7 +31,7 @@ def update_document_uri(
     :param api_client: An instance of MarklogicApiClient used to make the search request
     :return: The URL associated with the `target_citation`
     """
-    new_ncn_based_uri = caselawutils.neutral_url(target_citation.strip())
+    new_ncn_based_uri = caselawutils.neutral_url(target_citation)
     new_uri: Optional[DocumentURIString] = DocumentURIString(new_ncn_based_uri) if new_ncn_based_uri else None
     if new_uri is None:
         raise NeutralCitationToUriError(
@@ -63,7 +64,7 @@ def update_document_uri(
     return new_uri
 
 
-def set_metadata(old_uri: str, new_uri: str, api_client: Any) -> None:
+def set_metadata(old_uri: DocumentURIString, new_uri: DocumentURIString, api_client: Any) -> None:
     source_organisation = api_client.get_property(old_uri, "source-organisation")
     source_name = api_client.get_property(old_uri, "source-name")
     source_email = api_client.get_property(old_uri, "source-email")
