@@ -38,7 +38,7 @@ class PressSummary(NeutralCitationMixin, Document):
         )
 
     @property
-    def best_human_identifier(self) -> NeutralCitationString:
+    def best_human_identifier(self) -> str:
         return self.neutral_citation
 
     @cached_property
