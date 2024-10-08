@@ -3,8 +3,8 @@ from unittest.mock import patch
 import pytest
 
 from caselawclient.errors import DocumentNotFoundError
+from caselawclient.factories import PressSummaryFactory
 from caselawclient.models.judgments import Judgment
-from tests.factories import PressSummaryFactory
 
 
 class TestJudgment:

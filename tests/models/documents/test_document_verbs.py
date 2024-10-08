@@ -6,13 +6,13 @@ from unittest.mock import PropertyMock, patch
 import pytest
 import time_machine
 
+from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import (
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
 )
 from caselawclient.models.judgments import Judgment
-from tests.factories import JudgmentFactory
 
 
 class TestDocumentPublish:
@@ -274,10 +274,9 @@ class TestReparse:
 
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
     def test_reparse_sets_last_sent_if_no_docx(self, mock_api_client):
-        document = JudgmentFactory().build(is_published=True)
-        document.api_client = mock_api_client
+        document = JudgmentFactory().build(api_client=mock_api_client)
         document.can_reparse = False
-        assert Judgment.reparse(document) is False
+        assert document.reparse() is False
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
             "last_sent_to_parser",
@@ -286,12 +285,14 @@ class TestReparse:
 
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
     def test_reparse_sets_last_sent_if_docx(self, mock_api_client):
-        document = JudgmentFactory().build(is_published=True)
-        document.api_client = mock_api_client
+        document = JudgmentFactory().build(api_client=mock_api_client)
         document.can_reparse = True
-        assert Judgment.reparse(document) is True
-        # set_property is only called once because document.reparse isn't real
-        assert "Mock" in str(type(document.reparse))
+
+        # Patch force_reparse so we don't actually try to call boto here
+        with patch.object(Document, "force_reparse"):
+            assert document.reparse() is True
+
+        # set_property is only called once because document.force_reparse isn't real
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
             "last_sent_to_parser",
