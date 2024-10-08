@@ -12,6 +12,7 @@ from xml.etree.ElementTree import Element, ParseError, fromstring
 
 import environ
 import requests
+from ds_caselaw_utils.types import NeutralCitationString
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -1035,7 +1036,7 @@ class MarklogicApiClient:
         search_parameters.collections = [DOCUMENT_COLLECTION_URI_JUDGMENT]
         return self.search_and_decode_response(search_parameters)
 
-    def update_document_uri(self, old_uri: DocumentURIString, new_citation: str) -> DocumentURIString:
+    def update_document_uri(self, old_uri: DocumentURIString, new_citation: NeutralCitationString) -> DocumentURIString:
         """
         Move the document at old_uri to the correct location based on the neutral citation
         The new neutral citation *must* not already exist (that is handled elsewhere)
