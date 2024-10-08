@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 import ds_caselaw_utils as caselawutils
+from ds_caselaw_utils.types import NeutralCitationString
 
 from caselawclient.errors import MarklogicAPIError
 from caselawclient.models.documents import DocumentURIString

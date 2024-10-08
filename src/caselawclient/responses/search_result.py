@@ -7,7 +7,8 @@ from typing import Dict, Optional
 
 from dateutil import parser as dateparser
 from dateutil.parser import ParserError
-from ds_caselaw_utils.courts import Court, CourtCode, CourtNotFoundException, JurisdictionCode, courts
+from ds_caselaw_utils.courts import Court, CourtNotFoundException, courts
+from ds_caselaw_utils.types import CourtCode, JurisdictionCode
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient

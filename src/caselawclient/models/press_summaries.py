@@ -4,6 +4,8 @@ import importlib
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
+from ds_caselaw_utils.types import NeutralCitationString
+
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 
@@ -25,16 +27,18 @@ class PressSummary(NeutralCitationMixin, Document):
         super(PressSummary, self).__init__(self.document_noun, *args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> str:
-        return self.body.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()",
-            {
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
+    def neutral_citation(self) -> NeutralCitationString:
+        return NeutralCitationString(
+            self.body.get_xpath_match_string(
+                "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()",
+                {
+                    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+                },
+            )
         )
 
     @property
-    def best_human_identifier(self) -> str:
+    def best_human_identifier(self) -> NeutralCitationString:
         return self.neutral_citation
 
     @cached_property
