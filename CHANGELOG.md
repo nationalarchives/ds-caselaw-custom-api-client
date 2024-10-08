@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v27.0.0 (2024-10-08)
 
 ### BREAKING CHANGE
 
 - Remove `Document.overwrite` and `MarkLogicApiClient.overwrite`
 - The `models.documents.body.CourtIdentifierString` type has been replaced with the more specific `courts.CourtCode` type from ds-caselaw-utils.
 
+### Feat
+
+- **NeutralCitationMixin**: use ABC to flag abstract methods properly
+
 ### Fix
 
+- **deps**: update dependency boto3 to v1.35.33
+- **deps**: update dependency mypy-boto3-s3 to v1.35.32
+- **deps**: update dependency boto3 to v1.35.30
 - **SearchResponse**: total now returns an int, not a str
 - **SearchResult**: update behaviour to meet type checking
 - **deps**: update dependency ds-caselaw-utils to v1.7.0
@@ -21,6 +28,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Refactor
 
+- **FCL-331**: move api_client, xml and html params to build method signature instead of kwargs
+- **types**: typing improvements around NeutralCitationString
 - **Document**: remove unused overwrite method
 - **DocumentBody**: replace CourtIdentifierString with utils.courts.CourtCode
 
