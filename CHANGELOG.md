@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## v27.0.0 (2024-10-08)
 
+- client.checkout_judgment now accepts a `timeout_seconds` parameter
+
+## v27.0.0 (2024-10-01)
+
 ### BREAKING CHANGE
 
 - Remove `Document.overwrite` and `MarkLogicApiClient.overwrite`
