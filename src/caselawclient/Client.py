@@ -634,12 +634,14 @@ class MarklogicApiClient:
         judgment_uri: DocumentURIString,
         annotation: str = "",
         expires_at_midnight: bool = False,
+        timeout_seconds: int = -1,
     ) -> requests.Response:
+        """If timeout_seconds is -1, the lock never times out"""
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.CheckoutJudgmentDict = {
             "uri": uri,
             "annotation": annotation,
-            "timeout": -1,
+            "timeout": timeout_seconds,
         }
 
         if expires_at_midnight:

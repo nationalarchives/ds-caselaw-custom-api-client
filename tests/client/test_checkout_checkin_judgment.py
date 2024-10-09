@@ -28,7 +28,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 accept_header="application/xml",
             )
 
-    def test_checkout_judgment_with_timeout(self):
+    def test_checkout_judgment_with_midnight_timeout(self):
         with patch.object(self.client, "eval") as mock_eval, patch.object(
             self.client,
             "calculate_seconds_until_midnight",
@@ -43,6 +43,21 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 "timeout": 3600,
             }
             self.client.checkout_judgment(uri, annotation, expires_at_midnight)
+
+            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"))
+            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
+
+    def test_checkout_judgment_with_timeout_seconds(self):
+        with patch.object(self.client, "eval") as mock_eval:
+            uri = "/ewca/civ/2004/632"
+            annotation = "locked by A KITTEN"
+            timeout_seconds = 1234
+            expected_vars = {
+                "uri": "/ewca/civ/2004/632.xml",
+                "annotation": "locked by A KITTEN",
+                "timeout": 1234,
+            }
+            self.client.checkout_judgment(uri, annotation, timeout_seconds=timeout_seconds)
 
             assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
