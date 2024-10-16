@@ -1,6 +1,6 @@
 import datetime
 from typing import Any, Optional, cast
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
 
@@ -63,10 +63,8 @@ class DocumentFactory:
             api_client = Mock(spec=MarklogicApiClient)
             api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
 
-        with patch.object(cls.target_class, "content_as_html") as mock_content_as_html:
-            mock_content_as_html.return_value = html
-            document = cls.target_class(uri, api_client=api_client)
-
+        document = cls.target_class(uri, api_client=api_client)
+        document.content_as_html = Mock(return_value=html)  # type: ignore[method-assign]
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         for param_name, default_value in cls.PARAMS_MAP.items():
