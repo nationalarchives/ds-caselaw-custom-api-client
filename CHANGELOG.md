@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v27.0.1 (2024-10-17)
+
+- Fix `.content_as_html` on Document Factory
+
 ## v27.0.0 (2024-10-08)
 
 ### BREAKING CHANGE
