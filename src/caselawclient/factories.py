@@ -14,6 +14,29 @@ from caselawclient.responses.search_result import SearchResult, SearchResultMeta
 DEFAULT_DOCUMENT_BODY_XML = "<akomantoso>This is some XML of a judgment.</akomantoso>"
 
 
+def doc_builder(
+    factory_cls,
+    uri: str = "test/2023/123",
+    html: str = "<p>This is a judgment.</p>",
+    api_client: Optional[MarklogicApiClient] = None,
+    **kwargs: Any,
+):
+    if not api_client:
+        api_client = Mock(spec=MarklogicApiClient)
+        api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
+
+    document = factory_cls.target_class(uri, api_client=api_client)
+    document.content_as_html = Mock(return_value=html)  # type: ignore[method-assign]
+    document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
+
+    breakpoint()
+    for param_name, default_value in factory_cls.PARAMS_MAP.items():
+        value = kwargs.get(param_name, default_value)
+        setattr(document, param_name, value)
+
+    return document
+
+
 class DocumentBodyFactory:
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any] = {
@@ -58,7 +81,7 @@ class DocumentFactory:
         html: str = "<p>This is a judgment.</p>",
         api_client: Optional[MarklogicApiClient] = None,
         **kwargs: Any,
-    ) -> target_class:
+    ):
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
             api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
@@ -76,14 +99,10 @@ class DocumentFactory:
 
 class JudgmentFactory(DocumentFactory):
     target_class = Judgment
-
-    def __init__(self) -> None:
-        self.PARAMS_MAP = self.PARAMS_MAP | {
-            "neutral_citation": "[2023] Test 123",
-            "best_human_identifier": "[2023] Test 123",
-        }
-
-        super().__init__()
+    PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
+        "neutral_citation": "[2023] Test 123",
+        # "best_human_identifier": "[2023] Test 123",
+    }
 
     @classmethod
     def build(
@@ -93,19 +112,16 @@ class JudgmentFactory(DocumentFactory):
         api_client: Optional[MarklogicApiClient] = None,
         **kwargs: Any,
     ) -> Judgment:
-        return cast(Judgment, super().build(uri, html, api_client, **kwargs))
+        return doc_builder(JudgmentFactory, uri, html, api_client, **kwargs)
 
 
 class PressSummaryFactory(DocumentFactory):
     target_class = PressSummary
 
-    def __init__(self) -> None:
-        self.PARAMS_MAP = self.PARAMS_MAP | {
-            "neutral_citation": "[2023] Test 123",
-            "best_human_identifier": "[2023] Test 123",
-        }
-
-        super().__init__()
+    PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
+        "neutral_citation": "[2023] Test 123",
+        "best_human_identifier": "[2023] Test 123",
+    }
 
     @classmethod
     def build(
