@@ -68,6 +68,7 @@ class DocumentBody:
         )
 
     @cached_property
+    # DRAGON
     def document_date_as_date(self) -> Optional[datetime.date]:
         if not self.document_date_as_string:
             return None
