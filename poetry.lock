@@ -1113,13 +1113,13 @@ dev = ["build", "pytest", "pytest-cov", "twine"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.35.32"
-description = "Type annotations for boto3.S3 1.35.32 service generated with mypy-boto3-builder 8.1.2"
+version = "1.35.42"
+description = "Type annotations for boto3.S3 1.35.42 service generated with mypy-boto3-builder 8.1.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_s3-1.35.32-py3-none-any.whl", hash = "sha256:ad77a637c71295a693c616d0dcfadca9ee0a5426083fe40a4eb19e84453dd9fa"},
-    {file = "mypy_boto3_s3-1.35.32.tar.gz", hash = "sha256:fceeb10ea70991a516b34d11c1fde0f7f3fe7508df4e436ffe066d27d04db0e4"},
+    {file = "mypy_boto3_s3-1.35.42-py3-none-any.whl", hash = "sha256:4e47094a43012be18e8ce858d6ec50f6505ba1d5364ca611093d9f736a38e8b2"},
+    {file = "mypy_boto3_s3-1.35.42.tar.gz", hash = "sha256:2d040c05d68a161d91c4b72926127034da28ade98d480def6a9569ab7655cddd"},
 ]
 
 [package.dependencies]
