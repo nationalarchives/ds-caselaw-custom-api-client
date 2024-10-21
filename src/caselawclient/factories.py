@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Optional, cast
+from typing import Any, Optional
 from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
@@ -75,54 +75,23 @@ class DocumentFactory:
 
 
 class JudgmentFactory(DocumentFactory):
-    target_class = Judgment
-
-    def __init__(self) -> None:
-        self.PARAMS_MAP = self.PARAMS_MAP | {
-            "neutral_citation": "[2023] Test 123",
-            "best_human_identifier": "[2023] Test 123",
-        }
-
-        super().__init__()
-
-    @classmethod
-    def build(
-        cls,
-        uri: str = "test/2023/123",
-        html: str = "<p>This is a judgment.</p>",
-        api_client: Optional[MarklogicApiClient] = None,
-        **kwargs: Any,
-    ) -> Judgment:
-        return cast(Judgment, super().build(uri, html, api_client, **kwargs))
+    target_class: TypeAlias = Judgment
+    PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
+        "neutral_citation": "[2023] Test 123",
+    }
 
 
 class PressSummaryFactory(DocumentFactory):
-    target_class = PressSummary
-
-    def __init__(self) -> None:
-        self.PARAMS_MAP = self.PARAMS_MAP | {
-            "neutral_citation": "[2023] Test 123",
-            "best_human_identifier": "[2023] Test 123",
-        }
-
-        super().__init__()
-
-    @classmethod
-    def build(
-        cls,
-        uri: str = "test/2023/123/press-summary/1",
-        html: str = "<p>This is a judgment.</p>",
-        api_client: Optional[MarklogicApiClient] = None,
-        **kwargs: Any,
-    ) -> PressSummary:
-        return cast(PressSummary, super().build(uri, html, api_client, **kwargs))
+    target_class: TypeAlias = PressSummary
+    PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
+        "neutral_citation": "[2023] Test 123",
+    }
 
 
 class SimpleFactory:
+    target_class: TypeAlias = object
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any]
-
-    target_class: TypeAlias = object
 
     @classmethod
     def build(cls, **kwargs: Any) -> target_class:
@@ -145,6 +114,7 @@ class SearchResultMetadataFactory(SimpleFactory):
         "author_email": "fake.email@gov.invalid",
         "consignment_reference": "TDR-2023-ABC",
         "submission_datetime": datetime.datetime(2023, 2, 3, 9, 12, 34),
+        "editor_status": "New",
     }
 
 
