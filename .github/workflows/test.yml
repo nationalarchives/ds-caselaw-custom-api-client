@@ -32,9 +32,17 @@ jobs:
       MARKLOGIC_USER: ""
       MARKLOGIC_PASSWORD: ""
 
+    continue-on-error: ${{ matrix.experimental }}
+
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        experimental: [false]
+        include:
+          - version: "3.13"
+            experimental: true
+          - version: "3.14"
+            experimental: true
 
     steps:
       - uses: actions/checkout@v4
