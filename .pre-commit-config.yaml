@@ -60,7 +60,6 @@ repos:
           - yaml
           - json
           - xml
-          - html
           - markdown
           - scss
           - javascript

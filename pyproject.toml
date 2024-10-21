@@ -32,7 +32,7 @@ saxonche = "^12.5.0"
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
 pytest = "^8.0.0"
-pytest-django = "^4.9.0"
+beautifulsoup4 = "^4.12.3"
 responses = "^0.25.0"
 python-dotenv = "^1.0.0"
 time-machine = "^2.13.0"
