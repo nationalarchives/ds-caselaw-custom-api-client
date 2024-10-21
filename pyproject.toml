@@ -27,10 +27,12 @@ mypy-boto3-s3 = "^1.26.104"
 mypy-boto3-sns = "^1.26.69"
 pytz = "^2024.1"
 python-dateutil = "^2.9.0-post.0"
+saxonche = "^12.5.0"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.3"
 pytest = "^8.0.0"
+pytest-django = "^4.9.0"
 responses = "^0.25.0"
 python-dotenv = "^1.0.0"
 time-machine = "^2.13.0"
