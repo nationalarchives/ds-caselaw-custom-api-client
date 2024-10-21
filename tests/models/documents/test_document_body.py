@@ -1,8 +1,8 @@
 import datetime
 import os
-import re
 
 import pytest
+from bs4 import BeautifulSoup
 
 from caselawclient.models.documents import (
     DocumentBody,
@@ -286,12 +286,11 @@ class TestDocumentBody:
         with open(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.html"), "r"
         ) as file:
-            html_document = file.read()
-
-            # The HTML which comes out of the XSLT doesn't have extra whitespace, but our test document does to aid readability.
-            # This reassembles our pretty HTML into a straight string for comparison purposes.
-            html_without_whitespace = "".join(re.split(r"\s*\n\s*", html_document.strip()))
+            target_html = file.read()
+            prettified_target_html = BeautifulSoup(target_html, features="html.parser").prettify()
 
         body = DocumentBody(xml_document.encode())
+        transformed_html = body.content_as_html(image_base_url="https://test.caselaw.nationalarchives.gov.uk/")
+        prettified_transformed_html = BeautifulSoup(transformed_html, features="html.parser").prettify()
 
-        assert body.content_as_html == html_without_whitespace
+        assert prettified_transformed_html == prettified_target_html
