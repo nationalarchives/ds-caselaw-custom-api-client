@@ -114,6 +114,7 @@ class SearchResultMetadataFactory(SimpleFactory):
         "author_email": "fake.email@gov.invalid",
         "consignment_reference": "TDR-2023-ABC",
         "submission_datetime": datetime.datetime(2023, 2, 3, 9, 12, 34),
+        "editor_status": "New",
     }
 
 

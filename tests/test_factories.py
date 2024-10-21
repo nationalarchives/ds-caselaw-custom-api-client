@@ -1,6 +1,6 @@
 import pytest
 
-from caselawclient.factories import DocumentFactory, JudgmentFactory, PressSummaryFactory
+from caselawclient.factories import DocumentFactory, JudgmentFactory, PressSummaryFactory, SearchResultFactory
 
 
 def test_content_as_html():
@@ -8,7 +8,13 @@ def test_content_as_html():
     assert doc.content_as_html() == "<p>This is a judgment.</p>"
 
 
-class TestNCNBehaviour:
+class TestSearchStatusBehaviour:
+    def test_status(self):
+        search = SearchResultFactory.build()
+        assert search.metadata.editor_status == "New"
+
+
+class TestDocumentNCNBehaviour:
     def test_ncn_judgment(self):
         doc = JudgmentFactory.build(neutral_citation="not the default")
         assert doc.neutral_citation == "not the default"
