@@ -1,10 +1,12 @@
 import datetime
+import os
 import warnings
-from functools import cached_property
+from functools import cache, cached_property
 from typing import Optional
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
+from saxonche import PySaxonProcessor
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
@@ -128,6 +130,23 @@ class DocumentBody:
     @cached_property
     def content_as_xml(self) -> str:
         return self._xml.xml_as_string
+
+    @cache
+    def content_as_html(self, image_base_url: Optional[str] = None) -> str:
+        """Convert the XML representation of the Document into HTML for rendering."""
+
+        html_xslt_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "transforms", "html.xsl")
+
+        with PySaxonProcessor() as proc:
+            xslt_processor = proc.new_xslt30_processor()
+            document = proc.parse_xml(xml_text=self._xml.xml_as_string)
+
+            executable = xslt_processor.compile_stylesheet(stylesheet_file=html_xslt_location)
+
+            if image_base_url:
+                executable.set_parameter("image-base", proc.make_string_value(image_base_url))
+
+            return str(executable.transform_to_string(xdm_node=document))
 
     @cached_property
     def failed_to_parse(self) -> bool:

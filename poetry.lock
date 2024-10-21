@@ -77,6 +77,27 @@ botocore = ">=1.11.3"
 wrapt = "*"
 
 [[package]]
+name = "beautifulsoup4"
+version = "4.12.3"
+description = "Screen-scraping library"
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "beautifulsoup4-4.12.3-py3-none-any.whl", hash = "sha256:b80878c9f40111313e55da8ba20bdba06d8fa3969fc68304167741bbf9e082ed"},
+    {file = "beautifulsoup4-4.12.3.tar.gz", hash = "sha256:74e3d1928edc070d21748185c46e3fb33490f22f52a3addee9aee0f4f7781051"},
+]
+
+[package.dependencies]
+soupsieve = ">1.2"
+
+[package.extras]
+cchardet = ["cchardet"]
+chardet = ["chardet"]
+charset-normalizer = ["charset-normalizer"]
+html5lib = ["html5lib"]
+lxml = ["lxml"]
+
+[[package]]
 name = "boto3"
 version = "1.35.44"
 description = "The AWS SDK for Python"
@@ -1970,6 +1991,40 @@ botocore = ">=1.33.2,<2.0a.0"
 crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
+name = "saxonche"
+version = "12.5.0"
+description = "Official Saxonica python package for the SaxonC-HE 12.5.0 processor: for XSLT 3.0, XQuery 3.1, XPath 3.1 and XML Schema processing."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "saxonche-12.5.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3f84604bc47721b2fc1df3106083e264d6dede5eec1934000376d61b3ad73c0b"},
+    {file = "saxonche-12.5.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c03ce719be633ddfd70198cb469d1f27e67062e5220eb810001b16a1061f5f43"},
+    {file = "saxonche-12.5.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:638895fc495e22a582e1d25dcc8b15c3fb94f645788bbff0efc0765287cd1fe1"},
+    {file = "saxonche-12.5.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5079210932e6d6a77d638a5acc15a438a91ea47f4e322ae2ae8a8e2b1be40689"},
+    {file = "saxonche-12.5.0-cp310-cp310-win_amd64.whl", hash = "sha256:df4ac7ef8420477184f4aa48ed5e696fef7b787d61aadfb6b62695afbb204a79"},
+    {file = "saxonche-12.5.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:8ab8ff38eba50b86c547dfe62494e8525e49737fb8c111377a530f8e4aba5398"},
+    {file = "saxonche-12.5.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:38a735bc7e7f7ec8fd31cf8d88d6880ea76d21f2c3da151c2d86a589f6cd6603"},
+    {file = "saxonche-12.5.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bfa0f72280e518bc48cb2dc648534ec9cde8da3e7f1b4a60beca8ca29c9ede31"},
+    {file = "saxonche-12.5.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:620849d0411e32a20193099106ddfe97d3ba07aa4b76ef0edab94920fdae0b34"},
+    {file = "saxonche-12.5.0-cp311-cp311-win_amd64.whl", hash = "sha256:a2d30fbe608390a9e32e27d8065696df398d3c56c5a776fd5e794e940d42b14b"},
+    {file = "saxonche-12.5.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:bc3f406ed0529ef56a796a3ddb66608047bc4d641ead57891b6924dfe0234f90"},
+    {file = "saxonche-12.5.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:620d586392ef7084ba8d0c6747bed2193da49cd137866ba619c479185fa24ed4"},
+    {file = "saxonche-12.5.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2374c58755944fa1bed6a5275eac2c988f132b461da15a33c66f79548b81f043"},
+    {file = "saxonche-12.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:78f4f606165f2d9c14c871132c3b3fd2ecaaa8a2f3d6a624c63f56524cef7470"},
+    {file = "saxonche-12.5.0-cp312-cp312-win_amd64.whl", hash = "sha256:bcdfc89a6ea6fb0e6b796cd55b6496cd21fc813110a692ed49a3457a47cafe31"},
+    {file = "saxonche-12.5.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:f05d0679d2355721adb6d1cd98968f698e46c7cc3c85d4f604315deef1ae82ec"},
+    {file = "saxonche-12.5.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:98d9647d37a166be9b2402bad389aaf28e5979258a672a6db86c1f48baf9db7e"},
+    {file = "saxonche-12.5.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:957f28de384ad3c24125f761ad0d10a5d62e6aa5123775e845cb28303a8717c7"},
+    {file = "saxonche-12.5.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7648002a76fcbd7c078fe91db52a93130a1b88932e5f7cd846f2ee5c91c89ff0"},
+    {file = "saxonche-12.5.0-cp38-cp38-win_amd64.whl", hash = "sha256:cbe5ff6b06a924e3f762ae359b5ec2fac9e5fe7febe6b0de95feca177fba7332"},
+    {file = "saxonche-12.5.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:4128c46466561b891ab07276043b94b37762187aa0a5a38331a3870e180907b1"},
+    {file = "saxonche-12.5.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:8f926d4158a280bca25a8b1d87c98e0901c881c0d190f066dba415cb63d7361a"},
+    {file = "saxonche-12.5.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7f4f9852684d70d708f36abc35e1da059b793b5e67d0d490c091c466fbce6d0f"},
+    {file = "saxonche-12.5.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cc22f5ea64e118bcae1599962b8a6b3ccdcd9da6eef14328f9eebd59ee2a4c88"},
+    {file = "saxonche-12.5.0-cp39-cp39-win_amd64.whl", hash = "sha256:26e0b1cfb7f99aed581c5c175db811a5cddfe860816b19bbeab4fdb1a7327fd6"},
+]
+
+[[package]]
 name = "setuptools"
 version = "75.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1998,6 +2053,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+
+[[package]]
+name = "soupsieve"
+version = "2.6"
+description = "A modern CSS selector implementation for Beautiful Soup."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "soupsieve-2.6-py3-none-any.whl", hash = "sha256:e72c4ff06e4fb6e4b5a9f0f55fe6e81514581fca1515028625d0f299c602ccc9"},
+    {file = "soupsieve-2.6.tar.gz", hash = "sha256:e2e68417777af359ec65daac1057404a3c8a5455bb8abc36f1a9866ab1a51abb"},
 ]
 
 [[package]]
@@ -2250,4 +2316,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "a388018414ab673f608320728a0f7bbf6a797f23e445b7a5c76ed62e125b44dc"
+content-hash = "abdab4437fc8c0fa25f83e56d3e4cb902ab39eb883a66b1d6f788b5d1d708da5"
