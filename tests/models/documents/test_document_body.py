@@ -1,4 +1,6 @@
 import datetime
+import os
+import re
 
 import pytest
 
@@ -272,3 +274,24 @@ class TestDocumentBody:
         assert body.transformation_datetime is None
         assert body.get_latest_manifestation_datetime() is None
         assert body.get_manifestation_datetimes("any") == []
+
+    def test_content_as_html_for_standard_judgment(self):
+        """Run our HTML XSLT on a judgment to make sure it's formatting as we expect."""
+
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.xml"), "r"
+        ) as file:
+            xml_document = file.read()
+
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.html"), "r"
+        ) as file:
+            html_document = file.read()
+
+            # The HTML which comes out of the XSLT doesn't have extra whitespace, but our test document does to aid readability.
+            # This reassembles our pretty HTML into a straight string for comparison purposes.
+            html_without_whitespace = "".join(re.split(r"\s*\n\s*", html_document.strip()))
+
+        body = DocumentBody(xml_document.encode())
+
+        assert body.content_as_html == html_without_whitespace
