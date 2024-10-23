@@ -1,6 +1,8 @@
 import datetime
+import os
 
 import pytest
+from bs4 import BeautifulSoup
 
 from caselawclient.models.documents import (
     DocumentBody,
@@ -272,3 +274,23 @@ class TestDocumentBody:
         assert body.transformation_datetime is None
         assert body.get_latest_manifestation_datetime() is None
         assert body.get_manifestation_datetimes("any") == []
+
+    def test_content_as_html_for_standard_judgment(self):
+        """Run our HTML XSLT on a judgment to make sure it's formatting as we expect."""
+
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.xml"), "r"
+        ) as file:
+            xml_document = file.read()
+
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.html"), "r"
+        ) as file:
+            target_html = file.read()
+            prettified_target_html = BeautifulSoup(target_html, features="html.parser").prettify()
+
+        body = DocumentBody(xml_document.encode())
+        transformed_html = body.content_as_html(image_base_url="https://test.caselaw.nationalarchives.gov.uk/")
+        prettified_transformed_html = BeautifulSoup(transformed_html, features="html.parser").prettify()
+
+        assert prettified_transformed_html == prettified_target_html
