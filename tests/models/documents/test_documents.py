@@ -1,4 +1,5 @@
 import datetime
+import warnings
 from unittest.mock import PropertyMock, patch
 
 import pytest
@@ -8,6 +9,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
+from caselawclient.factories import DocumentBodyFactory, DocumentFactory
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
     DOCUMENT_STATUS_IN_PROGRESS,
@@ -290,3 +292,24 @@ class TestCanEnrich:
             mock_validates_against_schema.return_value = validates_against_schema
 
             assert document.can_enrich is can_enrich
+
+    class TestMethodMissing:
+        def test_attribute_on_body(self, mock_api_client):
+            doc = DocumentFactory.build(uri="test/1234", body=DocumentBodyFactory.build(name="docname"))
+            with pytest.deprecated_call():
+                name = doc.name
+
+            assert name == "docname"
+
+        def test_real_attribute(self, mock_api_client):
+            doc = DocumentFactory.build(uri="test/1234", body=DocumentBodyFactory.build(name="docname"))
+            with warnings.catch_warnings():
+                identifier = doc.best_human_identifier
+            assert identifier is None
+
+        def test_absent_item(self, mock_api_client):
+            doc = DocumentFactory.build(uri="test/1234", body=DocumentBodyFactory.build(name="docname"))
+            with pytest.raises(
+                AttributeError, match="Neither 'Document' nor 'DocumentBody' objects have an attribute 'x'"
+            ):
+                doc.x

@@ -495,3 +495,10 @@ class Document:
         Is it sensible to reparse this document?
         """
         return self.docx_exists()
+
+    def __getattr__(self, name: str) -> Any:
+        warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
+        try:
+            return getattr(self.body, name)
+        except Exception:
+            raise AttributeError(f"Neither 'Document' nor 'DocumentBody' objects have an attribute '{name}'")
