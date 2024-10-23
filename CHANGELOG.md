@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v27.0.2 (unreleased)
+
+- Allow things on doc.body to be called from doc with a warning
+
 ## v27.0.1 (2024-10-17)
 
 - Fix `.content_as_html` on Document Factory
