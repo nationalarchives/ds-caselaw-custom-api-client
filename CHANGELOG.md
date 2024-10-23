@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## v27.0.2 (unreleased)
+## v27.1.0 (2024-10-23)
 
+- Feature: Add native XSLT transformations to the API
 - Allow things on doc.body to be called from doc with a warning
 - client.checkout_judgment now accepts a `timeout_seconds` parameter
+- Allow test failures for Python 3.13/3.14
+- Ensure Judgment- and PressSummaryFactory have working NCNs
 
 ## v27.0.1 (2024-10-17)
 
