@@ -14,12 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
 
       - uses: abatilo/actions-poetry@v3.0.0
         with:
           poetry-version: 1.4.2
 
-      - run: poetry install --only docs
+      - run: poetry install --with docs
 
       - run: poetry run pdoc -o docs/ src/caselawclient
 
