@@ -973,6 +973,14 @@
 	</xsl:element>
 </xsl:template>
 
+<!-- search query numbering -->
+
+<xsl:template match="*:mark">
+	<xsl:element name="{ local-name(.) }">
+		<xsl:copy-of select="@*"/>
+		<xsl:apply-templates />
+	</xsl:element>
+</xsl:template>
 
 <!-- text -->
 
