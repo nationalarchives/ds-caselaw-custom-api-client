@@ -135,6 +135,11 @@ class Document:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
 
+    def body_with_query(self, query: Optional[str] = None) -> DocumentBody:
+        if not query:
+            return self.body
+        return DocumentBody(self.api_client.get_judgment_xml_bytestring(self.uri, show_unpublished=True, query=query))
+
     @property
     def best_human_identifier(self) -> Optional[str]:
         """
