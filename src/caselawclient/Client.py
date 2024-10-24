@@ -435,6 +435,7 @@ class MarklogicApiClient:
         judgment_uri: DocumentURIString,
         version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
+        query: Optional[str] = None,
     ) -> str:
         return self.get_judgment_xml_bytestring(
             judgment_uri,
