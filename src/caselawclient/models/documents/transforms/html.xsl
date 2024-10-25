@@ -975,7 +975,7 @@
 
 <!-- search query numbering -->
 
-<xsl:template match="*:mark">
+<xsl:template match="uk:mark">
 	<xsl:element name="{ local-name(.) }">
 		<xsl:copy-of select="@*"/>
 		<xsl:apply-templates />
