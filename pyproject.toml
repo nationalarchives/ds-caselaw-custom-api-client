@@ -42,7 +42,7 @@ moto = {version = "^5.0.1", extras = ["all"]}
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-pdoc = "^14.0.0"
+pdoc = "^15.0.0"
 
 
 [tool.commitizen]
