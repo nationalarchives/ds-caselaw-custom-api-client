@@ -8,7 +8,7 @@ import module namespace helper = "https://caselaw.nationalarchives.gov.uk/helper
 declare variable $show_unpublished as xs:boolean? external;
 declare variable $uri as xs:string external;
 declare variable $version_uri as xs:string? external;
-declare variable $query as xs:string? external;
+declare variable $search_query as xs:string? external;
 
 (: Note that `xsl:output method` is changed from `html` to `xml` and we've namespaced the tag :)
 let $number_marks_xslt := (
@@ -49,12 +49,13 @@ let $raw_xml := if ($show_unpublished) then
     else
         ()
 
-let $transformed := if($query) then
+(: If a search query string is present, highlight instances :)
+let $transformed := if($search_query) then
       xdmp:xslt-eval(
         $number_marks_xslt,
         cts:highlight(
           $raw_xml,
-          helper:make-q-query($query),
+          helper:make-q-query($search_query),
           <uk:mark>{$cts:text}</uk:mark>
         )
       )

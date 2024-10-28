@@ -105,7 +105,7 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
-    def __init__(self, uri: str, api_client: "MarklogicApiClient"):
+    def __init__(self, uri: str, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
         :param uri: For historical reasons this accepts a pseudo-URI which may include leading or trailing slashes.
 
@@ -117,7 +117,11 @@ class Document:
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
         self.body: DocumentBody = DocumentBody(
-            xml_bytestring=self.api_client.get_judgment_xml_bytestring(self.uri, show_unpublished=True),
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
+                self.uri,
+                show_unpublished=True,
+                search_query=search_query,
+            ),
         )
         """ `Document.body` represents the XML of the document itself, without any information such as version tracking or properties. """
 
@@ -134,11 +138,6 @@ class Document:
     def docx_exists(self) -> bool:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
-
-    def body_with_query(self, query: Optional[str] = None) -> DocumentBody:
-        if not query:
-            return self.body
-        return DocumentBody(self.api_client.get_judgment_xml_bytestring(self.uri, show_unpublished=True, query=query))
 
     @property
     def best_human_identifier(self) -> Optional[str]:

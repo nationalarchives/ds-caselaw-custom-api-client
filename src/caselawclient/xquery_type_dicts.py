@@ -64,7 +64,7 @@ class GetComponentsForDocumentDict(MarkLogicAPIDict):
 
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
-    query: Optional[str]
+    search_query: Optional[str]
     show_unpublished: Optional[bool]
     uri: MarkLogicDocumentURIString
     version_uri: Optional[MarkLogicDocumentVersionURIString]
