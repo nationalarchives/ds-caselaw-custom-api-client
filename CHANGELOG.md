@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v27.2.0 (2024-10-28)
+
+## Feat
+
+- **FCL-396**: query highlighting is now done as a function of requesting the Document
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.35.48
+- **deps**: update dependency mypy-boto3-s3 to v1.35.45
+- **deps**: update dependency boto3 to v1.35.45
+
+### Refactor
+
+- **FCL-396**: tidy up API implementation for search query highlighting change
+
 ## v27.1.0 (2024-10-23)
 
 - Feature: Add native XSLT transformations to the API
