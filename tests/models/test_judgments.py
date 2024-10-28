@@ -45,6 +45,7 @@ class TestJudgmentValidation:
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
             "test/1234",
             show_unpublished=True,
+            search_query=None,
         )
 
     @pytest.mark.parametrize(

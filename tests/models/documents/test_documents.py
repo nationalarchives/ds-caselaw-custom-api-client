@@ -220,6 +220,13 @@ class TestDocument:
 
         mock_api_client.validate_document.assert_called_with(document.uri)
 
+    def test_document_initialises_with_search_query_string(self, mock_api_client):
+        document = Document("test/1234", mock_api_client, search_query="test search query")
+
+        mock_api_client.get_judgment_xml_bytestring.assert_called_with(
+            document.uri, show_unpublished=True, search_query="test search query"
+        )
+
 
 class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_false_when_never_enriched(self, mock_api_client):

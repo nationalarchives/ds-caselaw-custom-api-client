@@ -403,6 +403,7 @@ class MarklogicApiClient:
         judgment_uri: DocumentURIString,
         version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
+        search_query: Optional[str] = None,
     ) -> bytes:
         marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
         marklogic_document_version_uri = (
@@ -418,6 +419,7 @@ class MarklogicApiClient:
             "uri": marklogic_document_uri,
             "version_uri": marklogic_document_version_uri,
             "show_unpublished": show_unpublished,
+            "search_query": search_query,
         }
 
         response = self._eval_as_bytes(vars, "get_judgment.xqy")
@@ -433,11 +435,13 @@ class MarklogicApiClient:
         judgment_uri: DocumentURIString,
         version_uri: Optional[DocumentURIString] = None,
         show_unpublished: bool = False,
+        search_query: Optional[str] = None,
     ) -> str:
         return self.get_judgment_xml_bytestring(
             judgment_uri,
             version_uri,
             show_unpublished,
+            search_query=search_query,
         ).decode(encoding="utf-8")
 
     def set_document_name(
