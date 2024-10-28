@@ -105,13 +105,15 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
-    def __init__(self, uri: str, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
+    def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
-        :param uri: For historical reasons this accepts a pseudo-URI which may include leading or trailing slashes.
+        :param uri: The URI of the document to retrieve from MarkLogic.
+        :param api_client: An instance of the API client object to handle communication with the MarkLogic server.
+        :param search_query: Optionally, a search string which should be highlighted if it appears in the document body.
 
         :raises DocumentNotFoundError: The document does not exist within MarkLogic
         """
-        self.uri: DocumentURIString = DocumentURIString(uri.strip("/"))
+        self.uri: DocumentURIString = uri
         self.api_client: MarklogicApiClient = api_client
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
@@ -123,7 +125,7 @@ class Document:
                 search_query=search_query,
             ),
         )
-        """ `Document.body` represents the XML of the document itself, without any information such as version tracking or properties. """
+        """ `Document.body` represents the body of the document itself, without any information such as version tracking or properties. """
 
     def __repr__(self) -> str:
         name = self.body.name or "un-named"
