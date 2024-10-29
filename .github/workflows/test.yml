@@ -54,7 +54,7 @@ jobs:
           allow-prereleases: true
 
       - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
+        uses: abatilo/actions-poetry@v3.0.1
         with:
           poetry-version: 1.4.2
 
