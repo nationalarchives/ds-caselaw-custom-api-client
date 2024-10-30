@@ -1,9 +1,11 @@
 xquery version "1.0-ml";
 
+declare namespace xdmp="http://marklogic.com/xdmp"; 
 declare variable $target_enrichment_major_version as xs:int external;
 declare variable $target_enrichment_minor_version as xs:int external;
 declare variable $target_parser_major_version as xs:int external;
 declare variable $target_parser_minor_version as xs:int external;
+declare variable $maximum_records as xs:int? external := 1000;
 
 xdmp:to-json(xdmp:sql(
   "SELECT process_data.uri, enrich_version_string, minutes_since_enrichment_request
@@ -23,13 +25,16 @@ xdmp:to-json(xdmp:sql(
     (parser_major_version = @target_parser_major_version AND parser_minor_version = @target_parser_minor_version)
   )
   AND (minutes_since_enrichment_request > 43200 OR minutes_since_enrichment_request IS NULL)
-  ORDER BY enrich_major_version ASC NULLS FIRST, enrich_minor_version ASC",
+  ORDER BY enrich_major_version ASC NULLS FIRST, enrich_minor_version ASC
+  LIMIT @maximum_records",
   "array",
   map:new((
     map:entry("target_enrichment_major_version", $target_enrichment_major_version),
     map:entry("target_enrichment_minor_version", $target_enrichment_minor_version),
     map:entry("target_parser_major_version", $target_parser_major_version),
-    map:entry("target_parser_minor_version", $target_parser_minor_version)
+    map:entry("target_parser_minor_version", $target_parser_minor_version),
+    map:entry("maximum_records", $maximum_records)
+    
   ))
 ))
 

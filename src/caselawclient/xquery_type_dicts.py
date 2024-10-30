@@ -88,6 +88,7 @@ class GetLastModifiedDict(MarkLogicAPIDict):
 
 # get_pending_enrichment_for_version.xqy
 class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
+    maximum_records: Optional[int]
     target_enrichment_major_version: int
     target_enrichment_minor_version: int
     target_parser_major_version: int
@@ -96,6 +97,7 @@ class GetPendingEnrichmentForVersionDict(MarkLogicAPIDict):
 
 # get_pending_parse_for_version.xqy
 class GetPendingParseForVersionDict(MarkLogicAPIDict):
+    maximum_records: Optional[int]
     target_major_version: int
     target_minor_version: int
 

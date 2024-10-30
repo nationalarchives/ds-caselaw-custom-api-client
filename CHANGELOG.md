@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **FCL-386**: search query can now be passed to get_document_by_uri
+- **FCL-318**: Allow setting a limit on the number of enrich/reparse targets returned
 
 ## v27.2.0 (2024-10-28)
 

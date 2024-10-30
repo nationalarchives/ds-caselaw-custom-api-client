@@ -1080,6 +1080,7 @@ class MarklogicApiClient:
         self,
         target_enrichment_version: tuple[int, int],
         target_parser_version: tuple[int, int],
+        maximum_records: int = 1000,
     ) -> list[list[Any]]:
         """Retrieve documents which are not yet enriched with a given version."""
         vars: query_dicts.GetPendingEnrichmentForVersionDict = {
@@ -1087,6 +1088,7 @@ class MarklogicApiClient:
             "target_enrichment_minor_version": target_enrichment_version[1],
             "target_parser_major_version": target_parser_version[0],
             "target_parser_minor_version": target_parser_version[1],
+            "maximum_records": maximum_records,
         }
         results: list[list[Any]] = json.loads(
             get_single_string_from_marklogic_response(
@@ -1115,11 +1117,13 @@ class MarklogicApiClient:
     def get_pending_parse_for_version(
         self,
         target_version: tuple[int, int],
+        maximum_records: int = 1000,
     ) -> list[list[Any]]:
         """Retrieve documents which are not yet parsed with a given version."""
         vars: query_dicts.GetPendingParseForVersionDict = {
             "target_major_version": target_version[0],
             "target_minor_version": target_version[1],
+            "maximum_records": maximum_records,
         }
         results: list[list[Any]] = json.loads(
             get_single_string_from_marklogic_response(
