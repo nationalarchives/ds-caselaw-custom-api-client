@@ -217,10 +217,10 @@ class MarklogicApiClient:
     def get_document_by_uri(
         self,
         uri: DocumentURIString,
-        query: Optional[str] = None,
+        search_query: Optional[str] = None,
     ) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
-        return document_type_class(uri, self)
+        return document_type_class(uri, self, search_query=search_query)
 
     def get_document_type_from_uri(self, uri: DocumentURIString) -> Type[Document]:
         vars: query_dicts.DocumentCollectionsDict = {
