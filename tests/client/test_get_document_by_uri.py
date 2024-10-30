@@ -25,7 +25,19 @@ class TestGetDocumentByUri(TestCase):
         document = self.client.get_document_by_uri(uri="test/1234")
 
         mock_get_document_type.assert_called_with("test/1234")
-        mock_judgment.assert_called_with("test/1234", self.client)
+        mock_judgment.assert_called_with("test/1234", self.client, search_query=None)
+
+        self.assertIsInstance(document, Judgment)
+
+    @patch("caselawclient.Client.Judgment", autospec=True)
+    @patch("caselawclient.Client.MarklogicApiClient.get_document_type_from_uri")
+    def test_get_document_by_uri_with_search_query(self, mock_get_document_type, mock_judgment):
+        mock_get_document_type.return_value = mock_judgment
+
+        document = self.client.get_document_by_uri(uri="test/1234", search_query="Test search")
+
+        mock_get_document_type.assert_called_with("test/1234")
+        mock_judgment.assert_called_with("test/1234", self.client, search_query="Test search")
 
         self.assertIsInstance(document, Judgment)
 
