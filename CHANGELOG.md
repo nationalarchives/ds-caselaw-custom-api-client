@@ -4,12 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v27.3.0 (2024-10-30)
 
 ### Feat
 
 - **FCL-386**: search query can now be passed to get_document_by_uri
-- **FCL-318**: Allow setting a limit on the number of enrich/reparse targets returned
 
 ## v27.2.0 (2024-10-28)
 
