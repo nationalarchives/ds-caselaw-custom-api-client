@@ -34,7 +34,7 @@ ML_TYPES_TO_PYTHON_TYPES_DICT = {
 }
 
 XQY_VARIABLE_DECLARATION_REGEX = re.compile(
-    r"\s*declare variable \$(.+) as (.+) external;".replace(" ", "\\s+"),
+    r"\s*declare variable \$(.+) as (.+) external".replace(" ", "\\s+"),
     re.IGNORECASE | re.MULTILINE,
 )
 
