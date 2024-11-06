@@ -62,6 +62,8 @@ except importlib.metadata.PackageNotFoundError:
     VERSION = "0"
 DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
+DEBUG: bool = bool(os.getenv("DEBUG", default=False))
+
 
 class NoResponse(Exception):
     """A requests HTTPError has no response. We expect this will never happen."""
@@ -728,6 +730,10 @@ class MarklogicApiClient:
             "vars": vars,
         }
         path = "LATEST/eval"
+
+        if DEBUG:
+            print(f"Sending {vars} to {xquery_path}")
+
         response = self.session.request(
             "POST",
             url=self._path_to_request_url(path),
