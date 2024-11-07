@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v27.4.0 (2024-11-07)
+
+### Change of behaviour
+
+- Require documents to be published before bulk enrichment will enrich them
+
+### Feature
+
+- Add logging of xquery commands and values passed to them if DEBUG environment set
+
 ## v27.3.0 (2024-10-30)
 
 ### Feat
