@@ -1107,6 +1107,21 @@ class MarklogicApiClient:
 
         return results
 
+    def get_recently_enriched(
+        self,
+    ) -> list[list[Any]]:
+        """Retrieve documents which are not yet enriched with a given version."""
+        results: list[list[Any]] = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval(
+                    {},
+                    "get_recently_enriched.xqy",
+                ),
+            ),
+        )
+
+        return results
+
     def get_highest_parser_version(self) -> tuple[int, int]:
         """This gets the highest parser version in the database, so if nothing has been parsed with the most recent version of the parser, this won't reflect that change."""
         table = json.loads(
@@ -1136,6 +1151,21 @@ class MarklogicApiClient:
                 self._send_to_eval(
                     vars,
                     "get_pending_parse_for_version.xqy",
+                ),
+            ),
+        )
+
+        return results
+
+    def get_recently_parsed(
+        self,
+    ) -> list[list[Any]]:
+        """Retrieve documents which are not yet enriched with a given version."""
+        results: list[list[Any]] = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval(
+                    {},
+                    "get_recently_parsed.xqy",
                 ),
             ),
         )
