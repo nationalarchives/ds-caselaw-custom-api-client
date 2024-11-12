@@ -71,4 +71,4 @@ repos:
         stages:
           - pre-push
     repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.30.0
+    rev: v3.30.1
