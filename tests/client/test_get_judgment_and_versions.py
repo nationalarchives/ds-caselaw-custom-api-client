@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.models.documents import DocumentURIString
 
 
 class TestGetJudgment(unittest.TestCase):
@@ -28,7 +29,7 @@ class TestGetJudgment(unittest.TestCase):
                 b"</akomaNtoso>"
             )
 
-            result = self.client.get_judgment_xml("/judgment/uri")
+            result = self.client.get_judgment_xml(DocumentURIString("/judgment/uri"))
 
             expected = (
                 '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -41,7 +42,7 @@ class TestGetJudgment(unittest.TestCase):
 
     def test_get_judgment_version(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/ewca/civ/2004/632"
+            uri = DocumentURIString("/ewca/civ/2004/632")
             version = 3
             expected_vars = {"uri": "/ewca/civ/2004/632.xml", "version": "3"}
             self.client.get_judgment_version(uri, version)
@@ -51,7 +52,7 @@ class TestGetJudgment(unittest.TestCase):
 
     def test_list_judgment_versions(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/ewca/civ/2004/632"
+            uri = DocumentURIString("/ewca/civ/2004/632")
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             self.client.list_judgment_versions(uri)
 

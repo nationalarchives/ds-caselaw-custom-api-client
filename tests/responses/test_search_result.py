@@ -151,7 +151,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
 
-        assert search_result.court.name == "First-tier Tribunal (General Regulatory Chamber)"
+        assert search_result.court and search_result.court.name == "First-tier Tribunal (General Regulatory Chamber)"
 
 
 class TestSearchResultMeta:

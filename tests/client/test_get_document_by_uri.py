@@ -9,6 +9,7 @@ from caselawclient.Client import (
     DocumentHasNoTypeCollection,
     MarklogicApiClient,
 )
+from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 
@@ -22,7 +23,7 @@ class TestGetDocumentByUri(TestCase):
     def test_get_document_by_uri(self, mock_get_document_type, mock_judgment):
         mock_get_document_type.return_value = mock_judgment
 
-        document = self.client.get_document_by_uri(uri="test/1234")
+        document = self.client.get_document_by_uri(uri=DocumentURIString("test/1234"))
 
         mock_get_document_type.assert_called_with("test/1234")
         mock_judgment.assert_called_with("test/1234", self.client, search_query=None)
@@ -34,7 +35,7 @@ class TestGetDocumentByUri(TestCase):
     def test_get_document_by_uri_with_search_query(self, mock_get_document_type, mock_judgment):
         mock_get_document_type.return_value = mock_judgment
 
-        document = self.client.get_document_by_uri(uri="test/1234", search_query="Test search")
+        document = self.client.get_document_by_uri(uri=DocumentURIString("test/1234"), search_query="Test search")
 
         mock_get_document_type.assert_called_with("test/1234")
         mock_judgment.assert_called_with("test/1234", self.client, search_query="Test search")
@@ -54,7 +55,7 @@ class TestGetDocumentTypeFromUri(TestCase):
         mock_eval,
     ):
         mock_get_marklogic_response.return_value = [DOCUMENT_COLLECTION_URI_JUDGMENT]
-        document_type = self.client.get_document_type_from_uri(uri="test/1234")
+        document_type = self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234"))
         assert document_type == Judgment
 
     @patch("caselawclient.Client.MarklogicApiClient._send_to_eval")
@@ -67,7 +68,7 @@ class TestGetDocumentTypeFromUri(TestCase):
         mock_get_marklogic_response.return_value = [
             DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
         ]
-        document_type = self.client.get_document_type_from_uri(uri="test/1234")
+        document_type = self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234"))
         assert document_type == PressSummary
 
     @patch("caselawclient.Client.MarklogicApiClient._send_to_eval")
@@ -80,4 +81,4 @@ class TestGetDocumentTypeFromUri(TestCase):
         mock_get_marklogic_response.return_value = []
 
         with pytest.raises(DocumentHasNoTypeCollection):
-            self.client.get_document_type_from_uri(uri="test/1234")
+            self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234"))

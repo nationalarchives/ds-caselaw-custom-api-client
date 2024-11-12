@@ -4,7 +4,8 @@ import os
 import unittest
 from unittest.mock import patch
 
-from caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient, MarkLogicDocumentURIString
+from caselawclient.models.documents import DocumentURIString
 from caselawclient.xquery_type_dicts import XsltTransformDict
 
 
@@ -19,9 +20,9 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = "/judgment/uri"
+            uri = DocumentURIString("/judgment/uri")
             expected_vars: XsltTransformDict = {
-                "uri": "/judgment/uri.xml",
+                "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
                 "show_unpublished": True,
                 "img_location": "imagepath",
@@ -42,9 +43,9 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=False,
         ), patch.object(logging, "warning") as mock_logging:
-            uri = "/judgment/uri"
+            uri = DocumentURIString("/judgment/uri")
             expected_vars: XsltTransformDict = {
-                "uri": "/judgment/uri.xml",
+                "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
                 "show_unpublished": False,
                 "img_location": "imagepath",
@@ -66,9 +67,9 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = "/judgment/uri"
+            uri = DocumentURIString("/judgment/uri")
             expected_vars: XsltTransformDict = {
-                "uri": "/judgment/uri.xml",
+                "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
                 "show_unpublished": True,
                 "img_location": "imagepath",
@@ -91,10 +92,10 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = "/judgment/uri"
+            uri = DocumentURIString("/judgment/uri")
             query = "the query string"
             expected_vars: XsltTransformDict = {
-                "uri": "/judgment/uri.xml",
+                "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
                 "show_unpublished": True,
                 "img_location": "imagepath",

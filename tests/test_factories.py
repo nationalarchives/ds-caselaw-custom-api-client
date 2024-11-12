@@ -11,7 +11,7 @@ def test_content_as_html():
 class TestSearchStatusBehaviour:
     def test_status(self):
         search = SearchResultFactory.build()
-        assert search.metadata.editor_status == "New"
+        assert search.metadata.editor_status == "New"  # type: ignore[attr-defined]
 
 
 class TestDocumentNCNBehaviour:

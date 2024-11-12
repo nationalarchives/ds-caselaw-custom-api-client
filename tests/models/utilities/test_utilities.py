@@ -6,6 +6,8 @@ import boto3
 import ds_caselaw_utils
 from moto import mock_aws
 
+from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
     build_new_key,
@@ -98,7 +100,7 @@ class TestMove:
         ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
         fake_api_client = MagicMock()
         fake_api_client.document_exists.return_value = False
-        move.update_document_uri("old/uri", "[2023] EAT 1", fake_api_client)
+        move.update_document_uri(DocumentURIString("old/uri"), NeutralCitationString("[2023] EAT 1"), fake_api_client)
 
         fake_api_client.copy_document.assert_called_with("old/uri", "new/uri")
         fake_metadata.assert_called_with("old/uri", "new/uri", fake_api_client)

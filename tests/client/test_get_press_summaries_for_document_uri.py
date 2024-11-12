@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.models.documents import DocumentURIString
 
 
 class TestGetPressSummariesForDocumentUri(TestCase):
@@ -22,7 +23,7 @@ class TestGetPressSummariesForDocumentUri(TestCase):
 
         for uri in ["foo/bar", "/foo/bar"]:
             with self.subTest(uri=uri):
-                self.client.get_press_summaries_for_document_uri(uri)
+                self.client.get_press_summaries_for_document_uri(DocumentURIString(uri))
 
                 mock_get_marklogic_response.assert_called_with("EVAL")
                 mock_eval.assert_called_with(

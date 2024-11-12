@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from caselawclient.Client import ROOT_DIR, MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient, MarkLogicPrivilegeURIString
 
 
 class TestUserPrivileges(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestUserPrivileges(unittest.TestCase):
     def test_user_has_privilege(self):
         with patch.object(self.client, "eval") as mock_eval:
             user = "laura"
-            privilege_uri = "https://caselaw.nationalarchives.gov.uk/custom/uri"
+            privilege_uri = MarkLogicPrivilegeURIString("https://caselaw.nationalarchives.gov.uk/custom/uri")
             privilege_action = "execute"
             expected_vars = {
                 "user": "laura",
