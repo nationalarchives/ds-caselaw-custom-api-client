@@ -24,10 +24,10 @@ class TestAdvancedSearch(unittest.TestCase):
             parameters and return the response
         """
 
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as patched_invoke:
             response = self.client.advanced_search(SearchParameters())
 
-            self.client.invoke.assert_called_with(
+            patched_invoke.assert_called_with(
                 "/judgments/search/search-v2.xqy",
                 json.dumps(
                     {
@@ -50,7 +50,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 ),
             )
 
-            assert response == self.client.invoke.return_value
+            assert response == patched_invoke.return_value
 
     def test_invoke_called_with_all_params_when_all_parameters_provided(self):
         """
@@ -60,7 +60,7 @@ class TestAdvancedSearch(unittest.TestCase):
         Then it should call the MarkLogic module with all the parameters
             and return the response
         """
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as patched_invoke:
             response = self.client.advanced_search(
                 SearchParameters(
                     query="test query",
@@ -80,7 +80,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 ),
             )
 
-            self.client.invoke.assert_called_with(
+            patched_invoke.assert_called_with(
                 "/judgments/search/search-v2.xqy",
                 json.dumps(
                     {
@@ -103,7 +103,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 ),
             )
 
-            assert response == self.client.invoke.return_value
+            assert response == patched_invoke.return_value
 
     def test_exception_raised_when_invoke_raises_an_exception(self):
         """
@@ -113,8 +113,8 @@ class TestAdvancedSearch(unittest.TestCase):
         Then it should raise that same exception
         """
         exception = Exception("Error message from MarkLogic")
-        with patch.object(self.client, "invoke"):
-            self.client.invoke.side_effect = exception
+        with patch.object(self.client, "invoke") as patched_invoke:
+            patched_invoke.side_effect = exception
             with pytest.raises(Exception) as e:
                 self.client.advanced_search(SearchParameters(query="test query"))
         assert e.value == exception
@@ -177,7 +177,7 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the expected query parameters
         """
-        with patch.object(self.client, "invoke"), patch.object(
+        with patch.object(self.client, "invoke") as patched_invoke, patch.object(
             self.client,
             "user_can_view_unpublished_judgments",
             return_value=True,
@@ -193,7 +193,7 @@ class TestAdvancedSearch(unittest.TestCase):
                     show_unpublished=True,
                 ),
             )
-            assert '"show_unpublished": "true"' in self.client.invoke.call_args.args[1]
+            assert '"show_unpublished": "true"' in patched_invoke.call_args.args[1]
 
     def test_user_cannot_view_unpublished_but_show_unpublished_is_true(
         self,
@@ -204,7 +204,7 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the show_unpublished parameter set to False and log a warning
         """
-        with patch.object(self.client, "invoke"), patch.object(
+        with patch.object(self.client, "invoke") as patched_invoke, patch.object(
             self.client,
             "user_can_view_unpublished_judgments",
             return_value=False,
@@ -221,7 +221,7 @@ class TestAdvancedSearch(unittest.TestCase):
                 ),
             )
 
-            assert '"show_unpublished": "false"' in self.client.invoke.call_args.args[1]
+            assert '"show_unpublished": "false"' in patched_invoke.call_args.args[1]
             mock_logging.assert_called()
 
     def test_no_page_0(self):
@@ -231,11 +231,11 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the page parameter set to 0
         Then it should call the MarkLogic module with the page parameter set to 1
         """
-        with patch.object(self.client, "invoke"):
+        with patch.object(self.client, "invoke") as patched_invoke:
             self.client.advanced_search(
                 SearchParameters(
                     page=0,
                 ),
             )
 
-            assert ', "page": 1,' in self.client.invoke.call_args.args[1]
+            assert ', "page": 1,' in patched_invoke.call_args.args[1]
