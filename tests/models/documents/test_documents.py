@@ -18,24 +18,20 @@ from caselawclient.models.documents import (
     Document,
     DocumentURIString,
 )
+from caselawclient.models.documents.exceptions import InvalidDocumentURIException
 from caselawclient.models.judgments import Judgment
 from tests.test_helpers import MockMultipartResponse
 
 
 class TestDocument:
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
-        document = Judgment("test/1234", mock_api_client)
+        document = Judgment(DocumentURIString("test/1234"), mock_api_client)
         document.body.name = "Document Name"
         assert str(document) == "<judgment test/1234: Document Name>"
 
     def test_has_sensible_repr_without_name_or_subclass(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         assert str(document) == "<document test/1234: un-named>"
-
-    def test_uri_strips_slashes(self, mock_api_client):
-        document = Document(DocumentURIString("////test/1234/////"), mock_api_client)
-
-        assert document.uri == "test/1234"
 
     def test_public_uri(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -168,8 +164,8 @@ class TestDocument:
     def test_document_versions_happy_case(self, mock_api_client):
         version_document = Document(DocumentURIString("test/1234"), mock_api_client)
         version_document.versions = [
-            {"uri": "test/1234_xml_versions/2-1234.xml", "version": 2},
-            {"uri": "test/1234_xml_versions/1-1234.xml", "version": 1},
+            {"uri": "test/1234_xml_versions/2-1234", "version": 2},
+            {"uri": "test/1234_xml_versions/1-1234", "version": 1},
         ]
         version_document.versions_as_documents[0].uri = "test/1234_xml_versions/2-1234.xml"
 
@@ -327,3 +323,27 @@ class TestCanEnrich:
                 AttributeError, match="Neither 'Document' nor 'DocumentBody' objects have an attribute 'x'"
             ):
                 doc.x
+
+
+class TestDocumentURIString:
+    def test_accepts_two_element_uri(self):
+        DocumentURIString("test/1234")
+
+    def test_accepts_three_element_uri(self):
+        DocumentURIString("test/b/1234")
+
+    def test_rejects_uri_with_leading_slash(self):
+        with pytest.raises(InvalidDocumentURIException):
+            DocumentURIString("/test/1234")
+
+    def test_rejects_uri_with_trailing_slash(self):
+        with pytest.raises(InvalidDocumentURIException):
+            DocumentURIString("test/1234/")
+
+    def test_rejects_uri_with_leading_and_trailing_slash(self):
+        with pytest.raises(InvalidDocumentURIException):
+            DocumentURIString("/test/1234/")
+
+    def test_rejects_uri_with_dot(self):
+        with pytest.raises(InvalidDocumentURIException):
+            DocumentURIString("test/1234.xml")

@@ -172,7 +172,7 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_empty(self, sns, mock_api_client):
-        document = Judgment("test/2023/123", mock_api_client)
+        document = Judgment(DocumentURIString("test/2023/123"), mock_api_client)
 
         document.consignment_reference = "TDR-12345"
 
@@ -224,7 +224,7 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_full(self, sns, mock_api_client):
-        document = Judgment("test/2023/123", mock_api_client)
+        document = Judgment(DocumentURIString("test/2023/123"), mock_api_client)
 
         document.neutral_citation = NeutralCitationString("[2023] Test 123")
         document.consignment_reference = "TDR-12345"

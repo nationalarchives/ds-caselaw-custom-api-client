@@ -153,7 +153,7 @@ class TestGetSetMetadata(unittest.TestCase):
 
     def test_set_internal_uri_leading_slash(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars = {
                 "uri": "/judgment/uri.xml",
                 "content_with_id": "https://caselaw.nationalarchives.gov.uk/id/judgment/uri",

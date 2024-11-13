@@ -39,9 +39,9 @@ class TestVersionUtils:
         requests_toolbelt.multipart.decoder.BodyPart.return_value = version_parts
 
         expected_result = [
-            {"uri": "/ewhc/ch/2022/1178_xml_versions/3-1178", "version": 3},
-            {"uri": "/ewhc/ch/2022/1178_xml_versions/2-1178", "version": 2},
-            {"uri": "/ewhc/ch/2022/1178_xml_versions/1-1178", "version": 1},
+            {"uri": "ewhc/ch/2022/1178_xml_versions/3-1178", "version": 3},
+            {"uri": "ewhc/ch/2022/1178_xml_versions/2-1178", "version": 2},
+            {"uri": "ewhc/ch/2022/1178_xml_versions/1-1178", "version": 1},
         ]
 
         assert render_versions(version_parts) == expected_result

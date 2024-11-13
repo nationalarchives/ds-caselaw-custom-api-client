@@ -14,7 +14,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
 
     def test_checkout_judgment(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/ewca/civ/2004/632")
+            uri = DocumentURIString("ewca/civ/2004/632")
             annotation = "locked by A KITTEN"
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
@@ -35,7 +35,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
             "calculate_seconds_until_midnight",
             return_value=3600,
         ):
-            uri = DocumentURIString("/ewca/civ/2004/632")
+            uri = DocumentURIString("ewca/civ/2004/632")
             annotation = "locked by A KITTEN"
             expires_at_midnight = True
             expected_vars = {
@@ -50,7 +50,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
 
     def test_checkout_judgment_with_timeout_seconds(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/ewca/civ/2004/632")
+            uri = DocumentURIString("ewca/civ/2004/632")
             annotation = "locked by A KITTEN"
             timeout_seconds = 1234
             expected_vars = {
@@ -65,7 +65,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
 
     def test_checkin_judgment(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/ewca/civ/2004/632")
+            uri = DocumentURIString("ewca/civ/2004/632")
             expected_vars = {"uri": "/ewca/civ/2004/632.xml"}
             self.client.checkin_judgment(uri)
 
@@ -101,7 +101,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 b"</dls:checkout>\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_judgment_checkout_status_message(DocumentURIString("/ewca/2002/2"))
+            result = self.client.get_judgment_checkout_status_message(DocumentURIString("ewca/2002/2"))
             assert result == "locked by a kitten"
 
     def test_get_checkout_status_message_empty(self):
@@ -118,7 +118,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 b"\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_judgment_checkout_status_message(DocumentURIString("/ewca/2002/2"))
+            result = self.client.get_judgment_checkout_status_message(DocumentURIString("ewca/2002/2"))
             assert result is None
 
     def test_calculate_seconds_until_midnight(self):

@@ -4,23 +4,24 @@ import pytest
 
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.factories import PressSummaryFactory
+from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
 
 class TestJudgment:
     def test_best_identifier(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
         judgment.neutral_citation = NeutralCitationString("[2023] TEST 1234")
         assert judgment.best_human_identifier == judgment.neutral_citation
 
 
 class TestJudgmentValidation:
     def test_has_ncn(self, mock_api_client):
-        document_with_ncn = Judgment("test/1234", mock_api_client)
+        document_with_ncn = Judgment(DocumentURIString("test/1234"), mock_api_client)
         document_with_ncn.neutral_citation = NeutralCitationString("[2023] TEST 1234")
 
-        document_without_ncn = Judgment("test/1234", mock_api_client)
+        document_without_ncn = Judgment(DocumentURIString("test/1234"), mock_api_client)
         document_without_ncn.neutral_citation = NeutralCitationString("")
 
         assert document_with_ncn.has_ncn is True
@@ -40,7 +41,7 @@ class TestJudgmentValidation:
             </akomaNtoso>
         """
 
-        judgment = Judgment("test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
 
         assert judgment.neutral_citation == "[2023] TEST 1234"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
@@ -71,13 +72,13 @@ class TestJudgmentValidation:
         ],
     )
     def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
-        judgment = Judgment("test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
         judgment.neutral_citation = ncn_to_test
 
         assert judgment.has_valid_ncn is valid
 
     def test_judgment_validation_failure_messages_if_failing(self, mock_api_client):
-        judgment = Judgment("test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
         judgment.is_failure = True
         judgment.is_parked = True
         judgment.is_held = True
@@ -105,7 +106,7 @@ class TestLinkedDocuments:
         press_summary = PressSummaryFactory.build()
         document_mock.return_value = press_summary
 
-        judgment = Judgment("/test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
 
         assert judgment.linked_document == press_summary
         document_mock.assert_called_once_with(
@@ -121,5 +122,5 @@ class TestLinkedDocuments:
     ):
         document_mock.side_effect = DocumentNotFoundError()
 
-        judgment = Judgment("/test/1234", mock_api_client)
+        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
         assert judgment.linked_document is None

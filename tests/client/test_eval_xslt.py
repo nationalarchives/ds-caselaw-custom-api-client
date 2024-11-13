@@ -20,7 +20,7 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
                 "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
@@ -43,7 +43,7 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=False,
         ), patch.object(logging, "warning") as mock_logging:
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
                 "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
@@ -67,7 +67,7 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
                 "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
                 "version_uri": None,
@@ -92,7 +92,7 @@ class TestEvalXslt(unittest.TestCase):
             "user_can_view_unpublished_judgments",
             return_value=True,
         ):
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             query = "the query string"
             expected_vars: XsltTransformDict = {
                 "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),

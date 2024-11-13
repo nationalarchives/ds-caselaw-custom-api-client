@@ -12,14 +12,14 @@ uk_namespace = {"uk": "https://caselaw.nationalarchives.gov.uk/akn"}
 
 
 class VersionsDict(TypedDict):
-    uri: str
+    uri: str  ## TODO: This should be either a MarkLogicDocumentURIString (raw from ML) or a DocumentURIString (and we parse it out). Just a str is too vague.
     version: int
 
 
 def render_versions(decoded_versions: list[BodyPart]) -> list[VersionsDict]:
     versions: list[VersionsDict] = [
         {
-            "uri": part.text.rstrip(".xml"),
+            "uri": part.text.strip("/").rstrip(".xml"),
             "version": extract_version(part.text),
         }
         for part in decoded_versions

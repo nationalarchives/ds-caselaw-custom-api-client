@@ -23,6 +23,6 @@ class TestGetVersionAnnotation(unittest.TestCase):
                 b"\r\nthis is an annotation\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_version_annotation(DocumentURIString("/judgment/uri"))
+            result = self.client.get_version_annotation(DocumentURIString("judgment/uri"))
 
             assert result == "this is an annotation"

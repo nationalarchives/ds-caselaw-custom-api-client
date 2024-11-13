@@ -209,12 +209,14 @@ class MarklogicApiClient:
         Returns a list of PressSummary objects associated with a given Document URI
         """
         vars: query_dicts.GetComponentsForDocumentDict = {
-            "parent_uri": DocumentURIString(uri if uri.startswith("/") else "/" + uri),
+            "parent_uri": uri,
             "component": "pressSummary",
         }
         response = self._send_to_eval(vars, "get_components_for_document.xqy")
         uris = get_multipart_strings_from_marklogic_response(response)
-        return [PressSummary(uri.strip(".xml"), self) for uri in uris]
+        return [
+            PressSummary(DocumentURIString(uri.strip("/").strip(".xml")), self) for uri in uris
+        ]  # TODO: Migrate this strip behaviour into proper manipulation of a MarkLogicURIString
 
     def get_document_by_uri(
         self,
