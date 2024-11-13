@@ -126,38 +126,36 @@ class ApiClientTest(unittest.TestCase):
         mock_path_instance = MockPath.return_value
         mock_path_instance.read_text.return_value = "mock-query"
 
-        self.client.session.request = MagicMock()
+        with patch.object(self.client.session, "request") as patched_request:
+            self.client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
-        self.client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
-
-        self.client.session.request.assert_called_with(
-            "POST",
-            url=self.client._path_to_request_url("LATEST/eval"),
-            headers={
-                "Content-type": "application/x-www-form-urlencoded",
-                "Accept": "multipart/mixed",
-            },
-            data={"xquery": "mock-query", "vars": '{{"testvar":"test"}}'},
-        )
+            patched_request.assert_called_with(
+                "POST",
+                url=self.client._path_to_request_url("LATEST/eval"),
+                headers={
+                    "Content-type": "application/x-www-form-urlencoded",
+                    "Accept": "multipart/mixed",
+                },
+                data={"xquery": "mock-query", "vars": '{{"testvar":"test"}}'},
+            )
 
     @patch("caselawclient.Client.Path")
     def test_invoke_calls_request(self, MockPath):
         mock_path_instance = MockPath.return_value
         mock_path_instance.read_text.return_value = "mock-query"
 
-        self.client.session.request = MagicMock()
+        with patch.object(self.client.session, "request") as patched_request:
+            self.client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
-        self.client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
-
-        self.client.session.request.assert_called_with(
-            "POST",
-            url=self.client._path_to_request_url("LATEST/invoke"),
-            headers={
-                "Content-type": "application/x-www-form-urlencoded",
-                "Accept": "multipart/mixed",
-            },
-            data={"module": "mock-query-path.xqy", "vars": '{{"testvar":"test"}}'},
-        )
+            patched_request.assert_called_with(
+                "POST",
+                url=self.client._path_to_request_url("LATEST/invoke"),
+                headers={
+                    "Content-type": "application/x-www-form-urlencoded",
+                    "Accept": "multipart/mixed",
+                },
+                data={"module": "mock-query-path.xqy", "vars": '{{"testvar":"test"}}'},
+            )
 
     def test_format_uri(self):
         uri = DocumentURIString("/ewca/2022/123")
