@@ -13,7 +13,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
 
     def test_set_boolean_property_true(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars = {
                 "uri": "/judgment/uri.xml",
                 "value": "true",
@@ -29,7 +29,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
 
     def test_set_boolean_property_false(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars = {
                 "uri": "/judgment/uri.xml",
                 "value": "false",
@@ -46,7 +46,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
     def test_get_unset_boolean_property(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.content = ""
-            result = self.client.get_boolean_property(DocumentURIString("/judgment/uri"), "my-property")
+            result = self.client.get_boolean_property(DocumentURIString("judgment/uri"), "my-property")
 
             assert result is False
 
@@ -65,7 +65,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
                 b"\r\ntrue\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_boolean_property(DocumentURIString("/judgment/uri"), "my-property")
+            result = self.client.get_boolean_property(DocumentURIString("judgment/uri"), "my-property")
 
             assert result is True
 
@@ -84,20 +84,20 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
                 b"\r\nmy-content\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_property(DocumentURIString("/judgment/uri"), "my-property")
+            result = self.client.get_property(DocumentURIString("judgment/uri"), "my-property")
 
             assert result == "my-content"
 
     def test_get_unset_property(self):
         with patch.object(self.client, "eval") as mock_eval:
             mock_eval.return_value.content = ""
-            result = self.client.get_property(DocumentURIString("/judgment/uri"), "my-property")
+            result = self.client.get_property(DocumentURIString("judgment/uri"), "my-property")
 
             assert result == ""
 
     def test_set_property(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = DocumentURIString("/judgment/uri")
+            uri = DocumentURIString("judgment/uri")
             expected_vars = {
                 "uri": "/judgment/uri.xml",
                 "value": "my-value",

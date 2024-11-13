@@ -14,7 +14,7 @@ let $docTypeQuery := cts:element-attribute-value-query(
     )
 let $refQuery := cts:element-query(
       xs:QName("uk:summaryOf"),
-      concat("https://caselaw.nationalarchives.gov.uk/id", $parent_uri)
+      concat("https://caselaw.nationalarchives.gov.uk/id/", $parent_uri)
     )
 
 return xdmp:node-uri(cts:search(//akn:akomaNtoso, cts:and-query(($refQuery, $collectionQuery, $docTypeQuery))))

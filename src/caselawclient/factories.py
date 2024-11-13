@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from typing_extensions import TypeAlias
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.models.documents import Document
+from caselawclient.models.documents import Document, DocumentURIString
 from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
@@ -54,7 +54,7 @@ class DocumentFactory:
     @classmethod
     def build(
         cls,
-        uri: str = "test/2023/123",
+        uri: DocumentURIString = DocumentURIString("test/2023/123"),
         html: str = "<p>This is a judgment.</p>",
         api_client: Optional[MarklogicApiClient] = None,
         **kwargs: Any,

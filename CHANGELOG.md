@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- Document can now no longer be initialised with a string as the `uri`, it must be a `DocumentURIString`.
+
 ## v27.4.0 (2024-11-07)
 
 ### Change of behaviour

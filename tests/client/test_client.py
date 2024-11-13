@@ -106,7 +106,7 @@ class ApiClientTest(unittest.TestCase):
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
     def test_document_exists(self, mock_decode):
         mock_decode.return_value = "true"
-        assert self.client.document_exists(DocumentURIString("/2029/eat/1")) is True
+        assert self.client.document_exists(DocumentURIString("2029/eat/1")) is True
         mock_decode.assert_called_with(
             {"uri": "/2029/eat/1.xml"},
             "document_exists.xqy",
@@ -115,7 +115,7 @@ class ApiClientTest(unittest.TestCase):
     @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
     def test_document_not_exists(self, mock_decode):
         mock_decode.return_value = "false"
-        assert self.client.document_exists(DocumentURIString("/2029/eat/1")) is False
+        assert self.client.document_exists(DocumentURIString("2029/eat/1")) is False
         mock_decode.assert_called_with(
             {"uri": "/2029/eat/1.xml"},
             "document_exists.xqy",
@@ -158,19 +158,7 @@ class ApiClientTest(unittest.TestCase):
             )
 
     def test_format_uri(self):
-        uri = DocumentURIString("/ewca/2022/123")
-        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
-
-    def test_format_uri_no_leading_slash(self):
         uri = DocumentURIString("ewca/2022/123")
-        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
-
-    def test_format_uri_trailing_slash(self):
-        uri = DocumentURIString("ewca/2022/123/")
-        assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
-
-    def test_format_uri_all_the_slashes(self):
-        uri = DocumentURIString("/ewca/2022/123/")
         assert self.client._format_uri_for_marklogic(uri) == "/ewca/2022/123.xml"
 
     def test_user_agent(self):

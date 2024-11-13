@@ -11,7 +11,7 @@ from caselawclient.models.press_summaries import PressSummary
 
 class TestPressSummary:
     def test_best_identifier(self, mock_api_client):
-        summary = PressSummary("test/1234", mock_api_client)
+        summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
         summary.neutral_citation = NeutralCitationString("[2023] TEST 1234")
         assert summary.best_human_identifier == summary.neutral_citation
 
@@ -47,7 +47,7 @@ class TestPressSummaryValidation:
         </akomaNtoso>
         """
 
-        press_summary = PressSummary("test/1234", mock_api_client)
+        press_summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
 
         assert press_summary.neutral_citation == "[2016] TEST 49"
         mock_api_client.get_judgment_xml_bytestring.assert_called_once_with(
@@ -78,7 +78,7 @@ class TestPressSummaryValidation:
         ],
     )
     def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
-        press_summary = PressSummary("test/1234", mock_api_client)
+        press_summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
         press_summary.neutral_citation = ncn_to_test
 
         assert press_summary.has_valid_ncn is valid
@@ -87,7 +87,7 @@ class TestPressSummaryValidation:
         self,
         mock_api_client,
     ):
-        press_summary = PressSummary("test/1234", mock_api_client)
+        press_summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
         press_summary.is_failure = True
         press_summary.is_parked = True
         press_summary.is_held = True
@@ -115,7 +115,7 @@ class TestLinkedDocuments:
         judgment = JudgmentFactory.build()
         document_mock.return_value = judgment
 
-        press_summary = PressSummary("/test/1234/press-summary/1", mock_api_client)
+        press_summary = PressSummary(DocumentURIString("test/1234/press-summary/1"), mock_api_client)
 
         assert press_summary.linked_document == judgment
         document_mock.assert_called_once_with("test/1234", mock_api_client)
@@ -128,5 +128,5 @@ class TestLinkedDocuments:
     ):
         document_mock.side_effect = DocumentNotFoundError()
 
-        press_summary = PressSummary("/test/1234/press-summary/1", mock_api_client)
+        press_summary = PressSummary(DocumentURIString("test/1234/press-summary/1"), mock_api_client)
         assert press_summary.linked_document is None

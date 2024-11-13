@@ -9,7 +9,7 @@ from ds_caselaw_utils.types import NeutralCitationString
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 
-from .documents import Document
+from .documents import Document, DocumentURIString
 
 if TYPE_CHECKING:
     from caselawclient.models.judgments import Judgment
@@ -23,8 +23,8 @@ class PressSummary(NeutralCitationMixin, Document):
     document_noun = "press summary"
     document_noun_plural = "press summaries"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(self.document_noun, *args, **kwargs)
+    def __init__(self, uri: DocumentURIString, *args: Any, **kwargs: Any) -> None:
+        super().__init__(self.document_noun, uri, *args, **kwargs)
 
     @cached_property
     def neutral_citation(self) -> NeutralCitationString:
@@ -47,7 +47,7 @@ class PressSummary(NeutralCitationMixin, Document):
         Attempt to fetch a linked judgement, and return it, if it exists
         """
         try:
-            uri = self.uri.removesuffix("/press-summary/1")
+            uri = DocumentURIString(self.uri.removesuffix("/press-summary/1"))
             if not TYPE_CHECKING:  # This isn't nice, but will be cleaned up when we refactor how related documents work
                 Judgment = importlib.import_module("caselawclient.models.judgments").Judgment
             return Judgment(uri, self.api_client)

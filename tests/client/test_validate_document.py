@@ -24,7 +24,7 @@ class TestValidateDocument(unittest.TestCase):
                 b"--c878f7cb55370005--\r\n"
             )
 
-            assert self.client.validate_document(DocumentURIString("/foo/bar/123")) is True
+            assert self.client.validate_document(DocumentURIString("foo/bar/123")) is True
 
     def test_validation_failure(self):
         with patch.object(self.client, "eval") as mock_eval:
@@ -44,4 +44,4 @@ class TestValidateDocument(unittest.TestCase):
                 b"--c878f7cb55370005--\r\n"
             )
 
-            assert self.client.validate_document(DocumentURIString("/foo/bar/123")) is False
+            assert self.client.validate_document(DocumentURIString("foo/bar/123")) is False

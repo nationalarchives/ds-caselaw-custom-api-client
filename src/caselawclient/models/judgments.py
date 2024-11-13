@@ -10,7 +10,7 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 if TYPE_CHECKING:
     from caselawclient.models.press_summaries import PressSummary
 
-from .documents import Document
+from .documents import Document, DocumentURIString
 
 
 class Judgment(NeutralCitationMixin, Document):
@@ -21,8 +21,8 @@ class Judgment(NeutralCitationMixin, Document):
     document_noun = "judgment"
     document_noun_plural = "judgments"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(self.document_noun, *args, **kwargs)
+    def __init__(self, uri: DocumentURIString, *args: Any, **kwargs: Any) -> None:
+        super().__init__(self.document_noun, uri, *args, **kwargs)
 
     @cached_property
     def neutral_citation(self) -> NeutralCitationString:
@@ -46,7 +46,7 @@ class Judgment(NeutralCitationMixin, Document):
         Attempt to fetch a linked press summary, and return it, if it exists
         """
         try:
-            uri = self.uri + "/press-summary/1"
+            uri = DocumentURIString(self.uri + "/press-summary/1")
             if not TYPE_CHECKING:  # This isn't nice, but will be cleaned up when we refactor how related documents work
                 PressSummary = importlib.import_module("caselawclient.models.press_summaries").PressSummary
             return PressSummary(uri, self.api_client)
