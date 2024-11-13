@@ -47,7 +47,8 @@ class Judgment(NeutralCitationMixin, Document):
         """
         try:
             uri = self.uri + "/press-summary/1"
-            PressSummary = importlib.import_module("caselawclient.models.press_summaries").PressSummary
-            return PressSummary(uri, self.api_client)  # type: ignore
+            if not TYPE_CHECKING:  # This isn't nice, but will be cleaned up when we refactor how related documents work
+                PressSummary = importlib.import_module("caselawclient.models.press_summaries").PressSummary
+            return PressSummary(uri, self.api_client)
         except DocumentNotFoundError:
             return None

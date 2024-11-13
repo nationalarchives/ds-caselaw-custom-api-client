@@ -49,7 +49,7 @@ repos:
           - types-python-dateutil
           - types-pytz
           - ds-caselaw-utils~=2.0.0
-        files: ^tests/
+        exclude: ^smoketest/
         id: mypy
         name: mypy-tests
     repo: https://github.com/pre-commit/mirrors-mypy

@@ -11,14 +11,16 @@ from caselawclient.models.documents import (
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
+    DocumentURIString,
 )
 from caselawclient.models.judgments import Judgment
+from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
 
 class TestDocumentPublish:
     def test_publish_fails_if_not_publishable(self, mock_api_client):
         with pytest.raises(CannotPublishUnpublishableDocument):
-            document = Document("test/1234", mock_api_client)
+            document = Document(DocumentURIString("test/1234"), mock_api_client)
             document.is_publishable = False
             document.publish()
             mock_api_client.set_published.assert_not_called()
@@ -33,7 +35,7 @@ class TestDocumentPublish:
         mock_announce_document_event,
         mock_api_client,
     ):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_publishable = True
         document.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
@@ -54,7 +56,7 @@ class TestDocumentUnpublish:
         mock_announce_document_event,
         mock_api_client,
     ):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
@@ -69,7 +71,7 @@ class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     def test_force_enrich(self, mock_announce_document_event, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.force_enrich()
 
         mock_api_client.set_property.assert_called_once_with(
@@ -86,7 +88,7 @@ class TestDocumentEnrich:
 
     @patch("caselawclient.models.documents.Document.force_enrich")
     def test_no_enrich_when_can_enrich_is_false(self, force_enrich, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         with patch.object(
             Document,
             "can_enrich",
@@ -98,7 +100,7 @@ class TestDocumentEnrich:
 
     @patch("caselawclient.models.documents.Document.force_enrich")
     def test_enrich_when_can_enrich_is_true(self, force_enrich, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         with patch.object(
             Document,
             "can_enrich",
@@ -111,7 +113,7 @@ class TestDocumentEnrich:
 
 class TestDocumentHold:
     def test_hold(self, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.hold()
         mock_api_client.set_property.assert_called_once_with(
             "test/1234",
@@ -120,7 +122,7 @@ class TestDocumentHold:
         )
 
     def test_unhold(self, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.unhold()
         mock_api_client.set_property.assert_called_once_with(
             "test/1234",
@@ -131,20 +133,20 @@ class TestDocumentHold:
 
 class TestDocumentDelete:
     def test_not_safe_to_delete_if_published(self, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_published = True
 
         assert document.safe_to_delete is False
 
     def test_safe_to_delete_if_unpublished(self, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_published = False
 
         assert document.safe_to_delete is True
 
     @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
     def test_delete_if_safe(self, mock_aws_delete_documents, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.safe_to_delete = True
 
         document.delete()
@@ -154,7 +156,7 @@ class TestDocumentDelete:
 
     @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
     def test_delete_if_unsafe(self, mock_aws_delete_documents, mock_api_client):
-        document = Document("test/1234", mock_api_client)
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.safe_to_delete = False
 
         with pytest.raises(DocumentNotSafeForDeletion):
@@ -224,7 +226,7 @@ class TestReparse:
     def test_force_reparse_full(self, sns, mock_api_client):
         document = Judgment("test/2023/123", mock_api_client)
 
-        document.neutral_citation = "[2023] Test 123"
+        document.neutral_citation = NeutralCitationString("[2023] Test 123")
         document.consignment_reference = "TDR-12345"
 
         document.body.name = "Judgment v Judgement"

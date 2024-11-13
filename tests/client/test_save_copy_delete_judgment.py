@@ -10,6 +10,7 @@ import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError
+from caselawclient.models.documents import DocumentURIString
 
 
 class TestSaveCopyDeleteJudgment(unittest.TestCase):
@@ -24,7 +25,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
 
     def test_update_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/ewca/civ/2004/632"
+            uri = DocumentURIString("/ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = ElementTree.fromstring(judgment_str)
             expected_vars = {
@@ -64,7 +65,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         with patch.object(caselawclient.Client, "validate_content_hash"), patch.object(
             self.client, "eval"
         ) as mock_eval:
-            uri = "/ewca/civ/2004/632"
+            uri = DocumentURIString("/ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = judgment_str.encode("utf-8")
             expected_vars = {
@@ -105,7 +106,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             caselawclient.Client,
             "validate_content_hash",
         ) as mock_validate_hash:
-            uri = "/ewca/civ/2004/632"
+            uri = DocumentURIString("/ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = judgment_str.encode("utf-8")
             mock_validate_hash.side_effect = InvalidContentHashError()
@@ -123,7 +124,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
 
     def test_insert_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/ewca/civ/2004/632/"
+            uri = DocumentURIString("/ewca/civ/2004/632/")
             document_str = "<root>My judgment</root>"
             document_xml = ElementTree.fromstring(document_str)
             expected_vars = {
@@ -156,7 +157,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
 
     def test_delete_document(self):
         with patch.object(self.client, "eval") as mock_eval:
-            uri = "/judgment/uri"
+            uri = DocumentURIString("/judgment/uri")
             expected_vars = {
                 "uri": "/judgment/uri.xml",
             }
@@ -167,8 +168,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
 
     def test_copy_document(self):
         with patch.object(self.client, "eval") as mock_eval:
-            old_uri = "/judgment/old_uri"
-            new_uri = "/judgment/new_uri"
+            old_uri = DocumentURIString("/judgment/old_uri")
+            new_uri = DocumentURIString("/judgment/new_uri")
             expected_vars = {
                 "old_uri": "/judgment/old_uri.xml",
                 "new_uri": "/judgment/new_uri.xml",

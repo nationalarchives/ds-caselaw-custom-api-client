@@ -48,7 +48,8 @@ class PressSummary(NeutralCitationMixin, Document):
         """
         try:
             uri = self.uri.removesuffix("/press-summary/1")
-            Judgment = importlib.import_module("caselawclient.models.judgments").Judgment
-            return Judgment(uri, self.api_client)  # type: ignore
+            if not TYPE_CHECKING:  # This isn't nice, but will be cleaned up when we refactor how related documents work
+                Judgment = importlib.import_module("caselawclient.models.judgments").Judgment
+            return Judgment(uri, self.api_client)
         except DocumentNotFoundError:
             return None

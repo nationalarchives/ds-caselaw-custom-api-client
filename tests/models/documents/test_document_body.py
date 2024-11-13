@@ -249,9 +249,10 @@ class TestDocumentBody:
             </akomaNtoso>
         """)
 
-        assert body.enrichment_datetime.year == 2024
-        assert body.transformation_datetime.year == 2026
-        assert body.get_latest_manifestation_datetime().year == 2026
+        assert body.enrichment_datetime and body.enrichment_datetime.year == 2024
+        assert body.transformation_datetime and body.transformation_datetime.year == 2026
+        latest_manifestation_datetime = body.get_latest_manifestation_datetime()
+        assert latest_manifestation_datetime and latest_manifestation_datetime.year == 2026
         assert body.get_latest_manifestation_type() == "transform"
         assert [x.year for x in body.get_manifestation_datetimes("tna-enriched")] == [2024, 2023]
 

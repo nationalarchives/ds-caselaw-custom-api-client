@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.models.documents import DocumentURIString
 
 
 class TestGetVersionCreatedDatetime(unittest.TestCase):
@@ -23,7 +24,7 @@ class TestGetVersionCreatedDatetime(unittest.TestCase):
                 b"\r\n2022-04-11T16:12:33.548954+01:00\r\n"
                 b"--595658fa1db1aa98--\r\n"
             )
-            result = self.client.get_version_created_datetime("/judgment/uri")
+            result = self.client.get_version_created_datetime(DocumentURIString("/judgment/uri"))
 
             assert result == datetime.datetime(
                 2022,
