@@ -4,11 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v28.0.0 (2024-11-14)
 
 ### BREAKING CHANGE
 
+- Code which provided unsanitised URIs when initialising `DocumentURIStrings` will now cause `InvalidDocumentURIException`s to be raised.
 - Document can now no longer be initialised with a string as the `uri`, it must be a `DocumentURIString`.
+
+### Feat
+
+- Validate strings when creating a new DocumentURIString
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.35.58
+- **deps**: update dependency boto3 to v1.35.56
+
+### Refactor
+
+- **Document**: initialising a Document now requires a DocumentURIString, not a str
+- **tests**: simpler test changes to pass type checking
 
 ## v27.4.0 (2024-11-07)
 
