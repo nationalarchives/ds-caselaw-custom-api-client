@@ -29,6 +29,7 @@ from caselawclient.models.utilities.aws import (
     uri_for_s3,
 )
 
+from ..identifiers import Identifier
 from .body import DocumentBody
 from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion, InvalidDocumentURIException
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
@@ -159,6 +160,10 @@ class Document:
     def docx_exists(self) -> bool:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
+
+    @property
+    def identifiers(self) -> list[Identifier]:
+        return []
 
     @property
     def best_human_identifier(self) -> Optional[str]:
