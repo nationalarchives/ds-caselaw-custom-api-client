@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **deps**: update boto packages to v1.35.61
+
 ## v28.0.0 (2024-11-14)
 
 ### BREAKING CHANGE

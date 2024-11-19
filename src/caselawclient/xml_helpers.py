@@ -9,8 +9,7 @@ def get_xpath_match_string(
     namespaces: Optional[Dict[str, str]] = None,
     fallback: str = "",
 ) -> str:
-    kwargs = {"namespaces": namespaces} if namespaces else {}
-    return str((node.xpath(path, **kwargs) or [fallback])[0])
+    return str((node.xpath(path, namespaces=namespaces) or [fallback])[0])
 
 
 def get_xpath_match_strings(
@@ -18,5 +17,4 @@ def get_xpath_match_strings(
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
 ) -> list[str]:
-    kwargs = {"namespaces": namespaces} if namespaces else {}
-    return [str(x) for x in node.xpath(path, **kwargs)]
+    return [str(x) for x in node.xpath(path, namespaces=namespaces)]

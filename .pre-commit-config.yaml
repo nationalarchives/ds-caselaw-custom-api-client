@@ -34,6 +34,7 @@ repos:
           - boto3-stubs[s3,sns]
           - types-python-dateutil
           - types-pytz
+          - types-lxml
           - ds-caselaw-utils~=2.0.0
         args:
           - --strict
@@ -48,6 +49,7 @@ repos:
           - boto3-stubs[s3,sns]
           - types-python-dateutil
           - types-pytz
+          - types-lxml
           - ds-caselaw-utils~=2.0.0
         exclude: ^smoketest/
         id: mypy
