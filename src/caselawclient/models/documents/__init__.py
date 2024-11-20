@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
+from lxml import etree
 from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
 
@@ -15,6 +16,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
+from caselawclient.models.identifiers.unpacker import unpack_identifier_from_etree
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
 from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
@@ -125,6 +127,8 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
+    identifiers: dict[str, Identifier] = {}
+
     def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
         :param uri: The URI of the document to retrieve from MarkLogic.
@@ -147,6 +151,8 @@ class Document:
         )
         """ `Document.body` represents the body of the document itself, without any information such as version tracking or properties. """
 
+        self.identifiers = {}
+
     def __repr__(self) -> str:
         name = self.body.name or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
@@ -161,9 +167,29 @@ class Document:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
 
-    @property
-    def identifiers(self) -> list[Identifier]:
-        return []
+    def _load_identifiers(self) -> None:
+        """Load this document's identifiers from MarkLogic"""
+        identifiers_element_as_string = self.api_client.get_property(self.uri, "identifiers")
+        identifiers_element_as_etree = etree.fromstring(identifiers_element_as_string)
+
+        for identifier_etree in identifiers_element_as_etree.findall("identifier"):
+            identifier = unpack_identifier_from_etree(identifier_etree)
+            self.add_identifier(identifier)
+
+    def add_identifier(self, identifier: Identifier) -> None:
+        """Add an identifier to this Document's identifiers array."""
+        self.identifiers[identifier.uuid] = identifier
+
+    def identifiers_as_etree(self) -> etree._Element:
+        identifiers_root = etree.Element("identifiers")
+
+        for identifier in self.identifiers.values():
+            identifiers_root.append(identifier.as_xml_tree)
+
+        return identifiers_root
+
+    def save_identifiers(self) -> None:
+        """Save the current state of this Document's identifiers to MarkLogic."""
 
     @property
     def best_human_identifier(self) -> Optional[str]:

@@ -40,7 +40,8 @@ class TestNeutralCitationSchemaImplementation:
         "value",
         [
             "",
-            "bananas" "1604] EWCA Crim 555",
+            "bananas",
+            "1604] EWCA Crim 555",
             "[2022 EWHC 1 Comm",
             "[1999] EWCOP",
             "[2022] UKUT B1 IAC",
