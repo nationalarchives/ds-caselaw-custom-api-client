@@ -17,7 +17,7 @@ class XML:
         :raises NonXMLDocumentError: This document is not valid XML
         """
         try:
-            self.xml_as_tree: etree.Element = etree.fromstring(xml_bytestring)
+            self.xml_as_tree: etree._Element = etree.fromstring(xml_bytestring)
         except etree.XMLSyntaxError:
             raise NonXMLDocumentError
 
