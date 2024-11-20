@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- **FCL-309**: add functionality for packing and unpacking XML representations of identifiers
+- **FCL-309**: add stub for defining identifier schemas, and a Neutral Citation schema
+
 ### Fix
 
 - **deps**: update boto packages to v1.35.61

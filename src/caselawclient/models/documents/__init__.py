@@ -163,6 +163,7 @@ class Document:
 
     @property
     def identifiers(self) -> list[Identifier]:
+        """A list of all known identifiers for this document."""
         return []
 
     @property
