@@ -283,15 +283,18 @@ class TestCanEnrich:
         can_enrich,
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        with patch.object(
-            Document,
-            "enriched_recently",
-            new_callable=PropertyMock,
-        ) as mock_enriched_recently, patch.object(
-            Document,
-            "validates_against_schema",
-            new_callable=PropertyMock,
-        ) as mock_validates_against_schema:
+        with (
+            patch.object(
+                Document,
+                "enriched_recently",
+                new_callable=PropertyMock,
+            ) as mock_enriched_recently,
+            patch.object(
+                Document,
+                "validates_against_schema",
+                new_callable=PropertyMock,
+            ) as mock_validates_against_schema,
+        ):
             mock_enriched_recently.return_value = enriched_recently
             mock_validates_against_schema.return_value = validates_against_schema
 

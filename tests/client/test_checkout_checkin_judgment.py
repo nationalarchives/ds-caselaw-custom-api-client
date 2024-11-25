@@ -30,10 +30,13 @@ class TestGetCheckoutStatus(unittest.TestCase):
             )
 
     def test_checkout_judgment_with_midnight_timeout(self):
-        with patch.object(self.client, "eval") as mock_eval, patch.object(
-            self.client,
-            "calculate_seconds_until_midnight",
-            return_value=3600,
+        with (
+            patch.object(self.client, "eval") as mock_eval,
+            patch.object(
+                self.client,
+                "calculate_seconds_until_midnight",
+                return_value=3600,
+            ),
         ):
             uri = DocumentURIString("ewca/civ/2004/632")
             annotation = "locked by A KITTEN"
