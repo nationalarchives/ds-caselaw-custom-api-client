@@ -132,10 +132,13 @@ class TestGetSetMetadata(unittest.TestCase):
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
     def test_set_judgment_date_warn(self):
-        with patch.object(warnings, "warn") as mock_warn, patch.object(
-            self.client,
-            "eval",
-        ) as mock_eval:
+        with (
+            patch.object(warnings, "warn") as mock_warn,
+            patch.object(
+                self.client,
+                "eval",
+            ) as mock_eval,
+        ):
             uri = DocumentURIString("judgment/uri")
             content = "2022-01-01"
             expected_vars = {"uri": "/judgment/uri.xml", "content": "2022-01-01"}

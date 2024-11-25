@@ -62,9 +62,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         When `Client.save_locked_judgment_xml` is called with these as arguments
         Then the xquery in `update_locked_judgment.xqy` is called on the Marklogic db with those arguments
         """
-        with patch.object(caselawclient.Client, "validate_content_hash"), patch.object(
-            self.client, "eval"
-        ) as mock_eval:
+        with (
+            patch.object(caselawclient.Client, "validate_content_hash"),
+            patch.object(self.client, "eval") as mock_eval,
+        ):
             uri = DocumentURIString("ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = judgment_str.encode("utf-8")

@@ -15,10 +15,13 @@ class TestEvalXslt(unittest.TestCase):
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_user_can_view_unpublished(self):
-        with patch.object(self.client, "eval") as mock_eval, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=True,
+        with (
+            patch.object(self.client, "eval") as mock_eval,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
+            ),
         ):
             uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
@@ -38,11 +41,15 @@ class TestEvalXslt(unittest.TestCase):
     def test_eval_xslt_user_cannot_view_unpublished(self):
         """The user is not permitted to see unpublished judgments but is attempting to view them
         Set `show_unpublished` to false and log a warning"""
-        with patch.object(self.client, "eval") as mock_eval, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=False,
-        ), patch.object(logging, "warning") as mock_logging:
+        with (
+            patch.object(self.client, "eval") as mock_eval,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=False,
+            ),
+            patch.object(logging, "warning") as mock_logging,
+        ):
             uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
                 "uri": MarkLogicDocumentURIString("/judgment/uri.xml"),
@@ -62,10 +69,13 @@ class TestEvalXslt(unittest.TestCase):
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_with_filename(self):
-        with patch.object(self.client, "eval") as mock_eval, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=True,
+        with (
+            patch.object(self.client, "eval") as mock_eval,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
+            ),
         ):
             uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
@@ -87,10 +97,13 @@ class TestEvalXslt(unittest.TestCase):
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_with_query(self):
-        with patch.object(self.client, "eval") as mock_eval, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=True,
+        with (
+            patch.object(self.client, "eval") as mock_eval,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
+            ),
         ):
             uri = DocumentURIString("judgment/uri")
             query = "the query string"

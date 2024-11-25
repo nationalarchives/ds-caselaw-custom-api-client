@@ -128,10 +128,13 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to False
         Then it should call the MarkLogic module with the expected query parameters
         """
-        with patch.object(self.client, "invoke") as mock_invoke, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=True,
+        with (
+            patch.object(self.client, "invoke") as mock_invoke,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
+            ),
         ):
             self.client.advanced_search(
                 SearchParameters(
@@ -177,10 +180,13 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the expected query parameters
         """
-        with patch.object(self.client, "invoke") as patched_invoke, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=True,
+        with (
+            patch.object(self.client, "invoke") as patched_invoke,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=True,
+            ),
         ):
             self.client.advanced_search(
                 SearchParameters(
@@ -204,11 +210,15 @@ class TestAdvancedSearch(unittest.TestCase):
         When the advanced_search method is called with the show_unpublished parameter set to True
         Then it should call the MarkLogic module with the show_unpublished parameter set to False and log a warning
         """
-        with patch.object(self.client, "invoke") as patched_invoke, patch.object(
-            self.client,
-            "user_can_view_unpublished_judgments",
-            return_value=False,
-        ), patch.object(logging, "warning") as mock_logging:
+        with (
+            patch.object(self.client, "invoke") as patched_invoke,
+            patch.object(
+                self.client,
+                "user_can_view_unpublished_judgments",
+                return_value=False,
+            ),
+            patch.object(logging, "warning") as mock_logging,
+        ):
             self.client.advanced_search(
                 SearchParameters(
                     query="my-query",
