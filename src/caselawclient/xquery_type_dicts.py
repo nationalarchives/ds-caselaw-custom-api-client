@@ -113,6 +113,12 @@ class GetPropertyDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_property_as_node.xqy
+class GetPropertyAsNodeDict(MarkLogicAPIDict):
+    name: str
+    uri: MarkLogicDocumentURIString
+
+
 # get_version_annotation.xqy
 class GetVersionAnnotationDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
@@ -182,6 +188,13 @@ class SetMetadataWorkExpressionDateDict(MarkLogicAPIDict):
 
 # set_property.xqy
 class SetPropertyDict(MarkLogicAPIDict):
+    name: str
+    uri: MarkLogicDocumentURIString
+    value: str
+
+
+# set_property_as_node.xqy
+class SetPropertyAsNodeDict(MarkLogicAPIDict):
     name: str
     uri: MarkLogicDocumentURIString
     value: str

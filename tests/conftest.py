@@ -129,5 +129,6 @@ def generate_mock_response_fixture() -> Callable:
 def mock_api_client():
     mock_client = Mock(spec=MarklogicApiClient)
     mock_client.get_judgment_xml_bytestring.return_value = b"<xml>content</xml>"
+    mock_client.get_property_as_node.return_value = None
 
     return mock_client

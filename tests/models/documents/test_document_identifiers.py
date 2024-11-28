@@ -13,10 +13,10 @@ class TestDocumentIdentifiers:
         document.add_identifier(identifier_1)
         document.add_identifier(identifier_2)
 
-        assert document.identifiers == {
-            "e28e3ef1-85ed-4997-87ee-e7428a6cc02e": identifier_1,
-            "14ce4b3b-03c8-44f9-a29e-e02ce35fe136": identifier_2,
-        }
+        assert document.identifiers == [
+            identifier_1,
+            identifier_2,
+        ]
 
     def test_identifiers_as_etree(self):
         document = DocumentFactory.build()
@@ -41,6 +41,6 @@ class TestDocumentIdentifiers:
             </identifiers>
         """
 
-        assert etree.canonicalize(document.identifiers_as_etree(), strip_text=True) == etree.canonicalize(
+        assert etree.canonicalize(document.identifiers_as_etree, strip_text=True) == etree.canonicalize(
             etree.fromstring(expected_xml), strip_text=True
         )

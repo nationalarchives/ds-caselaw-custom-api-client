@@ -62,6 +62,7 @@ class DocumentFactory:
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
             api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
+            api_client.get_property_as_node.return_value = None
 
         document = cls.target_class(uri, api_client=api_client)
         document.content_as_html = Mock(return_value=html)  # type: ignore[method-assign]

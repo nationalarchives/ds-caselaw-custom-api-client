@@ -4,6 +4,11 @@ from uuid import uuid4
 
 from lxml import etree
 
+IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
+    "uuid",
+    "value",
+]
+
 
 class InvalidIdentifierXMLRepresentationException(Exception):
     pass
@@ -64,15 +69,14 @@ class Identifier(ABC):
 
     @property
     def as_xml_tree(self) -> etree._Element:
+        """Convert this Identifier into a packed XML representation for storage."""
         identifier_root = etree.Element("identifier")
 
-        identifier_namespace = etree.SubElement(identifier_root, "namespace")
-        identifier_namespace.text = self.schema.namespace
+        namespace_attribute = etree.SubElement(identifier_root, "namespace")
+        namespace_attribute.text = self.schema.namespace
 
-        identifier_uuid = etree.SubElement(identifier_root, "uuid")
-        identifier_uuid.text = self.uuid
-
-        identifier_value = etree.SubElement(identifier_root, "value")
-        identifier_value.text = self.value
+        for attribute in IDENTIFIER_PACKABLE_ATTRIBUTES:
+            packed_attribute = etree.SubElement(identifier_root, attribute)
+            packed_attribute.text = getattr(self, attribute)
 
         return identifier_root
