@@ -9,6 +9,10 @@ class TestIdentifierSchema(IdentifierSchema):
     name = "Test Schema"
     namespace = "test"
 
+    @classmethod
+    def compile_identifier_url_slug(cls, value: str) -> str:
+        return value.lower()
+
 
 class TestIdentifier(Identifier):
     __test__ = False
@@ -31,6 +35,7 @@ class TestIdentifierBase:
                 <namespace>test</namespace>
                 <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
                 <value>TEST-123</value>
+                <url_slug>test-123</url_slug>
             </identifier>
         """
         assert etree.canonicalize(identifier.as_xml_tree, strip_text=True) == etree.canonicalize(

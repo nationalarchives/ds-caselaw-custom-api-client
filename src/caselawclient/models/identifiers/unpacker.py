@@ -1,6 +1,6 @@
 from lxml import etree
 
-from . import IDENTIFIER_PACKABLE_ATTRIBUTES, Identifier, InvalidIdentifierXMLRepresentationException
+from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, InvalidIdentifierXMLRepresentationException
 from .neutral_citation import NeutralCitationNumber
 
 IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
@@ -20,7 +20,7 @@ def unpack_identifier_from_etree(identifier_xml: etree._Element) -> Identifier:
 
     kwargs: dict[str, str] = {}
 
-    for attribute in IDENTIFIER_PACKABLE_ATTRIBUTES:
+    for attribute in IDENTIFIER_UNPACKABLE_ATTRIBUTES:
         element = identifier_xml.find(attribute)
         if element is None or not element.text:
             raise InvalidIdentifierXMLRepresentationException(

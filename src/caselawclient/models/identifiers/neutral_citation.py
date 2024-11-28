@@ -1,5 +1,8 @@
 import re
 
+from ds_caselaw_utils import neutral_url
+from ds_caselaw_utils.types import NeutralCitationString
+
 from . import Identifier, IdentifierSchema
 
 VALID_NCN_PATTERN = re.compile(r"(^\[([0-9]{4})\] ([a-zA-Z]+)(?: ([a-zA-Z]+))? ([0-9]+)(?: \(([a-zA-Z]+)\))?$)")
@@ -29,6 +32,13 @@ class NeutralCitationNumberSchema(IdentifierSchema):
     @classmethod
     def validate_identifier(cls, value: str) -> bool:
         return bool(VALID_NCN_PATTERN.match(value))
+
+    @classmethod
+    def compile_identifier_url_slug(cls, value: str) -> str:
+        ncn_based_uri_string = neutral_url(NeutralCitationString(value))
+        if not ncn_based_uri_string:
+            raise Exception(f"Unable to convert NCN {value} into NCN-based URL slug")
+        return ncn_based_uri_string
 
 
 class NeutralCitationNumber(Identifier):

@@ -7,6 +7,12 @@ from lxml import etree
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
+    "url_slug",
+]
+
+IDENTIFIER_UNPACKABLE_ATTRIBUTES: list[str] = [
+    "uuid",
+    "value",
 ]
 
 
@@ -39,6 +45,12 @@ class IdentifierSchema(ABC):
     @abstractmethod
     def validate_identifier(cls, value: str) -> bool:
         """Check that any given identifier value is valid for this schema."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def compile_identifier_url_slug(cls, value: str) -> str:
+        """Convert an identifier into a precompiled URL slug."""
         pass
 
 
@@ -80,3 +92,7 @@ class Identifier(ABC):
             packed_attribute.text = getattr(self, attribute)
 
         return identifier_root
+
+    @property
+    def url_slug(self) -> str:
+        return self.schema.compile_identifier_url_slug(self.value)
