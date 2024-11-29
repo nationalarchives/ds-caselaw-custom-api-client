@@ -185,12 +185,13 @@ class Document:
         return list(self._identifiers.values())
 
     def add_identifier(self, identifier: Identifier) -> None:
-        """Add an identifier to this Document's identifiers array."""
+        """Add an Identifier object to this Document's list of identifiers."""
 
         self._identifiers[identifier.uuid] = identifier
 
     @property
     def identifiers_as_etree(self) -> etree._Element:
+        """Return an etree representation of all the Document's identifiers."""
         identifiers_root = etree.Element("identifiers")
 
         for identifier in self.identifiers:
