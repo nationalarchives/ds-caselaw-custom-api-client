@@ -77,7 +77,7 @@ class Identifier(ABC):
         if uuid:
             self.uuid = uuid
         else:
-            self.uuid = str(uuid4())
+            self.uuid = "id-" + str(uuid4())
 
     @property
     def as_xml_tree(self) -> etree._Element:
