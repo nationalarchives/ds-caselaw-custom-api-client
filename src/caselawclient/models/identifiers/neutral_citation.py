@@ -16,6 +16,8 @@ This pattern also defines five capture groups to standardise how we interface wi
 - `2`: (Optionally) the jurisdiction or division, depending on the court
 - `3`: The sequence number of the decision
 - `4`: (Optionally) the jurisdiction or division, depending on the court
+
+TODO: When these capture groups are being used in anger (eg to build URL slugs) you should go through and name the groups.
 """
 
 
@@ -35,7 +37,9 @@ class NeutralCitationNumberSchema(IdentifierSchema):
 
     @classmethod
     def compile_identifier_url_slug(cls, value: str) -> str:
-        ncn_based_uri_string = neutral_url(NeutralCitationString(value))
+        ncn_based_uri_string = neutral_url(
+            NeutralCitationString(value)
+        )  # TODO: At some point this should move out of utils and into this class.
         if not ncn_based_uri_string:
             raise Exception(f"Unable to convert NCN {value} into NCN-based URL slug")
         return ncn_based_uri_string
