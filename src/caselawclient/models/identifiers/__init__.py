@@ -20,6 +20,10 @@ class InvalidIdentifierXMLRepresentationException(Exception):
     pass
 
 
+class UUIDMismatchError(Exception):
+    pass
+
+
 class IdentifierSchema(ABC):
     """
     A base class which describes what an identifier schema should look like.
@@ -99,6 +103,12 @@ class Identifier(ABC):
 
 
 class Identifiers(dict[str, Identifier]):
+    def validate(self) -> None:
+        for uuid, identifier in self.items():
+            if uuid != identifier.uuid:
+                msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
+                raise UUIDMismatchError(msg)
+
     def add(self, identifier: Identifier) -> None:
         self[identifier.uuid] = identifier
 
@@ -120,5 +130,5 @@ class Identifiers(dict[str, Identifier]):
 
     def save(self, document) -> None:  # type: ignore[no-untyped-def, unused-ignore]
         """Save the current state of this Document's identifiers to MarkLogic."""
-
+        self.validate()
         document.api_client.set_property_as_node(document.uri, "identifiers", self.as_etree)
