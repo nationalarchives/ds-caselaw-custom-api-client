@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from uuid import uuid4
 
 from lxml import etree
@@ -70,7 +70,7 @@ class Identifier(ABC):
         super().__init_subclass__(**kwargs)
 
     def __repr__(self) -> str:
-        return f"{self.uuid} ({self.schema.name}): {self.value}"
+        return f"<{self.schema.name} {self.value}: {self.uuid}>"
 
     def __init__(self, value: str, uuid: Optional[str] = None) -> None:
         self.value = value
@@ -96,3 +96,29 @@ class Identifier(ABC):
     @property
     def url_slug(self) -> str:
         return self.schema.compile_identifier_url_slug(self.value)
+
+
+class Identifiers(dict[str, Identifier]):
+    def add(self, identifier: Identifier) -> None:
+        self[identifier.uuid] = identifier
+
+    def __delitem__(self, key: Union[Identifier, str]) -> None:
+        if isinstance(key, Identifier):
+            super().__delitem__(key.uuid)
+        else:
+            super().__delitem__(key)
+
+    @property
+    def as_etree(self) -> etree._Element:
+        """Return an etree representation of all the Document's identifiers."""
+        identifiers_root = etree.Element("identifiers")
+
+        for identifier in self.values():
+            identifiers_root.append(identifier.as_xml_tree)
+
+        return identifiers_root
+
+    def save(self, document) -> None:  # type: ignore[no-untyped-def, unused-ignore]
+        """Save the current state of this Document's identifiers to MarkLogic."""
+
+        document.api_client.set_property_as_node(document.uri, "identifiers", self.as_etree)
