@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from uuid import uuid4
 
 from lxml import etree
@@ -76,3 +76,14 @@ class Identifier(ABC):
         identifier_value.text = self.value
 
         return identifier_root
+
+
+class Identifiers(dict[str, Identifier]):
+    def add(self, identifier: Identifier) -> None:
+        self[identifier.uuid] = identifier
+
+    def __delitem__(self, key: Union[Identifier, str]) -> None:
+        if isinstance(key, Identifier):
+            super().__delitem__(key.uuid)
+        else:
+            super().__delitem__(key)

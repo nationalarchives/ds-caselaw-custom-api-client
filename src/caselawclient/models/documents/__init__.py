@@ -29,7 +29,7 @@ from caselawclient.models.utilities.aws import (
     uri_for_s3,
 )
 
-from ..identifiers import Identifier
+from ..identifiers import Identifiers
 from .body import DocumentBody
 from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion, InvalidDocumentURIException
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
@@ -162,9 +162,9 @@ class Document:
         return check_docx_exists(self.uri)
 
     @property
-    def identifiers(self) -> list[Identifier]:
+    def identifiers(self) -> Identifiers:
         """A list of all known identifiers for this document."""
-        return []
+        return Identifiers()
 
     @property
     def best_human_identifier(self) -> Optional[str]:
