@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **FCL-309**: identifiers can now be saved to and retrieved from MarkLogic
 - **FCL-309**: add functionality for packing and unpacking XML representations of identifiers
 - **FCL-309**: add stub for defining identifier schemas, and a Neutral Citation schema
+- **FCL-309**: add ability to add, delete and update identifiers
 
 ### Fix
 
