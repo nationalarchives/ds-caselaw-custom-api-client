@@ -692,8 +692,6 @@ optional = false
 python-versions = "*"
 files = [
     {file = "jsonpath-ng-1.7.0.tar.gz", hash = "sha256:f6f5f7fd4e5ff79c785f1573b394043b39849fb2bb47bcead935d12b00beab3c"},
-    {file = "jsonpath_ng-1.7.0-py2-none-any.whl", hash = "sha256:898c93fc173f0c336784a3fa63d7434297544b7198124a68f9a3ef9597b0ae6e"},
-    {file = "jsonpath_ng-1.7.0-py3-none-any.whl", hash = "sha256:f3d7f9e848cba1b6da28c55b1c26ff915dc9e0b1ba7e752a53d6da8d5cbd00b6"},
 ]
 
 [package.dependencies]
@@ -2080,6 +2078,17 @@ files = [
 ]
 
 [[package]]
+name = "sqids"
+version = "0.5.0"
+description = "Generate YouTube-like ids from numbers."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "sqids-0.5.0-py3-none-any.whl", hash = "sha256:4c2d1eabf4721e6e18001b1ff2bc0b30d059447ef96f1e1d1fb7f56841814154"},
+    {file = "sqids-0.5.0.tar.gz", hash = "sha256:647798e7d5bfeb236e7ac4709cfd4cd808630a6c50f80205df17b4c93e560140"},
+]
+
+[[package]]
 name = "sympy"
 version = "1.13.3"
 description = "Computer algebra system (CAS) in Python"
@@ -2354,4 +2363,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "475e15790354088d83c43ee782d985b62159ac7a095d292471e23a2c21612e86"
+content-hash = "a50c329d99433bcf05b86641f3333dff7e33f508549bc24fb857e8eb5f85cbcc"
