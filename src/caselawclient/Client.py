@@ -13,6 +13,7 @@ from xml.etree.ElementTree import Element, ParseError, fromstring
 import environ
 import requests
 from ds_caselaw_utils.types import NeutralCitationString
+from lxml import etree
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -864,6 +865,17 @@ class MarklogicApiClient:
         }
         return self._eval_and_decode(vars, "get_property.xqy")
 
+    def get_property_as_node(self, judgment_uri: DocumentURIString, name: str) -> Optional[etree._Element]:
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.GetPropertyAsNodeDict = {
+            "uri": uri,
+            "name": name,
+        }
+        value = self._eval_and_decode(vars, "get_property_as_node.xqy")
+        if not value:
+            return None
+        return etree.fromstring(value)
+
     def get_version_annotation(self, judgment_uri: DocumentURIString) -> str:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetVersionAnnotationDict = {
@@ -895,6 +907,22 @@ class MarklogicApiClient:
         }
 
         return self._send_to_eval(vars, "set_property.xqy")
+
+    def set_property_as_node(
+        self,
+        judgment_uri: DocumentURIString,
+        name: str,
+        value: etree._Element,
+    ) -> requests.Response:
+        """Given a root node, set the value of the MarkLogic property for a document to the _contents_ of that root node. The root node itself is discarded."""
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.SetPropertyAsNodeDict = {
+            "uri": uri,
+            "value": etree.tostring(value).decode(),
+            "name": name,
+        }
+
+        return self._send_to_eval(vars, "set_property_as_node.xqy")
 
     def set_boolean_property(
         self,

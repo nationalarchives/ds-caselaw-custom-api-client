@@ -6,8 +6,19 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- **FCL-309**: identifiers can compile URL slugs
+- **FCL-309**: identifiers can now be saved to and retrieved from MarkLogic
+- **FCL-309**: add functionality for packing and unpacking XML representations of identifiers
+- **FCL-309**: add stub for defining identifier schemas, and a Neutral Citation schema
+
 ### Fix
 
+- **deps**: update dependency ds-caselaw-utils to v2.0.1
+- **deps**: update dependency mypy-boto3-sns to v1.35.68
+- **deps**: update boto packages to v1.35.67
+- **deps**: update dependency boto3 to v1.35.64
 - **deps**: update boto packages to v1.35.61
 
 ## v28.0.0 (2024-11-14)
