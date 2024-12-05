@@ -101,6 +101,10 @@ class Identifier(ABC):
     def url_slug(self) -> str:
         return self.schema.compile_identifier_url_slug(self.value)
 
+    def same_as(self, other: "Identifier") -> bool:
+        "Is this the same as another identifier (in value and schema)?"
+        return self.value == other.value and self.schema == other.schema
+
 
 class Identifiers(dict[str, Identifier]):
     def validate(self) -> None:
@@ -109,8 +113,13 @@ class Identifiers(dict[str, Identifier]):
                 msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
                 raise UUIDMismatchError(msg)
 
+    def contains(self, other_identifier: Identifier) -> bool:
+        "Do the identifier's value and namespace already exist in this group?"
+        return any(other_identifier.same_as(identifier) for identifier in self.values())
+
     def add(self, identifier: Identifier) -> None:
-        self[identifier.uuid] = identifier
+        if not self.contains(identifier):
+            self[identifier.uuid] = identifier
 
     def __delitem__(self, key: Union[Identifier, str]) -> None:
         if isinstance(key, Identifier):

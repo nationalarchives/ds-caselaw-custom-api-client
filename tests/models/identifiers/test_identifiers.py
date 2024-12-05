@@ -2,18 +2,19 @@ import pytest
 from lxml import etree
 
 from caselawclient.models.identifiers import Identifier, Identifiers, IdentifierSchema
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 
 
 @pytest.fixture
 def identifiers():
     return Identifiers(
-        {"id-1": Identifier(uuid="id-1", value="TEST-111"), "id-2": Identifier(uuid="id-2", value="TEST-222")}
+        {"id-1": TestIdentifier(uuid="id-1", value="TEST-111"), "id-2": TestIdentifier(uuid="id-2", value="TEST-222")}
     )
 
 
 @pytest.fixture
 def id3():
-    return Identifier(uuid="id-3", value="TEST-333")
+    return TestIdentifier(uuid="id-3", value="TEST-333")
 
 
 class TestIdentifierSchema(IdentifierSchema):
@@ -55,6 +56,21 @@ class TestIdentifierBase:
             etree.fromstring(expected_xml), strip_text=True
         )
 
+    def test_same_as_different_types(self):
+        id_a = TestIdentifier("X")
+        id_b = NeutralCitationNumber("X")
+        assert not id_a.same_as(id_b)
+
+    def test_same_as_same_type_and_value(self):
+        id_a = NeutralCitationNumber("X")
+        id_b = NeutralCitationNumber("X")
+        assert id_a.same_as(id_b)
+
+    def test_same_as_different_values(self):
+        id_a = NeutralCitationNumber("Y")
+        id_b = NeutralCitationNumber("X")
+        assert not id_a.same_as(id_b)
+
 
 class TestIdentifiersCRUD:
     def test_delete(self, identifiers):
@@ -72,3 +88,8 @@ class TestIdentifiersCRUD:
         identifiers.add(id3)
         assert identifiers["id-3"] == id3
         assert len(identifiers) == 3
+
+    def test_contains(self, identifiers):
+        assert identifiers.contains_similar(TestIdentifier(value="TEST-111"))
+        assert not identifiers.contains_similar(TestIdentifier(value="TEST-333"))
+        assert not identifiers.contains_similar(NeutralCitationNumber(value="TEST-111"))
