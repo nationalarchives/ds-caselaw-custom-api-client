@@ -127,6 +127,14 @@ class Identifiers(dict[str, Identifier]):
         else:
             super().__delitem__(key)
 
+    def delete_type(self, deleted_identifier_type: type[Identifier]) -> None:
+        "For when we want an identifier to be the only valid identifier of that type, delete the others first"
+        uuids = self.keys()
+        for uuid in list(uuids):
+            # we could use compare to .schema instead, which would have diffferent behaviour for subclasses
+            if isinstance(self[uuid], deleted_identifier_type):
+                del self[uuid]
+
     @property
     def as_etree(self) -> etree._Element:
         """Return an etree representation of all the Document's identifiers."""

@@ -13,6 +13,17 @@ def identifiers():
 
 
 @pytest.fixture
+def mixed_identifiers():
+    return Identifiers(
+        {
+            "id-A": NeutralCitationNumber(value="[1701] UKSC 999"),
+            "id-B": TestIdentifier("TEST-999"),
+            "id-C": NeutralCitationNumber(value="[1234] UKSC 999"),
+        }
+    )
+
+
+@pytest.fixture
 def id3():
     return TestIdentifier(uuid="id-3", value="TEST-333")
 
@@ -90,6 +101,12 @@ class TestIdentifiersCRUD:
         assert len(identifiers) == 3
 
     def test_contains(self, identifiers):
-        assert identifiers.contains_similar(TestIdentifier(value="TEST-111"))
-        assert not identifiers.contains_similar(TestIdentifier(value="TEST-333"))
-        assert not identifiers.contains_similar(NeutralCitationNumber(value="TEST-111"))
+        assert identifiers.contains(TestIdentifier(value="TEST-111"))
+        assert not identifiers.contains(TestIdentifier(value="TEST-333"))
+        assert not identifiers.contains(NeutralCitationNumber(value="TEST-111"))
+
+    def test_delete_type(self, mixed_identifiers):
+        mixed_identifiers.delete_type(NeutralCitationNumber)
+        assert "TEST-999" in str(mixed_identifiers)
+        assert "[1701] UKSC 999" not in str(mixed_identifiers)
+        assert "[1234] UKSC 999" not in str(mixed_identifiers)
