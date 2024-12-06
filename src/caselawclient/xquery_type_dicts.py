@@ -141,6 +141,11 @@ class ListJudgmentVersionsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# resolve_from_identifier.xqy
+class ResolveFromIdentifierDict(MarkLogicAPIDict):
+    identifier_uri: DocumentURIString
+
+
 # set_boolean_property.xqy
 class SetBooleanPropertyDict(MarkLogicAPIDict):
     name: str
