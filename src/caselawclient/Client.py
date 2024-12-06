@@ -20,7 +20,7 @@ from requests_toolbelt.multipart import decoder
 
 from caselawclient import xquery_type_dicts as query_dicts
 from caselawclient.client_helpers import VersionAnnotation
-from caselawclient.identifiers import IdentifierResolutions
+from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
