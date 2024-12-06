@@ -54,7 +54,7 @@ def ml_type_to_python_type_declaration(variable_name: str, variable_type: str):
         variable_type = "MarkLogicDocumentVersionURIString"
     elif variable_name == "privilege_uri":
         variable_type = "MarkLogicPrivilegeURIString"
-    elif variable_name == "parent_uri":
+    elif variable_name in ["identifier_uri", "parent_uri"]:
         variable_type = "DocumentURIString"
     elif variable_name == "uri" or variable_name.endswith("_uri"):
         variable_type = "MarkLogicDocumentURIString"
