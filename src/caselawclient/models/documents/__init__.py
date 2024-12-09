@@ -530,6 +530,11 @@ class Document:
         """
         return self.docx_exists()
 
+    def save_identifiers(self) -> None:
+        """Save the current state of this Document's identifiers to MarkLogic."""
+        self.identifiers.validate()
+        self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
+
     def __getattr__(self, name: str) -> Any:
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
