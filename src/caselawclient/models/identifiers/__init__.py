@@ -144,8 +144,3 @@ class Identifiers(dict[str, Identifier]):
             identifiers_root.append(identifier.as_xml_tree)
 
         return identifiers_root
-
-    def save(self, document) -> None:  # type: ignore[no-untyped-def, unused-ignore]
-        """Save the current state of this Document's identifiers to MarkLogic."""
-        self.validate()
-        document.api_client.set_property_as_node(document.uri, "identifiers", self.as_etree)
