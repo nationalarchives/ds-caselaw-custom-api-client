@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from uuid import uuid4
 
 from lxml import etree
@@ -17,6 +17,10 @@ IDENTIFIER_UNPACKABLE_ATTRIBUTES: list[str] = [
 
 
 class InvalidIdentifierXMLRepresentationException(Exception):
+    pass
+
+
+class UUIDMismatchError(Exception):
     pass
 
 
@@ -70,7 +74,7 @@ class Identifier(ABC):
         super().__init_subclass__(**kwargs)
 
     def __repr__(self) -> str:
-        return f"{self.uuid} ({self.schema.name}): {self.value}"
+        return f"<{self.schema.name} {self.value}: {self.uuid}>"
 
     def __init__(self, value: str, uuid: Optional[str] = None) -> None:
         self.value = value
@@ -96,3 +100,52 @@ class Identifier(ABC):
     @property
     def url_slug(self) -> str:
         return self.schema.compile_identifier_url_slug(self.value)
+
+    def same_as(self, other: "Identifier") -> bool:
+        "Is this the same as another identifier (in value and schema)?"
+        return self.value == other.value and self.schema == other.schema
+
+
+class Identifiers(dict[str, Identifier]):
+    def validate(self) -> None:
+        for uuid, identifier in self.items():
+            if uuid != identifier.uuid:
+                msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
+                raise UUIDMismatchError(msg)
+
+    def contains(self, other_identifier: Identifier) -> bool:
+        "Do the identifier's value and namespace already exist in this group?"
+        return any(other_identifier.same_as(identifier) for identifier in self.values())
+
+    def add(self, identifier: Identifier) -> None:
+        if not self.contains(identifier):
+            self[identifier.uuid] = identifier
+
+    def __delitem__(self, key: Union[Identifier, str]) -> None:
+        if isinstance(key, Identifier):
+            super().__delitem__(key.uuid)
+        else:
+            super().__delitem__(key)
+
+    def delete_type(self, deleted_identifier_type: type[Identifier]) -> None:
+        "For when we want an identifier to be the only valid identifier of that type, delete the others first"
+        uuids = self.keys()
+        for uuid in list(uuids):
+            # we could use compare to .schema instead, which would have diffferent behaviour for subclasses
+            if isinstance(self[uuid], deleted_identifier_type):
+                del self[uuid]
+
+    @property
+    def as_etree(self) -> etree._Element:
+        """Return an etree representation of all the Document's identifiers."""
+        identifiers_root = etree.Element("identifiers")
+
+        for identifier in self.values():
+            identifiers_root.append(identifier.as_xml_tree)
+
+        return identifiers_root
+
+    def save(self, document) -> None:  # type: ignore[no-untyped-def, unused-ignore]
+        """Save the current state of this Document's identifiers to MarkLogic."""
+        self.validate()
+        document.api_client.set_property_as_node(document.uri, "identifiers", self.as_etree)
