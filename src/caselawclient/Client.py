@@ -20,6 +20,7 @@ from requests_toolbelt.multipart import decoder
 
 from caselawclient import xquery_type_dicts as query_dicts
 from caselawclient.client_helpers import VersionAnnotation
+from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
@@ -1201,3 +1202,18 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def resolve_from_identifier(self, identifier_uri: str, published_only: bool = True) -> IdentifierResolutions:
+        """Given a PUI/EUI url, look up the precomputed slug and return the
+        MarkLogic document URIs which match that slug. Multiple returns should be anticipated"""
+        vars: query_dicts.ResolveFromIdentifierDict = {
+            "identifier_uri": DocumentURIString(identifier_uri),
+            "published_only": int(published_only),
+        }
+        raw_results: list[str] = get_multipart_strings_from_marklogic_response(
+            self._send_to_eval(
+                vars,
+                "resolve_from_identifier.xqy",
+            ),
+        )
+        return IdentifierResolutions.from_marklogic_output(raw_results)
