@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-from unittest.mock import PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 import time_machine
@@ -13,8 +13,26 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
+from caselawclient.models.identifiers import Identifiers
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
+
+
+class TestDocumentSaveIdentifiers:
+    def test_document_save_identifiers(self, mock_api_client):
+        """
+        given a particular Document with a known value of Identifiers (probably mock this out tbh)
+        when I call document.save_identifiers() it
+        calls identifiers.validate and
+        calls set_property_as_node with expected values (edited)
+        """
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.identifiers = Mock(autospec=Identifiers)
+        document.identifiers.as_etree = "fake_node"
+
+        document.save_identifiers()
+        document.identifiers.validate.assert_called_once()
+        mock_api_client.set_property_as_node.assert_called_with("test/1234", "identifiers", "fake_node")
 
 
 class TestDocumentPublish:
