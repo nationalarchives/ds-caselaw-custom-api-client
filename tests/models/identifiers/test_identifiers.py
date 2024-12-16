@@ -105,6 +105,12 @@ class TestIdentifiersCRUD:
         assert not identifiers.contains(TestIdentifier(value="TEST-333"))
         assert not identifiers.contains(NeutralCitationNumber(value="TEST-111"))
 
+    def test_of_type(self, mixed_identifiers):
+        only_ncns = mixed_identifiers.of_type(NeutralCitationNumber)
+        assert "TEST-999" not in str(only_ncns)
+        assert "[1701] UKSC 999" in str(only_ncns)
+        assert "[1234] UKSC 999" in str(only_ncns)
+
     def test_delete_type(self, mixed_identifiers):
         mixed_identifiers.delete_type(NeutralCitationNumber)
         assert "TEST-999" in str(mixed_identifiers)
