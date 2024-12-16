@@ -15,6 +15,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
+from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
 from caselawclient.models.utilities.aws import (
@@ -431,6 +432,12 @@ class Document:
         """
         if not self.is_publishable:
             raise CannotPublishUnpublishableDocument
+
+        ## If it doesn't already have one, get a new FCLID for this document and assign
+        if len(self.identifiers.of_type(FindCaseLawIdentifier)) < 1:
+            document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
+            self.identifiers.add(document_fclid)
+            self.save_identifiers()
 
         publish_documents(uri_for_s3(self.uri))
         self.api_client.set_published(self.uri, True)

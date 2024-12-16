@@ -14,6 +14,7 @@ from caselawclient.models.documents import (
     DocumentURIString,
 )
 from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
@@ -63,6 +64,43 @@ class TestDocumentPublish:
             status="publish",
         )
         mock_enrich.assert_called_once()
+
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
+    def test_publish_assigns_new_fclid(
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_publishable = True
+        mock_api_client.get_next_document_sequence_number.return_value = 123
+        document.publish()
+
+        assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
+        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "z27xcnhr"
+
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
+    def test_publish_only_assigns_new_fclid_if_none_present(
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_publishable = True
+        document.identifiers.add(FindCaseLawIdentifier(value="abcd1234"))
+        mock_api_client.get_next_document_sequence_number.return_value = 123
+        document.publish()
+
+        assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
+        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "abcd1234"
 
 
 class TestDocumentUnpublish:
