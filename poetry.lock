@@ -230,13 +230,13 @@ pycparser = "*"
 
 [[package]]
 name = "cfn-lint"
-version = "1.20.2"
+version = "1.22.1"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cfn_lint-1.20.2-py3-none-any.whl", hash = "sha256:b91befdb509b9b2fba91023122c7f9cbf037ceb84001dc54c79d3b327672af95"},
-    {file = "cfn_lint-1.20.2.tar.gz", hash = "sha256:2bc93025bfe1b653c06820db0a20e33d686c68bec5bd3b7cc9178179a5d510f6"},
+    {file = "cfn_lint-1.22.1-py3-none-any.whl", hash = "sha256:33f976cdbc4cdeaf9d939821e906baac91e615588574aecaa7033811297496a9"},
+    {file = "cfn_lint-1.22.1.tar.gz", hash = "sha256:11085a8196ca1f381735782b4977be62a5860e26d3e0b578d2d4a244b9031b16"},
 ]
 
 [package.dependencies]
@@ -1044,13 +1044,13 @@ files = [
 
 [[package]]
 name = "moto"
-version = "5.0.22"
+version = "5.0.23"
 description = ""
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "moto-5.0.22-py3-none-any.whl", hash = "sha256:defae32e834ba5674f77cbbe996b41dc248dd81289af8032fa3e847284409b29"},
-    {file = "moto-5.0.22.tar.gz", hash = "sha256:daf47b8a1f5f190cd3eaa40018a643f38e542277900cf1db7f252cedbfed998f"},
+    {file = "moto-5.0.23-py3-none-any.whl", hash = "sha256:a8069f9c945e7503c43eccec30693f5656e0f8efb0256dfd814d99dedc38429e"},
+    {file = "moto-5.0.23.tar.gz", hash = "sha256:8a32636647e45a9b76c32de0ed15c4b083c62849993217f96aa60026a2ca1721"},
 ]
 
 [package.dependencies]
@@ -1059,7 +1059,7 @@ aws-xray-sdk = {version = ">=0.93,<0.96 || >0.96", optional = true, markers = "e
 boto3 = ">=1.9.201"
 botocore = ">=1.14.0,<1.35.45 || >1.35.45,<1.35.46 || >1.35.46"
 cfn-lint = {version = ">=0.40.0", optional = true, markers = "extra == \"all\""}
-cryptography = ">=3.3.1"
+cryptography = ">=35.0.0"
 docker = {version = ">=3.0.0", optional = true, markers = "extra == \"all\""}
 graphql-core = {version = "*", optional = true, markers = "extra == \"all\""}
 Jinja2 = ">=2.10.1"
@@ -1137,13 +1137,13 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.35.76"
-description = "Type annotations for boto3 S3 1.35.76 service generated with mypy-boto3-builder 8.6.0"
+version = "1.35.76.post1"
+description = "Type annotations for boto3 S3 1.35.76 service generated with mypy-boto3-builder 8.6.3"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_s3-1.35.76-py3-none-any.whl", hash = "sha256:35f9ae109c3cb64ac6b44596dffc429058085ddb82f4daaf5be0a39e5cc1b576"},
-    {file = "mypy_boto3_s3-1.35.76.tar.gz", hash = "sha256:6cf1f034985fe610754c3e6ef287490629870d508ada13b7d61e7b9aaeb46108"},
+    {file = "mypy_boto3_s3-1.35.76.post1-py3-none-any.whl", hash = "sha256:fd4a8734c3bb5a2da52e22258b1836a14aa3460816df25c831790e464334021f"},
+    {file = "mypy_boto3_s3-1.35.76.post1.tar.gz", hash = "sha256:34ac4cacf8acdafa6e71a2810116b2546376f241761f9eec6ac5a9887309372b"},
 ]
 
 [package.dependencies]
