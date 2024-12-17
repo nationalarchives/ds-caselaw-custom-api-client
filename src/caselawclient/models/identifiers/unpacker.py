@@ -3,9 +3,11 @@ from typing import Optional
 from lxml import etree
 
 from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, Identifiers, InvalidIdentifierXMLRepresentationException
+from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
 
 IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
+    "fclid": FindCaseLawIdentifier,
     "ukncn": NeutralCitationNumber,
 }
 

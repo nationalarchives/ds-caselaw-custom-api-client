@@ -127,6 +127,11 @@ class Identifiers(dict[str, Identifier]):
         else:
             super().__delitem__(key)
 
+    def of_type(self, identifier_type: type[Identifier]) -> list[Identifier]:
+        """Return a list of all identifiers of a given type."""
+        uuids = self.keys()
+        return [self[uuid] for uuid in list(uuids) if isinstance(self[uuid], identifier_type)]
+
     def delete_type(self, deleted_identifier_type: type[Identifier]) -> None:
         "For when we want an identifier to be the only valid identifier of that type, delete the others first"
         uuids = self.keys()

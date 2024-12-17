@@ -1217,3 +1217,7 @@ class MarklogicApiClient:
             ),
         )
         return IdentifierResolutions.from_marklogic_output(raw_results)
+
+    def get_next_document_sequence_number(self) -> int:
+        """Increment the MarkLogic sequence number by one and return the value."""
+        return int(self._eval_and_decode({}, "get_next_document_sequence_number.xqy"))
