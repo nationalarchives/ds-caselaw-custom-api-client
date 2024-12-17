@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v28.2.0 (2024-12-17)
+
+### Feat
+
+- **FCL-532**: assign FCLIDs on document publication
+- **FCL-532**: add ability to retrieve identifiers by type
+- **FCL-499**: add new FCLID identifier class
+- **FCL-499**: add method to get next sequence number from MarkLogic
+
+### Fix
+
+- **deps**: update dependency certifi to >=2024.12.14,<2024.13.0
+- **deps**: update dependency boto3 to v1.35.80
+
 ## v28.1.0 (2024-12-12)
 
 ### Feat
