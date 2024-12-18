@@ -162,14 +162,21 @@ class Identifiers(dict[str, Identifier]):
 
         return identifiers_root
 
-    @property
-    def by_score(self) -> list[Identifier]:
-        """Return a list of identifiers, sorted by their score in descending order."""
-        return sorted(self.values(), key=lambda v: v.score, reverse=True)
+    def by_score(self, type: Optional[type[Identifier]] = None) -> list[Identifier]:
+        """
+        :param type: Optionally, an identifier type to constrain this list to.
 
-    @property
-    def preferred(self) -> Optional[Identifier]:
-        """If this document has identifiers, return the preferred one."""
+        :return: Return a list of identifiers, sorted by their score in descending order.
+        """
+        identifiers = self.of_type(type) if type else list(self.values())
+        return sorted(identifiers, key=lambda v: v.score, reverse=True)
+
+    def preferred(self, type: Optional[type[Identifier]] = None) -> Optional[Identifier]:
+        """
+        :param type: Optionally, an identifier type to constrain the results to.
+
+        :return: Return the highest scoring identifier of the given type (or of any type, if none is specified). Returns `None` if no identifier is available.
+        """
         if len(self) == 0:
             return None
-        return self.by_score[0]
+        return self.by_score(type)[0]

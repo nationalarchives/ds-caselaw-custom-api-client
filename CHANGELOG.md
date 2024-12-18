@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **FCL-533**: getting scored or preferred identifiers can now be done by type
 - **FCL-533**: modify human identifier to rely on identifiers framework
 - **FCL-533**: add scoring to Identifiers
 

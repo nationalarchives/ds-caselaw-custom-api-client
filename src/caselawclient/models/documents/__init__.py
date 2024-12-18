@@ -174,7 +174,7 @@ class Document:
     @property
     def best_human_identifier(self) -> Optional[Identifier]:
         """Return the preferred identifier for the document, providing that it is considered human readable."""
-        preferred_identifier = self.identifiers.preferred
+        preferred_identifier = self.identifiers.preferred()
         if preferred_identifier and preferred_identifier.schema.human_readable:
             return preferred_identifier
         return None

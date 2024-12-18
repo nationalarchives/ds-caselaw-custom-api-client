@@ -131,7 +131,13 @@ class TestIdentifierScoring:
         assert identifier.score == 2.5
 
     def test_sorting(self, mixed_identifiers):
-        assert mixed_identifiers.by_score == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
+        assert mixed_identifiers.by_score() == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
 
     def test_preferred_identifier(self, mixed_identifiers):
-        assert mixed_identifiers.preferred == TEST_IDENTIFIER_999
+        assert mixed_identifiers.preferred() == TEST_IDENTIFIER_999
+
+    def test_sorting_with_type(self, mixed_identifiers):
+        assert mixed_identifiers.by_score(type=NeutralCitationNumber) == [TEST_NCN_1701, TEST_NCN_1234]
+
+    def test_preferred_identifier_with_type(self, mixed_identifiers):
+        assert mixed_identifiers.preferred(type=NeutralCitationNumber) == TEST_NCN_1701
