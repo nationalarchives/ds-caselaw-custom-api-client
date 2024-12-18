@@ -5,6 +5,7 @@ import pytest
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.factories import PressSummaryFactory
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
@@ -12,8 +13,9 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 class TestJudgment:
     def test_best_identifier(self, mock_api_client):
         judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
-        judgment.neutral_citation = NeutralCitationString("[2023] TEST 1234")
-        assert judgment.best_human_identifier == judgment.neutral_citation
+        document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
+        judgment.identifiers.add(document_ncn)
+        assert judgment.best_human_identifier == document_ncn
 
 
 class TestJudgmentValidation:

@@ -25,20 +25,17 @@ class Judgment(NeutralCitationMixin, Document):
         super().__init__(self.document_noun, uri, *args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> NeutralCitationString:
-        return NeutralCitationString(
-            self.body.get_xpath_match_string(
-                "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
-                {
-                    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-                },
-            )
+    def neutral_citation(self) -> Optional[NeutralCitationString]:
+        value_in_xml = self.body.get_xpath_match_string(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()",
+            {
+                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+            },
         )
-
-    @property
-    def best_human_identifier(self) -> str:
-        return self.neutral_citation
+        if value_in_xml:
+            return NeutralCitationString(value_in_xml)
+        return None
 
     @cached_property
     def linked_document(self) -> Optional["PressSummary"]:
