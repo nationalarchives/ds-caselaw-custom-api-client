@@ -15,6 +15,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
+from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
@@ -171,13 +172,11 @@ class Document:
         self.identifiers = unpack_all_identifiers_from_etree(identifiers_element_as_etree)
 
     @property
-    def best_human_identifier(self) -> Optional[str]:
-        """
-        Some identifier that is understood by legal professionals to refer to this legal event
-        that is not the name of the document.
-        Typically, this will be the neutral citation number, should it exist.
-        Should typically be overridden in subclasses.
-        """
+    def best_human_identifier(self) -> Optional[Identifier]:
+        """Return the preferred identifier for the document, providing that it is considered human readable."""
+        preferred_identifier = self.identifiers.preferred()
+        if preferred_identifier and preferred_identifier.schema.human_readable:
+            return preferred_identifier
         return None
 
     @property
@@ -507,12 +506,16 @@ class Document:
             "documentType": parser_type_noun,
             "metadata": {
                 "name": self.body.name or None,
-                "cite": self.best_human_identifier or None,
+                "cite": None,
                 "court": self.body.court or None,
                 "date": checked_date,
                 "uri": self.uri,
             },
         }
+
+        ## TODO: Remove this hack around the fact that NCNs are assumed to be present for all documents' metadata, but actually different document classes may have different metadata
+        if hasattr(self, "neutral_citation"):
+            parser_instructions["metadata"]["cite"] = self.neutral_citation
 
         request_parse(
             uri=self.uri,

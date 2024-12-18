@@ -5,34 +5,13 @@ from caselawclient.models.identifiers import Identifier, Identifiers, Identifier
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 
 
-@pytest.fixture
-def identifiers():
-    return Identifiers(
-        {"id-1": TestIdentifier(uuid="id-1", value="TEST-111"), "id-2": TestIdentifier(uuid="id-2", value="TEST-222")}
-    )
-
-
-@pytest.fixture
-def mixed_identifiers():
-    return Identifiers(
-        {
-            "id-A": NeutralCitationNumber(value="[1701] UKSC 999"),
-            "id-B": TestIdentifier("TEST-999"),
-            "id-C": NeutralCitationNumber(value="[1234] UKSC 999"),
-        }
-    )
-
-
-@pytest.fixture
-def id3():
-    return TestIdentifier(uuid="id-3", value="TEST-333")
-
-
 class TestIdentifierSchema(IdentifierSchema):
     __test__ = False
 
     name = "Test Schema"
     namespace = "test"
+    human_readable = True
+    base_score_multiplier = 2.5
 
     @classmethod
     def compile_identifier_url_slug(cls, value: str) -> str:
@@ -43,6 +22,34 @@ class TestIdentifier(Identifier):
     __test__ = False
 
     schema = TestIdentifierSchema
+
+
+@pytest.fixture
+def identifiers():
+    return Identifiers(
+        {"id-1": TestIdentifier(uuid="id-1", value="TEST-111"), "id-2": TestIdentifier(uuid="id-2", value="TEST-222")}
+    )
+
+
+TEST_NCN_1701 = NeutralCitationNumber(value="[1701] UKSC 999")
+TEST_NCN_1234 = NeutralCitationNumber(value="[1234] UKSC 999")
+TEST_IDENTIFIER_999 = TestIdentifier("TEST-999")
+
+
+@pytest.fixture
+def mixed_identifiers():
+    return Identifiers(
+        {
+            "id-A": TEST_NCN_1701,
+            "id-B": TEST_IDENTIFIER_999,
+            "id-C": TEST_NCN_1234,
+        }
+    )
+
+
+@pytest.fixture
+def id3():
+    return TestIdentifier(uuid="id-3", value="TEST-333")
 
 
 class TestIdentifierBase:
@@ -116,3 +123,21 @@ class TestIdentifiersCRUD:
         assert "TEST-999" in str(mixed_identifiers)
         assert "[1701] UKSC 999" not in str(mixed_identifiers)
         assert "[1234] UKSC 999" not in str(mixed_identifiers)
+
+
+class TestIdentifierScoring:
+    def test_base_scoring(self):
+        identifier = TestIdentifier(value="TEST-123")
+        assert identifier.score == 2.5
+
+    def test_sorting(self, mixed_identifiers):
+        assert mixed_identifiers.by_score() == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
+
+    def test_preferred_identifier(self, mixed_identifiers):
+        assert mixed_identifiers.preferred() == TEST_IDENTIFIER_999
+
+    def test_sorting_with_type(self, mixed_identifiers):
+        assert mixed_identifiers.by_score(type=NeutralCitationNumber) == [TEST_NCN_1701, TEST_NCN_1234]
+
+    def test_preferred_identifier_with_type(self, mixed_identifiers):
+        assert mixed_identifiers.preferred(type=NeutralCitationNumber) == TEST_NCN_1701

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Any
+from typing import Any, Optional
 
 from ds_caselaw_utils import neutral_url
 from ds_caselaw_utils.types import NeutralCitationString
+from typing_extensions import deprecated
 
 
 class NeutralCitationMixin(ABC):
@@ -38,12 +39,15 @@ class NeutralCitationMixin(ABC):
 
     @cached_property
     @abstractmethod
-    def neutral_citation(self) -> NeutralCitationString: ...
+    @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
+    def neutral_citation(self) -> Optional[NeutralCitationString]: ...
 
     @cached_property
+    @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
     def has_ncn(self) -> bool:
-        return bool(self.neutral_citation)
+        return self.neutral_citation is not None and self.neutral_citation != ""
 
     @cached_property
+    @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
     def has_valid_ncn(self) -> bool:
-        return self.has_ncn and neutral_url(self.neutral_citation) is not None
+        return self.neutral_citation is not None and neutral_url(self.neutral_citation) is not None

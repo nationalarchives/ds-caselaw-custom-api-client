@@ -5,6 +5,7 @@ import pytest
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.press_summaries import PressSummary
 
@@ -12,8 +13,9 @@ from caselawclient.models.press_summaries import PressSummary
 class TestPressSummary:
     def test_best_identifier(self, mock_api_client):
         summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
-        summary.neutral_citation = NeutralCitationString("[2023] TEST 1234")
-        assert summary.best_human_identifier == summary.neutral_citation
+        document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
+        summary.identifiers.add(document_ncn)
+        assert summary.best_human_identifier == document_ncn
 
 
 class TestPressSummaryValidation:

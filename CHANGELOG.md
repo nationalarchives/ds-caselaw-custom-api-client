@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- Methods which were previously guaranteed to return a Neutral Citation may now return `None`.
+
+### Feat
+
+- **FCL-533**: getting scored or preferred identifiers can now be done by type
+- **FCL-533**: modify human identifier to rely on identifiers framework
+- **FCL-533**: add scoring to Identifiers
+
+### Fix
+
+- **IdentifierSchema**: use hasattr instead of getattr with a default when testing required attributes
+
 ## v28.2.0 (2024-12-17)
 
 ### Feat
