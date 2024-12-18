@@ -30,6 +30,8 @@ class NeutralCitationNumberSchema(IdentifierSchema):
 
     name = "Neutral Citation Number"
     namespace = "ukncn"
+    human_readable = True
+    base_score_multiplier = 1.5
 
     @classmethod
     def validate_identifier(cls, value: str) -> bool:
