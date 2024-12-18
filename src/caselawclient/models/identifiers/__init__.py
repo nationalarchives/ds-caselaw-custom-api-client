@@ -38,7 +38,7 @@ class IdentifierSchema(ABC):
             "name",
             "namespace",
         ):
-            if not getattr(cls, required, False):
+            if not hasattr(cls, required):
                 raise NotImplementedError(f"Can't instantiate IdentifierSchema without {required} attribute.")
         super().__init_subclass__(**kwargs)
 
