@@ -177,6 +177,6 @@ class Identifiers(dict[str, Identifier]):
 
         :return: Return the highest scoring identifier of the given type (or of any type, if none is specified). Returns `None` if no identifier is available.
         """
-        if len(self) == 0:
+        if len(self.by_score(type)) == 0:
             return None
         return self.by_score(type)[0]
