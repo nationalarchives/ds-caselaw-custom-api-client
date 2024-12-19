@@ -53,7 +53,7 @@ class TestJudgmentValidation:
             ("[2022] UKFTT 1 (TC)", True),
             ("[2022] UKFTT 1 (GRC)", True),
             ("[2022] EWHC 1 (KB)", True),
-            ("", False),
+            ("", True),  # An empty NCN should return True
             ("1604] EWCA Crim 555", False),
             ("[2022 EWHC 1 Comm", False),
             ("[1999] EWCOP", False),

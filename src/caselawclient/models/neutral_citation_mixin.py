@@ -40,4 +40,7 @@ class NeutralCitationMixin(ABC):
     @cached_property
     @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
     def has_valid_ncn(self) -> bool:
-        return self.neutral_citation is not None and neutral_url(self.neutral_citation) is not None
+        """Return `False` if the document has an NCN and it's invalid, otherwise return `True`."""
+        if not self.neutral_citation:
+            return True
+        return bool(neutral_url(self.neutral_citation))
