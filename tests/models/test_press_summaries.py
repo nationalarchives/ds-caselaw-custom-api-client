@@ -6,7 +6,6 @@ from caselawclient.errors import DocumentNotFoundError
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
-from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.press_summaries import PressSummary
 
 
@@ -19,16 +18,6 @@ class TestPressSummary:
 
 
 class TestPressSummaryValidation:
-    def test_has_ncn(self, mock_api_client):
-        document_with_ncn = PressSummary(DocumentURIString("test/1234"), mock_api_client)
-        document_with_ncn.neutral_citation = NeutralCitationString("[2023] TEST 1234")
-
-        document_without_ncn = PressSummary(DocumentURIString("test/1234"), mock_api_client)
-        document_without_ncn.neutral_citation = NeutralCitationString("")
-
-        assert document_with_ncn.has_ncn is True
-        assert document_without_ncn.has_ncn is False
-
     def test_press_summary_neutral_citation(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = b"""
         <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
@@ -94,7 +83,6 @@ class TestPressSummaryValidation:
         press_summary.is_parked = True
         press_summary.is_held = True
         press_summary.has_name = False
-        press_summary.has_ncn = False
         press_summary.has_valid_ncn = False
         press_summary.has_valid_court = False
 
@@ -104,7 +92,6 @@ class TestPressSummaryValidation:
                 "This press summary is currently parked at a temporary URI",
                 "This press summary is currently on hold",
                 "This press summary has no name",
-                "This press summary has no neutral citation number",
                 "The neutral citation number of this press summary is not valid",
                 "The court for this press summary is not valid",
             ],

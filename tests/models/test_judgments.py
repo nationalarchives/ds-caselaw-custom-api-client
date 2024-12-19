@@ -7,7 +7,6 @@ from caselawclient.factories import PressSummaryFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.judgments import Judgment
-from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
 
 class TestJudgment:
@@ -19,16 +18,6 @@ class TestJudgment:
 
 
 class TestJudgmentValidation:
-    def test_has_ncn(self, mock_api_client):
-        document_with_ncn = Judgment(DocumentURIString("test/1234"), mock_api_client)
-        document_with_ncn.neutral_citation = NeutralCitationString("[2023] TEST 1234")
-
-        document_without_ncn = Judgment(DocumentURIString("test/1234"), mock_api_client)
-        document_without_ncn.neutral_citation = NeutralCitationString("")
-
-        assert document_with_ncn.has_ncn is True
-        assert document_without_ncn.has_ncn is False
-
     def test_judgment_neutral_citation(self, mock_api_client):
         mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
@@ -85,7 +74,6 @@ class TestJudgmentValidation:
         judgment.is_parked = True
         judgment.is_held = True
         judgment.has_name = False
-        judgment.has_ncn = False
         judgment.has_valid_ncn = False
         judgment.has_valid_court = False
 
@@ -95,7 +83,6 @@ class TestJudgmentValidation:
                 "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
                 "This judgment has no name",
-                "This judgment has no neutral citation number",
                 "The neutral citation number of this judgment is not valid",
                 "The court for this judgment is not valid",
             ],
