@@ -1,3 +1,4 @@
+import unittest
 from unittest.mock import patch
 
 from lxml import etree
@@ -7,7 +8,7 @@ from caselawclient.models.identifiers import Identifiers
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree, unpack_an_identifier_from_etree
 
 
-class TestIdentifierUnpacking:
+class TestIdentifierUnpacking(unittest.TestCase):
     @patch("caselawclient.models.identifiers.unpacker.IDENTIFIER_NAMESPACE_MAP", {"test": TestIdentifier})
     def test_unpack_identifier(self):
         xml_tree = etree.fromstring("""
@@ -23,6 +24,47 @@ class TestIdentifierUnpacking:
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.uuid == "2d80bf1d-e3ea-452f-965c-041f4399f2dd"
         assert unpacked_identifier.value == "TEST-123"
+
+    @patch("caselawclient.models.identifiers.unpacker.IDENTIFIER_NAMESPACE_MAP", {"test": TestIdentifier})
+    def test_unpack_unknown_identifier(self):
+        xml_tree = etree.fromstring("""
+            <identifier>
+                <namespace>unknown</namespace>
+                <uuid>86888618-a9a0-44e3-af4a-5b10dbb910c0</uuid>
+                <value>UK-123</value>
+            </identifier>
+        """)
+
+        with self.assertWarnsRegex(Warning, "Identifier type unknown is not known."):
+            unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
+
+        assert unpacked_identifier is None
+
+    @patch("caselawclient.models.identifiers.unpacker.IDENTIFIER_NAMESPACE_MAP", {"test": TestIdentifier})
+    def test_unpack_multiple_identifiers(self):
+        """Validate that unpacking a list of identifiers where some are known and some are unknown behaves as expected."""
+        xml_tree = etree.fromstring("""
+            <identifiers>
+                <identifier>
+                    <namespace>test</namespace>
+                    <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
+                    <value>TEST-123</value>
+                </identifier>
+                <identifier>
+                    <namespace>unknown</namespace>
+                    <uuid>86888618-a9a0-44e3-af4a-5b10dbb910c0</uuid>
+                    <value>UK-123</value>
+                </identifier>
+            </identifiers>
+        """)
+
+        with self.assertWarnsRegex(Warning, "Identifier type unknown is not known."):
+            unpacked_identifiers = unpack_all_identifiers_from_etree(xml_tree)
+
+        assert type(unpacked_identifiers) is Identifiers
+        assert len(unpacked_identifiers) == 1
+        assert type(unpacked_identifiers["2d80bf1d-e3ea-452f-965c-041f4399f2dd"]) is TestIdentifier
+        assert "86888618-a9a0-44e3-af4a-5b10dbb910c0" not in unpacked_identifiers
 
 
 class TestIdentifierPackUnpackRoundTrip:

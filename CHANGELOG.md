@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v29.0.1 (2024-12-20)
+
+### Fix
+
+- **Identifiers**: preferred identifier now correctly handles case where there are none of type
+- **Identifiers**: fix case where unpacking unknown identifier type would raise an exception
+- **deps**: update dependency mypy-boto3-s3 to v1.35.81
+- **deps**: update dependency boto3 to v1.35.82
+
 ## v29.0.0 (2024-12-18)
 
 ### BREAKING CHANGE

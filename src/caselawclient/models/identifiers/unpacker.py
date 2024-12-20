@@ -1,4 +1,5 @@
 from typing import Optional
+from warnings import warn
 
 from lxml import etree
 
@@ -19,12 +20,13 @@ def unpack_all_identifiers_from_etree(identifiers_etree: Optional[etree._Element
         return identifiers
     for identifier_etree in identifiers_etree.findall("identifier"):
         identifier = unpack_an_identifier_from_etree(identifier_etree)
-        identifiers.add(identifier)
+        if identifier:
+            identifiers.add(identifier)
     return identifiers
 
 
-def unpack_an_identifier_from_etree(identifier_xml: etree._Element) -> Identifier:
-    """Given an etree representation of a single identifier, unpack it into an appropriate instance of an Identifier."""
+def unpack_an_identifier_from_etree(identifier_xml: etree._Element) -> Optional[Identifier]:
+    """Given an etree representation of a single identifier, unpack it into an appropriate instance of an Identifier if the type is known (otherwise return `None`)."""
 
     namespace_element = identifier_xml.find("namespace")
 
@@ -32,6 +34,11 @@ def unpack_an_identifier_from_etree(identifier_xml: etree._Element) -> Identifie
         raise InvalidIdentifierXMLRepresentationException(
             "Identifer XML representation is not valid: namespace not present or empty"
         )
+
+    # If the identifier namespace isn't known, fail out
+    if namespace_element.text not in IDENTIFIER_NAMESPACE_MAP:
+        warn(f"Identifier type {namespace_element.text} is not known.")
+        return None
 
     kwargs: dict[str, str] = {}
 
