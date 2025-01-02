@@ -83,6 +83,9 @@ class Identifier(ABC):
     def __repr__(self) -> str:
         return f"<{self.schema.name} {self.value}: {self.uuid}>"
 
+    def __str__(self) -> str:
+        return self.value
+
     def __init__(self, value: str, uuid: Optional[str] = None) -> None:
         self.value = value
         if uuid:
