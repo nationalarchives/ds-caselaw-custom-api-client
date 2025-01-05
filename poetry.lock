@@ -1105,17 +1105,17 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.35.81"
-description = "Type annotations for boto3 S3 1.35.81 service generated with mypy-boto3-builder 8.6.4"
+version = "1.35.92"
+description = "Type annotations for boto3 S3 1.35.92 service generated with mypy-boto3-builder 8.7.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_s3-1.35.81-py3-none-any.whl", hash = "sha256:6af1d815ff2cc8e32ca1190c7387f94341c1607444f958ac283aa10b1d11db08"},
-    {file = "mypy_boto3_s3-1.35.81.tar.gz", hash = "sha256:fe1a6860c0ca7016e24089819433c0d5835d4a57635bb42628645b71271b946c"},
+    {file = "mypy_boto3_s3-1.35.92-py3-none-any.whl", hash = "sha256:ce302a635da78e1925d8ff4809184ba55618cd7e3707156bea405cde7fdcf67a"},
+    {file = "mypy_boto3_s3-1.35.92.tar.gz", hash = "sha256:9ac88dc0f6d87892344ed99b1e5a2884215503afff3859417b6010b31de7cef6"},
 ]
 
 [package.dependencies]
-typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
+typing-extensions = {version = "*", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-sns"
