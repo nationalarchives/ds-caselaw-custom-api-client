@@ -31,8 +31,8 @@ def identifiers():
     )
 
 
-TEST_NCN_1701 = NeutralCitationNumber(value="[1701] UKSC 999")
-TEST_NCN_1234 = NeutralCitationNumber(value="[1234] UKSC 999")
+TEST_NCN_1701 = NeutralCitationNumber(value="[1701] UKSC 999", uuid="id-1701")
+TEST_NCN_1234 = NeutralCitationNumber(value="[1234] UKSC 999", uuid="id-1234")
 TEST_IDENTIFIER_999 = TestIdentifier("TEST-999")
 
 
@@ -88,6 +88,12 @@ class TestIdentifierBase:
         id_a = NeutralCitationNumber("Y")
         id_b = NeutralCitationNumber("X")
         assert not id_a.same_as(id_b)
+
+    def test_str(self):
+        assert f"{TEST_NCN_1234}" == "[1234] UKSC 999"
+
+    def test_repr(self):
+        assert f"{TEST_NCN_1234!r}" == "<Neutral Citation Number [1234] UKSC 999: id-1234>"
 
 
 class TestIdentifiersCRUD:
