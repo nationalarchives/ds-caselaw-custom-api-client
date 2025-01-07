@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **FCL-568**: add new class for Press Summary identifiers
+
+### Fix
+
+- **deps**: update dependency mypy-boto3-s3 to v1.35.92
+- **deps**: update dependency boto3 to v1.35.91
+- **deps**: update dependency boto3 to v1.35.88
+- **deps**: update dependency charset-normalizer to v3.4.1
+- **deps**: update dependency boto3 to v1.35.87
+- **deps**: update dependency boto3 to v1.35.85
+
 ## v29.0.1 (2024-12-20)
 
 ### Fix
