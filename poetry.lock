@@ -1105,13 +1105,13 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.35.92"
-description = "Type annotations for boto3 S3 1.35.92 service generated with mypy-boto3-builder 8.7.1"
+version = "1.35.93"
+description = "Type annotations for boto3 S3 1.35.93 service generated with mypy-boto3-builder 8.8.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_s3-1.35.92-py3-none-any.whl", hash = "sha256:ce302a635da78e1925d8ff4809184ba55618cd7e3707156bea405cde7fdcf67a"},
-    {file = "mypy_boto3_s3-1.35.92.tar.gz", hash = "sha256:9ac88dc0f6d87892344ed99b1e5a2884215503afff3859417b6010b31de7cef6"},
+    {file = "mypy_boto3_s3-1.35.93-py3-none-any.whl", hash = "sha256:4cd3f1718fa0d8a54212c495cdff493bdcc6a8ae419d95428c60fb6bc7db7980"},
+    {file = "mypy_boto3_s3-1.35.93.tar.gz", hash = "sha256:b4529e57a8d5f21d4c61fe650fa6764fee2ba7ab524a455a34ba2698ef6d27a8"},
 ]
 
 [package.dependencies]
@@ -1119,17 +1119,17 @@ typing-extensions = {version = "*", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.35.68"
-description = "Type annotations for boto3 SNS 1.35.68 service generated with mypy-boto3-builder 8.3.1"
+version = "1.35.93"
+description = "Type annotations for boto3 SNS 1.35.93 service generated with mypy-boto3-builder 8.8.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_sns-1.35.68-py3-none-any.whl", hash = "sha256:d03e754e74a386ab7bc7af0d0038e79ba6648b803b90aed325d67bd09c78e666"},
-    {file = "mypy_boto3_sns-1.35.68.tar.gz", hash = "sha256:5a7def707ac298c312e0b713421cdcb583e0d993d217b4818104b3e386c9c86a"},
+    {file = "mypy_boto3_sns-1.35.93-py3-none-any.whl", hash = "sha256:528b0246da33f4f0fce957cbcc844d9df4df372b70229361a0694f125b40dfcc"},
+    {file = "mypy_boto3_sns-1.35.93.tar.gz", hash = "sha256:fd17cec410bc477096652431d324881f4d33b89fab7c4c857f3347442354ffa1"},
 ]
 
 [package.dependencies]
-typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
+typing-extensions = {version = "*", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "networkx"
