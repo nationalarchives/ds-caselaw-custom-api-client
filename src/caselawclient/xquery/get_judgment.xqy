@@ -14,12 +14,16 @@ declare variable $search_query as xs:string? external;
 let $number_marks_xslt := (
   <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                   xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                  xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                   version="2.0">
     <xsl:output method="xml" />
     <xsl:template match="@*|node()">
       <xsl:copy>
         <xsl:apply-templates select="@*|node()"/>
       </xsl:copy>
+    </xsl:template>
+    <xsl:template match="//akn:meta//uk:mark">
+          <xsl:apply-templates />
     </xsl:template>
     <xsl:template match="uk:mark">
       <xsl:copy>
