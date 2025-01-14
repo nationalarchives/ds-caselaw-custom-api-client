@@ -37,9 +37,7 @@ class MarklogicResourceUnmanagedError(MarklogicAPIError):
 
     status_code = 404
     default_message = (
-        "The resource isn't managed. "
-        "It probably doesn't exist, and if it does, that's a problem. "
-        "Please report it."
+        "The resource isn't managed. It probably doesn't exist, and if it does, that's a problem. Please report it."
     )
 
 

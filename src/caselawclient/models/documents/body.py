@@ -91,8 +91,7 @@ class DocumentBody:
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
         iso_datetimes = self._xml.get_xpath_match_strings(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation"
-            f"/akn:FRBRdate{name_filter}/@date",
+            f"/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRdate{name_filter}/@date",
             {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 

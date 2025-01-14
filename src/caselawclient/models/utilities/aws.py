@@ -95,7 +95,7 @@ def check_docx_exists(uri: str) -> bool:
 
 def generate_docx_key(uri: str) -> str:
     """from a canonical caselaw URI (eat/2022/1) return the S3 key of the associated docx"""
-    return f'{uri}/{uri.replace("/", "_")}.docx'
+    return f"{uri}/{uri.replace('/', '_')}.docx"
 
 
 def generate_docx_url(uri: str) -> str:
@@ -104,7 +104,7 @@ def generate_docx_url(uri: str) -> str:
 
 
 def generate_pdf_url(uri: str) -> str:
-    key = f'{uri}/{uri.replace("/", "_")}.pdf'
+    key = f"{uri}/{uri.replace('/', '_')}.pdf"
 
     return generate_signed_asset_url(key)
 
