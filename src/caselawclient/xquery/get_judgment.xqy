@@ -30,7 +30,7 @@ let $number_marks_xslt := (
           <xsl:copy-of select="@*" />
           <xsl:attribute name="id">
               <xsl:text>mark_</xsl:text>
-              <xsl:value-of select="count(preceding::uk:mark)"/>
+              <xsl:number count="//uk:mark" level="any" from="//*[ancestor::akn:meta]" />
           </xsl:attribute>
           <xsl:apply-templates />
       </xsl:copy>
@@ -65,6 +65,5 @@ let $transformed := if($search_query) then
       )
     else
       $raw_xml
-
 
 return $transformed
