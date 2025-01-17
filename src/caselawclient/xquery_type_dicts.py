@@ -147,6 +147,12 @@ class ResolveFromIdentifierSlugDict(MarkLogicAPIDict):
     published_only: Optional[int]
 
 
+# resolve_from_identifier_value.xqy
+class ResolveFromIdentifierValueDict(MarkLogicAPIDict):
+    identifier_value: str
+    published_only: Optional[int]
+
+
 # set_boolean_property.xqy
 class SetBooleanPropertyDict(MarkLogicAPIDict):
     name: str
