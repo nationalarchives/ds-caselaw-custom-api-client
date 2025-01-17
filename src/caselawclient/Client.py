@@ -1203,7 +1203,7 @@ class MarklogicApiClient:
 
         return results
 
-    def resolve_from_identifier(self, identifier_uri: str, published_only: bool = True) -> IdentifierResolutions:
+    def resolve_from_identifier_slug(self, identifier_uri: str, published_only: bool = True) -> IdentifierResolutions:
         """Given a PUI/EUI url, look up the precomputed slug and return the
         MarkLogic document URIs which match that slug. Multiple returns should be anticipated"""
         vars: query_dicts.ResolveFromIdentifierSlugDict = {
@@ -1214,6 +1214,29 @@ class MarklogicApiClient:
             self._send_to_eval(
                 vars,
                 "resolve_from_identifier_slug.xqy",
+            ),
+        )
+        return IdentifierResolutions.from_marklogic_output(raw_results)
+
+    def resolve_from_identifier(self, identifier_uri: str, published_only: bool = True) -> IdentifierResolutions:
+        warnings.warn(
+            "resolve_from_identifier deprecated, use resolve_from_identifier_slug instead", DeprecationWarning
+        )
+        return self.resolve_from_identifier(identifier_uri, published_only)
+
+    def resolve_from_identifier_value(
+        self, identifier_value: str, published_only: bool = True
+    ) -> IdentifierResolutions:
+        """Given a PUI/EUI url, look up the precomputed slug and return the
+        MarkLogic document URIs which match that slug. Multiple returns should be anticipated"""
+        vars: query_dicts.ResolveFromIdentifierValueDict = {
+            "identifier_value": identifier_value,
+            "published_only": int(published_only),
+        }
+        raw_results: list[str] = get_multipart_strings_from_marklogic_response(
+            self._send_to_eval(
+                vars,
+                "resolve_from_identifier_value.xqy",
             ),
         )
         return IdentifierResolutions.from_marklogic_output(raw_results)
