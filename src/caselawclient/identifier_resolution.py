@@ -32,6 +32,7 @@ class IdentifierResolution(NamedTuple):
     identifier_slug: DocumentURIString
     document_published: bool
     identifier_value: str
+    identifier_namespace: str
 
     @staticmethod
     def from_marklogic_output(raw_row: str) -> "IdentifierResolution":
@@ -42,4 +43,5 @@ class IdentifierResolution(NamedTuple):
             identifier_slug=DocumentURIString(row["documents.compiled_url_slugs.identifier_slug"]),
             document_published=row["documents.compiled_url_slugs.document_published"] == "true",
             identifier_value=row["documents.compiled_url_slugs.identifier_value"],
+            identifier_namespace=row["documents.compiled_url_slugs.identifier_namespace"],
         )
