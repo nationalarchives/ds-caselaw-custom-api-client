@@ -12,7 +12,7 @@ class IdentifierResolutions(list["IdentifierResolution"]):
     MarkLogic returns a list of dictionaries; IdentifierResolution handles a single dictionary
     which corresponds to a single identifier to MarkLogic document mapping.
 
-    see `xquery/resolve_from_identifier.xqy` and `resolve_from_identifier` in `Client.py`
+    see `xquery/resolve_from_identifier_slug.xqy` and `resolve_from_identifier` in `Client.py`
     """
 
     @staticmethod
