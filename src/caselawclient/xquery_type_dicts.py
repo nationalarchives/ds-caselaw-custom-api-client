@@ -141,9 +141,15 @@ class ListJudgmentVersionsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
-# resolve_from_identifier.xqy
-class ResolveFromIdentifierDict(MarkLogicAPIDict):
+# resolve_from_identifier_slug.xqy
+class ResolveFromIdentifierSlugDict(MarkLogicAPIDict):
     identifier_uri: DocumentURIString
+    published_only: Optional[int]
+
+
+# resolve_from_identifier_value.xqy
+class ResolveFromIdentifierValueDict(MarkLogicAPIDict):
+    identifier_value: str
     published_only: Optional[int]
 
 
