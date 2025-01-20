@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v29.1.1 (2025-01-20)
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.36.1
+- **deps**: update dependency django-environ to ^0.12.0
+- **deps**: update dependency boto3 to v1.35.98
+- **deps**: update dependency boto3 to v1.35.96
+- **deps**: update boto packages to v1.35.93
+- **deps**: update dependency boto3 to v1.35.93
+
 ## v29.1.0 (2025-01-08)
 
 ### Feat
