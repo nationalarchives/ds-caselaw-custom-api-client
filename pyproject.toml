@@ -52,6 +52,8 @@ tag_format = "v$version"
 version_scheme = "semver2"
 version_provider = "poetry"
 update_changelog_on_bump = true
+changelog_incremental = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
