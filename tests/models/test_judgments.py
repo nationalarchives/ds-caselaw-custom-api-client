@@ -71,6 +71,7 @@ class TestJudgmentValidation:
             ("[2022] UKUT B1 IAC", False),
             ("[2022] EAT A", False),
             ("[2022] NOTACOURT 1 TC", False),
+            (None, True),
         ],
     )
     def test_has_valid_ncn(self, mock_api_client, ncn_to_test, valid):
@@ -85,7 +86,6 @@ class TestJudgmentValidation:
         judgment.is_parked = True
         judgment.is_held = True
         judgment.has_name = False
-        judgment.has_ncn = False
         judgment.has_valid_ncn = False
         judgment.has_valid_court = False
 
@@ -95,7 +95,6 @@ class TestJudgmentValidation:
                 "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
                 "This judgment has no name",
-                "This judgment has no neutral citation number",
                 "The neutral citation number of this judgment is not valid",
                 "The court for this judgment is not valid",
             ],
