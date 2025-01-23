@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from caselawclient.models.press_summaries import PressSummary
 
 from .documents import Document, DocumentURIString
+from caselawclient.identifier_resolution import IdentifierResolutions
 
 
 class Judgment(NeutralCitationMixin, Document):
@@ -49,3 +50,9 @@ class Judgment(NeutralCitationMixin, Document):
             return PressSummary(uri, self.api_client)
         except DocumentNotFoundError:
             return None
+        
+    @cached_property
+    def linked_press_summaries(self, only_published=True):
+        return self.linked_document_resolutions(["uksummaryofncn"], only_published)
+
+
