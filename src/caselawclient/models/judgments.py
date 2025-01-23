@@ -51,3 +51,9 @@ class Judgment(NeutralCitationMixin, Document):
             return PressSummary(uri, self.api_client)
         except DocumentNotFoundError:
             return None
+        
+    @cached_property
+    def linked_press_summaries(self, only_published=True):
+        return self.linked_document_resolutions(["uksummaryofncn"], only_published)
+
+
