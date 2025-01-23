@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unpublished
+
+### Fix
+
+- **s3**: When publishing, only copy files in folder, not all folders that share a prefix
+
 ## v29.1.1 (2025-01-20)
 
 ### Fix
