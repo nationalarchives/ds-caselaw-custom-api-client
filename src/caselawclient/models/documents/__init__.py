@@ -29,7 +29,6 @@ from caselawclient.models.utilities.aws import (
     publish_documents,
     request_parse,
     unpublish_documents,
-    uri_for_s3,
 )
 
 from .body import DocumentBody
@@ -216,11 +215,11 @@ class Document:
 
     @property
     def docx_url(self) -> str:
-        return generate_docx_url(uri_for_s3(self.uri))
+        return generate_docx_url(self.uri)
 
     @property
     def pdf_url(self) -> str:
-        return generate_pdf_url(uri_for_s3(self.uri))
+        return generate_pdf_url(self.uri)
 
     @cached_property
     def assigned_to(self) -> str:
@@ -438,7 +437,7 @@ class Document:
             self.identifiers.add(document_fclid)
             self.save_identifiers()
 
-        publish_documents(uri_for_s3(self.uri))
+        publish_documents(self.uri)
         self.api_client.set_published(self.uri, True)
         announce_document_event(
             uri=self.uri,
@@ -448,7 +447,7 @@ class Document:
 
     def unpublish(self) -> None:
         self.api_client.break_checkout(self.uri)
-        unpublish_documents(uri_for_s3(self.uri))
+        unpublish_documents(self.uri)
         self.api_client.set_published(self.uri, False)
         announce_document_event(
             uri=self.uri,

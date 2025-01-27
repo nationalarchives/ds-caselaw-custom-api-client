@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import Any, Literal, Optional, TypedDict, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -13,7 +13,19 @@ from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 from typing_extensions import NotRequired
 
+if TYPE_CHECKING:
+    from caselawclient.models.documents import DocumentURIString
+else:
+    DocumentURIString = None
+
 env = environ.Env()
+
+
+class S3PrefixString(str):
+    def __new__(cls, content: str) -> "S3PrefixString":
+        if content[-1] != "/":
+            raise RuntimeError("S3 Prefixes must end in / so they behave like directories")
+        return str.__new__(cls, content)
 
 
 class ParserInstructionsMetadataDict(TypedDict):
@@ -58,8 +70,9 @@ def create_sns_client() -> SNSClient:
     return create_aws_client("sns")
 
 
-def uri_for_s3(uri: str) -> str:
-    return uri.lstrip("/")
+def uri_for_s3(uri: DocumentURIString) -> S3PrefixString:
+    """An S3 Prefix must end with / to avoid uksc/2004/1 matching uksc/2004/1000"""
+    return S3PrefixString(uri + "/")
 
 
 def generate_signed_asset_url(key: str) -> str:
@@ -79,7 +92,7 @@ def generate_signed_asset_url(key: str) -> str:
     )
 
 
-def check_docx_exists(uri: str) -> bool:
+def check_docx_exists(uri: DocumentURIString) -> bool:
     """Does the docx for a document URI actually exist?"""
     bucket = env("PRIVATE_ASSET_BUCKET", None)
     s3_key = generate_docx_key(uri)
@@ -93,25 +106,25 @@ def check_docx_exists(uri: str) -> bool:
         raise
 
 
-def generate_docx_key(uri: str) -> str:
+def generate_docx_key(uri: DocumentURIString) -> str:
     """from a canonical caselaw URI (eat/2022/1) return the S3 key of the associated docx"""
     return f"{uri}/{uri.replace('/', '_')}.docx"
 
 
-def generate_docx_url(uri: str) -> str:
+def generate_docx_url(uri: DocumentURIString) -> str:
     """from a canonical caselaw URI (eat/2022/1) return a signed S3 link for the front end"""
     return generate_signed_asset_url(generate_docx_key(uri))
 
 
-def generate_pdf_url(uri: str) -> str:
+def generate_pdf_url(uri: DocumentURIString) -> str:
     key = f"{uri}/{uri.replace('/', '_')}.pdf"
 
     return generate_signed_asset_url(key)
 
 
-def delete_from_bucket(uri: str, bucket: str) -> None:
+def delete_from_bucket(uri: DocumentURIString, bucket: str) -> None:
     client = create_s3_client()
-    response = client.list_objects(Bucket=bucket, Prefix=uri)
+    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
 
     if response.get("Contents"):
         objects_to_delete: list[ObjectIdentifierTypeDef] = [{"Key": obj["Key"]} for obj in response.get("Contents", [])]
@@ -123,7 +136,7 @@ def delete_from_bucket(uri: str, bucket: str) -> None:
         )
 
 
-def publish_documents(uri: str) -> None:
+def publish_documents(uri: DocumentURIString) -> None:
     """
     Copy assets from the unpublished bucket to the published one.
     Don't copy parser logs and package tar gz.
@@ -134,7 +147,7 @@ def publish_documents(uri: str) -> None:
     public_bucket = env("PUBLIC_ASSET_BUCKET")
     private_bucket = env("PRIVATE_ASSET_BUCKET")
 
-    response = client.list_objects(Bucket=private_bucket, Prefix=uri)
+    response = client.list_objects(Bucket=private_bucket, Prefix=uri_for_s3(uri))
 
     for result in response.get("Contents", []):
         print(f"Contemplating copying {result!r}")
@@ -152,15 +165,15 @@ def publish_documents(uri: str) -> None:
                 )
 
 
-def unpublish_documents(uri: str) -> None:
+def unpublish_documents(uri: DocumentURIString) -> None:
     delete_from_bucket(uri, env("PUBLIC_ASSET_BUCKET"))
 
 
-def delete_documents_from_private_bucket(uri: str) -> None:
+def delete_documents_from_private_bucket(uri: DocumentURIString) -> None:
     delete_from_bucket(uri, env("PRIVATE_ASSET_BUCKET"))
 
 
-def announce_document_event(uri: str, status: str, enrich: bool = False) -> None:
+def announce_document_event(uri: DocumentURIString, status: str, enrich: bool = False) -> None:
     client = create_sns_client()
 
     message_attributes: dict[str, MessageAttributeValueTypeDef] = {}
@@ -186,17 +199,14 @@ def announce_document_event(uri: str, status: str, enrich: bool = False) -> None
     )
 
 
-def copy_assets(old_uri: str, new_uri: str) -> None:
+def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
     """
     Copy *unpublished* assets from one path to another,
     renaming DOCX and PDF files as appropriate.
     """
     client = create_s3_client()
     bucket = env("PRIVATE_ASSET_BUCKET")
-    old_uri = uri_for_s3(old_uri)
-    new_uri = uri_for_s3(new_uri)
-
-    response = client.list_objects(Bucket=bucket, Prefix=old_uri)
+    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(old_uri))
 
     for result in response.get("Contents", []):
         old_key = str(result["Key"])
@@ -212,7 +222,7 @@ def copy_assets(old_uri: str, new_uri: str) -> None:
             )
 
 
-def build_new_key(old_key: str, new_uri: str) -> str:
+def build_new_key(old_key: str, new_uri: DocumentURIString) -> str:
     """Ensure that DOCX and PDF filenames are modified to reflect their new home
     as we get the name of the new S3 path"""
     old_filename = old_key.rsplit("/", 1)[-1]
@@ -224,7 +234,7 @@ def build_new_key(old_key: str, new_uri: str) -> str:
 
 
 def request_parse(
-    uri: str,
+    uri: DocumentURIString,
     reference: Optional[str],
     parser_instructions: Optional[ParserInstructionsDict] = None,
 ) -> None:
