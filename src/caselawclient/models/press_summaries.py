@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from ds_caselaw_utils.types import NeutralCitationString
 
 from caselawclient.errors import DocumentNotFoundError
+from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 from caselawclient.types import DocumentURIString
 
@@ -52,6 +53,5 @@ class PressSummary(NeutralCitationMixin, Document):
         except DocumentNotFoundError:
             return None
 
-    def linked_judgments(self, only_published=True):
+    def linked_judgments(self, only_published: bool = True) -> "IdentifierResolutions":
         return self.linked_document_resolutions(["ukncn"], only_published)
-
