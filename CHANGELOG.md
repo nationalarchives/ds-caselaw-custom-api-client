@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unpublished
+## Unreleased
+
+### Feat
+
+- **NeutralCitationMixin**: NCNs are no longer considered obligatory
 
 ### Fix
 
 - **s3**: When publishing, only copy files in folder, not all folders that share a prefix
+- **deps**: update dependency boto3 to v1.36.6
+- **deps**: update boto packages to v1.36.3
 
 ## v29.1.1 (2025-01-20)
 

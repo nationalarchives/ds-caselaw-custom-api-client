@@ -24,11 +24,6 @@ class NeutralCitationMixin(ABC):
     def __init__(self, document_noun: str, *args: Any, **kwargs: Any) -> None:
         self.attributes_to_validate: list[tuple[str, bool, str]] = self.attributes_to_validate + [
             (
-                "has_ncn",
-                True,
-                f"This {document_noun} has no neutral citation number",
-            ),
-            (
                 "has_valid_ncn",
                 True,
                 f"The neutral citation number of this {document_noun} is not valid",
@@ -50,4 +45,6 @@ class NeutralCitationMixin(ABC):
     @cached_property
     @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
     def has_valid_ncn(self) -> bool:
-        return self.neutral_citation is not None and neutral_url(self.neutral_citation) is not None
+        if self.neutral_citation is None:
+            return True
+        return neutral_url(self.neutral_citation) is not None
