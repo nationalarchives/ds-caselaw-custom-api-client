@@ -5,11 +5,12 @@ from unittest.mock import Mock
 from typing_extensions import TypeAlias
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.models.documents import Document, DocumentURIString
+from caselawclient.models.documents import Document
 from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
+from caselawclient.types import DocumentURIString
 
 DEFAULT_DOCUMENT_BODY_XML = "<akomantoso>This is some XML of a judgment.</akomantoso>"
 

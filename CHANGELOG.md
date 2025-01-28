@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **identifiers**: Support identifier resolution from value and namespace
+- ⚠️ **refactor**: Move DocumentURIString and InvalidDocumentURIException to .types
 
 ## v29.2.0 (2025-01-27)
 

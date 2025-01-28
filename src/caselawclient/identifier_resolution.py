@@ -1,9 +1,9 @@
 import json
 from typing import NamedTuple
 
-from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.unpacker import IDENTIFIER_NAMESPACE_MAP
+from caselawclient.types import DocumentURIString
 from caselawclient.xquery_type_dicts import MarkLogicDocumentURIString
 
 

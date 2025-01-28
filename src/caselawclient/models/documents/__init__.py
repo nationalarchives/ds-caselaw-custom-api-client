@@ -30,9 +30,10 @@ from caselawclient.models.utilities.aws import (
     request_parse,
     unpublish_documents,
 )
+from caselawclient.types import DocumentURIString
 
 from .body import DocumentBody
-from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion, InvalidDocumentURIException
+from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -47,28 +48,6 @@ DOCUMENT_COLLECTION_URI_PRESS_SUMMARY = "press-summary"
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient
-
-
-class DocumentURIString(str):
-    """
-    This class checks that the string is actually a valid Document URI on creation. It does _not_ manipulate the string.
-    """
-
-    def __new__(cls, content: str) -> "DocumentURIString":
-        # Check that the URI doesn't begin or end with a slash
-        if content[0] == "/" or content[-1] == "/":
-            raise InvalidDocumentURIException(
-                f'"{content}" is not a valid document URI; URIs cannot begin or end with slashes.'
-            )
-
-        # Check that the URI doesn't contain a full stop
-        if "." in content:
-            raise InvalidDocumentURIException(
-                f'"{content}" is not a valid document URI; URIs cannot contain full stops.'
-            )
-
-        # If everything is good, return as usual
-        return str.__new__(cls, content)
 
 
 class Document:

@@ -18,8 +18,8 @@ from caselawclient.models.documents import (
     Document,
     DocumentURIString,
 )
-from caselawclient.models.documents.exceptions import InvalidDocumentURIException
 from caselawclient.models.judgments import Judgment
+from caselawclient.types import InvalidDocumentURIException
 from tests.test_helpers import MockMultipartResponse
 
 

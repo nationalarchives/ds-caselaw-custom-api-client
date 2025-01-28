@@ -25,12 +25,12 @@ from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
-    DocumentURIString,
 )
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
+from caselawclient.types import DocumentURIString
 from caselawclient.xquery_type_dicts import (
     MarkLogicDocumentURIString,
     MarkLogicDocumentVersionURIString,
