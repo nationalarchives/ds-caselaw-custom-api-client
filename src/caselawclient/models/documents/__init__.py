@@ -15,6 +15,7 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
+from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
@@ -550,3 +551,19 @@ class Document:
             return getattr(self.body, name)
         except Exception:
             raise AttributeError(f"Neither 'Document' nor 'DocumentBody' objects have an attribute '{name}'")
+
+    def linked_document_resolutions(self, namespaces: list[str], only_published: bool = True) -> IdentifierResolutions:
+        """Get documents which share the same neutral citation as this document."""
+        if not hasattr(self, "neutral_citation") or not self.neutral_citation:
+            return IdentifierResolutions([])
+        all_similar_resolutions = self.api_client.resolve_from_identifier_value(self.neutral_citation).published(
+            only_published=only_published
+        )
+        # only documents which aren't this one and have a right namespace
+        return IdentifierResolutions(
+            [
+                resolution
+                for resolution in all_similar_resolutions
+                if resolution.identifier_slug != self.uri and resolution.identifier_namespace in namespaces
+            ]
+        )
