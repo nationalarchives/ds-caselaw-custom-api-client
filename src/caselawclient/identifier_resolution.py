@@ -2,6 +2,8 @@ import json
 from typing import NamedTuple
 
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.identifiers import Identifier
+from caselawclient.models.identifiers.unpacker import IDENTIFIER_NAMESPACE_MAP
 from caselawclient.xquery_type_dicts import MarkLogicDocumentURIString
 
 
@@ -12,7 +14,7 @@ class IdentifierResolutions(list["IdentifierResolution"]):
     MarkLogic returns a list of dictionaries; IdentifierResolution handles a single dictionary
     which corresponds to a single identifier to MarkLogic document mapping.
 
-    see `xquery/resolve_from_identifier.xqy` and `resolve_from_identifier` in `Client.py`
+    see `xquery/resolve_from_identifier_slug.xqy` and `resolve_from_identifier` in `Client.py`
     """
 
     @staticmethod
@@ -31,13 +33,20 @@ class IdentifierResolution(NamedTuple):
     document_uri: MarkLogicDocumentURIString
     identifier_slug: DocumentURIString
     document_published: bool
+    identifier_value: str
+    identifier_namespace: str
+    identifier_type: type[Identifier]
 
     @staticmethod
     def from_marklogic_output(raw_row: str) -> "IdentifierResolution":
         row = json.loads(raw_row)
+        identifier_namespace = row["documents.compiled_url_slugs.identifier_namespace"]
         return IdentifierResolution(
             identifier_uuid=row["documents.compiled_url_slugs.identifier_uuid"],
             document_uri=MarkLogicDocumentURIString(row["documents.compiled_url_slugs.document_uri"]),
             identifier_slug=DocumentURIString(row["documents.compiled_url_slugs.identifier_slug"]),
             document_published=row["documents.compiled_url_slugs.document_published"] == "true",
+            identifier_value=row["documents.compiled_url_slugs.identifier_value"],
+            identifier_namespace=identifier_namespace,
+            identifier_type=IDENTIFIER_NAMESPACE_MAP[identifier_namespace],
         )

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unpublished
+
+### Feat
+
+- **identifiers**: Support identifier resolution from value and namespace
+
 ## v29.2.0 (2025-01-27)
 
 ### Feat
