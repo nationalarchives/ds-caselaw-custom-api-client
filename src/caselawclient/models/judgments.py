@@ -10,7 +10,9 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 if TYPE_CHECKING:
     from caselawclient.models.press_summaries import PressSummary
 
-from .documents import Document, DocumentURIString
+from caselawclient.types import DocumentURIString
+
+from .documents import Document
 
 
 class Judgment(NeutralCitationMixin, Document):

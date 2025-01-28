@@ -8,8 +8,9 @@ from ds_caselaw_utils.types import NeutralCitationString
 
 from caselawclient.errors import DocumentNotFoundError
 from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
+from caselawclient.types import DocumentURIString
 
-from .documents import Document, DocumentURIString
+from .documents import Document
 
 if TYPE_CHECKING:
     from caselawclient.models.judgments import Judgment

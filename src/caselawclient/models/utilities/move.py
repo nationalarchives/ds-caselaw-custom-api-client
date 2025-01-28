@@ -4,8 +4,8 @@ import ds_caselaw_utils as caselawutils
 from ds_caselaw_utils.types import NeutralCitationString
 
 from caselawclient.errors import MarklogicAPIError
-from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.utilities.aws import copy_assets
+from caselawclient.types import DocumentURIString
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient

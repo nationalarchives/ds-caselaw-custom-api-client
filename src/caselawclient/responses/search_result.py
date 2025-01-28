@@ -12,7 +12,7 @@ from ds_caselaw_utils.types import CourtCode, JurisdictionCode
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.models.documents import DocumentURIString
+from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
 
 

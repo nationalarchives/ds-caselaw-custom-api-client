@@ -4,7 +4,3 @@ class CannotPublishUnpublishableDocument(Exception):
 
 class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
-
-
-class InvalidDocumentURIException(Exception):
-    """The document URI is not valid."""

@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, overload
+from typing import Any, Literal, Optional, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -13,10 +13,7 @@ from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 from typing_extensions import NotRequired
 
-if TYPE_CHECKING:
-    from caselawclient.models.documents import DocumentURIString
-else:
-    DocumentURIString = None
+from caselawclient.types import DocumentURIString
 
 env = environ.Env()
 

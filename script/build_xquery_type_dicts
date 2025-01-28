@@ -13,7 +13,7 @@ checks. They are used to enforce appropriately typed variables being passed in t
 \"\"\"
 
 from typing import Any, NewType, Optional, TypedDict
-from caselawclient.models.documents import DocumentURIString
+from caselawclient.types import DocumentURIString
 
 MarkLogicDocumentURIString = NewType("MarkLogicDocumentURIString", str)
 MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
