@@ -311,7 +311,7 @@ class TestDocumentBody:
                 </judgmentBody>
             </judgment>
             </akomaNtoso>""")
-        assert body.has_actual_content
+        assert body.has_content
 
     def test_actual_content_header(self):
         body = DocumentBodyFactory.build("""
@@ -326,7 +326,7 @@ class TestDocumentBody:
                 </judgmentBody>
             </judgment>
             </akomaNtoso>""")
-        assert body.has_actual_content
+        assert body.has_content
 
     def test_no_actual_content(self):
         body = DocumentBodyFactory.build("""
@@ -341,4 +341,4 @@ class TestDocumentBody:
             </judgment>
             </akomaNtoso>""")
 
-        assert not (body.has_actual_content)
+        assert not (body.has_content)

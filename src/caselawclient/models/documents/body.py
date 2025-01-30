@@ -125,7 +125,7 @@ class DocumentBody:
         return self._xml.xml_as_string
 
     @property
-    def has_actual_content(self) -> bool:
+    def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
         the contents of the judgment, but will contain a preamble."""
 
@@ -138,7 +138,7 @@ class DocumentBody:
 
     def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
-        if not self.has_actual_content:
+        if not self.has_content:
             return None
 
         html_xslt_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "transforms", "html.xsl")
