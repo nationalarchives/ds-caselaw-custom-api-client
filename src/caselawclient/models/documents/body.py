@@ -12,6 +12,11 @@ from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from .xml import XML
 
+DEFAULT_NAMESPACES = {
+    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+}
+
 
 class UnparsableDate(Warning):
     pass
@@ -26,35 +31,25 @@ class DocumentBody:
         self._xml = XML(xml_bytestring=xml_bytestring)
         """ This is an instance of the `Document.XML` class for manipulation of the XML document itself. """
 
-    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str]) -> str:
+    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> str:
         return self._xml.get_xpath_match_string(xpath, namespaces)
+
+    def get_xpath_match_strings(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[str]:
+        return self._xml.get_xpath_match_strings(xpath, namespaces)
 
     @cached_property
     def name(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
+        return self.get_xpath_match_string(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
         )
 
     @cached_property
     def court(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
@@ -64,9 +59,8 @@ class DocumentBody:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self._xml.get_xpath_match_string(
+        return self.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
@@ -90,9 +84,8 @@ class DocumentBody:
         name: Optional[str] = None,
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
-        iso_datetimes = self._xml.get_xpath_match_strings(
+        iso_datetimes = self.get_xpath_match_strings(
             f"/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRdate{name_filter}/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
         return [parse_string_date_as_utc(event, pytz.UTC) for event in iso_datetimes]
