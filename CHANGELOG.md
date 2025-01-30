@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **identifiers**: Support identifier resolution from value and namespace
 - ⚠️ **refactor**: Move DocumentURIString and InvalidDocumentURIException to .types
+- ⚠️ **html transform**: Document.body.content_as_html can be None if there is no real content
 
 ## v29.2.0 (2025-01-27)
 

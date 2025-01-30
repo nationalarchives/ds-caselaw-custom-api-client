@@ -293,6 +293,7 @@ class TestDocumentBody:
 
         body = DocumentBody(xml_document.encode())
         transformed_html = body.content_as_html(image_base_url="https://test.caselaw.nationalarchives.gov.uk/")
+        assert transformed_html
         prettified_transformed_html = BeautifulSoup(transformed_html, features="html.parser").prettify()
 
         assert prettified_transformed_html == prettified_target_html

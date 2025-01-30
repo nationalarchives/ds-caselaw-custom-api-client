@@ -136,8 +136,10 @@ class DocumentBody:
         content = self._xml.xml_as_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)[0]
         return not (stripped_tag_text(header) == "" and stripped_tag_text(content) == "")
 
-    def content_as_html(self, image_base_url: Optional[str] = None) -> str:
+    def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
+        if not self.has_actual_content:
+            return None
 
         html_xslt_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "transforms", "html.xsl")
 
