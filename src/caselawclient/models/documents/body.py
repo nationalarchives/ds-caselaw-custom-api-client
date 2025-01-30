@@ -3,6 +3,7 @@ import os
 import warnings
 from functools import cache, cached_property
 from typing import Optional
+from xml.etree.ElementTree import Element
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
@@ -11,6 +12,11 @@ from saxonche import PySaxonProcessor
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
 from .xml import XML
+
+DEFAULT_NAMESPACES = {
+    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
+    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
+}
 
 
 class UnparsableDate(Warning):
@@ -26,35 +32,25 @@ class DocumentBody:
         self._xml = XML(xml_bytestring=xml_bytestring)
         """ This is an instance of the `Document.XML` class for manipulation of the XML document itself. """
 
-    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str]) -> str:
+    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> str:
         return self._xml.get_xpath_match_string(xpath, namespaces)
+
+    def get_xpath_match_strings(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[str]:
+        return self._xml.get_xpath_match_strings(xpath, namespaces)
 
     @cached_property
     def name(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
+        return self.get_xpath_match_string(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
         )
 
     @cached_property
     def court(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self._xml.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()",
-            {
-                "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
-        )
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
@@ -64,9 +60,8 @@ class DocumentBody:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self._xml.get_xpath_match_string(
+        return self.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
     @cached_property
@@ -90,9 +85,8 @@ class DocumentBody:
         name: Optional[str] = None,
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
-        iso_datetimes = self._xml.get_xpath_match_strings(
+        iso_datetimes = self.get_xpath_match_strings(
             f"/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRdate{name_filter}/@date",
-            {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
         )
 
         return [parse_string_date_as_utc(event, pytz.UTC) for event in iso_datetimes]
@@ -130,9 +124,23 @@ class DocumentBody:
     def content_as_xml(self) -> str:
         return self._xml.xml_as_string
 
+    @cached_property
+    def has_content(self) -> bool:
+        """If we do not have a word document, the XML will not contain
+        the contents of the judgment, but will contain a preamble."""
+
+        def stripped_tag_text(tag: Element) -> str:
+            return "".join(tag.itertext()).strip()
+
+        header = self._xml.xml_as_tree.xpath("//akn:header", namespaces=DEFAULT_NAMESPACES)[0]
+        content = self._xml.xml_as_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)[0]
+        return not (stripped_tag_text(header) == "" and stripped_tag_text(content) == "")
+
     @cache
-    def content_as_html(self, image_base_url: Optional[str] = None) -> str:
+    def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
+        if not self.has_content:
+            return None
 
         html_xslt_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "transforms", "html.xsl")
 
