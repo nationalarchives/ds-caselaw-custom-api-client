@@ -1,7 +1,7 @@
 import datetime
 import os
 import warnings
-from functools import cached_property
+from functools import cache, cached_property
 from typing import Optional
 from xml.etree.ElementTree import Element
 
@@ -124,7 +124,7 @@ class DocumentBody:
     def content_as_xml(self) -> str:
         return self._xml.xml_as_string
 
-    @property
+    @cached_property
     def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
         the contents of the judgment, but will contain a preamble."""
@@ -136,6 +136,7 @@ class DocumentBody:
         content = self._xml.xml_as_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)[0]
         return not (stripped_tag_text(header) == "" and stripped_tag_text(content) == "")
 
+    @cache
     def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
         if not self.has_content:
