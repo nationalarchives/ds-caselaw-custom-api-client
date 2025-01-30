@@ -4,6 +4,7 @@ import os
 import pytest
 from bs4 import BeautifulSoup
 
+from caselawclient.factories import DocumentBodyFactory
 from caselawclient.models.documents import (
     DocumentBody,
 )
@@ -295,3 +296,48 @@ class TestDocumentBody:
         prettified_transformed_html = BeautifulSoup(transformed_html, features="html.parser").prettify()
 
         assert prettified_transformed_html == prettified_target_html
+
+    def test_actual_content_body(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+            <judgment name="decision">
+                <meta/><header/>
+                <judgmentBody>
+                <decision>
+                a
+                <p/>
+                </decision>
+                </judgmentBody>
+            </judgment>
+            </akomaNtoso>""")
+        assert body.has_actual_content
+
+    def test_actual_content_header(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+            <judgment name="decision">
+                <meta/>
+                <header>a</header>
+                <judgmentBody>
+                <decision>
+                <p/>
+                </decision>
+                </judgmentBody>
+            </judgment>
+            </akomaNtoso>""")
+        assert body.has_actual_content
+
+    def test_no_actual_content(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+            <judgment name="decision">
+                <meta/><header/>
+                <judgmentBody>
+                <decision>
+                <p/>
+                </decision>
+                </judgmentBody>
+            </judgment>
+            </akomaNtoso>""")
+
+        assert not (body.has_actual_content)

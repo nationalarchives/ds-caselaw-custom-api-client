@@ -1,8 +1,9 @@
 import datetime
 import os
 import warnings
-from functools import cache, cached_property
+from functools import cached_property
 from typing import Optional
+from xml.etree.ElementTree import Element
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
@@ -123,7 +124,18 @@ class DocumentBody:
     def content_as_xml(self) -> str:
         return self._xml.xml_as_string
 
-    @cache
+    @property
+    def has_actual_content(self) -> bool:
+        """If we do not have a word document, the XML will not contain
+        the contents of the judgment, but will contain a preamble."""
+
+        def stripped_tag_text(tag: Element) -> str:
+            return "".join(tag.itertext()).strip()
+
+        header = self._xml.xml_as_tree.xpath("//akn:header", namespaces=DEFAULT_NAMESPACES)[0]
+        content = self._xml.xml_as_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)[0]
+        return not (stripped_tag_text(header) == "" and stripped_tag_text(content) == "")
+
     def content_as_html(self, image_base_url: Optional[str] = None) -> str:
         """Convert the XML representation of the Document into HTML for rendering."""
 
