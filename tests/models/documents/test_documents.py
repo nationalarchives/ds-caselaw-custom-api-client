@@ -364,7 +364,7 @@ class TestLinkedDocumentResolutions:
             [
                 IdentifierResolutionFactory.build(namespace="ukncn", resolution_uuid="okay-pub"),
                 IdentifierResolutionFactory.build(namespace="ukncn", resolution_uuid="okay-multi"),
-                IdentifierResolutionFactory.build(published=False, namespace="ukncn", resolution_uuid="not-unpub"),
+                IdentifierResolutionFactory.build(published=False, namespace="ukncn", resolution_uuid="maybe-unpub"),
                 IdentifierResolutionFactory.build(namespace="fclid", resolution_uuid="not-diff-namespace"),
                 IdentifierResolutionFactory.build(
                     namespace="ukncn", document_uri="/thisone.xml", resolution_uuid="not-this"
@@ -377,3 +377,7 @@ class TestLinkedDocumentResolutions:
         resolutions = doc.linked_document_resolutions(["ukncn"])
         match_uuids = [x.identifier_uuid for x in resolutions]
         assert match_uuids == ["okay-pub", "okay-multi"]
+
+        resolutions_unpub = doc.linked_document_resolutions(["ukncn"], only_published=False)
+        unpub_uuids = [x.identifier_uuid for x in resolutions_unpub]
+        assert unpub_uuids == ["okay-pub", "okay-multi", "maybe-unpub"]
