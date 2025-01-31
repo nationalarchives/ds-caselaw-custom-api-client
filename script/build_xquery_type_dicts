@@ -14,8 +14,8 @@ checks. They are used to enforce appropriately typed variables being passed in t
 
 from typing import Any, NewType, Optional, TypedDict
 from caselawclient.types import DocumentURIString
+from caselawclient.types import MarkLogicDocumentURIString as MarkLogicDocumentURIString
 
-MarkLogicDocumentURIString = NewType("MarkLogicDocumentURIString", str)
 MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
 
 MarkLogicPrivilegeURIString = NewType("MarkLogicPrivilegeURIString", str)

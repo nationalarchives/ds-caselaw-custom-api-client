@@ -543,6 +543,6 @@ class Document:
             [
                 resolution
                 for resolution in all_similar_resolutions
-                if resolution.document_uri != self.uri and resolution.identifier_namespace in namespaces
+                if resolution.document_uri != self.uri.as_marklogic() and resolution.identifier_namespace in namespaces
             ]
         )
