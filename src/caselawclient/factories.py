@@ -56,7 +56,6 @@ class DocumentFactory:
     def build(
         cls,
         uri: DocumentURIString = DocumentURIString("test/2023/123"),
-        html: str = "<p>This is a judgment.</p>",
         api_client: Optional[MarklogicApiClient] = None,
         **kwargs: Any,
     ) -> target_class:
@@ -66,7 +65,6 @@ class DocumentFactory:
             api_client.get_property_as_node.return_value = None
 
         document = cls.target_class(uri, api_client=api_client)
-        document.content_as_html = Mock(return_value=html)  # type: ignore[method-assign]
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         for param_name, default_value in cls.PARAMS_MAP.items():

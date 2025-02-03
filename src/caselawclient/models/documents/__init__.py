@@ -6,12 +6,10 @@ from typing import TYPE_CHECKING, Any, Optional
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
-from lxml import html as html_parser
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.errors import (
     DocumentNotFoundError,
-    GatewayTimeoutError,
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
@@ -251,39 +249,6 @@ class Document:
     def is_version(self) -> bool:
         "Is this document a potentially historic version of a document, or is it the main document itself?"
         return extract_version(self.uri) != 0
-
-    def content_as_html(
-        self,
-        version_uri: Optional[DocumentURIString] = None,
-        query: Optional[str] = None,
-    ) -> str:
-        try:
-            results = self.api_client.eval_xslt(
-                self.uri,
-                version_uri,
-                show_unpublished=True,
-                query=query,
-            )
-            multipart_data = decoder.MultipartDecoder.from_response(results)
-            return str(multipart_data.parts[0].text)
-        except GatewayTimeoutError as e:
-            if query is not None:
-                warnings.warn(
-                    (
-                        "Gateway timeout when getting content with query"
-                        "highlighting for document %s, version %s, and query"
-                        '"%s", falling back to unhighlighted content...'
-                    )
-                    % (self.uri, version_uri, query),
-                    GatewayTimeoutGettingHTMLWithQuery,
-                )
-                return self.content_as_html(version_uri)
-            raise e
-
-    def number_of_mentions(self, query: str) -> int:
-        html = self.content_as_html(query=query)
-        tree = html_parser.fromstring(html.encode("utf-8"))
-        return len(tree.findall(".//mark"))
 
     @cached_property
     def is_failure(self) -> bool:
