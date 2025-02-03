@@ -12,7 +12,16 @@ from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 from caselawclient.types import DocumentURIString
 
-DEFAULT_DOCUMENT_BODY_XML = "<akomantoso>This is some XML of a judgment.</akomantoso>"
+DEFAULT_DOCUMENT_BODY_XML = """<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+            <judgment name="decision">
+                <meta/><header/>
+                <judgmentBody>
+                <decision>
+                <p>This is a document.</p>
+                </decision>
+                </judgmentBody>
+            </judgment>
+            </akomaNtoso>"""
 
 
 class DocumentBodyFactory:
