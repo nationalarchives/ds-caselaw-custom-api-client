@@ -3,7 +3,6 @@ import os
 import warnings
 from functools import cache, cached_property
 from typing import Optional
-from xml.etree.ElementTree import Element
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
@@ -128,13 +127,14 @@ class DocumentBody:
     def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
         the contents of the judgment, but will contain a preamble."""
+        trailing_tags = self._xml.xml_as_tree.xpath("//*[preceding::akn:meta]", namespaces=DEFAULT_NAMESPACES)
+        for tag in trailing_tags:
+            if tag.tail and tag.tail.strip():
+                return True
+            if tag.text and tag.text.strip():
+                return True
 
-        def stripped_tag_text(tag: Element) -> str:
-            return "".join(tag.itertext()).strip()
-
-        header = self._xml.xml_as_tree.xpath("//akn:header", namespaces=DEFAULT_NAMESPACES)[0]
-        content = self._xml.xml_as_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)[0]
-        return not (stripped_tag_text(header) == "" and stripped_tag_text(content) == "")
+        return False
 
     @cache
     def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:

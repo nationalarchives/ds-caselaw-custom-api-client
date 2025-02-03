@@ -342,3 +342,8 @@ class TestDocumentBody:
             </akomaNtoso>""")
 
         assert not (body.has_content)
+
+    def test_minimal_xml_behaves_ok(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso/>""")
+        assert not (body.has_content)
