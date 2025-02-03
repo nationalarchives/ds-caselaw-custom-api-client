@@ -21,10 +21,8 @@ class IdentifierResolutions(list["IdentifierResolution"]):
     def from_marklogic_output(table: list[str]) -> "IdentifierResolutions":
         return IdentifierResolutions(list(IdentifierResolution.from_marklogic_output(row) for row in table))
 
-    def published(self, only_published: bool = True) -> "IdentifierResolutions":
+    def published(self) -> "IdentifierResolutions":
         "Filter the list so that only published documents are returned"
-        if not only_published:
-            return self
         return IdentifierResolutions(list(x for x in self if x.document_published))
 
 

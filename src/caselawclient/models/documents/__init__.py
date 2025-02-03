@@ -535,14 +535,16 @@ class Document:
         """Get documents which share the same neutral citation as this document."""
         if not hasattr(self, "neutral_citation") or not self.neutral_citation:
             return IdentifierResolutions([])
-        all_similar_resolutions = self.api_client.resolve_from_identifier_value(self.neutral_citation).published(
-            only_published=only_published
-        )
+
+        resolutions = self.api_client.resolve_from_identifier_value(self.neutral_citation)
+        if only_published:
+            resolutions = resolutions.published()
+
         # only documents which aren't this one and have a right namespace
         return IdentifierResolutions(
             [
                 resolution
-                for resolution in all_similar_resolutions
+                for resolution in resolutions
                 if resolution.document_uri != self.uri.as_marklogic() and resolution.identifier_namespace in namespaces
             ]
         )
