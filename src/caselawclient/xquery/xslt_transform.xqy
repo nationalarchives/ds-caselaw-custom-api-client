@@ -28,7 +28,7 @@ let $number_marks_xslt := (
     </xsl:template>
     <xsl:template match="mark">
       <xsl:copy>
-          <xsl:copy-of select="@*" />
+          <xsl:copy-of select="*" />
           <xsl:attribute name="id">
               <xsl:text>mark_</xsl:text>
               <xsl:value-of select="count(preceding::mark)"/>
