@@ -9,7 +9,13 @@ from caselawclient.errors import (
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
-from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+from caselawclient.factories import (
+    DocumentBodyFactory,
+    DocumentFactory,
+    IdentifierResolutionFactory,
+    IdentifierResolutionsFactory,
+    JudgmentFactory,
+)
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
     DOCUMENT_STATUS_IN_PROGRESS,
@@ -321,3 +327,28 @@ class TestDocumentURIString:
     def test_rejects_uri_with_dot(self):
         with pytest.raises(InvalidDocumentURIException):
             DocumentURIString("test/1234.xml")
+
+
+class TestLinkedDocumentResolutions:
+    def test_base(self, mock_api_client):
+        resolutions = IdentifierResolutionsFactory.build(
+            [
+                IdentifierResolutionFactory.build(namespace="ukncn", resolution_uuid="okay-pub"),
+                IdentifierResolutionFactory.build(namespace="ukncn", resolution_uuid="okay-multi"),
+                IdentifierResolutionFactory.build(published=False, namespace="ukncn", resolution_uuid="maybe-unpub"),
+                IdentifierResolutionFactory.build(namespace="fclid", resolution_uuid="not-diff-namespace"),
+                IdentifierResolutionFactory.build(
+                    namespace="ukncn", document_uri="/thisone.xml", resolution_uuid="not-this"
+                ),
+            ]
+        )
+        mock_api_client.resolve_from_identifier_value.return_value = resolutions
+        doc = JudgmentFactory.build(neutral_citation="[2003] UKSC 1", uri=DocumentURIString("thisone"))
+        doc.api_client = mock_api_client
+        resolutions = doc.linked_document_resolutions(["ukncn"])
+        match_uuids = [x.identifier_uuid for x in resolutions]
+        assert match_uuids == ["okay-pub", "okay-multi"]
+
+        resolutions_unpub = doc.linked_document_resolutions(["ukncn"], only_published=False)
+        unpub_uuids = [x.identifier_uuid for x in resolutions_unpub]
+        assert unpub_uuids == ["okay-pub", "okay-multi", "maybe-unpub"]

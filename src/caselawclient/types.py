@@ -2,6 +2,10 @@ class InvalidDocumentURIException(Exception):
     """The document URI is not valid."""
 
 
+class MarkLogicDocumentURIString(str):
+    pass
+
+
 class DocumentURIString(str):
     """
     This class checks that the string is actually a valid Document URI on creation. It does _not_ manipulate the string.
@@ -22,3 +26,6 @@ class DocumentURIString(str):
 
         # If everything is good, return as usual
         return str.__new__(cls, content)
+
+    def as_marklogic(self) -> MarkLogicDocumentURIString:
+        return MarkLogicDocumentURIString(f"/{self}.xml")

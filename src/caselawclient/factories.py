@@ -1,10 +1,12 @@
 import datetime
+import json
 from typing import Any, Optional
 from unittest.mock import Mock
 
 from typing_extensions import TypeAlias
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.identifier_resolution import IdentifierResolution, IdentifierResolutions
 from caselawclient.models.documents import Document
 from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.judgments import Judgment
@@ -140,3 +142,33 @@ class SearchResultFactory(SimpleFactory):
         "metadata": SearchResultMetadataFactory.build(),
         "is_failure": False,
     }
+
+
+class IdentifierResolutionFactory:
+    @classmethod
+    def build(
+        self,
+        resolution_uuid: Optional[str] = None,
+        document_uri: Optional[str] = None,
+        identifier_slug: Optional[str] = None,
+        published: Optional[bool] = True,
+        namespace: Optional[str] = None,
+        value: Optional[str] = None,
+    ) -> IdentifierResolution:
+        raw_resolution = {
+            "documents.compiled_url_slugs.identifier_uuid": resolution_uuid or "24b9a384-8bcf-4f20-996a-5c318f8dc657",
+            "documents.compiled_url_slugs.document_uri": document_uri or "/ewca/civ/2003/547.xml",
+            "documents.compiled_url_slugs.identifier_slug": identifier_slug or "ewca/civ/2003/54721",
+            "documents.compiled_url_slugs.document_published": "true" if published else "false",
+            "documents.compiled_url_slugs.identifier_namespace": namespace or "ukncn",
+            "documents.compiled_url_slugs.identifier_value": value or "[2003] EWCA 54721 (Civ)",
+        }
+        return IdentifierResolution.from_marklogic_output(json.dumps(raw_resolution))
+
+
+class IdentifierResolutionsFactory:
+    @classmethod
+    def build(self, resolutions: Optional[list[IdentifierResolution]] = None) -> IdentifierResolutions:
+        if resolutions is None:
+            resolutions = [IdentifierResolutionFactory.build()]
+        return IdentifierResolutions(resolutions)
