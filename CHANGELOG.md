@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v30.0.1 (2025-02-03)
+
+### Bugfix
+
+- **document**: Relax has_content to not require valid akomaNtoso to allow tests
+
 ## v30.0.0 (2025-01-31)
 
 ### Feat
