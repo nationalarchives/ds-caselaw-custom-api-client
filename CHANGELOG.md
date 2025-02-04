@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v31.0.0 (2025-02-03)
+
+### Breaking Change
+
+- refactor(Document): remove deprecated content_as_html and number_of_mentions methods
+
+### Feat
+
+- FCL 582 Get related documents (e.g. Press Summary for Judgment)
+
+### Fix
+
+- Relax has_content to not require valid akomaNtoso
+- fix(DocumentFactory): make default body XML representative of a real document
+
 ## v30.0.0 (2025-01-31)
 
 ### Feat
