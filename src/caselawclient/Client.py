@@ -1222,7 +1222,7 @@ class MarklogicApiClient:
         warnings.warn(
             "resolve_from_identifier deprecated, use resolve_from_identifier_slug instead", DeprecationWarning
         )
-        return self.resolve_from_identifier(identifier_uri, published_only)
+        return self.resolve_from_identifier_slug(identifier_uri, published_only)
 
     def resolve_from_identifier_value(
         self, identifier_value: str, published_only: bool = True
