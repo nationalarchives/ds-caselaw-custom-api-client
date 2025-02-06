@@ -4,11 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unpublished
+## v31.0.1 (2025-02-06)
 
-### Fix
+### Fix
 
 - **html transform**: If query contains space, don't delete the highlighted space
+- **deps**: update dependency pytz to v2025
+- **deps**: update dependency boto3 to v1.36.12
 
 ## v31.0.0 (2025-02-03)
 
