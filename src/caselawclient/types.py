@@ -29,3 +29,11 @@ class DocumentURIString(str):
 
     def as_marklogic(self) -> MarkLogicDocumentURIString:
         return MarkLogicDocumentURIString(f"/{self}.xml")
+
+
+class DocumentIdentifierSlug(str):
+    pass
+
+
+class DocumentIdentifierValue(str):
+    pass

@@ -13,7 +13,7 @@ checks. They are used to enforce appropriately typed variables being passed in t
 \"\"\"
 
 from typing import Any, NewType, Optional, TypedDict
-from caselawclient.types import DocumentURIString
+from caselawclient.types import DocumentURIString, DocumentIdentifierSlug, DocumentIdentifierValue
 from caselawclient.types import MarkLogicDocumentURIString as MarkLogicDocumentURIString
 
 MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
@@ -54,8 +54,12 @@ def ml_type_to_python_type_declaration(variable_name: str, variable_type: str):
         variable_type = "MarkLogicDocumentVersionURIString"
     elif variable_name == "privilege_uri":
         variable_type = "MarkLogicPrivilegeURIString"
-    elif variable_name in ["identifier_uri", "parent_uri"]:
+    elif variable_name in ["parent_uri"]:
         variable_type = "DocumentURIString"
+    elif variable_name in ["identifier_slug"]:
+        variable_type = "DocumentIdentifierSlug"
+    elif variable_name in ["identifier_value"]:
+        variable_type = "DocumentIdentifierValue"
     elif variable_name == "uri" or variable_name.endswith("_uri"):
         variable_type = "MarkLogicDocumentURIString"
     else:

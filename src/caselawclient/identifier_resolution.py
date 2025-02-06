@@ -3,7 +3,7 @@ from typing import NamedTuple
 
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.unpacker import IDENTIFIER_NAMESPACE_MAP
-from caselawclient.types import DocumentURIString
+from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
 from caselawclient.xquery_type_dicts import MarkLogicDocumentURIString
 
 
@@ -31,9 +31,9 @@ class IdentifierResolution(NamedTuple):
 
     identifier_uuid: str
     document_uri: MarkLogicDocumentURIString
-    identifier_slug: DocumentURIString
+    identifier_slug: DocumentIdentifierSlug
     document_published: bool
-    identifier_value: str
+    identifier_value: DocumentIdentifierValue
     identifier_namespace: str
     identifier_type: type[Identifier]
 
@@ -44,9 +44,9 @@ class IdentifierResolution(NamedTuple):
         return IdentifierResolution(
             identifier_uuid=row["documents.compiled_url_slugs.identifier_uuid"],
             document_uri=MarkLogicDocumentURIString(row["documents.compiled_url_slugs.document_uri"]),
-            identifier_slug=DocumentURIString(row["documents.compiled_url_slugs.identifier_slug"]),
+            identifier_slug=DocumentIdentifierSlug(row["documents.compiled_url_slugs.identifier_slug"]),
             document_published=row["documents.compiled_url_slugs.document_published"] == "true",
-            identifier_value=row["documents.compiled_url_slugs.identifier_value"],
+            identifier_value=DocumentIdentifierValue(row["documents.compiled_url_slugs.identifier_value"]),
             identifier_namespace=identifier_namespace,
             identifier_type=IDENTIFIER_NAMESPACE_MAP[identifier_namespace],
         )
