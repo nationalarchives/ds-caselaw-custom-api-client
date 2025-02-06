@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **IdentifierResolution**: fix incorrect types in resolving an identifier
+
 ## v31.0.1 (2025-02-06)
 
 ### Fix

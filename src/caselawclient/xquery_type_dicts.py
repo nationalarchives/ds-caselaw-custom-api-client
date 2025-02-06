@@ -7,7 +7,7 @@ checks. They are used to enforce appropriately typed variables being passed in t
 """
 
 from typing import Any, NewType, Optional, TypedDict
-from caselawclient.types import DocumentURIString
+from caselawclient.types import DocumentURIString, DocumentIdentifierSlug, DocumentIdentifierValue
 from caselawclient.types import MarkLogicDocumentURIString as MarkLogicDocumentURIString
 
 MarkLogicDocumentVersionURIString = NewType("MarkLogicDocumentVersionURIString", MarkLogicDocumentURIString)
@@ -143,13 +143,13 @@ class ListJudgmentVersionsDict(MarkLogicAPIDict):
 
 # resolve_from_identifier_slug.xqy
 class ResolveFromIdentifierSlugDict(MarkLogicAPIDict):
-    identifier_uri: DocumentURIString
+    identifier_slug: DocumentIdentifierSlug
     published_only: Optional[int]
 
 
 # resolve_from_identifier_value.xqy
 class ResolveFromIdentifierValueDict(MarkLogicAPIDict):
-    identifier_value: str
+    identifier_value: DocumentIdentifierValue
     published_only: Optional[int]
 
 
