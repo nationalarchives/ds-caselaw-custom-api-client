@@ -106,18 +106,18 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.36.14"
+version = "1.36.16"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "boto3-1.36.14-py3-none-any.whl", hash = "sha256:e2dab15944c3f517c88850d60b07f2f6fd3bc69aa51c47670e4f45d62a8c41fd"},
-    {file = "boto3-1.36.14.tar.gz", hash = "sha256:4b0b8dd593b95f32a5a761dee65094423fbd06a4ad09f26b2e6c80493139569f"},
+    {file = "boto3-1.36.16-py3-none-any.whl", hash = "sha256:b10583bf8bd35be1b4027ee7e26b7cdf2078c79eab18357fd602cecb6d39400b"},
+    {file = "boto3-1.36.16.tar.gz", hash = "sha256:0cf92ca0538ab115447e1c58050d43e1273e88c58ddfea2b6f133fdc508b400a"},
 ]
 
 [package.dependencies]
-botocore = ">=1.36.14,<1.37.0"
+botocore = ">=1.36.16,<1.37.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.11.0,<0.12.0"
 
@@ -126,14 +126,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.36.14"
+version = "1.36.16"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "botocore-1.36.14-py3-none-any.whl", hash = "sha256:546d0c071e9c8aeaca399d71bec414abe6434460f7d6640cbd92d4b1c3eb443e"},
-    {file = "botocore-1.36.14.tar.gz", hash = "sha256:53feff270078c23ba852fb2638fde6c5f74084cfc019dd5433e865cd04065c60"},
+    {file = "botocore-1.36.16-py3-none-any.whl", hash = "sha256:aca0348ccd730332082489b6817fdf89e1526049adcf6e9c8c11c96dd9f42c03"},
+    {file = "botocore-1.36.16.tar.gz", hash = "sha256:10c6aa386ba1a9a0faef6bb5dbfc58fc2563a3c6b95352e86a583cd5f14b11f3"},
 ]
 
 [package.dependencies]
@@ -1206,14 +1206,14 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.36.9"
-description = "Type annotations for boto3 S3 1.36.9 service generated with mypy-boto3-builder 8.8.0"
+version = "1.36.15"
+description = "Type annotations for boto3 S3 1.36.15 service generated with mypy-boto3-builder 8.9.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mypy_boto3_s3-1.36.9-py3-none-any.whl", hash = "sha256:506edd56892452dff5b673e3c79a11b6f8935076ce4a9daaac4cda708a176201"},
-    {file = "mypy_boto3_s3-1.36.9.tar.gz", hash = "sha256:368c963969eda65bb3a9df61e87510dd8b3247cce59f559c2ec6c43d5796bef5"},
+    {file = "mypy_boto3_s3-1.36.15-py3-none-any.whl", hash = "sha256:a48031b4c84898756f03787baf711cf14cb219b5cb2e433a369c018544bfbffa"},
+    {file = "mypy_boto3_s3-1.36.15.tar.gz", hash = "sha256:e5400f6a008f746c42bbbe767eb492cec96a211ceb34b6032673aedcd87b3d62"},
 ]
 
 [package.dependencies]
