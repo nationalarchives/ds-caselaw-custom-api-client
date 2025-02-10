@@ -2,8 +2,29 @@ class InvalidDocumentURIException(Exception):
     """The document URI is not valid."""
 
 
+class InvalidMarkLogicDocumentURIException(Exception):
+    """The MarkLogic document URI is not valid."""
+
+
 class MarkLogicDocumentURIString(str):
-    pass
+    def __new__(cls, content: str) -> "MarkLogicDocumentURIString":
+        # Check that the URI begins with a slash
+        if content[0] != "/":
+            raise InvalidMarkLogicDocumentURIException(
+                f'"{content}" is not a valid MarkLogic document URI; URIs must begin with a slash.'
+            )
+
+        # Check that the URI ends with ".xml"
+        if not content.endswith(".xml"):
+            raise InvalidMarkLogicDocumentURIException(
+                f'"{content}" is not a valid MarkLogic document URI; URIs must end with ".xml". '
+            )
+
+        # If everything is good, return as usual
+        return str.__new__(cls, content)
+
+    def as_document_uri(self) -> "DocumentURIString":
+        return DocumentURIString(self.lstrip("/").rstrip(".xml"))
 
 
 class DocumentURIString(str):
