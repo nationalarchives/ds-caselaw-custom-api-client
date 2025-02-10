@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v31.1.0 (2025-02-10)
+
+### Feat
+
+- **types**: MarkLogicDocumentURIString now validates and can be converted back to a DocumentURIString
 
 ### Fix
 
+- **deps**: update boto packages to v1.36.15
 - **IdentifierResolution**: fix incorrect types in resolving an identifier
 
 ## v31.0.1 (2025-02-06)
