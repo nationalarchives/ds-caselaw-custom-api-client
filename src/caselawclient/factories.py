@@ -9,6 +9,8 @@ from caselawclient.Client import MarklogicApiClient
 from caselawclient.identifier_resolution import IdentifierResolution, IdentifierResolutions
 from caselawclient.models.documents import Document
 from caselawclient.models.documents.body import DocumentBody
+from caselawclient.models.identifiers import Identifier
+from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
@@ -68,8 +70,12 @@ class DocumentFactory:
         cls,
         uri: DocumentURIString = DocumentURIString("test/2023/123"),
         api_client: Optional[MarklogicApiClient] = None,
+        identifiers: Optional[list[Identifier]] = None,
         **kwargs: Any,
     ) -> target_class:
+        def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
+            return [document]
+
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
             api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
@@ -77,6 +83,14 @@ class DocumentFactory:
 
         document = cls.target_class(uri, api_client=api_client)
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
+
+        if identifiers is None:
+            document.identifiers.add(FindCaseLawIdentifier(value="a1b2c3"))
+        else:
+            for identifier in identifiers:
+                document.identifiers.add(identifier)
+
+        setattr(document, "linked_documents", _fake_linked_documents)
 
         for param_name, default_value in cls.PARAMS_MAP.items():
             value = kwargs.get(param_name, default_value)

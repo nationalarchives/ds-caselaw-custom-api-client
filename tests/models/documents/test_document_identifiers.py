@@ -8,7 +8,7 @@ from tests.models.identifiers.test_identifiers import TestIdentifier
 
 class TestDocumentIdentifiers:
     def test_add_identifiers(self):
-        document = DocumentFactory.build()
+        document = DocumentFactory.build(identifiers=[])
 
         identifier_1 = TestIdentifier(uuid="id-1", value="TEST-123")
         identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456")
@@ -26,7 +26,7 @@ class TestDocumentIdentifiers:
             identifiers.validate()
 
     def test_identifiers_as_etree(self):
-        document = DocumentFactory.build()
+        document = DocumentFactory.build(identifiers=[])
 
         identifier_1 = TestIdentifier(uuid="e28e3ef1-85ed-4997-87ee-e7428a6cc02e", value="TEST-123")
         identifier_2 = TestIdentifier(uuid="14ce4b3b-03c8-44f9-a29e-e02ce35fe136", value="TEST-456")
