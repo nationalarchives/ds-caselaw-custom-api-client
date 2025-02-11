@@ -38,10 +38,9 @@ class TestDocument:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         assert str(document) == "<document test/1234: un-named>"
 
-    def test_public_uri(self, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-
-        assert document.public_uri == "https://caselaw.nationalarchives.gov.uk/test/1234"
+    def test_public_uri(self):
+        document = DocumentFactory.build()
+        assert document.public_uri == "https://caselaw.nationalarchives.gov.uk/tna.a1b2c3"
 
     def test_document_exists_check(self, mock_api_client):
         mock_api_client.document_exists.return_value = False

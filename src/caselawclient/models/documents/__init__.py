@@ -161,7 +161,19 @@ class Document:
         """
         :return: The absolute, public URI at which a copy of this document can be found
         """
-        return f"https://caselaw.nationalarchives.gov.uk/{self.uri}"
+        return f"https://caselaw.nationalarchives.gov.uk/{self.slug}"
+
+    @cached_property
+    def slug(self) -> str:
+        """
+        :return: The best public-facing URL for the judgment, which is the slug
+        of the most-preferred identifier, which should either be an NCN or fclid.
+        """
+        preferred_identifier = self.identifiers.preferred()
+        if preferred_identifier:
+            return preferred_identifier.url_slug
+        msg = f"No preferred identifier exists for {self.uri}"
+        raise RuntimeError(msg)
 
     @cached_property
     def is_published(self) -> bool:
@@ -497,7 +509,7 @@ class Document:
             raise AttributeError(f"Neither 'Document' nor 'DocumentBody' objects have an attribute '{name}'")
 
     def linked_document_resolutions(self, namespaces: list[str], only_published: bool = True) -> IdentifierResolutions:
-        """Get documents which share the same neutral citation as this document."""
+        """Get document resolutions which share the same neutral citation as this document."""
         if not hasattr(self, "neutral_citation") or not self.neutral_citation:
             return IdentifierResolutions([])
 
@@ -513,3 +525,10 @@ class Document:
                 if resolution.document_uri != self.uri.as_marklogic() and resolution.identifier_namespace in namespaces
             ]
         )
+
+    def linked_documents(self, namespaces: list[str], only_published: bool = True) -> list["Document"]:
+        resolutions = self.linked_document_resolutions(namespaces=namespaces, only_published=only_published)
+        return [
+            Document(resolution.document_uri.as_document_uri(), api_client=self.api_client)
+            for resolution in resolutions
+        ]
