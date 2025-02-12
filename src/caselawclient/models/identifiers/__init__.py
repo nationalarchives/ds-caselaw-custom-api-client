@@ -4,6 +4,8 @@ from uuid import uuid4
 
 from lxml import etree
 
+from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
+
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
@@ -60,7 +62,7 @@ class IdentifierSchema(ABC):
 
     @classmethod
     @abstractmethod
-    def compile_identifier_url_slug(cls, value: str) -> str:
+    def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
         """Convert an identifier into a precompiled URL slug."""
         pass
 
@@ -71,7 +73,7 @@ class Identifier(ABC):
     schema: type[IdentifierSchema]
 
     uuid: str
-    value: str
+    value: DocumentIdentifierValue
 
     def __init_subclass__(cls: type["Identifier"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
@@ -87,7 +89,7 @@ class Identifier(ABC):
         return self.value
 
     def __init__(self, value: str, uuid: Optional[str] = None) -> None:
-        self.value = value
+        self.value = DocumentIdentifierValue(value)
         if uuid:
             self.uuid = uuid
         else:

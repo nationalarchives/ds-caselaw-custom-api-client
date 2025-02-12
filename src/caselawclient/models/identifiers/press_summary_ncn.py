@@ -1,3 +1,5 @@
+from caselawclient.types import DocumentIdentifierSlug
+
 from .neutral_citation import NeutralCitationNumber, NeutralCitationNumberSchema
 
 
@@ -12,8 +14,8 @@ class PressSummaryRelatedNCNIdentifierSchema(NeutralCitationNumberSchema):
     base_score_multiplier = 0.5
 
     @classmethod
-    def compile_identifier_url_slug(cls, value: str) -> str:
-        return super().compile_identifier_url_slug(value) + "/press-summary"
+    def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
+        return DocumentIdentifierSlug(super().compile_identifier_url_slug(value) + "/press-summary")
 
 
 class PressSummaryRelatedNCNIdentifier(NeutralCitationNumber):

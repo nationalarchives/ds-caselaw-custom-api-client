@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 
 from sqids import Sqids
 
+from caselawclient.types import DocumentIdentifierSlug
+
 from . import Identifier, IdentifierSchema
 
 if TYPE_CHECKING:
@@ -35,8 +37,8 @@ class FindCaseLawIdentifierSchema(IdentifierSchema):
         return bool(VALID_FCLID_PATTERN.match(value))
 
     @classmethod
-    def compile_identifier_url_slug(cls, value: str) -> str:
-        return "tna." + value
+    def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
+        return DocumentIdentifierSlug("tna." + value)
 
     @classmethod
     def mint(cls, api_client: "MarklogicApiClient") -> "FindCaseLawIdentifier":

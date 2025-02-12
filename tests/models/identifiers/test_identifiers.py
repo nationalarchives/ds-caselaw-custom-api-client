@@ -3,6 +3,7 @@ from lxml import etree
 
 from caselawclient.models.identifiers import Identifier, Identifiers, IdentifierSchema
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
+from caselawclient.types import DocumentIdentifierSlug
 
 
 class TestIdentifierSchema(IdentifierSchema):
@@ -14,8 +15,8 @@ class TestIdentifierSchema(IdentifierSchema):
     base_score_multiplier = 2.5
 
     @classmethod
-    def compile_identifier_url_slug(cls, value: str) -> str:
-        return value.lower()
+    def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
+        return DocumentIdentifierSlug(value.lower())
 
 
 class TestIdentifier(Identifier):
