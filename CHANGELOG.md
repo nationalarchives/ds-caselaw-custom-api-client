@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v31.2.0 (2025-02-12)
+
+### Feat
+
+- **Identifier**: update the types of outputs from value and slug
+
+### Fix
+
+- **deps**: update dependency lxml to v5.3.1
+
 ## v31.1.0 (2025-02-10)
 
 ### Feat
