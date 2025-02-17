@@ -242,14 +242,14 @@ pycparser = "*"
 
 [[package]]
 name = "cfn-lint"
-version = "1.23.1"
+version = "1.25.1"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "cfn_lint-1.23.1-py3-none-any.whl", hash = "sha256:6f89f557dea6484cd5bc1b32cef91e9898dd1d98f12d5b59a7f6baf9cf61b7ee"},
-    {file = "cfn_lint-1.23.1.tar.gz", hash = "sha256:2ee8722673414a3993921d87cc1893934d313b9b953da7a91442f81958d86644"},
+    {file = "cfn_lint-1.25.1-py3-none-any.whl", hash = "sha256:bbf6c2d95689da466dc427217ab7ed8f3a2a4a134df70876cc63e41aaad9385a"},
+    {file = "cfn_lint-1.25.1.tar.gz", hash = "sha256:717012566c6034ffa7e60fcf1b350804d093ee37589a1e91a1fd867f33a930b7"},
 ]
 
 [package.dependencies]
@@ -656,14 +656,14 @@ files = [
 
 [[package]]
 name = "joserfc"
-version = "1.0.2"
+version = "1.0.3"
 description = "The ultimate Python library for JOSE RFCs, including JWS, JWE, JWK, JWA, JWT"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "joserfc-1.0.2-py3-none-any.whl", hash = "sha256:8d3e0253b0b24aeaf049d7bf7a847040dd6462de24cefd0c14abfc8b353f9619"},
-    {file = "joserfc-1.0.2.tar.gz", hash = "sha256:f3c4efa35a62fc100097e4bec2584f5fd21b878eee3eb5324bc9b37d2969b2a4"},
+    {file = "joserfc-1.0.3-py3-none-any.whl", hash = "sha256:76c7efafb9b7bc635dd73e9e3819d393d952f042c24d6a98182759d39cbc743b"},
+    {file = "joserfc-1.0.3.tar.gz", hash = "sha256:bcbed6fdfeefb9dc3bcca827f7539c57b353d514fbddf6c722a1c35aea4eb499"},
 ]
 
 [package.dependencies]
