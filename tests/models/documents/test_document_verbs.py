@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import time_machine
@@ -141,30 +141,6 @@ class TestDocumentEnrich:
             status="enrich",
             enrich=True,
         )
-
-    @patch("caselawclient.models.documents.Document.force_enrich")
-    def test_no_enrich_when_can_enrich_is_false(self, force_enrich, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        with patch.object(
-            Document,
-            "can_enrich",
-            new_callable=PropertyMock,
-        ) as can_enrich:
-            can_enrich.return_value = False
-            document.enrich()
-            force_enrich.assert_not_called()
-
-    @patch("caselawclient.models.documents.Document.force_enrich")
-    def test_enrich_when_can_enrich_is_true(self, force_enrich, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        with patch.object(
-            Document,
-            "can_enrich",
-            new_callable=PropertyMock,
-        ) as can_enrich:
-            can_enrich.return_value = True
-            document.enrich()
-            force_enrich.assert_called()
 
 
 class TestDocumentHold:

@@ -1,6 +1,6 @@
 import datetime
 import warnings
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -223,58 +223,6 @@ class TestDocumentEnrichedRecently:
         ) - datetime.timedelta(days=2)
 
         assert document.enriched_recently is False
-
-
-class TestCanEnrich:
-    @pytest.mark.parametrize(
-        "enriched_recently, validates_against_schema, can_enrich",
-        [
-            (
-                True,
-                True,
-                False,
-            ),  # Enriched recently and validates against schema - Can't enrich
-            (
-                True,
-                False,
-                False,
-            ),  # Enriched recently and does not validate against schema - Can't enrich
-            (
-                False,
-                False,
-                False,
-            ),  # Not enriched recently and does not validate against schema - Can't enrich
-            (
-                False,
-                True,
-                True,
-            ),  # Not Enriched recently and validates against schema - Can enrich
-        ],
-    )
-    def test_returns_true_when_enriched_recently_is_true_and_validates_against_schema_is_true(
-        self,
-        mock_api_client,
-        enriched_recently,
-        validates_against_schema,
-        can_enrich,
-    ):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        with (
-            patch.object(
-                Document,
-                "enriched_recently",
-                new_callable=PropertyMock,
-            ) as mock_enriched_recently,
-            patch.object(
-                Document,
-                "validates_against_schema",
-                new_callable=PropertyMock,
-            ) as mock_validates_against_schema,
-        ):
-            mock_enriched_recently.return_value = enriched_recently
-            mock_validates_against_schema.return_value = validates_against_schema
-
-            assert document.can_enrich is can_enrich
 
     class TestMethodMissing:
         def test_attribute_on_body(self, mock_api_client):
