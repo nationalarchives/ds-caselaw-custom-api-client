@@ -357,7 +357,7 @@ class Document:
         """
         Is it sensible to enrich this document?
         """
-        return (self.enriched_recently is False) and self.validates_against_schema
+        return self.enriched_recently is False
 
     @cached_property
     def enriched_recently(self) -> bool:
