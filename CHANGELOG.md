@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Breaking Changes
 
+- Removed unneded `can_enrich` method from API
 - Stop validating xml against schema before attempting to trigger enrichment
 
 ### Changes
