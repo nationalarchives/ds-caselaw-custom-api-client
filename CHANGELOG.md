@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## v31.2.1 (2025-02-19)
+## v32.0.0 (2025-02-19)
 
-### Fix
+### Breaking Changes
 
 - Stop validating xml against schema before attempting to trigger enrichment
+
+### Changes
+
+- Add logging for enrich method for debugging
 
 ## v31.2.0 (2025-02-12)
 
