@@ -347,17 +347,12 @@ class Document:
         """
         Request enrichment of a document, if it's sensible to do so.
         """
-        if self.can_enrich:
+        if self.enriched_recently is False:
+            print("Enrichment requested")
             self.force_enrich()
             return True
+        print("Enrichment not requested as document was enriched recently")
         return False
-
-    @cached_property
-    def can_enrich(self) -> bool:
-        """
-        Is it sensible to enrich this document?
-        """
-        return (self.enriched_recently is False) and self.validates_against_schema
 
     @cached_property
     def enriched_recently(self) -> bool:
