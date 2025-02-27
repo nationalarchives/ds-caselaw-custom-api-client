@@ -1068,14 +1068,14 @@ class MarklogicApiClient:
         response = self._send_to_eval(vars, "get_properties_for_search_results.xqy")
         return get_single_string_from_marklogic_response(response)
 
-    def search_and_decode_response(self, search_parameters: SearchParameters) -> str:
+    def search_and_decode_response(self, search_parameters: SearchParameters) -> bytes:
         response = self.advanced_search(search_parameters)
-        return get_single_string_from_marklogic_response(response)
+        return get_single_bytestring_from_marklogic_response(response)
 
     def search_judgments_and_decode_response(
         self,
         search_parameters: SearchParameters,
-    ) -> str:
+    ) -> bytes:
         search_parameters.collections = [DOCUMENT_COLLECTION_URI_JUDGMENT]
         return self.search_and_decode_response(search_parameters)
 
