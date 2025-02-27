@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v33.0.0 (2025-02-19)
+
+### Breaking Changes
+
+- Stop validating xml against schema when attempting to update a locked judgment
+
 ## v32.0.0 (2025-02-19)
 
 ### Breaking Changes
