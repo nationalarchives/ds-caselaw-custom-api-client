@@ -55,7 +55,7 @@ def generate_search_response_xml_fixture() -> Callable:
         Callable: Function that generates search response XML.
     """
 
-    def _generate_search_response_xml(response_content: str, facets="") -> str:
+    def _generate_search_response_xml(response_content: str, facets="") -> bytes:
         """
         Generate a search response XML string.
 
@@ -70,7 +70,7 @@ def generate_search_response_xml_fixture() -> Callable:
             f"{response_content}"
             f"{facets}"
             "</search:response>"
-        )
+        ).encode("utf-8")
 
     return _generate_search_response_xml
 
@@ -102,12 +102,12 @@ def generate_mock_response_fixture() -> Callable:
         Callable: Function that generates a mock search response.
     """
 
-    def _generate_mock_response(search_response_xml: str) -> Mock:
+    def _generate_mock_response(search_response_xml: bytes) -> Mock:
         """
         Generate a mock search response.
 
         Args:
-            search_response_xml (str): Search response XML.
+            search_response_xml (bytes): Search response XML.
 
         Returns:
             Mock: Generated mock search response.
@@ -118,7 +118,7 @@ def generate_mock_response_fixture() -> Callable:
         mock_response.content = (
             b"\r\n--foo\r\n"
             b"Content-Type: application/xml\r\n"
-            b"X-Primitive: element()\r\nX-Path: /*:response\r\n\r\n" + search_response_xml.encode() + b"\r\n--foo--\r\n"
+            b"X-Primitive: element()\r\nX-Path: /*:response\r\n\r\n" + search_response_xml + b"\r\n--foo--\r\n"
         )
         return mock_response
 
