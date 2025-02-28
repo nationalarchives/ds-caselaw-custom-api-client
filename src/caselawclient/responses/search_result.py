@@ -179,6 +179,13 @@ class SearchResult:
         identifiers_etree = None if not identifiers_etrees else identifiers_etrees[0]
         return unpack_all_identifiers_from_etree(identifiers_etree)
 
+    @cached_property
+    def slug(self) -> str:
+        preferred = self.identifiers.preferred()
+        if not preferred:
+            raise RuntimeError("No preferred identifier for search result")
+        return str(preferred.url_slug)
+
     @property
     def neutral_citation(self) -> str:
         """

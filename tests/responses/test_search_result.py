@@ -183,6 +183,7 @@ class TestSearchResult:
         assert isinstance(identifiers, Identifiers)
         (identifier_1,) = identifiers.values()
         assert identifier_1.value == "[1901] UKSC 1"
+        assert search_result.slug == "uksc/1901/1"
 
     def test_identifiers_absent(self):
         """
@@ -202,6 +203,8 @@ class TestSearchResult:
         identifiers = search_result.identifiers
         assert isinstance(identifiers, Identifiers)
         assert not identifiers
+        with pytest.raises(RuntimeError):
+            search_result.slug
 
 
 class TestSearchResultMeta:
