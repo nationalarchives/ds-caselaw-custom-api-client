@@ -36,11 +36,9 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         experimental: [false]
         include:
-          - version: "3.13"
-            experimental: true
           - version: "3.14"
             experimental: true
 
@@ -65,11 +63,11 @@ jobs:
         run: poetry run coverage run -m pytest
 
       - name: Generate coverage XML
-        if: ${{ matrix.python-version == '3.12' }}
+        if: ${{ matrix.python-version == '3.13' }}
         run: poetry run coverage xml
 
       - name: Upload coverage to CodeClimate
         uses: paambaati/codeclimate-action@v9.0.0
-        if: ${{ matrix.python-version == '3.12' }}
+        if: ${{ matrix.python-version == '3.13' }}
         env:
           CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
