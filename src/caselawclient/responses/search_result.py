@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from enum import Enum
 from functools import cached_property
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from dateutil import parser as dateparser
 from dateutil.parser import ParserError
@@ -12,6 +12,8 @@ from ds_caselaw_utils.types import CourtCode, JurisdictionCode
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
 
@@ -170,6 +172,21 @@ class SearchResult:
         )
 
     @property
+    def identifiers(self) -> Identifiers:
+        identifiers_etrees = self._get_xpath("//identifiers")
+        if count := len(identifiers_etrees) != 1:
+            logging.warning(f"{count} //identifiers nodes found in search result, expected 1.")
+        identifiers_etree = None if not identifiers_etrees else identifiers_etrees[0]
+        return unpack_all_identifiers_from_etree(identifiers_etree)
+
+    @cached_property
+    def slug(self) -> str:
+        preferred = self.identifiers.preferred()
+        if not preferred:
+            raise RuntimeError("No preferred identifier for search result")
+        return str(preferred.url_slug)
+
+    @property
     def neutral_citation(self) -> str:
         """
         :return: The neutral citation of the search result, or the judgment it is a press summary of.
@@ -278,3 +295,6 @@ class SearchResult:
 
     def _get_xpath_match_string(self, path: str) -> str:
         return get_xpath_match_string(self.node, path, namespaces=self.NAMESPACES)
+
+    def _get_xpath(self, path: str) -> Any:
+        return self.node.xpath(path, namespaces=self.NAMESPACES)

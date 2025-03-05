@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **FCL-735**: inserting a new document requires an explicit document type collection
+- `SearchResults` now includes an `identifiers` property
 
 ### Fix
 
