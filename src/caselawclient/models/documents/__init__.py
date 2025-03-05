@@ -61,6 +61,8 @@ class Document:
     document_noun_plural = "documents"
     """ The noun for a plural of this document type. """
 
+    type_collection_name: str
+
     attributes_to_validate: list[tuple[str, bool, str]] = [
         (
             "is_failure",

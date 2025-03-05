@@ -133,6 +133,7 @@ class GetVersionCreatedDict(MarkLogicAPIDict):
 class InsertDocumentDict(MarkLogicAPIDict):
     annotation: str
     document: str
+    type_collection: str
     uri: MarkLogicDocumentURIString
 
 
