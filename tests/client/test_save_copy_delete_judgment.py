@@ -11,6 +11,7 @@ from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.judgments import Judgment
 
 
 class TestSaveCopyDeleteJudgment(unittest.TestCase):
@@ -130,6 +131,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             document_xml = ElementTree.fromstring(document_str)
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
+                "type_collection": "judgment",
                 "document": document_str,
                 "annotation": json.dumps(
                     {
@@ -143,9 +145,10 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 ),
             }
             self.client.insert_document_xml(
-                uri,
-                document_xml,
-                VersionAnnotation(
+                document_uri=uri,
+                document_xml=document_xml,
+                document_type=Judgment,
+                annotation=VersionAnnotation(
                     VersionType.SUBMISSION,
                     message="test_insert_document_xml",
                     automated=False,

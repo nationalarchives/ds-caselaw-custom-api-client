@@ -572,6 +572,7 @@ class MarklogicApiClient:
         self,
         document_uri: DocumentURIString,
         document_xml: Element,
+        document_type: type[Document],
         annotation: VersionAnnotation,
     ) -> requests.Response:
         """
@@ -579,6 +580,7 @@ class MarklogicApiClient:
 
         :param document_uri: The URI to insert the document at
         :param document_xml: The XML of the document to insert
+        :param document_type: The type class of the document
         :param annotation: Annotations to record alongside this version
 
         :return: The response object from MarkLogic
@@ -592,6 +594,7 @@ class MarklogicApiClient:
 
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
+            "type_collection": document_type.type_collection_name,
             "document": xml.decode("utf-8"),
             "annotation": annotation.as_json,
         }

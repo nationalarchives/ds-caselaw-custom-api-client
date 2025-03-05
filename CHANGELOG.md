@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- insert_document_xml() now requires a Document type class be provided
+
+### Feat
+
+- **FCL-735**: inserting a new document requires an explicit document type collection
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.37.3
+
 ## v33.0.0 (2025-02-19)
 
 ### Breaking Changes

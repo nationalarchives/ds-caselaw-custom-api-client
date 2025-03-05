@@ -2,7 +2,16 @@ import json
 from enum import Enum
 from typing import Any, Optional, TypedDict
 
+from lxml import etree
 from typing_extensions import NotRequired
+
+from ..models.documents import Document
+from ..models.judgments import Judgment
+from ..models.press_summaries import PressSummary
+
+
+class CannotDetermineDocumentType(Exception):
+    pass
 
 
 class AnnotationDataDict(TypedDict):
@@ -112,3 +121,22 @@ class VersionAnnotation:
 
     def __str__(self) -> str:
         return self.as_json
+
+
+def get_document_type_class(xml: bytes) -> type[Document]:
+    """Attempt to get the type of the document based on the XML root node."""
+
+    node = etree.fromstring(xml)
+
+    # If the document's root element is `judgment` it's a `Judgment`, regardless of the presence of a `name`.
+    if node.tag == "judgment":
+        return Judgment
+
+    # If the document's root element has a `name` attribute with a value of `pressSummary` we can assume it's a `PressSummary`
+    if node.tag == "doc" and node.attrib.get("name") == "pressSummary":
+        return PressSummary
+
+    # Otherwise, we don't know for sure. Fail out.
+    raise CannotDetermineDocumentType(
+        "Unable to accurately determine the type of document based on the root XML node.",
+    )
