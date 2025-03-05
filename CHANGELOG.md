@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- Python versions below 3.10 are no longer supported.
 - insert_document_xml() now requires a Document type class be provided
 
 ### Feat
