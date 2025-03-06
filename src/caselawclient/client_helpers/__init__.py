@@ -5,6 +5,8 @@ from typing import Any, Optional, TypedDict
 from lxml import etree
 from typing_extensions import NotRequired
 
+from caselawclient.xml_helpers import DEFAULT_NAMESPACES
+
 from ..models.documents import Document
 from ..models.judgments import Judgment
 from ..models.press_summaries import PressSummary
@@ -124,19 +126,23 @@ class VersionAnnotation:
 
 
 def get_document_type_class(xml: bytes) -> type[Document]:
-    """Attempt to get the type of the document based on the XML root node."""
+    """Attempt to get the type of the document based on the top-level structure of the XML document."""
 
     node = etree.fromstring(xml)
 
-    # If the document's root element is `judgment` it's a `Judgment`, regardless of the presence of a `name`.
-    if node.tag == "judgment":
+    # If the main node is `<judgment>`, it's a judgment
+    if node.xpath("/akn:akomaNtoso/akn:judgment", namespaces=DEFAULT_NAMESPACES):
         return Judgment
 
-    # If the document's root element has a `name` attribute with a value of `pressSummary` we can assume it's a `PressSummary`
-    if node.tag == "doc" and node.attrib.get("name") == "pressSummary":
+    # If the main node is `<doc name='pressSummary'>`, it's a press summary
+    if node.xpath("/akn:akomaNtoso/akn:doc[@name='pressSummary']", namespaces=DEFAULT_NAMESPACES):
         return PressSummary
+
+    # If the document is a parser error with a root element of `error`, it's not of a special type.
+    if node.xpath("/error", namespaces=DEFAULT_NAMESPACES):
+        return Document
 
     # Otherwise, we don't know for sure. Fail out.
     raise CannotDetermineDocumentType(
-        "Unable to accurately determine the type of document based on the root XML node.",
+        "Unable to determine the Document type by its XML",
     )
