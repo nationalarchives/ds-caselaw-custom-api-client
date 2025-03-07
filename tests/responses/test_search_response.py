@@ -15,6 +15,48 @@ class TestSearchResponse:
             user_agent="marklogic-api-client-test",
         )
 
+    def test_multi_identifier(self):
+        """
+        Ensure that if multiple search results exist, each gets the identifier for that result.
+        There was a bug where it would get the first result from anywhere in the document.
+        Some odd behaviour -- it determines the slug from the value, not the url_slug;
+        this is fine, because it's calculated the same way, but is counterintuitive.
+        """
+        search_response = SearchResponse(
+            etree.fromstring(
+                """
+                <search:response xmlns:search="http://marklogic.com/appservices/search" total="5">
+                <search:result xmlns:search="http://marklogic.com/appservices/search" uri="/uksc/2015/20.xml">
+                <search:extracted kind="identifiers">
+                <identifiers>
+                    <identifier>
+                        <namespace>ukncn</namespace>
+                        <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
+                        <value>[1901] UKSC 1</value>
+                        <url_slug>uksc/1901/1</url_slug>
+                    </identifier>
+                </identifiers>
+                </search:extracted>
+                </search:result>
+                <search:result xmlns:search="http://marklogic.com/appservices/search" uri="/uksc/2015/20.xml">
+                <search:extracted kind="identifiers">
+                <identifiers>
+                    <identifier>
+                        <namespace>ukncn</namespace>
+                        <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
+                        <value>[1901] UKSC 4444</value>
+                        <url_slug>uksc/1901/4444</url_slug>
+                    </identifier>
+                </identifiers>
+                </search:extracted>
+                </search:result>
+                "</search:response>"""
+            ),
+            self.client,
+        )
+        assert search_response.results[0].slug == "uksc/1901/1"
+        assert search_response.results[1].slug == "uksc/1901/4444"
+
     def test_total(
         self,
     ):
