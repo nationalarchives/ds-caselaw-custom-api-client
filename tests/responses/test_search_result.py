@@ -57,6 +57,10 @@ class TestSearchResult:
             assert search_result.transformation_date == "2023-04-09T18:05:45"
             assert etree.tostring(search_result.metadata.node).decode() == "<foo/>"
             assert search_result.metadata.last_modified == "bar"
+            assert (
+                str(search_result)
+                == "<SearchResult a/c/2015/20 **NO SLUG** Another made up case name 2017-08-08 00:00:00>"
+            )
 
     def test_create_from_node_with_unparsable_date(self):
         """
@@ -184,6 +188,7 @@ class TestSearchResult:
         (identifier_1,) = identifiers.values()
         assert identifier_1.value == "[1901] UKSC 1"
         assert search_result.slug == "uksc/1901/1"
+        assert str(search_result) == "<SearchResult a/c/2015/20 uksc/1901/1 **NO NAME** None>"
 
     def test_identifiers_absent(self):
         """
@@ -205,6 +210,7 @@ class TestSearchResult:
         assert not identifiers
         with pytest.raises(RuntimeError):
             search_result.slug
+        assert str(search_result) == "<SearchResult a/c/2015/20 **NO SLUG** **NO NAME** None>"
 
 
 class TestSearchResultMeta:

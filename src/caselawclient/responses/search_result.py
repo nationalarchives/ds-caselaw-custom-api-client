@@ -161,6 +161,14 @@ class SearchResult:
         self.node = node
         self.client = client
 
+    def __repr__(self) -> str:
+        try:
+            slug = self.slug
+        except RuntimeError:
+            slug = "**NO SLUG**"
+        name = self.name or "**NO NAME**"
+        return f"<SearchResult {self.uri} {slug} {name} {self.date}>"
+
     @property
     def uri(self) -> DocumentURIString:
         """
