@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v34.0.2 (2025-03-07)
+
+## Fix
+
+- Search results should return their own identifiers, not the first search result's
+
 ## v34.0.1 (2025-03-04)
 
 ## Fix
