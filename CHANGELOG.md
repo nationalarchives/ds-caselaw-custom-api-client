@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v34.1.0 (2025-03-13)
+
+### Feat
+
+- Add new `ParserLog` document class to handle proper storage of error logs
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.37.10
+- **deps**: update dependency boto3 to v1.37.8
+
 ## v34.0.2 (2025-03-07)
 
 ## Fix
