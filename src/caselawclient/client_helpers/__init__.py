@@ -9,6 +9,7 @@ from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 from ..models.documents import Document
 from ..models.judgments import Judgment
+from ..models.parser_logs import ParserLog
 from ..models.press_summaries import PressSummary
 
 
@@ -140,7 +141,7 @@ def get_document_type_class(xml: bytes) -> type[Document]:
 
     # If the document is a parser error with a root element of `error`, it's not of a special type.
     if node.xpath("/error", namespaces=DEFAULT_NAMESPACES):
-        return Document
+        return ParserLog
 
     # Otherwise, we don't know for sure. Fail out.
     raise CannotDetermineDocumentType(

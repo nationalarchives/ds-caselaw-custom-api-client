@@ -1,8 +1,8 @@
 from pytest import raises
 
 from caselawclient import client_helpers
-from caselawclient.models.documents import Document
 from caselawclient.models.judgments import Judgment
+from caselawclient.models.parser_logs import ParserLog
 from caselawclient.models.press_summaries import PressSummary
 
 
@@ -25,9 +25,9 @@ class TestGetDocumentTypeClass:
             == PressSummary
         )
 
-    def test_ingested_document_error(self):
-        """Check that parser logs with root tags of `<error>` are detected as plain `Document`s."""
-        client_helpers.get_document_type_class(b"<error/>") == Document
+    def test_ingested_document_parser_log(self):
+        """Check that parser logs with root tags of `<error>` are detected as `ParserLog`s."""
+        client_helpers.get_document_type_class(b"<error/>") == ParserLog
 
     def test_ingested_document_type_doc_without_press_summary_name(self):
         """ "Check that documents with a main tag of `<doc>` but no `name="pressSummary"` raise an exception."""
