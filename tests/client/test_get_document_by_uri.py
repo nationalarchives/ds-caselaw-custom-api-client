@@ -1,15 +1,12 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-import pytest
-
 from caselawclient.Client import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
-    DocumentHasNoTypeCollection,
     MarklogicApiClient,
 )
-from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.documents import Document, DocumentURIString
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 
@@ -80,5 +77,4 @@ class TestGetDocumentTypeFromUri(TestCase):
     ):
         mock_get_marklogic_response.return_value = []
 
-        with pytest.raises(DocumentHasNoTypeCollection):
-            self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234"))
+        self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234")) == Document

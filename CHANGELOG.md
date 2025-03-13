@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unpublished
+
+## Fix
+
+- Allow XML documents to be read as Documents even if they don't have a collection
+
 ## v34.1.0 (2025-03-13)
 
 ### Feat

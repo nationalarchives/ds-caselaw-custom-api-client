@@ -77,12 +77,6 @@ class MultipartResponseLongerThanExpected(Exception):
     """
 
 
-class DocumentHasNoTypeCollection(Exception):
-    """
-    A MarkLogic document is not part of a collection which identifies its document type.
-    """
-
-
 def get_multipart_strings_from_marklogic_response(
     response: requests.Response,
 ) -> list[str]:
@@ -239,9 +233,7 @@ class MarklogicApiClient:
             return Judgment
         if DOCUMENT_COLLECTION_URI_PRESS_SUMMARY in collections:
             return PressSummary
-        raise DocumentHasNoTypeCollection(
-            f"The document at URI {uri} is not part of a valid document type collection.",
-        )
+        return Document
 
     def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
         """
