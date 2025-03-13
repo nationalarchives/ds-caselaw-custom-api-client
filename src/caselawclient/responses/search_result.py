@@ -182,7 +182,8 @@ class SearchResult:
     @property
     def identifiers(self) -> Identifiers:
         identifiers_etrees = self._get_xpath(".//identifiers")
-        if count := len(identifiers_etrees) != 1:
+        count = len(identifiers_etrees)
+        if count != 1:
             logging.warning(f"{count} //identifiers nodes found in search result, expected 1.")
         identifiers_etree = None if not identifiers_etrees else identifiers_etrees[0]
         return unpack_all_identifiers_from_etree(identifiers_etree)
