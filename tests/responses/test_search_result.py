@@ -212,6 +212,48 @@ class TestSearchResult:
             search_result.slug
         assert str(search_result) == "<SearchResult a/c/2015/20 **NO SLUG** **NO NAME** None>"
 
+    @patch("logging.warning")
+    def test_has_many_identifiers(self, logging_warning):
+        """
+        GIVEN an XML node with multiple identifiers
+        WHEN creating a SearchResult object from the node
+        THEN a warning is raised
+        AND the identifiers are extracted for the first node
+        """
+        xml = """
+        <search:result xmlns:search="http://marklogic.com/appservices/search" index="2" uri="/a/c/2015/20.xml">
+            <search:extracted kind="element">
+                <uk:court xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">UKFTT-GRC</uk:court>
+                <uk:jurisdiction xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">DoesntExist</uk:jurisdiction>
+            </search:extracted>
+            <search:extracted kind="identifiers">
+                <identifiers>
+                    <identifier>
+                        <namespace>ukncn</namespace>
+                        <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
+                        <value>[1901] UKSC 1</value>
+                        <url_slug>uksc/1901/1</url_slug>
+                    </identifier>
+                </identifiers>
+                <identifiers>
+                    <identifier>
+                        <namespace>ukncn</namespace>
+                        <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
+                        <value>[1901] UKSC 2</value>
+                        <url_slug>uksc/1901/2</url_slug>
+                    </identifier>
+                </identifiers>
+            </search:extracted>
+        </search:result>"""
+        node = etree.fromstring(xml)
+        search_result = SearchResult(node, self.client)
+        identifiers = search_result.identifiers
+        assert isinstance(identifiers, Identifiers)
+        (identifier_1,) = identifiers.values()
+        assert identifier_1.value == "[1901] UKSC 1"
+        assert search_result.slug == "uksc/1901/1"
+        logging_warning.assert_called_with("2 //identifiers nodes found in search result, expected 1.")
+
 
 class TestSearchResultMeta:
     def test_init(self):
