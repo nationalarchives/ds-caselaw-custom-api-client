@@ -74,3 +74,8 @@ repos:
           - pre-push
     repo: https://github.com/commitizen-tools/commitizen
     rev: v4.4.1
+
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.5.1
+    hooks:
+      - id: zizmor
