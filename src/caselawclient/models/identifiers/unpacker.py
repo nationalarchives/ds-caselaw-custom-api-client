@@ -6,10 +6,12 @@ from lxml import etree
 from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, Identifiers, InvalidIdentifierXMLRepresentationException
 from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
+from .press_summary_ncn import PressSummaryRelatedNCNIdentifier
 
 IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
     "fclid": FindCaseLawIdentifier,
     "ukncn": NeutralCitationNumber,
+    "uksummaryofncn": PressSummaryRelatedNCNIdentifier,
 }
 
 
