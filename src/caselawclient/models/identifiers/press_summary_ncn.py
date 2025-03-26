@@ -19,4 +19,4 @@ class PressSummaryRelatedNCNIdentifierSchema(NeutralCitationNumberSchema):
 
 
 class PressSummaryRelatedNCNIdentifier(NeutralCitationNumber):
-    schema = NeutralCitationNumberSchema
+    schema = PressSummaryRelatedNCNIdentifierSchema
