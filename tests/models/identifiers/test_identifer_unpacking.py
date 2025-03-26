@@ -5,7 +5,18 @@ from lxml import etree
 from test_identifiers import TestIdentifier
 
 from caselawclient.models.identifiers import Identifiers
-from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree, unpack_an_identifier_from_etree
+from caselawclient.models.identifiers.unpacker import (
+    IDENTIFIER_NAMESPACE_MAP,
+    unpack_all_identifiers_from_etree,
+    unpack_an_identifier_from_etree,
+)
+
+
+class TestIdentifierNamespaceMapping:
+    def test_identifier_consistency_in_namespace_map(self):
+        """Sense-check that identifiers in the namespace map actually match those in the identifier class."""
+        for namespace, identifier in IDENTIFIER_NAMESPACE_MAP.items():
+            assert namespace == identifier.schema.namespace
 
 
 class TestIdentifierUnpacking(unittest.TestCase):
