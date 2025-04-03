@@ -47,17 +47,9 @@ def create_aws_client(service: Literal["sns"]) -> SNSClient: ...
 
 
 def create_aws_client(service: Literal["s3", "sns"]) -> Any:
-    if env("AWS_ACCESS_KEY_ID", None):
-        aws = boto3.session.Session(
-            aws_access_key_id=env("AWS_ACCESS_KEY_ID", default=None),
-            aws_secret_access_key=env("AWS_SECRET_KEY", default=None),
-        )
-    else:
-        aws = boto3.session.Session()
+    aws = boto3.session.Session()
     return aws.client(
         service,
-        endpoint_url=env("AWS_ENDPOINT_URL", default=None),
-        region_name=env("PRIVATE_ASSET_BUCKET_REGION", default=None),
         config=botocore.client.Config(signature_version="s3v4"),
     )
 
