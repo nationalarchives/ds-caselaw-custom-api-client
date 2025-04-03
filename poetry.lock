@@ -1115,21 +1115,21 @@ files = [
 
 [[package]]
 name = "moto"
-version = "5.1.1"
+version = "5.1.2"
 description = "A library that allows you to easily mock out tests based on AWS infrastructure"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "moto-5.1.1-py3-none-any.whl", hash = "sha256:615904d6210431950a59a2bdec365d60e791eacbe3dd07a3a5d742c88ef847dd"},
-    {file = "moto-5.1.1.tar.gz", hash = "sha256:5b25dbc62cccd9f36ef062c870db49d976b241129024fab049e2d3d1296e2a57"},
+    {file = "moto-5.1.2-py3-none-any.whl", hash = "sha256:3789084bb20052b6eb846fe6f4831ce6dfe8a3b197c8f63789b40281b5e1731d"},
+    {file = "moto-5.1.2.tar.gz", hash = "sha256:0e4c650d31eacfbe726c37e956efa04d36948e23f7d3228a7c3746aa839e66c2"},
 ]
 
 [package.dependencies]
 antlr4-python3-runtime = {version = "*", optional = true, markers = "extra == \"all\""}
 aws-xray-sdk = {version = ">=0.93,<0.96 || >0.96", optional = true, markers = "extra == \"all\""}
 boto3 = ">=1.9.201"
-botocore = ">=1.14.0,<1.35.45 || >1.35.45,<1.35.46 || >1.35.46"
+botocore = ">=1.20.88,<1.35.45 || >1.35.45,<1.35.46 || >1.35.46"
 cfn-lint = {version = ">=0.40.0", optional = true, markers = "extra == \"all\""}
 cryptography = ">=35.0.0"
 docker = {version = ">=3.0.0", optional = true, markers = "extra == \"all\""}
@@ -2482,4 +2482,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10.0"
-content-hash = "f102f3dde911b4eef5b934fb9f97ae33a43046be0b15b8ddf8a16deefa3f0d13"
+content-hash = "fb8d1e625ce71539b4d609d5afe71010fce0c33c700bb17b9b3b60ed974621f8"
