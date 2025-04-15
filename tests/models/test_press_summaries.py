@@ -3,19 +3,28 @@ from unittest.mock import patch
 import pytest
 
 from caselawclient.errors import DocumentNotFoundError
-from caselawclient.factories import JudgmentFactory
+from caselawclient.factories import JudgmentFactory, PressSummaryFactory
 from caselawclient.models.documents import DocumentURIString
-from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
+from caselawclient.models.identifiers.press_summary_ncn import PressSummaryRelatedNCNIdentifier
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.press_summaries import PressSummary
 
 
 class TestPressSummary:
     def test_best_identifier(self, mock_api_client):
-        summary = PressSummary(DocumentURIString("test/1234"), mock_api_client)
-        document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
-        summary.identifiers.add(document_ncn)
-        assert summary.best_human_identifier == document_ncn
+        summary = PressSummaryFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
+        related_document_ncn = PressSummaryRelatedNCNIdentifier(value="[2023] TEST 1234")
+        summary.identifiers.add(related_document_ncn)
+        assert summary.best_human_identifier == related_document_ncn
+        assert summary.best_human_identifier.value == "[2023] TEST 1234"
+
+    def test_best_identifier_without_ncn(self, mock_api_client):
+        summary = PressSummaryFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
+        assert summary.best_human_identifier is None
+
+        preferred_identifier = summary.identifiers.preferred()
+        assert preferred_identifier
+        assert preferred_identifier.value == "a1b2c3"
 
 
 class TestPressSummaryValidation:

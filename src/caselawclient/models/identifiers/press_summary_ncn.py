@@ -11,7 +11,7 @@ class PressSummaryRelatedNCNIdentifierSchema(NeutralCitationNumberSchema):
     name = "Press Summary relates to NCN"
     namespace = "uksummaryofncn"
     human_readable = True
-    base_score_multiplier = 0.5
+    base_score_multiplier = 0.8
 
     @classmethod
     def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:

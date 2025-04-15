@@ -30,7 +30,7 @@ class FindCaseLawIdentifierSchema(IdentifierSchema):
     name = "Find Case Law Identifier"
     namespace = "fclid"
     human_readable = False
-    base_score_multiplier = 0.8
+    base_score_multiplier = 0.6
 
     @classmethod
     def validate_identifier(cls, value: str) -> bool:

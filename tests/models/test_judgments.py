@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from caselawclient.errors import DocumentNotFoundError
-from caselawclient.factories import PressSummaryFactory
+from caselawclient.factories import JudgmentFactory, PressSummaryFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.judgments import Judgment
@@ -11,11 +11,20 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 
 
 class TestJudgment:
-    def test_best_identifier(self, mock_api_client):
-        judgment = Judgment(DocumentURIString("test/1234"), mock_api_client)
+    def test_best_identifier_with_ncn(self, mock_api_client):
+        judgment = JudgmentFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
         document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
         judgment.identifiers.add(document_ncn)
         assert judgment.best_human_identifier == document_ncn
+        assert judgment.best_human_identifier.value == "[2023] TEST 1234"
+
+    def test_best_identifier_without_ncn(self, mock_api_client):
+        judgment = JudgmentFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
+        assert judgment.best_human_identifier is None
+
+        preferred_identifier = judgment.identifiers.preferred()
+        assert preferred_identifier
+        assert preferred_identifier.value == "a1b2c3"
 
 
 class TestJudgmentValidation:
