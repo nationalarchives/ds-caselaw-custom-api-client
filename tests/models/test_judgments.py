@@ -16,6 +16,7 @@ class TestJudgment:
         document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
         judgment.identifiers.add(document_ncn)
         assert judgment.best_human_identifier == document_ncn
+        assert judgment.best_human_identifier.value == "[2023] TEST 1234"
 
 
 class TestJudgmentValidation:
