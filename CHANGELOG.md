@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **identifiers**: swap priorities of FCLID and PressSummaryRelatedNCNIdentifier
+
 ## v35.0.0 (2025-04-03)
 
 - Remove explicit environment variables to configure AWS; rely on magic ones
