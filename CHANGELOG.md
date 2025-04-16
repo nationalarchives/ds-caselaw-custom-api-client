@@ -4,11 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v35.1.0 (2025-04-16)
 
 ### Feat
 
 - **identifiers**: swap priorities of FCLID and PressSummaryRelatedNCNIdentifier
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.37.34
+- **deps**: update dependency lxml to v5.3.2
+- **deps**: update dependency boto3 to v1.37.31
+- **deps**: update dependency typing-extensions to v4.13.2
 
 ## v35.0.0 (2025-04-03)
 
