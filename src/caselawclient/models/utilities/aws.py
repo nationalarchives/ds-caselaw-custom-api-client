@@ -50,6 +50,7 @@ def create_aws_client(service: Literal["s3", "sns"]) -> Any:
     aws = boto3.session.Session()
     return aws.client(
         service,
+        region_name=env("PRIVATE_ASSET_BUCKET_REGION", default=None),
         config=botocore.client.Config(signature_version="s3v4"),
     )
 
