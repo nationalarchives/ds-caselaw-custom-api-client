@@ -85,7 +85,7 @@ class DocumentFactory:
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         if identifiers is None:
-            document.identifiers.add(FindCaseLawIdentifier(value="a1b2c3"))
+            document.identifiers.add(FindCaseLawIdentifier(value="tn4t35ts"))
         else:
             for identifier in identifiers:
                 document.identifiers.add(identifier)

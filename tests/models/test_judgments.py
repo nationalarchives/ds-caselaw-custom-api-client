@@ -24,7 +24,7 @@ class TestJudgment:
 
         preferred_identifier = judgment.identifiers.preferred()
         assert preferred_identifier
-        assert preferred_identifier.value == "a1b2c3"
+        assert preferred_identifier.value == "tn4t35ts"
 
 
 class TestJudgmentValidation:
