@@ -3,7 +3,8 @@ from warnings import warn
 
 from lxml import etree
 
-from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, Identifiers, InvalidIdentifierXMLRepresentationException
+from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, Identifiers
+from .exceptions import InvalidIdentifierXMLRepresentationException
 from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
 from .press_summary_ncn import PressSummaryRelatedNCNIdentifier

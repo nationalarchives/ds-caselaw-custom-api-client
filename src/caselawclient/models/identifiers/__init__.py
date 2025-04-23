@@ -6,6 +6,8 @@ from lxml import etree
 
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
 
+from .exceptions import IdentifierValidationException, UUIDMismatchError
+
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
@@ -16,14 +18,6 @@ IDENTIFIER_UNPACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
 ]
-
-
-class InvalidIdentifierXMLRepresentationException(Exception):
-    pass
-
-
-class UUIDMismatchError(Exception):
-    pass
 
 
 class IdentifierSchema(ABC):
@@ -89,6 +83,11 @@ class Identifier(ABC):
         return self.value
 
     def __init__(self, value: str, uuid: Optional[str] = None) -> None:
+        if not self.schema.validate_identifier(value=value):
+            raise IdentifierValidationException(
+                f'Identifier value "{value}" is not valid according to the {self.schema.name} schema.'
+            )
+
         self.value = DocumentIdentifierValue(value)
         if uuid:
             self.uuid = uuid

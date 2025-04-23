@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Identifiers**: run identifier validation methods on init
+
+### Fix
+
+- **deps**: update dependency ds-caselaw-utils to v2.4.3
+- **deps**: update dependency ds-caselaw-utils to v2.4.2
+- **deps**: update dependency ds-caselaw-utils to v2.4.1
+- **deps**: update dependency boto3 to v1.37.35
+
 ## v35.1.1 (2025-04-17)
 
 ### Fix

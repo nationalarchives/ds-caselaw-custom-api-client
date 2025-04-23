@@ -95,12 +95,12 @@ class TestDocumentPublish:
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_publishable = True
-        document.identifiers.add(FindCaseLawIdentifier(value="abcd1234"))
+        document.identifiers.add(FindCaseLawIdentifier(value="tn4t35ts"))
         mock_api_client.get_next_document_sequence_number.return_value = 123
         document.publish()
 
         assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
-        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "abcd1234"
+        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "tn4t35ts"
 
 
 class TestDocumentUnpublish:
