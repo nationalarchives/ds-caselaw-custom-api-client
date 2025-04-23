@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- `NeutralCitationNumber`s must now be valid in all conditions, including under test.
+
 ### Feat
 
+- **NeutralCitationNumber**: validating an NCN now checks it can be converted to a URL
 - **Identifiers**: run identifier validation methods on init
 
 ### Fix

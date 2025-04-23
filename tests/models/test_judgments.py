@@ -13,10 +13,10 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 class TestJudgment:
     def test_best_identifier_with_ncn(self, mock_api_client):
         judgment = JudgmentFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
-        document_ncn = NeutralCitationNumber(value="[2023] TEST 1234")
+        document_ncn = NeutralCitationNumber(value="[2023] UKSC 1234")
         judgment.identifiers.add(document_ncn)
         assert judgment.best_human_identifier == document_ncn
-        assert judgment.best_human_identifier.value == "[2023] TEST 1234"
+        assert judgment.best_human_identifier.value == "[2023] UKSC 1234"
 
     def test_best_identifier_without_ncn(self, mock_api_client):
         judgment = JudgmentFactory.build(uri=DocumentURIString("test/1234"), api_client=mock_api_client)
