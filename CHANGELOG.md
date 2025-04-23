@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- An identifier's document_published is natively boolean from MarkLogic, treat it as such
 - `NeutralCitationNumber`s must now be valid in all conditions, including under test.
 
 ### Feat

@@ -45,7 +45,7 @@ class IdentifierResolution(NamedTuple):
             identifier_uuid=row["documents.compiled_url_slugs.identifier_uuid"],
             document_uri=MarkLogicDocumentURIString(row["documents.compiled_url_slugs.document_uri"]),
             identifier_slug=DocumentIdentifierSlug(row["documents.compiled_url_slugs.identifier_slug"]),
-            document_published=row["documents.compiled_url_slugs.document_published"] == "true",
+            document_published=row["documents.compiled_url_slugs.document_published"],
             identifier_value=DocumentIdentifierValue(row["documents.compiled_url_slugs.identifier_value"]),
             identifier_namespace=identifier_namespace,
             identifier_type=IDENTIFIER_NAMESPACE_MAP[identifier_namespace],
