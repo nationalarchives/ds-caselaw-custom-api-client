@@ -173,7 +173,7 @@ class IdentifierResolutionFactory:
             "documents.compiled_url_slugs.identifier_uuid": resolution_uuid or "24b9a384-8bcf-4f20-996a-5c318f8dc657",
             "documents.compiled_url_slugs.document_uri": document_uri or "/ewca/civ/2003/547.xml",
             "documents.compiled_url_slugs.identifier_slug": identifier_slug or "ewca/civ/2003/54721",
-            "documents.compiled_url_slugs.document_published": "true" if published else "false",
+            "documents.compiled_url_slugs.document_published": published,
             "documents.compiled_url_slugs.identifier_namespace": namespace or "ukncn",
             "documents.compiled_url_slugs.identifier_value": value or "[2003] EWCA 54721 (Civ)",
         }
