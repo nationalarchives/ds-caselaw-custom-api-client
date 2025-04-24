@@ -1,6 +1,10 @@
 import pytest
 
 from caselawclient.models.identifiers import neutral_citation
+from caselawclient.models.identifiers.neutral_citation import (
+    NCNCannotConvertToValidURLSlugException,
+    NCNDoesNotMatchExpectedPatternException,
+)
 
 
 class TestNeutralCitationSchemaImplementation:
@@ -49,9 +53,22 @@ class TestNeutralCitationSchemaImplementation:
             "[2022] EWCA Crim Civ 123",
         ],
     )
-    def test_ncn_schema_validation_fails(self, value):
+    def test_ncn_schema_validation_fails_at_pattern(self, value):
         schema = neutral_citation.NeutralCitationNumberSchema
-        assert schema.validate_identifier(value) is False
+        with pytest.raises(NCNDoesNotMatchExpectedPatternException):
+            schema.validate_identifier(value)
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "[2245] NCC 1701",  # Not a real court code
+            "[2025] UKFTT 1",  # Missing jurisdiction code
+        ],
+    )
+    def test_ncn_schema_validation_fails_at_url_slug(self, value):
+        schema = neutral_citation.NeutralCitationNumberSchema
+        with pytest.raises(NCNCannotConvertToValidURLSlugException):
+            schema.validate_identifier(value)
 
     @pytest.mark.parametrize(
         ("value", "slug"),
