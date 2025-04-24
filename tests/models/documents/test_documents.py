@@ -292,7 +292,7 @@ class TestLinkedDocumentResolutions:
         mock_api_client.resolve_from_identifier_value.return_value = resolutions
         doc = JudgmentFactory.build(neutral_citation="[2003] UKSC 1", uri=DocumentURIString("thisone"))
         doc.api_client = mock_api_client
-        resolutions = doc.linked_document_resolutions(["ukncn"])
+        resolutions = doc.linked_document_resolutions(["ukncn"], only_published=True)
         match_uuids = [x.identifier_uuid for x in resolutions]
         assert match_uuids == ["okay-pub", "okay-multi"]
 

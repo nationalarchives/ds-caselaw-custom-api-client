@@ -6,7 +6,7 @@ raw_marklogic_resolutions = [
                                  {"documents.compiled_url_slugs.identifier_uuid":"id-24b9a384-8bcf-4f20-996a-5c318f8dc657",
                                   "documents.compiled_url_slugs.document_uri":"/ewca/civ/2003/547.xml",
                                   "documents.compiled_url_slugs.identifier_slug":"ewca/civ/2003/54721",
-                                  "documents.compiled_url_slugs.document_published":"false",
+                                  "documents.compiled_url_slugs.document_published": false,
                                   "documents.compiled_url_slugs.identifier_namespace":"ukncn",
                                   "documents.compiled_url_slugs.identifier_value":"[2003] EWCA 54721 (Civ)"
                                   }
@@ -15,7 +15,7 @@ raw_marklogic_resolutions = [
                                  {"documents.compiled_url_slugs.identifier_uuid":"id-04026b8d-3b34-4603-86cd-da145ce6ec26",
                                   "documents.compiled_url_slugs.document_uri":"/uksc/2025/123.xml",
                                   "documents.compiled_url_slugs.identifier_slug":"uksc/2025/123",
-                                  "documents.compiled_url_slugs.document_published":"true",
+                                  "documents.compiled_url_slugs.document_published": true,
                                   "documents.compiled_url_slugs.identifier_namespace":"ukncn",
                                   "documents.compiled_url_slugs.identifier_value":"[2025] UKSC 123"
                                   }
