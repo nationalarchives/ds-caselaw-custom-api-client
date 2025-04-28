@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v36.0.0 (2025-04-28)
 
 ### BREAKING CHANGE
 
@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **deps**: update dependency certifi to >=2025.4.26,<2025.5.0
+- **deps**: update dependency boto3 to v1.38.2
+- **deps**: update dependency boto3 to v1.37.38
 - **deps**: update dependency ds-caselaw-utils to v2.4.3
 - **deps**: update dependency ds-caselaw-utils to v2.4.2
 - **deps**: update dependency ds-caselaw-utils to v2.4.1
