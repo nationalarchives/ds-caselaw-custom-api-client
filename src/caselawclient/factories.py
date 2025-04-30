@@ -146,15 +146,18 @@ class SearchResultMetadataFactory(SimpleFactory):
 class SearchResultFactory(SimpleFactory):
     target_class = SearchResult
 
-    # "name_of_attribute": ("name of incoming param", "default value")
     PARAMS_MAP = {
-        "uri": "test/2023/123",
+        "uri": "d-a1b2c3",
         "name": "Judgment v Judgement",
-        "neutral_citation": "[2023] Test 123",
+        "neutral_citation": "[2025] UKSC 123",
         "court": "Court of Testing",
-        "date": datetime.date(2023, 2, 3),
+        "date": datetime.datetime(2023, 2, 3),
+        "transformation_date": str(datetime.datetime(2023, 2, 3, 12, 34)),
         "metadata": SearchResultMetadataFactory.build(),
         "is_failure": False,
+        "matches": None,
+        "slug": "uksc/2025/1",
+        "content_hash": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
     }
 
 
