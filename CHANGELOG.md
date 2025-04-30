@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v36.0.1 (2025-04-30)
+
+### Feat
+
+- **SearchResultFactory**: now closer matches a real `SearchResult` so it's more useful downstream
+
 ## v36.0.0 (2025-04-28)
 
 ### BREAKING CHANGE
