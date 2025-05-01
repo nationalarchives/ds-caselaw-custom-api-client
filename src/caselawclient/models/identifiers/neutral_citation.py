@@ -8,7 +8,7 @@ from caselawclient.types import DocumentIdentifierSlug
 from . import Identifier, IdentifierSchema
 from .exceptions import IdentifierValidationException
 
-VALID_NCN_PATTERN = re.compile(r"(^\[([0-9]{4})\] ([a-zA-Z]+)(?: ([a-zA-Z]+))? ([0-9]+)(?: \(([a-zA-Z]+)\))?$)")
+VALID_NCN_PATTERN = re.compile(r"(^\[([0-9]{4})\] ([a-zA-Z]+)(?: ([a-zA-Z]+))? ([0-9]+)(?: \(([a-zA-Z0-9]+)\))?$)")
 """
 This is a catch-all pattern for anything which looks like a Neutral Citation, even if the court itself isn't valid. Checking that an NCN is plausibly correct is handled elsewhere.
 
