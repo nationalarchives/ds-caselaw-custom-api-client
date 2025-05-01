@@ -34,6 +34,7 @@ class TestNeutralCitationSchemaImplementation:
             "[2022] UKFTT 1 (TC)",
             "[2022] UKFTT 1 (GRC)",
             "[2022] EWHC 1 (KB)",
+            "[2025] EWCOP 12 (T3)",
         ],
     )
     def test_ncn_schema_validation_passes(self, value):
