@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v37.0.0 (2025-05-02)
 
 ### BREAKING CHANGE
 
