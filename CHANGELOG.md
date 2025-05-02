@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- content_as_html renamed to content_html to fix assets not rendering
+  - signature changed, now takes full prefix to folder containing assets
+  - location of assets now mandatory
+
 ## v36.0.2 (2025-05-01)
 
 ### Fix

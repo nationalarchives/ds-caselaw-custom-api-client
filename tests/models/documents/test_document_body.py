@@ -277,7 +277,7 @@ class TestDocumentBody:
         assert body.get_latest_manifestation_datetime() is None
         assert body.get_manifestation_datetimes("any") == []
 
-    def test_content_as_html_for_standard_judgment(self):
+    def test_content_html_for_standard_judgment(self):
         """Run our HTML XSLT on a judgment to make sure it's formatting as we expect."""
 
         with open(
@@ -292,7 +292,7 @@ class TestDocumentBody:
             prettified_target_html = BeautifulSoup(target_html, features="html.parser").prettify()
 
         body = DocumentBody(xml_document.encode())
-        transformed_html = body.content_as_html(image_base_url="https://test.caselaw.nationalarchives.gov.uk/")
+        transformed_html = body.content_html("https://test.caselaw.nationalarchives.gov.uk/d-a1b2c3")
         assert transformed_html
         prettified_transformed_html = BeautifulSoup(transformed_html, features="html.parser").prettify()
 
