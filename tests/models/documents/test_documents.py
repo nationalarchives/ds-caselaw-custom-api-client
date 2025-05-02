@@ -1,6 +1,7 @@
 import datetime
+import os
 import warnings
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -299,3 +300,13 @@ class TestLinkedDocumentResolutions:
         resolutions_unpub = doc.linked_document_resolutions(["ukncn"], only_published=False)
         unpub_uuids = [x.identifier_uuid for x in resolutions_unpub]
         assert unpub_uuids == ["okay-pub", "okay-multi", "maybe-unpub"]
+
+    @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
+    class TestDocumentContentAsHtml:
+        def test_document_content_as_html_calls_with_uri(self):
+            doc = DocumentFactory.build(
+                uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname")
+            )
+            doc.body.content_html = Mock()
+            doc.content_as_html()
+            doc.body.content_html.assert_called_with("imagepath/test/1234")

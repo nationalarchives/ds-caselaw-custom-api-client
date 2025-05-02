@@ -1,4 +1,5 @@
 import datetime
+import os
 import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
@@ -529,3 +530,7 @@ class Document:
             Document(resolution.document_uri.as_document_uri(), api_client=self.api_client)
             for resolution in resolutions
         ]
+
+    def content_as_html(self) -> str | None:
+        xlst_image_location = os.getenv("XSLT_IMAGE_LOCATION", "")
+        return self.body.content_html(f"{xlst_image_location}/{self.uri}")
