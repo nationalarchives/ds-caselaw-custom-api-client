@@ -137,8 +137,11 @@ class DocumentBody:
         return False
 
     @cache
-    def content_as_html(self, image_base_url: Optional[str] = None) -> Optional[str]:
+    def content_html(self, image_prefix: str) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
+        """This used to be called content_as_html but we have changed the parameter passed to it from the
+        domain of the assets to the path in which the assets are stored (from assets to assets/d-a1b2c3)
+        and made the image_prefix mandatory"""
         if not self.has_content:
             return None
 
@@ -150,8 +153,8 @@ class DocumentBody:
 
             executable = xslt_processor.compile_stylesheet(stylesheet_file=html_xslt_location)
 
-            if image_base_url:
-                executable.set_parameter("image-base", proc.make_string_value(image_base_url))
+            if image_prefix:
+                executable.set_parameter("image-prefix", proc.make_string_value(image_prefix))
 
             return str(executable.transform_to_string(xdm_node=document))
 

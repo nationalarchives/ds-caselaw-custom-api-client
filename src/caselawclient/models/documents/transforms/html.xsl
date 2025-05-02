@@ -13,7 +13,7 @@
 <xsl:strip-space elements="*" />
 <xsl:preserve-space elements="p block num heading span a courtType date docDate docTitle docketNumber judge lawyer location neutralCitation party role time" />
 
-<xsl:param name="image-base" as="xs:string" select="'https://assets.caselaw.nationalarchives.gov.uk/'" />
+<xsl:param name="image-prefix" as="xs:string" />
 
 <xsl:function name="uk:link-is-supported" as="xs:boolean">
 	<xsl:param name="href" as="attribute()?" />
@@ -741,7 +741,7 @@
 </xsl:template>
 <xsl:template match="img/@src">
 	<xsl:attribute name="src">
-		<xsl:sequence select="concat($image-base, $doc-id, '/', .)" />
+		<xsl:sequence select="concat($image-prefix, '/', .)" />
 	</xsl:attribute>
 </xsl:template>
 
