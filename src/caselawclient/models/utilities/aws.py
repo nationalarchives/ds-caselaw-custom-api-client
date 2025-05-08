@@ -74,7 +74,10 @@ def generate_signed_asset_url(key: str) -> str:
     bucket = env("PRIVATE_ASSET_BUCKET", None)
     if not bucket:
         return ""
+    return generate_signed_url(key=key, bucket=bucket)
 
+
+def generate_signed_url(key: str, bucket: None | str) -> str:
     client = create_s3_client()
 
     return str(
