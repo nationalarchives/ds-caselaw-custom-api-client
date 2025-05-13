@@ -151,7 +151,7 @@ class SearchResultFactory(SimpleFactory):
         "name": "Judgment v Judgement",
         "neutral_citation": "[2025] UKSC 123",
         "court": "Court of Testing",
-        "date": datetime.datetime(2023, 2, 3).isoformat(),
+        "date": datetime.datetime(2023, 2, 3),
         "transformation_date": datetime.datetime(2023, 2, 3, 12, 34).isoformat(),
         "metadata": SearchResultMetadataFactory.build(),
         "is_failure": False,
