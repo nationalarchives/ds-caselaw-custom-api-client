@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v37.0.1 (2025-05-13)
+
+### Fix
+
+- **SearchResultFactory**: improve fidelity to actual MarkLogic response
+- **deps**: update dependency boto3 to v1.38.12
+- **deps**: update dependency boto3 to v1.38.9
+- **deps**: update dependency charset-normalizer to v3.4.2
+- **deps**: update dependency boto3 to v1.38.7
+
 ## v37.0.0 (2025-05-02)
 
 ### BREAKING CHANGE
