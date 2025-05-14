@@ -11,6 +11,7 @@ from caselawclient.models.documents import Document
 from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
@@ -143,24 +144,6 @@ class SearchResultMetadataFactory(SimpleFactory):
     }
 
 
-class SearchResultFactory(SimpleFactory):
-    target_class = SearchResult
-
-    PARAMS_MAP = {
-        "uri": "d-a1b2c3",
-        "name": "Judgment v Judgement",
-        "neutral_citation": "[2025] UKSC 123",
-        "court": "Court of Testing",
-        "date": datetime.datetime(2023, 2, 3),
-        "transformation_date": datetime.datetime(2023, 2, 3, 12, 34).isoformat(),
-        "metadata": SearchResultMetadataFactory.build(),
-        "is_failure": False,
-        "matches": None,
-        "slug": "uksc/2025/1",
-        "content_hash": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
-    }
-
-
 class IdentifierResolutionFactory:
     @classmethod
     def build(
@@ -189,3 +172,22 @@ class IdentifierResolutionsFactory:
         if resolutions is None:
             resolutions = [IdentifierResolutionFactory.build()]
         return IdentifierResolutions(resolutions)
+
+
+class SearchResultFactory(SimpleFactory):
+    target_class = SearchResult
+
+    PARAMS_MAP = {
+        "uri": "d-a1b2c3",
+        "name": "Judgment v Judgement",
+        "neutral_citation": "[2025] UKSC 123",
+        "court": "Court of Testing",
+        "date": datetime.datetime(2023, 2, 3),
+        "transformation_date": str(datetime.datetime(2023, 2, 3, 12, 34)),
+        "metadata": SearchResultMetadataFactory.build(),
+        "is_failure": False,
+        "matches": None,
+        "slug": "uksc/2025/1",
+        "content_hash": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+        "identifiers": {"id-1": NeutralCitationNumber("[2025] UKSC 123", "id-1")},
+    }
