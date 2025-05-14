@@ -378,6 +378,13 @@ class Document:
         """
         return self.api_client.validate_document(self.uri)
 
+    def mint_fclid(self) -> None:
+        """Mint a new FCLID if needed, and save."""
+        if len(self.identifiers.of_type(FindCaseLawIdentifier)) < 1:
+            document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
+            self.identifiers.add(document_fclid)
+            self.save_identifiers()
+
     def publish(self) -> None:
         """
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
@@ -387,10 +394,7 @@ class Document:
             raise CannotPublishUnpublishableDocument
 
         ## If it doesn't already have one, get a new FCLID for this document and assign
-        if len(self.identifiers.of_type(FindCaseLawIdentifier)) < 1:
-            document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
-            self.identifiers.add(document_fclid)
-            self.save_identifiers()
+        self.mint_fclid()
 
         publish_documents(self.uri)
         self.api_client.set_published(self.uri, True)
