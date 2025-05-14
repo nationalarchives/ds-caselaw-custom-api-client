@@ -1202,7 +1202,7 @@ class MarklogicApiClient:
         self,
         maximum_records: int = 50,
     ) -> list[str]:
-        """Retrieve documents which do not have an FCLID."""
+        """Retrieve the URIs of published documents which do not have an identifier in the `fclid` schema."""
         vars: query_dicts.GetMissingFclidDict = {
             "maximum_records": maximum_records,
         }

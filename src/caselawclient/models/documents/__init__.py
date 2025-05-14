@@ -378,12 +378,15 @@ class Document:
         """
         return self.api_client.validate_document(self.uri)
 
-    def mint_fclid(self) -> None:
-        """Mint a new FCLID if needed, and save."""
-        if len(self.identifiers.of_type(FindCaseLawIdentifier)) < 1:
+    def assign_fclid_if_missing(self) -> Optional[FindCaseLawIdentifier]:
+        """If the document does not have an FCLID already, mint a new one and save it."""
+        if len(self.identifiers.of_type(FindCaseLawIdentifier)) == 0:
             document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
             self.identifiers.add(document_fclid)
             self.save_identifiers()
+            return document_fclid
+
+        return None
 
     def publish(self) -> None:
         """
@@ -393,8 +396,8 @@ class Document:
         if not self.is_publishable:
             raise CannotPublishUnpublishableDocument
 
-        ## If it doesn't already have one, get a new FCLID for this document and assign
-        self.mint_fclid()
+        ## Make sure the document has an FCLID
+        self.assign_fclid_if_missing()
 
         publish_documents(self.uri)
         self.api_client.set_published(self.uri, True)
