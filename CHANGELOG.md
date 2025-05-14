@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v37.0.2 (2025-05-13)
+
+### Fix
+
+- **SearchResultFactory**: fix type mismatch in factory default
+
 ## v37.0.1 (2025-05-13)
 
 ### Fix
