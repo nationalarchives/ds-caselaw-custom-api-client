@@ -1198,6 +1198,24 @@ class MarklogicApiClient:
 
         return results
 
+    def get_missing_fclid(
+        self,
+        maximum_records: int = 50,
+    ) -> list[str]:
+        """Retrieve documents which do not have an FCLID."""
+        vars: query_dicts.GetMissingFclidDict = {
+            "maximum_records": maximum_records,
+        }
+
+        results: list[str] = get_multipart_strings_from_marklogic_response(
+            self._send_to_eval(
+                vars,
+                "get_missing_fclid.xqy",
+            )
+        )
+
+        return results
+
     def resolve_from_identifier_slug(
         self, identifier_slug: DocumentIdentifierSlug, published_only: bool = True
     ) -> IdentifierResolutions:
