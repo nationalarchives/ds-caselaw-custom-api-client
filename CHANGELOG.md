@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **MarklogicApiClient**: add new method for getting list of documents missing a FCLID
+
+### Fix
+
+- **deps**: update dependency ds-caselaw-utils to v2.4.4
+
+### Refactor
+
+- break FCLID minting into its own function at document level
+
 ## v37.0.2 (2025-05-13)
 
 ### Fix
