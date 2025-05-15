@@ -557,14 +557,14 @@ websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "ds-caselaw-utils"
-version = "2.4.5"
+version = "2.4.6"
 description = "Utilities for the National Archives Caselaw project"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "ds_caselaw_utils-2.4.5-py3-none-any.whl", hash = "sha256:f785f7e9efe26dcc3bac0dae68865bb29f84efa70ac6ca3fc48392a12b790bbe"},
-    {file = "ds_caselaw_utils-2.4.5.tar.gz", hash = "sha256:9db2944057bcf08e3d277864d4bd02197d7483e767ed5d8447d876bb92e6e879"},
+    {file = "ds_caselaw_utils-2.4.6-py3-none-any.whl", hash = "sha256:46a831b2c703115e497b197d36a81e5bf2105b20b377ed6ab3c2df735e8726ab"},
+    {file = "ds_caselaw_utils-2.4.6.tar.gz", hash = "sha256:133710f062de4580d5b90938d8279ea23935991ac37a968944a62682e0bf454c"},
 ]
 
 [package.dependencies]
