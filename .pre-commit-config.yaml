@@ -21,7 +21,7 @@ repos:
         id: ruff
       - id: ruff-format
     repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.9
+    rev: v0.11.10
   - hooks:
       - entry: script/build_xquery_type_dicts
         id: build-xquery-type-dicts
