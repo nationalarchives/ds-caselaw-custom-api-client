@@ -134,6 +134,11 @@ class GetVersionCreatedDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# has_html_representation.xqy
+class HasHtmlRepresentationDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # insert_document.xqy
 class InsertDocumentDict(MarkLogicAPIDict):
     annotation: str

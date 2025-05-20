@@ -329,6 +329,12 @@ class Document:
 
         return DOCUMENT_STATUS_NEW
 
+    def has_html_representation(self) -> bool:
+        """
+        :return: `True` if this document has an HTML representation, otherwise `False`
+        """
+        return self.api_client.has_html_representation(self.uri)
+
     def force_enrich(self) -> None:
         """
         Request enrichment of the document, but do no checks

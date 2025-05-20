@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v37.2.0 (2025-05-20)
+
+### Feat
+
+- Added `has_html_representation` to `Document`
+
 ## v37.1.0 (2025-05-15)
 
 ### Feat

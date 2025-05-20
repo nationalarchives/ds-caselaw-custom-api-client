@@ -889,6 +889,13 @@ class MarklogicApiClient:
             "%Y-%m-%dT%H:%M:%S.%f%z",
         )
 
+    def has_html_representation(self, judgment_uri: DocumentURIString) -> bool:
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.HasHtmlRepresentationDict = {
+            "uri": uri,
+        }
+        return self._eval_and_decode(vars, "has_html_representation.xqy") == "true"
+
     def set_property(
         self,
         judgment_uri: DocumentURIString,
