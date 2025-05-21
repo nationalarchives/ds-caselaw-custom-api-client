@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v37.2.0 (2025-05-20)
 
 ### Feat
 
 - **SearchResultFactory**: search result factory now includes identifier map
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.38.17
+- **deps**: update dependency sqids to v0.5.2
+- **deps**: update dependency ds-caselaw-utils to v2.4.6
 
 ## v37.1.0 (2025-05-15)
 
