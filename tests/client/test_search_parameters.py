@@ -25,6 +25,7 @@ class TestSearchParametersToMarklogicData:
             "to": "",
             "show_unpublished": "false",
             "only_unpublished": "false",
+            "only_with_html_representation": "false",
             "collections": "",
             "quoted_phrases": [],
         }
@@ -49,6 +50,7 @@ class TestSearchParametersToMarklogicData:
             page_size=10,
             show_unpublished=False,
             only_unpublished=False,
+            only_with_html_representation=False,
             collections=[" foo ", "abc def", " bar"],
         )
         assert search_parameters.as_marklogic_payload() == {
@@ -65,6 +67,7 @@ class TestSearchParametersToMarklogicData:
             "to": "2022-01-31",
             "show_unpublished": "false",
             "only_unpublished": "false",
+            "only_with_html_representation": "false",
             "collections": "foo,abcdef,bar",
             "quoted_phrases": [],
         }

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v37.3.0 (2025-05-22)
+
+### Feat
+
+- Add `only_with_html_representation` field to `SearchParameters` dataclass
+
 ## v37.2.0 (2025-05-20)
 
 ### Feat
