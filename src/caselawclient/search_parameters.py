@@ -23,6 +23,7 @@ class SearchParameters:
     page_size: int = RESULTS_PER_PAGE
     show_unpublished: bool = False
     only_unpublished: bool = False
+    only_with_html_representation: bool = False
     collections: Optional[List[str]] = None
 
     def as_marklogic_payload(self) -> Dict[str, Any]:
@@ -44,6 +45,7 @@ class SearchParameters:
             "to": str(self.date_to or ""),
             "show_unpublished": str(self.show_unpublished).lower(),
             "only_unpublished": str(self.only_unpublished).lower(),
+            "only_with_html_representation": str(self.only_with_html_representation).lower(),
             "collections": self._marklogic_collections,
             "quoted_phrases": self._quoted_phrases,
         }
