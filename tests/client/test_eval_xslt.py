@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import unittest
 from unittest.mock import patch
@@ -40,7 +39,7 @@ class TestEvalXslt(unittest.TestCase):
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_user_cannot_view_unpublished(self):
         """The user is not permitted to see unpublished judgments but is attempting to view them
-        Set `show_unpublished` to false and log a warning"""
+        Set `show_unpublished` to false"""
         with (
             patch.object(self.client, "eval") as mock_eval,
             patch.object(
@@ -48,7 +47,6 @@ class TestEvalXslt(unittest.TestCase):
                 "user_can_view_unpublished_judgments",
                 return_value=False,
             ),
-            patch.object(logging, "warning") as mock_logging,
         ):
             uri = DocumentURIString("judgment/uri")
             expected_vars: XsltTransformDict = {
@@ -65,7 +63,6 @@ class TestEvalXslt(unittest.TestCase):
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(
                 expected_vars,
             )
-            mock_logging.assert_called()
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     def test_eval_xslt_with_filename(self):
