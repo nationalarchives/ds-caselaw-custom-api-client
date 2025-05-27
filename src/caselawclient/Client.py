@@ -1047,10 +1047,6 @@ class MarklogicApiClient:
         if show_unpublished and not self.user_can_view_unpublished_judgments(
             self.username,
         ):
-            # The user cannot view unpublished judgments but is requesting to see them
-            logging.warning(
-                f"User {self.username} is attempting to view unpublished judgments but does not have that privilege.",
-            )
             return False
         return show_unpublished
 

@@ -1,5 +1,4 @@
 import json
-import logging
 import unittest
 from unittest.mock import patch
 
@@ -212,7 +211,7 @@ class TestAdvancedSearch(unittest.TestCase):
         Scenario: User cannot view unpublished but show unpublished is true
         Given a client instance with a user who is not allowed to view unpublished judgments
         When the advanced_search method is called with the show_unpublished parameter set to True
-        Then it should call the MarkLogic module with the show_unpublished parameter set to False and log a warning
+        Then it should call the MarkLogic module with the show_unpublished parameter set to False
         """
         with (
             patch.object(self.client, "invoke") as patched_invoke,
@@ -221,7 +220,6 @@ class TestAdvancedSearch(unittest.TestCase):
                 "user_can_view_unpublished_judgments",
                 return_value=False,
             ),
-            patch.object(logging, "warning") as mock_logging,
         ):
             self.client.advanced_search(
                 SearchParameters(
@@ -236,7 +234,6 @@ class TestAdvancedSearch(unittest.TestCase):
             )
 
             assert '"show_unpublished": "false"' in patched_invoke.call_args.args[1]
-            mock_logging.assert_called()
 
     def test_no_page_0(self):
         """
