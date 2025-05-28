@@ -169,10 +169,10 @@ class TestDocument:
     def test_document_versions_happy_case(self, mock_api_client):
         version_document = Document(DocumentURIString("test/1234"), mock_api_client)
         version_document.versions = [
-            {"uri": "test/1234_xml_versions/2-1234", "version": 2},
-            {"uri": "test/1234_xml_versions/1-1234", "version": 1},
+            {"uri": DocumentURIString("test/1234_xml_versions/2-1234"), "version": 2},
+            {"uri": DocumentURIString("test/1234_xml_versions/1-1234"), "version": 1},
         ]
-        version_document.versions_as_documents[0].uri = "test/1234_xml_versions/2-1234.xml"
+        version_document.versions_as_documents[0].uri = DocumentURIString("test/1234_xml_versions/2-1234")
 
     def test_document_version_number_when_not_version(self, mock_api_client):
         base_document = Document(DocumentURIString("test/1234"), mock_api_client)
