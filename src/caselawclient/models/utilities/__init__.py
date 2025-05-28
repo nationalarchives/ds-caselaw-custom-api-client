@@ -9,9 +9,6 @@ VERSION_REGEX = r"xml_versions/(\d{1,10})-(\d{1,10}|TDR)"
 # Here we limit the number of digits in the version and document reference to 10 on purpose, see
 # https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS for an explanation of why.
 
-akn_namespace = {"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"}
-uk_namespace = {"uk": "https://caselaw.nationalarchives.gov.uk/akn"}
-
 
 class VersionsDict(TypedDict):
     uri: DocumentURIString
