@@ -19,8 +19,12 @@ from caselawclient.models.utilities.aws import (
 
 
 class TestVersionUtils:
-    def test_extract_version_uri(self):
+    def test_extract_version_ncn_based_uri(self):
         uri = "/ewhc/ch/2022/1178_xml_versions/2-1178.xml"
+        assert extract_version(uri) == 2
+
+    def test_extract_version_uuid_based_uri(self):
+        uri = "/d-24e29b2e-9264-43f9-b0de-31c4605cb500_xml_versions/2-d-24e29b2e-9264-43f9-b0de-31c4605cb500.xml"
         assert extract_version(uri) == 2
 
     def test_extract_version_failure(self):
