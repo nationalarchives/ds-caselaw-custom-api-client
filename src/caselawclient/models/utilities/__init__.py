@@ -6,7 +6,7 @@ from requests_toolbelt.multipart.decoder import BodyPart
 from caselawclient.types import DocumentURIString, MarkLogicDocumentURIString
 
 VERSION_REGEX = r"xml_versions/(\d{1,10})-"
-# Here we limit the number of digits in the version and document reference to 10 on purpose, see
+# Here we limit the number of digits in the version to 10 on purpose, see
 # https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS for an explanation of why.
 
 

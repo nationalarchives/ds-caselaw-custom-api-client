@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **extract_version**: update version decoding regex so it accepts new-style URIs
+- **deps**: update dependency boto3 to v1.38.22
+
+### Refactor
+
+- remove unused namespace declarations from codebase
+- **Document**: improve type hints for versions_as_documents
+
 ## v37.3.0 (2025-05-22)
 
 ### Feat
