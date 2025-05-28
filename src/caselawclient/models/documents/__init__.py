@@ -229,7 +229,7 @@ class Document:
             return []
 
     @cached_property
-    def versions_as_documents(self) -> list[Any]:
+    def versions_as_documents(self) -> list["Document"]:
         """
         Returns a list of `Document` subclasses corresponding to the versions of the document. The first entry is:
            * the most recent

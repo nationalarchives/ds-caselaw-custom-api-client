@@ -3,6 +3,8 @@ from typing import TypedDict
 
 from requests_toolbelt.multipart.decoder import BodyPart
 
+from caselawclient.types import DocumentURIString, MarkLogicDocumentURIString
+
 VERSION_REGEX = r"xml_versions/(\d{1,10})-(\d{1,10}|TDR)"
 # Here we limit the number of digits in the version and document reference to 10 on purpose, see
 # https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS for an explanation of why.
@@ -12,14 +14,14 @@ uk_namespace = {"uk": "https://caselaw.nationalarchives.gov.uk/akn"}
 
 
 class VersionsDict(TypedDict):
-    uri: str  ## TODO: This should be either a MarkLogicDocumentURIString (raw from ML) or a DocumentURIString (and we parse it out). Just a str is too vague.
+    uri: DocumentURIString
     version: int
 
 
 def render_versions(decoded_versions: list[BodyPart]) -> list[VersionsDict]:
     versions: list[VersionsDict] = [
         {
-            "uri": part.text.strip("/").rstrip(".xml"),
+            "uri": MarkLogicDocumentURIString(part.text).as_document_uri(),
             "version": extract_version(part.text),
         }
         for part in decoded_versions
