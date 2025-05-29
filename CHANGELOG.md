@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Identifier**: add the ability to store and retrieve if an identifier is deprecated
 
+### Fix
+
+- **deps**: update dependency boto3 to v1.38.27
+- **deps**: update dependency mypy-boto3-s3 to v1.38.26
+- **deps**: update dependency boto3 to v1.38.24
+
 ## v37.3.1 (2025-05-28)
 
 ### Fix
