@@ -20,7 +20,7 @@ jobs:
       - name: Run image
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
         with:
-          poetry-version: 1.4.2
+          poetry-version: 2.1.1
       - name: Build with poetry
         run: poetry build
       - name: Publish distribution to PyPI
