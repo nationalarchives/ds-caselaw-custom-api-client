@@ -43,14 +43,23 @@ def unpack_an_identifier_from_etree(identifier_xml: etree._Element) -> Optional[
         warn(f"Identifier type {namespace_element.text} is not known.")
         return None
 
-    kwargs: dict[str, str] = {}
+    str_kwargs: dict[str, str] = {}
+    deprecated = False
 
     for attribute in IDENTIFIER_UNPACKABLE_ATTRIBUTES:
         element = identifier_xml.find(attribute)
-        if element is None or not element.text:
-            raise InvalidIdentifierXMLRepresentationException(
-                f"Identifer XML representation is not valid: {element} not present or empty"
-            )
-        kwargs[attribute] = element.text
 
-    return IDENTIFIER_NAMESPACE_MAP[namespace_element.text](**kwargs)
+        # Special case for unpacking deprecation state into a boolean
+        if attribute == "deprecated":
+            if element is not None and element.text is not None and element.text.lower() == "true":
+                deprecated = True
+
+        else:
+            # Case for unpacking all other element types
+            if element is None or not element.text:
+                raise InvalidIdentifierXMLRepresentationException(
+                    f"Identifer XML representation is not valid: {element} not present or empty"
+                )
+            str_kwargs[attribute] = element.text
+
+    return IDENTIFIER_NAMESPACE_MAP[namespace_element.text](deprecated=deprecated, **str_kwargs)

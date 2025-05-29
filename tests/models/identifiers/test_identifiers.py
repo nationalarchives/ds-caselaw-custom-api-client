@@ -75,6 +75,7 @@ class TestIdentifierBase:
                 <namespace>test</namespace>
                 <uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>
                 <value>TEST-123</value>
+                <deprecated>false</deprecated>
                 <url_slug>test-123</url_slug>
             </identifier>
         """

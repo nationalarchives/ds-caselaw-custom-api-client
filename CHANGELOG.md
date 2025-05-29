@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Identifier**: add the ability to store and retrieve if an identifier is deprecated
+
 ## v37.3.1 (2025-05-28)
 
 ### Fix
