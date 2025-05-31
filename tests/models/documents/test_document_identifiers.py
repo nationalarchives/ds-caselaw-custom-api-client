@@ -29,7 +29,7 @@ class TestDocumentIdentifiers:
         document = DocumentFactory.build(identifiers=[])
 
         identifier_1 = TestIdentifier(uuid="e28e3ef1-85ed-4997-87ee-e7428a6cc02e", value="TEST-123")
-        identifier_2 = TestIdentifier(uuid="14ce4b3b-03c8-44f9-a29e-e02ce35fe136", value="TEST-456")
+        identifier_2 = TestIdentifier(uuid="14ce4b3b-03c8-44f9-a29e-e02ce35fe136", value="TEST-456", deprecated=True)
         document.identifiers.add(identifier_1)
         document.identifiers.add(identifier_2)
 
@@ -39,12 +39,14 @@ class TestDocumentIdentifiers:
                     <namespace>test</namespace>
                     <uuid>e28e3ef1-85ed-4997-87ee-e7428a6cc02e</uuid>
                     <value>TEST-123</value>
+                    <deprecated>false</deprecated>
                     <url_slug>test-123</url_slug>
                 </identifier>
                 <identifier>
                     <namespace>test</namespace>
                     <uuid>14ce4b3b-03c8-44f9-a29e-e02ce35fe136</uuid>
                     <value>TEST-456</value>
+                    <deprecated>true</deprecated>
                     <url_slug>test-456</url_slug>
                 </identifier>
             </identifiers>

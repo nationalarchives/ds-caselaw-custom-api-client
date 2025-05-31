@@ -11,13 +11,17 @@ from .exceptions import IdentifierValidationException, UUIDMismatchError
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
+    "deprecated",
     "url_slug",
 ]
+"""A list of attributes of an Identifier to pack into an XML representation."""
 
 IDENTIFIER_UNPACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
     "value",
+    "deprecated",
 ]
+"""A list of attributes to unpack from an XML representation."""
 
 
 class IdentifierSchema(ABC):
@@ -69,6 +73,9 @@ class Identifier(ABC):
     uuid: str
     value: DocumentIdentifierValue
 
+    deprecated: bool
+    """Should this identifier be considered deprecated, ie although we know it refers to a particular document its usage should be discouraged?"""
+
     def __init_subclass__(cls: type["Identifier"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
         for required in ("schema",):
@@ -77,12 +84,16 @@ class Identifier(ABC):
         super().__init_subclass__(**kwargs)
 
     def __repr__(self) -> str:
-        return f"<{self.schema.name} {self.value}: {self.uuid}>"
+        representation = f"{self.schema.name} {self.value}: {self.uuid}"
+
+        if self.deprecated:
+            return f"<{representation} (deprecated)> "
+        return f"<{representation}>"
 
     def __str__(self) -> str:
         return self.value
 
-    def __init__(self, value: str, uuid: Optional[str] = None) -> None:
+    def __init__(self, value: str, uuid: Optional[str] = None, deprecated: bool = False) -> None:
         if not self.schema.validate_identifier(value=value):
             raise IdentifierValidationException(
                 f'Identifier value "{value}" is not valid according to the {self.schema.name} schema.'
@@ -94,6 +105,8 @@ class Identifier(ABC):
         else:
             self.uuid = "id-" + str(uuid4())
 
+        self.deprecated = deprecated
+
     @property
     def as_xml_tree(self) -> etree._Element:
         """Convert this Identifier into a packed XML representation for storage."""
@@ -102,9 +115,13 @@ class Identifier(ABC):
         namespace_attribute = etree.SubElement(identifier_root, "namespace")
         namespace_attribute.text = self.schema.namespace
 
-        for attribute in IDENTIFIER_PACKABLE_ATTRIBUTES:
-            packed_attribute = etree.SubElement(identifier_root, attribute)
-            packed_attribute.text = getattr(self, attribute)
+        for attribute_name in IDENTIFIER_PACKABLE_ATTRIBUTES:
+            packed_attribute = etree.SubElement(identifier_root, attribute_name)
+            attribute_value = getattr(self, attribute_name)
+            if type(attribute_value) is bool:
+                packed_attribute.text = str(attribute_value).lower()
+            else:
+                packed_attribute.text = getattr(self, attribute_name)
 
         return identifier_root
 
