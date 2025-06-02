@@ -1189,14 +1189,14 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.38.0"
-description = "Type annotations for boto3 S3 1.38.0 service generated with mypy-boto3-builder 8.10.1"
+version = "1.38.26"
+description = "Type annotations for boto3 S3 1.38.26 service generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mypy_boto3_s3-1.38.0-py3-none-any.whl", hash = "sha256:5cd9449df0ef6cf89e00e6fc9130a0ab641f703a23ab1d2146c394da058e8282"},
-    {file = "mypy_boto3_s3-1.38.0.tar.gz", hash = "sha256:f8fe586e45123ffcd305a0c30847128f3931d888649e2b4c5a52f412183c840a"},
+    {file = "mypy_boto3_s3-1.38.26-py3-none-any.whl", hash = "sha256:1129d64be1aee863e04f0c92ac8d315578f13ccae64fa199b20ad0950d2b9616"},
+    {file = "mypy_boto3_s3-1.38.26.tar.gz", hash = "sha256:38a45dee5782d5c07ddea07ea50965c4d2ba7e77617c19f613b4c9f80f961b52"},
 ]
 
 [package.dependencies]
