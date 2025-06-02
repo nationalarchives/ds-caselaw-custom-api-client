@@ -6,7 +6,7 @@ from caselawclient.factories import DocumentFactory, JudgmentFactory, PressSumma
 class TestSearchStatusBehaviour:
     def test_status(self):
         search = SearchResultFactory.build()
-        assert search.metadata.editor_status == "New"  # type: ignore[attr-defined]
+        assert search.metadata.editor_status == "New"
 
 
 class TestDocumentNCNBehaviour:

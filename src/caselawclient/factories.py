@@ -1,9 +1,7 @@
 import datetime
 import json
-from typing import Any, Optional
+from typing import Any, Generic, Optional, Type, TypeAlias, TypeVar, cast
 from unittest.mock import Mock
-
-from typing_extensions import TypeAlias
 
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.identifier_resolution import IdentifierResolution, IdentifierResolutions
@@ -16,6 +14,8 @@ from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.responses.search_result import SearchResult, SearchResultMetadata
 from caselawclient.types import DocumentURIString
+
+T = TypeVar("T")
 
 DEFAULT_DOCUMENT_BODY_XML = """<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
             <judgment name="decision">
@@ -114,13 +114,13 @@ class PressSummaryFactory(DocumentFactory):
     }
 
 
-class SimpleFactory:
-    target_class: TypeAlias = object
+class SimpleFactory(Generic[T]):
+    target_class: Type[T]
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any]
 
     @classmethod
-    def build(cls, **kwargs: Any) -> target_class:
+    def build(cls, **kwargs: Any) -> T:
         mock_object = Mock(spec=cls.target_class, autospec=True)
 
         for param, default in cls.PARAMS_MAP.items():
@@ -129,10 +129,10 @@ class SimpleFactory:
             else:
                 setattr(mock_object.return_value, param, default)
 
-        return mock_object()
+        return cast(T, mock_object())
 
 
-class SearchResultMetadataFactory(SimpleFactory):
+class SearchResultMetadataFactory(SimpleFactory[SearchResultMetadata]):
     target_class = SearchResultMetadata
     # "name_of_attribute": "default value"
     PARAMS_MAP = {
@@ -174,9 +174,8 @@ class IdentifierResolutionsFactory:
         return IdentifierResolutions(resolutions)
 
 
-class SearchResultFactory(SimpleFactory):
+class SearchResultFactory(SimpleFactory[SearchResult]):
     target_class = SearchResult
-
     PARAMS_MAP = {
         "uri": "d-a1b2c3",
         "name": "Judgment v Judgement",
