@@ -51,6 +51,14 @@ class DocumentBody:
     def jurisdiction(self) -> str:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
 
+    @cached_property
+    def category(self) -> Optional[str]:
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category/text()")
+
+    @cached_property
+    def case_number(self) -> Optional[str]:
+        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()")
+
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
         if self.jurisdiction != "":
