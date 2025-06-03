@@ -112,6 +112,56 @@ class TestDocumentBody:
             ('doc name="pressSummary"', "doc"),
         ],
     )
+    def test_category(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Breach of code of standards</uk:category>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.category == "Breach of code of standards"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_case_number(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:caseNumber>2010/1/dis</uk:caseNumber>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.case_number == "2010/1/dis"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
     def test_court_and_jurisdiction_with_jurisdiction(
         self,
         opening_tag,
