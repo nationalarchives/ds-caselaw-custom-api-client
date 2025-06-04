@@ -4,12 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v37.4.0 (2025-06-04)
 
 ### Feat
 
 - **Identifier**: add the ability to store and retrieve if an identifier is deprecated
-- **Document**: add case number and category to the document body if available in the xml
 
 ### Fix
 
