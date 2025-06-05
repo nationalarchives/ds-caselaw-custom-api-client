@@ -22,6 +22,8 @@ class TestNeutralCitationSchemaImplementation:
         assert schema.name == "Neutral Citation Number"
         assert schema.namespace == "ukncn"
 
+        assert schema.allow_editing is True
+
     @pytest.mark.parametrize(
         "value",
         [

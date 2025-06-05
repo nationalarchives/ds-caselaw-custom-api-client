@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- **IdentifierSchema**: add new allow_editing flag to identifier schemas
+
 ### Fix
 
 - **deps**: update dependency boto3 to v1.38.28
