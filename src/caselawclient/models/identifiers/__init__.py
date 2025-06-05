@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 from uuid import uuid4
 
 from lxml import etree
 
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
 
-from .exceptions import IdentifierValidationException, UUIDMismatchError
+from .exceptions import GlobalDuplicateIdentifierException, IdentifierValidationException, UUIDMismatchError
+
+if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
 
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
@@ -40,6 +43,9 @@ class IdentifierSchema(ABC):
 
     allow_editing: bool = True
     """ Should editors be allowed to manually manipulate identifiers under this schema? """
+
+    require_globally_unique: bool = True
+    """ Must this identifier be globally unique? """
 
     def __init_subclass__(cls: type["IdentifierSchema"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
@@ -140,6 +146,18 @@ class Identifier(ABC):
     def same_as(self, other: "Identifier") -> bool:
         "Is this the same as another identifier (in value and schema)?"
         return self.value == other.value and self.schema == other.schema
+
+    def validate_require_globally_unique(self, api_client: "MarklogicApiClient") -> None:
+        """Check against the list of identifiers in the database that this value does not currently exist."""
+        resolutions = [
+            resolution
+            for resolution in api_client.resolve_from_identifier_value(identifier_value=self.value)
+            if resolution.identifier_namespace == self.schema.namespace
+        ]
+        if len(resolutions) > 0:
+            raise GlobalDuplicateIdentifierException(
+                f'Identifiers in scheme {self.schema.namespace} must be unique; "{self.value}" already exists!'
+            )
 
 
 class Identifiers(dict[str, Identifier]):
