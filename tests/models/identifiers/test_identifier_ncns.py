@@ -23,6 +23,7 @@ class TestNeutralCitationSchemaImplementation:
         assert schema.namespace == "ukncn"
 
         assert schema.allow_editing is True
+        assert schema.require_globally_unique is True
 
     @pytest.mark.parametrize(
         "value",

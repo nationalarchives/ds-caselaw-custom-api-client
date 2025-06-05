@@ -18,6 +18,7 @@ class TestFCLIDSchemaImplementation:
         assert schema.name == "Find Case Law Identifier"
         assert schema.namespace == "fclid"
         assert schema.allow_editing is False
+        assert schema.require_globally_unique is True
 
     def test_fclid_schema_compile_url_slug(self):
         schema = fclid.FindCaseLawIdentifierSchema
