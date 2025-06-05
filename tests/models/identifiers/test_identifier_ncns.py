@@ -42,7 +42,7 @@ class TestNeutralCitationSchemaImplementation:
     )
     def test_ncn_schema_validation_passes(self, value):
         schema = neutral_citation.NeutralCitationNumberSchema
-        assert schema.validate_identifier(value) is True
+        assert schema.validate_identifier_value(value) is True
 
     @pytest.mark.parametrize(
         "value",
@@ -60,7 +60,7 @@ class TestNeutralCitationSchemaImplementation:
     def test_ncn_schema_validation_fails_at_pattern(self, value):
         schema = neutral_citation.NeutralCitationNumberSchema
         with pytest.raises(NCNDoesNotMatchExpectedPatternException):
-            schema.validate_identifier(value)
+            schema.validate_identifier_value(value)
 
     @pytest.mark.parametrize(
         "value",
@@ -72,7 +72,7 @@ class TestNeutralCitationSchemaImplementation:
     def test_ncn_schema_validation_fails_at_url_slug(self, value):
         schema = neutral_citation.NeutralCitationNumberSchema
         with pytest.raises(NCNCannotConvertToValidURLSlugException):
-            schema.validate_identifier(value)
+            schema.validate_identifier_value(value)
 
     @pytest.mark.parametrize(
         ("value", "slug"),
