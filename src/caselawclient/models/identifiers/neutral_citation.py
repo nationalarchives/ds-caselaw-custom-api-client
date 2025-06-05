@@ -49,7 +49,7 @@ class NeutralCitationNumberSchema(IdentifierSchema):
     base_score_multiplier = 1.5
 
     @classmethod
-    def validate_identifier(cls, value: str) -> bool:
+    def validate_identifier_value(cls, value: str) -> bool:
         # Quick check to see if the NCN matches the expected pattern
         if not bool(VALID_NCN_PATTERN.match(value)):
             raise NCNDoesNotMatchExpectedPatternException(f"NCN '{value}' is not in the expected format")

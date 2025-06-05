@@ -36,7 +36,7 @@ class FindCaseLawIdentifierSchema(IdentifierSchema):
     require_globally_unique = True
 
     @classmethod
-    def validate_identifier(cls, value: str) -> bool:
+    def validate_identifier_value(cls, value: str) -> bool:
         return bool(VALID_FCLID_PATTERN.match(value))
 
     @classmethod

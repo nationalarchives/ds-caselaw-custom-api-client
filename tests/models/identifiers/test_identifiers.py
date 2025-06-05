@@ -22,7 +22,7 @@ class TestIdentifierSchema(IdentifierSchema):
         return DocumentIdentifierSlug(value.lower())
 
     @classmethod
-    def validate_identifier(cls, value):
+    def validate_identifier_value(cls, value):
         return value.startswith("TEST-")
 
 
@@ -84,10 +84,10 @@ class TestIdentifierBase:
         )
 
     def test_validates_on_init(self):
-        """Check that when you initialise a new identifier the schema.validate_identifier method is called to validate the value."""
-        with patch.object(TestIdentifierSchema, "validate_identifier") as mock_validate_identifier:
+        """Check that when you initialise a new identifier the schema.validate_identifier_value method is called to validate the value."""
+        with patch.object(TestIdentifierSchema, "validate_identifier_value") as mock_validate_identifier_value:
             TestIdentifier(value="TEST-123")
-            mock_validate_identifier.assert_called_once_with(value="TEST-123")
+            mock_validate_identifier_value.assert_called_once_with(value="TEST-123")
 
     def test_validate_on_init_raises_on_false(self):
         """Check that when you initialise a new identifier with an invalid value it raises an exception."""

@@ -63,7 +63,7 @@ class IdentifierSchema(ABC):
 
     @classmethod
     @abstractmethod
-    def validate_identifier(cls, value: str) -> bool:
+    def validate_identifier_value(cls, value: str) -> bool:
         """Check that any given identifier value is valid for this schema."""
         pass
 
@@ -103,7 +103,7 @@ class Identifier(ABC):
         return self.value
 
     def __init__(self, value: str, uuid: Optional[str] = None, deprecated: bool = False) -> None:
-        if not self.schema.validate_identifier(value=value):
+        if not self.schema.validate_identifier_value(value=value):
             raise IdentifierValidationException(
                 f'Identifier value "{value}" is not valid according to the {self.schema.name} schema.'
             )
