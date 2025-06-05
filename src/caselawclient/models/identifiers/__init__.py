@@ -38,6 +38,9 @@ class IdentifierSchema(ABC):
     base_score_multiplier: float = 1.0
     """ A multiplier used to adjust the relative ranking of this identifier when calculating preferred identifiers. """
 
+    allow_editing: bool = True
+    """ Should editors be allowed to manually manipulate identifiers under this schema? """
+
     def __init_subclass__(cls: type["IdentifierSchema"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
         for required in (
