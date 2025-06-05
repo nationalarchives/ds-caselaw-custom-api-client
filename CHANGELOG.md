@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.38.28
+- **deps**: update dependency typing-extensions to v4.14.0
+
 ## v37.4.0 (2025-06-04)
 
 ### Feat
