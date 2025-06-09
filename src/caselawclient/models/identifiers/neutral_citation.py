@@ -48,6 +48,8 @@ class NeutralCitationNumberSchema(IdentifierSchema):
     human_readable = True
     base_score_multiplier = 1.5
 
+    document_types = ["Judgment"]
+
     @classmethod
     def validate_identifier_value(cls, value: str) -> bool:
         # Quick check to see if the NCN matches the expected pattern

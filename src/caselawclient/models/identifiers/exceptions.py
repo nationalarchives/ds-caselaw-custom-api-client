@@ -16,3 +16,7 @@ class IdentifierConstraintException(Exception):
 
 class GlobalDuplicateIdentifierException(IdentifierConstraintException):
     pass
+
+
+class IdentifierNotValidForDocumentTypeException(IdentifierConstraintException):
+    pass
