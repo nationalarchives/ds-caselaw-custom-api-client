@@ -32,7 +32,9 @@ class TestDocumentSaveIdentifiers:
         document.identifiers.as_etree = "fake_node"
 
         document.save_identifiers()
-        document.identifiers.validate.assert_called_once()
+        document.identifiers.perform_all_validations.assert_called_once_with(
+            document_type=Document, api_client=mock_api_client
+        )
         mock_api_client.set_property_as_node.assert_called_with("test/1234", "identifiers", "fake_node")
 
 

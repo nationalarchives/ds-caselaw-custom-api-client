@@ -20,10 +20,10 @@ class TestDocumentIdentifiers:
             "id-2": identifier_2,
         }
 
-    def test_validate(self):
+    def test_validate_uuids_match_keys(self):
         identifiers = Identifiers({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
         with pytest.raises(UUIDMismatchError):
-            identifiers.validate()
+            identifiers.validate_uuids_match_keys()
 
     def test_identifiers_as_etree(self):
         document = DocumentFactory.build(identifiers=[])
