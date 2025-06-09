@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- `IdentifierSchema.validate_identifier` has been renamed `IdentifierSchema.validate_identifier_value`
+
 ### Feat
 
+- **IdentifierSchema**: rename validate_identifier to validate_identifier_value
 - **Identifier**: add ability to validate that identifiers are globally unique
 - **IdentifierSchema**: add new allow_editing flag to identifier schemas
 

@@ -6,10 +6,16 @@ from lxml import etree
 
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
 
-from .exceptions import GlobalDuplicateIdentifierException, IdentifierValidationException, UUIDMismatchError
+from .exceptions import (
+    GlobalDuplicateIdentifierException,
+    IdentifierNotValidForDocumentTypeException,
+    IdentifierValidationException,
+    UUIDMismatchError,
+)
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient
+    from caselawclient.models.documents import Document
 
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
@@ -46,6 +52,13 @@ class IdentifierSchema(ABC):
 
     require_globally_unique: bool = True
     """ Must this identifier be globally unique? """
+
+    document_types: Optional[list[str]] = None
+    """
+    If present, a list of the names of document classes which can have this identifier.
+
+    If `None`, this identifier is valid for all document types.
+    """
 
     def __init_subclass__(cls: type["IdentifierSchema"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
@@ -148,7 +161,11 @@ class Identifier(ABC):
         return self.value == other.value and self.schema == other.schema
 
     def validate_require_globally_unique(self, api_client: "MarklogicApiClient") -> None:
-        """Check against the list of identifiers in the database that this value does not currently exist."""
+        """
+        Check against the list of identifiers in the database that this value does not currently exist.
+
+        nb: We don't need to check that the identifier value is unique within a parent `Identifiers` object, because `Identifiers.add()` will only allow one value per namespace.
+        """
         resolutions = [
             resolution
             for resolution in api_client.resolve_from_identifier_value(identifier_value=self.value)
@@ -157,6 +174,14 @@ class Identifier(ABC):
         if len(resolutions) > 0:
             raise GlobalDuplicateIdentifierException(
                 f'Identifiers in scheme {self.schema.namespace} must be unique; "{self.value}" already exists!'
+            )
+
+    def validate_valid_for_document_type(self, document_type: type["Document"]) -> None:
+        document_type_classname = document_type.__name__
+
+        if self.schema.document_types and document_type_classname not in self.schema.document_types:
+            raise IdentifierNotValidForDocumentTypeException(
+                f"Document type {document_type_classname} is not accepted for identifier schema {self.schema.name}"
             )
 
 

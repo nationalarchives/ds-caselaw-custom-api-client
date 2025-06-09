@@ -4,7 +4,11 @@ import pytest
 from test_identifiers import TestIdentifier, TestIdentifierSchema
 
 from caselawclient.factories import IdentifierResolutionFactory, IdentifierResolutionsFactory
-from caselawclient.models.identifiers.exceptions import GlobalDuplicateIdentifierException
+from caselawclient.models.documents import Document
+from caselawclient.models.identifiers.exceptions import (
+    GlobalDuplicateIdentifierException,
+    IdentifierNotValidForDocumentTypeException,
+)
 
 
 class TestGloballyUniqueIdentifierSchema(TestIdentifierSchema):
@@ -13,6 +17,30 @@ class TestGloballyUniqueIdentifierSchema(TestIdentifierSchema):
 
 class TestGloballyUniqueIdentifier(TestIdentifier):
     schema = TestGloballyUniqueIdentifierSchema
+
+
+class TestNotLimitedToDocumentTypeIdentifierSchema(TestIdentifierSchema):
+    document_types = None
+
+
+class TestNotLimitedToDocumentTypeIdentifier(TestIdentifier):
+    schema = TestNotLimitedToDocumentTypeIdentifierSchema
+
+
+class TestLimitedToJudgmentDocumentTypeIdentifierSchema(TestIdentifierSchema):
+    document_types = ["TestCorrectDocumentType"]
+
+
+class TestLimitedToJudgmentDocumentTypeIdentifier(TestIdentifier):
+    schema = TestLimitedToJudgmentDocumentTypeIdentifierSchema
+
+
+class TestCorrectDocumentType(Document):
+    __test__ = False
+
+
+class TestIncorrectDocumentType(Document):
+    __test__ = False
 
 
 @patch(
@@ -55,3 +83,19 @@ class TestRequireGloballyUniqueIdentifierConstraint:
 
         new_identifier.validate_require_globally_unique(api_client=mock_api_client)
         mock_api_client.resolve_from_identifier_value.assert_called_once_with(identifier_value="TEST-123")
+
+
+class TestDocumentTypesConstraint:
+    def test_validate_valid_for_document_type_if_document_types_is_none(self):
+        new_identifier = TestNotLimitedToDocumentTypeIdentifier(value="TEST-123")
+        new_identifier.validate_valid_for_document_type(TestCorrectDocumentType)
+        new_identifier.validate_valid_for_document_type(TestIncorrectDocumentType)
+
+    def test_validate_valid_for_document_type_if_correct_document_type(self):
+        new_identifier = TestLimitedToJudgmentDocumentTypeIdentifier(value="TEST-123")
+        new_identifier.validate_valid_for_document_type(TestCorrectDocumentType)
+
+    def test_validate_valid_for_document_type_if_incorrect_document_type(self):
+        new_identifier = TestLimitedToJudgmentDocumentTypeIdentifier(value="TEST-123")
+        with pytest.raises(IdentifierNotValidForDocumentTypeException):
+            new_identifier.validate_valid_for_document_type(TestIncorrectDocumentType)
