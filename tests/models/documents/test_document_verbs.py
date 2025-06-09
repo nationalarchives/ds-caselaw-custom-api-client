@@ -24,7 +24,7 @@ class TestDocumentSaveIdentifiers:
         """
         given a particular Document with a known value of Identifiers (probably mock this out tbh)
         when I call document.save_identifiers() it
-        calls identifiers.validate and
+        validates that the identifiers meet constraints using `perform_all_validations` and
         calls set_property_as_node with expected values (edited)
         """
         document = Document(DocumentURIString("test/1234"), mock_api_client)

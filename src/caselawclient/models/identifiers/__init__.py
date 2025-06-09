@@ -184,6 +184,10 @@ class Identifier(ABC):
                 f"Document type {document_type_classname} is not accepted for identifier schema {self.schema.name}"
             )
 
+    def perform_all_validations(self, document_type: type["Document"], api_client: "MarklogicApiClient") -> None:
+        self.validate_require_globally_unique(api_client=api_client)
+        self.validate_valid_for_document_type(document_type=document_type)
+
 
 class Identifiers(dict[str, Identifier]):
     def validate_uuids_match_keys(self) -> None:
@@ -194,6 +198,8 @@ class Identifiers(dict[str, Identifier]):
 
     def perform_all_validations(self, document_type: type["Document"], api_client: "MarklogicApiClient") -> None:
         self.validate_uuids_match_keys()
+        for _, identifier in self.items():
+            identifier.perform_all_validations(document_type=document_type, api_client=api_client)
 
     def contains(self, other_identifier: Identifier) -> bool:
         "Do the identifier's value and namespace already exist in this group?"

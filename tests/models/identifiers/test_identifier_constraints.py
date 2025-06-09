@@ -99,3 +99,17 @@ class TestDocumentTypesConstraint:
         new_identifier = TestLimitedToJudgmentDocumentTypeIdentifier(value="TEST-123")
         with pytest.raises(IdentifierNotValidForDocumentTypeException):
             new_identifier.validate_valid_for_document_type(TestIncorrectDocumentType)
+
+
+class TestPerformAllValidations:
+    def test_perform_all_validations_runs_expected_validations(self, mock_api_client):
+        """Make sure that perform_all_validations is actually running the validations we expect."""
+        identifier = TestIdentifier(uuid="id-1", value="TEST-123")
+
+        with (
+            patch.object(identifier, "validate_require_globally_unique") as mock_validate_require_globally_unique,
+            patch.object(identifier, "validate_valid_for_document_type") as mock_validate_valid_for_document_type,
+        ):
+            identifier.perform_all_validations(document_type=Document, api_client=mock_api_client)
+            mock_validate_require_globally_unique.assert_called_once_with(api_client=mock_api_client)
+            mock_validate_valid_for_document_type.assert_called_once_with(document_type=Document)
