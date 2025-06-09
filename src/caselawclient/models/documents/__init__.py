@@ -503,7 +503,7 @@ class Document:
 
     def save_identifiers(self) -> None:
         """Save the current state of this Document's identifiers to MarkLogic."""
-        self.identifiers.validate()
+        self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
         self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
 
     def __getattr__(self, name: str) -> Any:

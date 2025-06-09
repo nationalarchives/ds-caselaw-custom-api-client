@@ -186,11 +186,14 @@ class Identifier(ABC):
 
 
 class Identifiers(dict[str, Identifier]):
-    def validate(self) -> None:
+    def validate_uuids_match_keys(self) -> None:
         for uuid, identifier in self.items():
             if uuid != identifier.uuid:
                 msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
                 raise UUIDMismatchError(msg)
+
+    def perform_all_validations(self, document_type: type["Document"], api_client: "MarklogicApiClient") -> None:
+        self.validate_uuids_match_keys()
 
     def contains(self, other_identifier: Identifier) -> bool:
         "Do the identifier's value and namespace already exist in this group?"
