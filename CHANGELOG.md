@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- `IdentifierSchema.validate_identifier` has been renamed `IdentifierSchema.validate_identifier_value`
+
+### Feat
+
+- **IdentifierSchema**: rename validate_identifier to validate_identifier_value
+- **Identifier**: add ability to validate that identifiers are globally unique
+- **IdentifierSchema**: add new allow_editing flag to identifier schemas
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.38.28
+- **deps**: update dependency typing-extensions to v4.14.0
+
 ## v37.4.0 (2025-06-04)
 
 ### Feat

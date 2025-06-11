@@ -32,8 +32,11 @@ class FindCaseLawIdentifierSchema(IdentifierSchema):
     human_readable = False
     base_score_multiplier = 0.6
 
+    allow_editing = False
+    require_globally_unique = True
+
     @classmethod
-    def validate_identifier(cls, value: str) -> bool:
+    def validate_identifier_value(cls, value: str) -> bool:
         return bool(VALID_FCLID_PATTERN.match(value))
 
     @classmethod
