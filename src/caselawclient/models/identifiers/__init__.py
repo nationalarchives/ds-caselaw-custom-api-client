@@ -218,10 +218,22 @@ class Identifiers(dict[str, Identifier]):
                 msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
                 raise UUIDMismatchError(msg)
 
-    def perform_all_validations(self, document_type: type["Document"], api_client: "MarklogicApiClient") -> None:
+    def perform_all_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
         self.validate_uuids_match_keys()
+
+        success = True
+        messages: list[str] = []
+
         for _, identifier in self.items():
-            identifier.perform_all_validations(document_type=document_type, api_client=api_client)
+            validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
+            if validations.success is False:
+                success = False
+
+            messages += validations.messages
+
+        return SuccessFailureMessageTuple(success, messages)
 
     def contains(self, other_identifier: Identifier) -> bool:
         "Do the identifier's value and namespace already exist in this group?"
