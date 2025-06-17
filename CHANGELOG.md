@@ -8,18 +8,33 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- `Identifiers.validate()` is now `Identifiers.validate_uuids_match_keys()`
 - `IdentifierSchema.validate_identifier` has been renamed `IdentifierSchema.validate_identifier_value`
 
 ### Feat
 
+- **Document**: saving identifiers now correctly raises exception when validation fails
+- move to using structured objects to represent validation failures rather than exceptions
+- **Identifiers**: validating identifiers now performs a full check of all individual identifiers
+- **Identifier**: add ability to validate that an identifier is acceptable for a given document class
 - **IdentifierSchema**: rename validate_identifier to validate_identifier_value
 - **Identifier**: add ability to validate that identifiers are globally unique
 - **IdentifierSchema**: add new allow_editing flag to identifier schemas
 
 ### Fix
 
+- **deps**: update dependency certifi to >=2025.6.15,<2025.7.0
+- **deps**: update dependency boto3 to v1.38.36
+- **deps**: update dependency boto3 to v1.38.33
+- **deps**: update dependency requests to v2.32.4 [security]
+- **deps**: update dependency ds-caselaw-utils to v2.4.7
+- **deps**: update dependency boto3 to v1.38.31
 - **deps**: update dependency boto3 to v1.38.28
 - **deps**: update dependency typing-extensions to v4.14.0
+
+### Refactor
+
+- refine how identifiers validity checks are performed
 
 ## v37.4.0 (2025-06-04)
 
