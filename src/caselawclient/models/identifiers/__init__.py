@@ -4,11 +4,9 @@ from uuid import uuid4
 
 from lxml import etree
 
-from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
+from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, SuccessFailureMessageTuple
 
 from .exceptions import (
-    GlobalDuplicateIdentifierException,
-    IdentifierNotValidForDocumentTypeException,
     IdentifierValidationException,
     UUIDMismatchError,
 )
@@ -160,7 +158,7 @@ class Identifier(ABC):
         "Is this the same as another identifier (in value and schema)?"
         return self.value == other.value and self.schema == other.schema
 
-    def validate_require_globally_unique(self, api_client: "MarklogicApiClient") -> None:
+    def validate_require_globally_unique(self, api_client: "MarklogicApiClient") -> SuccessFailureMessageTuple:
         """
         Check against the list of identifiers in the database that this value does not currently exist.
 
@@ -172,21 +170,45 @@ class Identifier(ABC):
             if resolution.identifier_namespace == self.schema.namespace
         ]
         if len(resolutions) > 0:
-            raise GlobalDuplicateIdentifierException(
-                f'Identifiers in scheme {self.schema.namespace} must be unique; "{self.value}" already exists!'
+            return SuccessFailureMessageTuple(
+                False,
+                [f'Identifiers in scheme "{self.schema.namespace}" must be unique; "{self.value}" already exists!'],
             )
 
-    def validate_valid_for_document_type(self, document_type: type["Document"]) -> None:
+        return SuccessFailureMessageTuple(True, [])
+
+    def validate_valid_for_document_type(self, document_type: type["Document"]) -> SuccessFailureMessageTuple:
         document_type_classname = document_type.__name__
 
         if self.schema.document_types and document_type_classname not in self.schema.document_types:
-            raise IdentifierNotValidForDocumentTypeException(
-                f"Document type {document_type_classname} is not accepted for identifier schema {self.schema.name}"
+            return SuccessFailureMessageTuple(
+                False,
+                [
+                    f'Document type "{document_type_classname}" is not accepted for identifier schema "{self.schema.name}"'
+                ],
             )
 
-    def perform_all_validations(self, document_type: type["Document"], api_client: "MarklogicApiClient") -> None:
-        self.validate_require_globally_unique(api_client=api_client)
-        self.validate_valid_for_document_type(document_type=document_type)
+        return SuccessFailureMessageTuple(True, [])
+
+    def perform_all_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
+        """Perform all validations on a given identifier"""
+        validations = [
+            self.validate_require_globally_unique(api_client=api_client),
+            self.validate_valid_for_document_type(document_type=document_type),
+        ]
+
+        success = True
+        messages: list[str] = []
+
+        for validation in validations:
+            if validation.success is False:
+                success = False
+
+            messages += validation.messages
+
+        return SuccessFailureMessageTuple(success, messages)
 
 
 class Identifiers(dict[str, Identifier]):
