@@ -518,7 +518,7 @@ class Document:
         """
         Is it possible to enrich this document?
         """
-        return self.docx_exists()
+        return self.body.has_content
 
     def save_identifiers(self) -> None:
         """Save the current state of this Document's identifiers to MarkLogic."""
