@@ -154,7 +154,8 @@ class TestDocumentUnpublish:
 class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
-    def test_force_enrich(self, mock_announce_document_event, mock_api_client):
+    @patch("caselawclient.models.documents.Document.can_enrich", return_value=True)
+    def test_force_enrich(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.force_enrich()
 
