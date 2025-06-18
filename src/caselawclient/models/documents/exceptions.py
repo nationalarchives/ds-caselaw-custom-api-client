@@ -3,7 +3,7 @@ class CannotPublishUnpublishableDocument(Exception):
 
 
 class CannotEnrichUnenrichableDocument(Exception):
-    """We tried to enrich a document without a docx"""
+    """A document which cannot be enriched (see `Document.can_enrich`) tried to be sent to enrichment"""
 
 
 class DocumentNotSafeForDeletion(Exception):

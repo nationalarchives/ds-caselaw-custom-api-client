@@ -175,7 +175,7 @@ class TestDocumentForceEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
-    def test_force_enrich_but_no_docx(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
+    def test_force_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.can_enrich = False
         with pytest.raises(CannotEnrichUnenrichableDocument):
@@ -194,7 +194,7 @@ class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
-    def test_enrich_with_no_docx(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
+    def test_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.can_enrich = False
         with pytest.raises(CannotEnrichUnenrichableDocument):
@@ -211,7 +211,7 @@ class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
-    def test_enrich_with_no_docx_and_exception_ignored(
+    def test_enrich_of_unenrichable_but_exception_ignored(
         self, mock_can_enrich, mock_announce_document_event, mock_api_client
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)

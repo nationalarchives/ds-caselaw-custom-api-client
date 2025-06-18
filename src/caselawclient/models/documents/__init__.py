@@ -342,7 +342,7 @@ class Document:
         )
 
         if not self.can_enrich:
-            msg = f"{self.uri} has no docx"
+            msg = f"{self.uri} cannot be enriched"
             raise CannotEnrichUnenrichableDocument(msg)
 
         announce_document_event(
@@ -519,7 +519,7 @@ class Document:
         """
         Is it possible to enrich this document?
         """
-        return self.docx_exists()
+        return self.body.has_content
 
     def save_identifiers(self) -> None:
         """Validate the identifiers, and if the validation passes save them to MarkLogic"""
