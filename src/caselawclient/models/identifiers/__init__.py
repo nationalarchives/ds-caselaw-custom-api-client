@@ -1,12 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 from uuid import uuid4
 
 from lxml import etree
 
-from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue
+from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, SuccessFailureMessageTuple
 
-from .exceptions import IdentifierValidationException, UUIDMismatchError
+from .exceptions import (
+    IdentifierValidationException,
+    UUIDMismatchError,
+)
+
+if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
+    from caselawclient.models.documents import Document
 
 IDENTIFIER_PACKABLE_ATTRIBUTES: list[str] = [
     "uuid",
@@ -38,6 +45,19 @@ class IdentifierSchema(ABC):
     base_score_multiplier: float = 1.0
     """ A multiplier used to adjust the relative ranking of this identifier when calculating preferred identifiers. """
 
+    allow_editing: bool = True
+    """ Should editors be allowed to manually manipulate identifiers under this schema? """
+
+    require_globally_unique: bool = True
+    """ Must this identifier be globally unique? """
+
+    document_types: Optional[list[str]] = None
+    """
+    If present, a list of the names of document classes which can have this identifier.
+
+    If `None`, this identifier is valid for all document types.
+    """
+
     def __init_subclass__(cls: type["IdentifierSchema"], **kwargs: Any) -> None:
         """Ensure that subclasses have the required attributes set."""
         for required in (
@@ -54,7 +74,7 @@ class IdentifierSchema(ABC):
 
     @classmethod
     @abstractmethod
-    def validate_identifier(cls, value: str) -> bool:
+    def validate_identifier_value(cls, value: str) -> bool:
         """Check that any given identifier value is valid for this schema."""
         pass
 
@@ -94,7 +114,7 @@ class Identifier(ABC):
         return self.value
 
     def __init__(self, value: str, uuid: Optional[str] = None, deprecated: bool = False) -> None:
-        if not self.schema.validate_identifier(value=value):
+        if not self.schema.validate_identifier_value(value=value):
             raise IdentifierValidationException(
                 f'Identifier value "{value}" is not valid according to the {self.schema.name} schema.'
             )
@@ -138,13 +158,82 @@ class Identifier(ABC):
         "Is this the same as another identifier (in value and schema)?"
         return self.value == other.value and self.schema == other.schema
 
+    def validate_require_globally_unique(self, api_client: "MarklogicApiClient") -> SuccessFailureMessageTuple:
+        """
+        Check against the list of identifiers in the database that this value does not currently exist.
+
+        nb: We don't need to check that the identifier value is unique within a parent `Identifiers` object, because `Identifiers.add()` will only allow one value per namespace.
+        """
+        resolutions = [
+            resolution
+            for resolution in api_client.resolve_from_identifier_value(identifier_value=self.value)
+            if resolution.identifier_namespace == self.schema.namespace
+        ]
+        if len(resolutions) > 0:
+            return SuccessFailureMessageTuple(
+                False,
+                [f'Identifiers in scheme "{self.schema.namespace}" must be unique; "{self.value}" already exists!'],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def validate_valid_for_document_type(self, document_type: type["Document"]) -> SuccessFailureMessageTuple:
+        document_type_classname = document_type.__name__
+
+        if self.schema.document_types and document_type_classname not in self.schema.document_types:
+            return SuccessFailureMessageTuple(
+                False,
+                [
+                    f'Document type "{document_type_classname}" is not accepted for identifier schema "{self.schema.name}"'
+                ],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def perform_all_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
+        """Perform all validations on a given identifier"""
+        validations = [
+            self.validate_require_globally_unique(api_client=api_client),
+            self.validate_valid_for_document_type(document_type=document_type),
+        ]
+
+        success = True
+        messages: list[str] = []
+
+        for validation in validations:
+            if validation.success is False:
+                success = False
+
+            messages += validation.messages
+
+        return SuccessFailureMessageTuple(success, messages)
+
 
 class Identifiers(dict[str, Identifier]):
-    def validate(self) -> None:
+    def validate_uuids_match_keys(self) -> None:
         for uuid, identifier in self.items():
             if uuid != identifier.uuid:
                 msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
                 raise UUIDMismatchError(msg)
+
+    def perform_all_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
+        self.validate_uuids_match_keys()
+
+        success = True
+        messages: list[str] = []
+
+        for _, identifier in self.items():
+            validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
+            if validations.success is False:
+                success = False
+
+            messages += validations.messages
+
+        return SuccessFailureMessageTuple(success, messages)
 
     def contains(self, other_identifier: Identifier) -> bool:
         "Do the identifier's value and namespace already exist in this group?"

@@ -13,6 +13,8 @@ class PressSummaryRelatedNCNIdentifierSchema(NeutralCitationNumberSchema):
     human_readable = True
     base_score_multiplier = 0.8
 
+    document_types = ["PressSummary"]
+
     @classmethod
     def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
         return DocumentIdentifierSlug(super().compile_identifier_url_slug(value) + "/press-summary")

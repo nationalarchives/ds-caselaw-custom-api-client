@@ -1,3 +1,6 @@
+from typing import NamedTuple
+
+
 class InvalidDocumentURIException(Exception):
     """The document URI is not valid."""
 
@@ -58,3 +61,11 @@ class DocumentIdentifierSlug(str):
 
 class DocumentIdentifierValue(str):
     pass
+
+
+SuccessFailureMessageTuple = NamedTuple("SuccessFailureMessageTuple", [("success", bool), ("messages", list[str])])
+"""
+A tuple used to return if an operation has succeeded or failed (and optionally a list of messages associated with that operation).
+
+This should only be used where a failure is considered a routine part of the application (eg during validation options); where an unexpected action has led to a failure the application should raise an appropriate exception.
+"""

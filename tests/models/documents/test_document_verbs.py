@@ -14,9 +14,11 @@ from caselawclient.models.documents import (
     DocumentURIString,
 )
 from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
+from caselawclient.types import SuccessFailureMessageTuple
 
 
 class TestDocumentSaveIdentifiers:
@@ -24,16 +26,42 @@ class TestDocumentSaveIdentifiers:
         """
         given a particular Document with a known value of Identifiers (probably mock this out tbh)
         when I call document.save_identifiers() it
-        calls identifiers.validate and
+        validates that the identifiers meet constraints using `perform_all_validations` and
         calls set_property_as_node with expected values (edited)
         """
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.identifiers = Mock(autospec=Identifiers)
         document.identifiers.as_etree = "fake_node"
 
+        document.identifiers.perform_all_validations.return_value = SuccessFailureMessageTuple(True, [])
+
         document.save_identifiers()
-        document.identifiers.validate.assert_called_once()
+        document.identifiers.perform_all_validations.assert_called_once_with(
+            document_type=Document, api_client=mock_api_client
+        )
         mock_api_client.set_property_as_node.assert_called_with("test/1234", "identifiers", "fake_node")
+
+    def test_document_save_identifiers_raises_exception_on_validation_failure(self, mock_api_client):
+        """
+        Check that if validating identifiers at save time fails then an exception is raised and the save is not performed
+        """
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.identifiers = Mock(autospec=Identifiers)
+        document.identifiers.as_etree = "fake_node"
+
+        document.identifiers.perform_all_validations.return_value = SuccessFailureMessageTuple(
+            False, ["Validation message one", "Validation message two"]
+        )
+
+        with pytest.raises(
+            IdentifierValidationException,
+            match="Unable to save identifiers; validation constraints not met: Validation message one, Validation message two",
+        ):
+            document.save_identifiers()
+            document.identifiers.perform_all_validations.assert_called_once_with(
+                document_type=Document, api_client=mock_api_client
+            )
+            mock_api_client.set_property_as_node.assert_not_called
 
 
 class TestDocumentPublish:

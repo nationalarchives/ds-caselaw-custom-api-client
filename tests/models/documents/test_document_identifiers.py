@@ -1,8 +1,6 @@
-import pytest
 from lxml import etree
 
 from caselawclient.factories import DocumentFactory
-from caselawclient.models.identifiers import Identifiers, UUIDMismatchError
 from tests.models.identifiers.test_identifiers import TestIdentifier
 
 
@@ -19,11 +17,6 @@ class TestDocumentIdentifiers:
             "id-1": identifier_1,
             "id-2": identifier_2,
         }
-
-    def test_validate(self):
-        identifiers = Identifiers({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
-        with pytest.raises(UUIDMismatchError):
-            identifiers.validate()
 
     def test_identifiers_as_etree(self):
         document = DocumentFactory.build(identifiers=[])

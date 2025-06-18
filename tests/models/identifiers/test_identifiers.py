@@ -3,7 +3,8 @@ from unittest.mock import patch
 import pytest
 from lxml import etree
 
-from caselawclient.models.identifiers import Identifier, Identifiers, IdentifierSchema
+from caselawclient.models.documents import Document
+from caselawclient.models.identifiers import Identifier, Identifiers, IdentifierSchema, UUIDMismatchError
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.types import DocumentIdentifierSlug
@@ -22,7 +23,7 @@ class TestIdentifierSchema(IdentifierSchema):
         return DocumentIdentifierSlug(value.lower())
 
     @classmethod
-    def validate_identifier(cls, value):
+    def validate_identifier_value(cls, value):
         return value.startswith("TEST-")
 
 
@@ -84,10 +85,10 @@ class TestIdentifierBase:
         )
 
     def test_validates_on_init(self):
-        """Check that when you initialise a new identifier the schema.validate_identifier method is called to validate the value."""
-        with patch.object(TestIdentifierSchema, "validate_identifier") as mock_validate_identifier:
+        """Check that when you initialise a new identifier the schema.validate_identifier_value method is called to validate the value."""
+        with patch.object(TestIdentifierSchema, "validate_identifier_value") as mock_validate_identifier_value:
             TestIdentifier(value="TEST-123")
-            mock_validate_identifier.assert_called_once_with(value="TEST-123")
+            mock_validate_identifier_value.assert_called_once_with(value="TEST-123")
 
     def test_validate_on_init_raises_on_false(self):
         """Check that when you initialise a new identifier with an invalid value it raises an exception."""
@@ -166,3 +167,30 @@ class TestIdentifierScoring:
 
     def test_preferred_identifier_with_type(self, mixed_identifiers: Identifiers):
         assert mixed_identifiers.preferred(type=NeutralCitationNumber) == TEST_NCN_1701
+
+
+class TestIdentifierValidation:
+    def test_validate_uuids_match_keys(self):
+        identifiers = Identifiers({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
+        with pytest.raises(UUIDMismatchError):
+            identifiers.validate_uuids_match_keys()
+
+    def test_perform_all_validations_runs_expected_validations(self, mock_api_client):
+        """Check that when we try to validate an entire set of Identifiers we do what is expected"""
+        identifier_1 = TestIdentifier(uuid="id-1", value="TEST-123")
+        identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456")
+        identifiers = Identifiers(
+            {
+                "id-1": identifier_1,
+                "id-2": identifier_2,
+            }
+        )
+        with (
+            patch.object(identifiers, "validate_uuids_match_keys") as mock_validate_uuids_match_keys,
+            patch.object(identifier_1, "perform_all_validations") as mock_identifier_1_validate,
+            patch.object(identifier_2, "perform_all_validations") as mock_identifier_2_validate,
+        ):
+            identifiers.perform_all_validations(document_type=Document, api_client=mock_api_client)
+            mock_validate_uuids_match_keys.assert_called_once()
+            mock_identifier_1_validate.assert_called_once_with(document_type=Document, api_client=mock_api_client)
+            mock_identifier_2_validate.assert_called_once_with(document_type=Document, api_client=mock_api_client)

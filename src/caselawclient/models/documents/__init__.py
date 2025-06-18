@@ -16,6 +16,7 @@ from caselawclient.errors import (
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.identifiers import Identifier
+from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
@@ -502,9 +503,14 @@ class Document:
         return self.docx_exists()
 
     def save_identifiers(self) -> None:
-        """Save the current state of this Document's identifiers to MarkLogic."""
-        self.identifiers.validate()
-        self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
+        """Validate the identifiers, and if the validation passes save them to MarkLogic"""
+        validations = self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
+        if validations.success is True:
+            self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
+        else:
+            raise IdentifierValidationException(
+                "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
+            )
 
     def __getattr__(self, name: str) -> Any:
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)

@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.factories import IdentifierResolutionsFactory
 
 
 @pytest.fixture(name="valid_search_result_xml")
@@ -131,5 +132,6 @@ def mock_api_client():
     mock_client.get_judgment_xml_bytestring.return_value = b"<xml>content</xml>"
     mock_client.get_property_as_node.return_value = None
     mock_client.get_next_document_sequence_number.return_value = 1
+    mock_client.resolve_from_identifier_value.return_value = IdentifierResolutionsFactory.build()
 
     return mock_client
