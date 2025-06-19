@@ -7,7 +7,7 @@ from caselawclient.Client import MarklogicApiClient
 from caselawclient.identifier_resolution import IdentifierResolution, IdentifierResolutions
 from caselawclient.models.documents import Document
 from caselawclient.models.documents.body import DocumentBody
-from caselawclient.models.identifiers import Identifier
+from caselawclient.models.identifiers import Identifier, Identifiers
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.judgments import Judgment
@@ -188,5 +188,5 @@ class SearchResultFactory(SimpleFactory[SearchResult]):
         "matches": None,
         "slug": "uksc/2025/1",
         "content_hash": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
-        "identifiers": {"id-1": NeutralCitationNumber("[2025] UKSC 123", "id-1")},
+        "identifiers": Identifiers({"id-1": NeutralCitationNumber("[2025] UKSC 123", "id-1")}),
     }
