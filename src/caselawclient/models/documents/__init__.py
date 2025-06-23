@@ -34,7 +34,7 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.types import DocumentURIString
 
 from .body import DocumentBody
-from .exceptions import CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -341,22 +341,34 @@ class Document:
             now.isoformat(),
         )
 
+        if not self.can_enrich:
+            msg = f"{self.uri} cannot be enriched"
+            raise CannotEnrichUnenrichableDocument(msg)
+
         announce_document_event(
             uri=self.uri,
             status="enrich",
             enrich=True,
         )
 
-    def enrich(self) -> bool:
+    def enrich(self, even_if_recent: bool = False, accept_failures: bool = False) -> bool:
         """
         Request enrichment of a document, if it's sensible to do so.
         """
-        if self.enriched_recently is False:
-            print("Enrichment requested")
+        if not (even_if_recent) and self.enriched_recently:
+            print("Enrichment not requested as document was enriched recently")
+            return False
+
+        print("Enrichment requested")
+
+        try:
             self.force_enrich()
-            return True
-        print("Enrichment not requested as document was enriched recently")
-        return False
+        except CannotEnrichUnenrichableDocument as e:
+            if not accept_failures:
+                raise e
+            return False
+
+        return True
 
     @cached_property
     def enriched_recently(self) -> bool:
@@ -501,6 +513,13 @@ class Document:
         Is it sensible to reparse this document?
         """
         return self.docx_exists()
+
+    @cached_property
+    def can_enrich(self) -> bool:
+        """
+        Is it possible to enrich this document?
+        """
+        return self.body.has_content
 
     def save_identifiers(self) -> None:
         """Validate the identifiers, and if the validation passes save them to MarkLogic"""

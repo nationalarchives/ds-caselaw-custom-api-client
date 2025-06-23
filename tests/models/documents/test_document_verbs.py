@@ -1,13 +1,14 @@
 import datetime
 import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 import time_machine
 
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import (
+    CannotEnrichUnenrichableDocument,
     CannotPublishUnpublishableDocument,
     Document,
     DocumentNotSafeForDeletion,
@@ -151,10 +152,11 @@ class TestDocumentUnpublish:
         )
 
 
-class TestDocumentEnrich:
+class TestDocumentForceEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
-    def test_force_enrich(self, mock_announce_document_event, mock_api_client):
+    @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=True)
+    def test_force_enrich(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.force_enrich()
 
@@ -170,6 +172,60 @@ class TestDocumentEnrich:
             enrich=True,
         )
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
+    def test_force_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.can_enrich = False
+        with pytest.raises(CannotEnrichUnenrichableDocument):
+            document.force_enrich()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        mock_announce_document_event.assert_not_called()
+
+
+class TestDocumentEnrich:
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
+    def test_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.can_enrich = False
+        with pytest.raises(CannotEnrichUnenrichableDocument):
+            document.enrich()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        mock_announce_document_event.assert_not_called()
+
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
+    def test_enrich_of_unenrichable_but_exception_ignored(
+        self, mock_can_enrich, mock_announce_document_event, mock_api_client
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.can_enrich = False
+        document.enrich(accept_failures=True)
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        mock_announce_document_event.assert_not_called()
+
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.force_enrich")
     def test_enrich_not_recently_enriched(self, mock_force_enrich, mock_announce_document_event, mock_api_client):
@@ -180,7 +236,6 @@ class TestDocumentEnrich:
 
         assert result is True
         mock_force_enrich.assert_called_once()
-        mock_announce_document_event.assert_not_called()
 
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.force_enrich")
@@ -192,7 +247,19 @@ class TestDocumentEnrich:
 
         assert result is False
         mock_force_enrich.assert_not_called()
-        mock_announce_document_event.assert_not_called()
+
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.Document.force_enrich")
+    def test_enrich_recently_enriched_but_ignore_it(
+        self, mock_force_enrich, mock_announce_document_event, mock_api_client
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.enriched_recently = True
+
+        result = document.enrich(even_if_recent=True)
+
+        assert result is True
+        mock_force_enrich.assert_called_once()
 
 
 class TestDocumentHold:
