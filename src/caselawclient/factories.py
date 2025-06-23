@@ -188,5 +188,10 @@ class SearchResultFactory(SimpleFactory[SearchResult]):
         "matches": None,
         "slug": "uksc/2025/1",
         "content_hash": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
-        "identifiers": Identifiers({"id-1": NeutralCitationNumber("[2025] UKSC 123", "id-1")}),
+        "identifiers": Identifiers(
+            {
+                "id-1": NeutralCitationNumber("[2025] UKSC 123", "id-1"),
+                "id-2": FindCaseLawIdentifier("bcdfghjk", "id-2"),
+            }
+        ),
     }
