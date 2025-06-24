@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
-from ds_caselaw_utils.types import NeutralCitationString
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.errors import (
@@ -412,7 +411,9 @@ class Document:
         ## Make sure the document has an FCLID
         self.assign_fclid_if_missing()
 
+        # copy assets to public s3 bucket
         publish_documents(self.uri)
+
         self.api_client.set_published(self.uri, True)
         announce_document_event(
             uri=self.uri,
@@ -455,9 +456,6 @@ class Document:
             delete_documents_from_private_bucket(self.uri)
         else:
             raise DocumentNotSafeForDeletion
-
-    def move(self, new_citation: NeutralCitationString) -> None:
-        self.api_client.update_document_uri(self.uri, new_citation)
 
     def force_reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"

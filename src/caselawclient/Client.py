@@ -523,19 +523,26 @@ class MarklogicApiClient:
     def set_judgment_this_uri(
         self,
         judgment_uri: DocumentURIString,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        content_with_id = f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
-        content_without_id = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
-        content_with_xml = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
-        vars: query_dicts.SetMetadataThisUriDict = {
-            "uri": uri,
-            "content_with_id": content_with_id,
-            "content_without_id": content_without_id,
-            "content_with_xml": content_with_xml,
-        }
+    ) -> None:
+        # raise RuntimeError("This can't work any more")
+        work = f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
+        expression = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
+        manifestation = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
+        self.set_metadata_frbr_uris(judgment_uri, work, expression, manifestation)
 
-        return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
+    def set_metadata_frbr_uris(
+        self, judgment_uri: DocumentURIString, work: str, expression: str, manifestation: str
+    ) -> None:
+        """Update the FRBRWork, FRBRExpression and FRBRManifestation uris in the XML"""
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.SetMetadataFrbrUrisDict = {
+            "uri": uri,
+            "work": work,
+            "expression": expression,
+            "manifestation": manifestation,
+        }
+        response = self._send_to_eval(vars, "set_metadata_frbr_uris.xqy")
+        response.raise_for_status()
 
     def save_locked_judgment_xml(
         self,
