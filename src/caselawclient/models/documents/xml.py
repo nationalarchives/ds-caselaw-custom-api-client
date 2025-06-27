@@ -1,6 +1,14 @@
+import os
+
 from lxml import etree
 
 from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
+
+
+def _xslt_path(xslt_file_name: str) -> str:
+    from caselawclient.Client import ROOT_DIR
+
+    return os.path.join(ROOT_DIR, "xslt", xslt_file_name)
 
 
 class NonXMLDocumentError(Exception):
@@ -41,3 +49,20 @@ class XML:
         namespaces: dict[str, str],
     ) -> list[str]:
         return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)
+
+    def _modified(
+        self,
+        xslt: str,
+        **values: str,
+    ) -> bytes:
+        """XSLT transform this XML, given a stylesheet"""
+        passable_values = {k: etree.XSLT.strparam(v) for k, v in values.items()}
+        xslt_transform = etree.XSLT(etree.fromstring(xslt))
+        return etree.tostring(xslt_transform(self.xml_as_tree, profile_run=False, **passable_values))
+
+    def apply_xslt(self, xslt_filename: str, **values: str) -> bytes:
+        """XSLT transform this XML, given a path to a stylesheet"""
+        full_xslt_filename = _xslt_path(xslt_filename)
+        with open(full_xslt_filename) as f:
+            xslt = f.read()
+        return self._modified(xslt, **values)

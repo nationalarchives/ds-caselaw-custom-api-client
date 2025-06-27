@@ -4,6 +4,7 @@ import warnings
 from unittest.mock import Mock, patch
 
 import pytest
+from lxml import etree
 
 from caselawclient.errors import (
     DocumentNotFoundError,
@@ -27,6 +28,7 @@ from caselawclient.models.documents import (
 )
 from caselawclient.models.judgments import Judgment
 from caselawclient.types import InvalidDocumentURIException
+from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 
 class TestDocument:
@@ -310,3 +312,33 @@ class TestLinkedDocumentResolutions:
             doc.body.content_html = Mock()
             doc.content_as_html()
             doc.body.content_html.assert_called_with("imagepath/test/1234")
+
+
+class TestDocumentXMLWithCorrectFRBR:
+    def test_add_live_data(self):
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.xml"), "r"
+        ) as file:
+            doc = DocumentFactory.build(
+                uri=DocumentURIString("d-1234"), body=DocumentBodyFactory.build(name="docname", xml_string=file.read())
+            )
+
+        root = etree.fromstring(doc.xml_with_correct_frbr())
+        assert root.xpath("//akn:FRBRWork/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/id/tna.tn4t35ts"
+        ]
+        assert root.xpath("//akn:FRBRWork/akn:FRBRuri/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/id/tna.tn4t35ts"
+        ]
+        assert root.xpath("//akn:FRBRExpression/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/d-1234"
+        ]
+        assert root.xpath("//akn:FRBRExpression/akn:FRBRuri/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/d-1234"
+        ]
+        assert root.xpath("//akn:FRBRManifestation/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/d-1234/data.xml"
+        ]
+        assert root.xpath("//akn:FRBRManifestation/akn:FRBRuri/@value", namespaces=DEFAULT_NAMESPACES) == [
+            "https://caselaw.nationalarchives.gov.uk/d-1234/data.xml"
+        ]

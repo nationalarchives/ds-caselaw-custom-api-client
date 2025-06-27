@@ -174,3 +174,6 @@ class DocumentBody:
         :return: `True` if there was a complete parser failure, otherwise `False`
         """
         return "error" in self._xml.root_element
+
+    def apply_xslt(self, xslt_filename: str, **values: str) -> bytes:
+        return self._xml.apply_xslt(xslt_filename, **values)
