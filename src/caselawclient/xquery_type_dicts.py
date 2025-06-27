@@ -178,6 +178,14 @@ class SetMetadataCourtDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# set_metadata_frbr_uris.xqy
+class SetMetadataFrbrUrisDict(MarkLogicAPIDict):
+    expression: str
+    manifestation: str
+    uri: MarkLogicDocumentURIString
+    work: str
+
+
 # set_metadata_jurisdiction.xqy
 class SetMetadataJurisdictionDict(MarkLogicAPIDict):
     content: str
@@ -187,14 +195,6 @@ class SetMetadataJurisdictionDict(MarkLogicAPIDict):
 # set_metadata_name.xqy
 class SetMetadataNameDict(MarkLogicAPIDict):
     content: str
-    uri: MarkLogicDocumentURIString
-
-
-# set_metadata_this_uri.xqy
-class SetMetadataThisUriDict(MarkLogicAPIDict):
-    content_with_id: str
-    content_with_xml: str
-    content_without_id: str
     uri: MarkLogicDocumentURIString
 
 
