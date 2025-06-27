@@ -524,7 +524,7 @@ class MarklogicApiClient:
         self,
         judgment_uri: DocumentURIString,
     ) -> None:
-        # raise RuntimeError("This can't work any more")
+        raise RuntimeError("This can't work any more")
         work = f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
         expression = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
         manifestation = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"

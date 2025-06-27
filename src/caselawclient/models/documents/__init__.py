@@ -564,3 +564,14 @@ class Document:
     def content_as_html(self) -> str | None:
         xlst_image_location = os.getenv("XSLT_IMAGE_LOCATION", "")
         return self.body.content_html(f"{xlst_image_location}/{self.uri}")
+
+    def update_frbr_uris(self) -> None:
+        """Note that this must only happen on documents that have been published."""
+        # TODO: test, plumb in
+        fcl_identifiers = self.identifiers.of_type(FindCaseLawIdentifier)
+        if len(fcl_identifiers) != 1:
+            raise RuntimeError(f"{len(fcl_identifiers)} FCL ids found for {self}")
+        work = f"https://caselaw.nationalarchives.gov.uk/id/{fcl_identifiers[0].url_slug}"
+        expression = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}"
+        manifestation = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}/data.xml"
+        self.api_client.set_metadata_frbr_uris(self.uri, work, expression, manifestation)
