@@ -12,7 +12,7 @@ from ds_caselaw_utils.types import CourtCode, JurisdictionCode
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
@@ -180,7 +180,7 @@ class SearchResult:
         )
 
     @property
-    def identifiers(self) -> Identifiers:
+    def identifiers(self) -> IdentifiersCollection:
         identifiers_etrees = self._get_xpath(".//identifiers")
         count = len(identifiers_etrees)
         if count != 1:

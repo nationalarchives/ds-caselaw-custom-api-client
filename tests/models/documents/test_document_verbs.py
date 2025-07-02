@@ -14,7 +14,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
-from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
@@ -31,7 +31,7 @@ class TestDocumentSaveIdentifiers:
         calls set_property_as_node with expected values (edited)
         """
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.identifiers = Mock(autospec=Identifiers)
+        document.identifiers = Mock(autospec=IdentifiersCollection)
         document.identifiers.as_etree = "fake_node"
 
         document.identifiers.perform_all_validations.return_value = SuccessFailureMessageTuple(True, [])
@@ -47,7 +47,7 @@ class TestDocumentSaveIdentifiers:
         Check that if validating identifiers at save time fails then an exception is raised and the save is not performed
         """
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.identifiers = Mock(autospec=Identifiers)
+        document.identifiers = Mock(autospec=IdentifiersCollection)
         document.identifiers.as_etree = "fake_node"
 
         document.identifiers.perform_all_validations.return_value = SuccessFailureMessageTuple(

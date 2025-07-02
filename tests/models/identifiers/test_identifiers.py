@@ -4,8 +4,9 @@ import pytest
 from lxml import etree
 
 from caselawclient.models.documents import Document
-from caselawclient.models.identifiers import Identifier, Identifiers, IdentifierSchema, UUIDMismatchError
-from caselawclient.models.identifiers.exceptions import IdentifierValidationException
+from caselawclient.models.identifiers import Identifier, IdentifierSchema
+from caselawclient.models.identifiers.collection import IdentifiersCollection
+from caselawclient.models.identifiers.exceptions import IdentifierValidationException, UUIDMismatchError
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.types import DocumentIdentifierSlug
 
@@ -35,7 +36,7 @@ class TestIdentifier(Identifier):
 
 @pytest.fixture
 def identifiers():
-    return Identifiers(
+    return IdentifiersCollection(
         {"id-1": TestIdentifier(uuid="id-1", value="TEST-111"), "id-2": TestIdentifier(uuid="id-2", value="TEST-222")}
     )
 
@@ -47,7 +48,7 @@ TEST_IDENTIFIER_999 = TestIdentifier("TEST-999")
 
 @pytest.fixture
 def mixed_identifiers():
-    return Identifiers(
+    return IdentifiersCollection(
         {
             "id-A": TEST_NCN_1701,
             "id-B": TEST_IDENTIFIER_999,
@@ -118,33 +119,33 @@ class TestIdentifierBase:
 
 
 class TestIdentifiersCRUD:
-    def test_delete(self, identifiers: Identifiers):
+    def test_delete(self, identifiers: IdentifiersCollection):
         del identifiers["id-1"]
         assert len(identifiers) == 1
         assert "id-2" in identifiers
 
-    def test_delete_identifier(self, identifiers: Identifiers):
+    def test_delete_identifier(self, identifiers: IdentifiersCollection):
         id1 = identifiers["id-1"]
         del identifiers[id1]
         assert len(identifiers) == 1
         assert "id-2" in identifiers
 
-    def test_add_identifier(self, identifiers: Identifiers, id3: TestIdentifier):
+    def test_add_identifier(self, identifiers: IdentifiersCollection, id3: TestIdentifier):
         identifiers.add(id3)
         assert identifiers["id-3"] == id3
         assert len(identifiers) == 3
 
-    def test_contains(self, identifiers: Identifiers):
+    def test_contains(self, identifiers: IdentifiersCollection):
         assert identifiers.contains(TestIdentifier(value="TEST-111"))
         assert not identifiers.contains(TestIdentifier(value="TEST-333"))
 
-    def test_of_type(self, mixed_identifiers: Identifiers):
+    def test_of_type(self, mixed_identifiers: IdentifiersCollection):
         only_ncns = mixed_identifiers.of_type(NeutralCitationNumber)
         assert "TEST-999" not in str(only_ncns)
         assert "[1701] UKSC 999" in str(only_ncns)
         assert "[1234] UKSC 999" in str(only_ncns)
 
-    def test_delete_type(self, mixed_identifiers: Identifiers):
+    def test_delete_type(self, mixed_identifiers: IdentifiersCollection):
         mixed_identifiers.delete_type(NeutralCitationNumber)
         assert "TEST-999" in str(mixed_identifiers)
         assert "[1701] UKSC 999" not in str(mixed_identifiers)
@@ -156,22 +157,22 @@ class TestIdentifierScoring:
         identifier = TestIdentifier(value="TEST-123")
         assert identifier.score == 2.5
 
-    def test_sorting(self, mixed_identifiers: Identifiers):
+    def test_sorting(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.by_score() == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
 
-    def test_preferred_identifier(self, mixed_identifiers: Identifiers):
+    def test_preferred_identifier(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.preferred() == TEST_IDENTIFIER_999
 
-    def test_sorting_with_type(self, mixed_identifiers: Identifiers):
+    def test_sorting_with_type(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.by_score(type=NeutralCitationNumber) == [TEST_NCN_1701, TEST_NCN_1234]
 
-    def test_preferred_identifier_with_type(self, mixed_identifiers: Identifiers):
+    def test_preferred_identifier_with_type(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.preferred(type=NeutralCitationNumber) == TEST_NCN_1701
 
 
 class TestIdentifierValidation:
     def test_validate_uuids_match_keys(self):
-        identifiers = Identifiers({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
+        identifiers = IdentifiersCollection({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
         with pytest.raises(UUIDMismatchError):
             identifiers.validate_uuids_match_keys()
 
@@ -179,7 +180,7 @@ class TestIdentifierValidation:
         """Check that when we try to validate an entire set of Identifiers we do what is expected"""
         identifier_1 = TestIdentifier(uuid="id-1", value="TEST-123")
         identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456")
-        identifiers = Identifiers(
+        identifiers = IdentifiersCollection(
             {
                 "id-1": identifier_1,
                 "id-2": identifier_2,

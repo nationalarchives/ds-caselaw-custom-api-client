@@ -3,7 +3,8 @@ from warnings import warn
 
 from lxml import etree
 
-from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier, Identifiers
+from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier
+from .collection import IdentifiersCollection
 from .exceptions import InvalidIdentifierXMLRepresentationException
 from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
@@ -16,9 +17,9 @@ IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
 }
 
 
-def unpack_all_identifiers_from_etree(identifiers_etree: Optional[etree._Element]) -> Identifiers:
+def unpack_all_identifiers_from_etree(identifiers_etree: Optional[etree._Element]) -> IdentifiersCollection:
     """This expects the entire <identifiers> tag, and unpacks all Identifiers inside it"""
-    identifiers = Identifiers()
+    identifiers = IdentifiersCollection()
     if identifiers_etree is None:
         return identifiers
     for identifier_etree in identifiers_etree.findall("identifier"):

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from lxml import etree
 from test_identifiers import TestIdentifier
 
-from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.unpacker import (
     IDENTIFIER_NAMESPACE_MAP,
     unpack_all_identifiers_from_etree,
@@ -119,7 +119,7 @@ class TestIdentifierUnpacking(unittest.TestCase):
         with self.assertWarnsRegex(Warning, "Identifier type unknown is not known."):
             unpacked_identifiers = unpack_all_identifiers_from_etree(xml_tree)
 
-        assert type(unpacked_identifiers) is Identifiers
+        assert type(unpacked_identifiers) is IdentifiersCollection
         assert len(unpacked_identifiers) == 1
         assert type(unpacked_identifiers["2d80bf1d-e3ea-452f-965c-041f4399f2dd"]) is TestIdentifier
         assert "86888618-a9a0-44e3-af4a-5b10dbb910c0" not in unpacked_identifiers
@@ -143,7 +143,7 @@ class TestIdentifierPackUnpackRoundTrip:
     @patch("caselawclient.models.identifiers.unpacker.IDENTIFIER_NAMESPACE_MAP", {"test": TestIdentifier})
     def test_roundtrip_identifiers(self):
         """Check that if we convert multiple identifiers to XML and back again we get the same things out at the far end."""
-        original_identifiers = Identifiers()
+        original_identifiers = IdentifiersCollection()
         original_identifiers.add(TestIdentifier(uuid="id-a1", value="TEST-123"))
         original_identifiers.add(TestIdentifier(uuid="id-b2", value="TEST-456", deprecated=True))
 
