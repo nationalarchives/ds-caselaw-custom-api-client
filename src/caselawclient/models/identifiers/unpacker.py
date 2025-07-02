@@ -4,16 +4,11 @@ from warnings import warn
 from lxml import etree
 
 from . import IDENTIFIER_UNPACKABLE_ATTRIBUTES, Identifier
-from .collection import IdentifiersCollection
+from .collection import SUPPORTED_IDENTIFIER_TYPES, IdentifiersCollection
 from .exceptions import InvalidIdentifierXMLRepresentationException
-from .fclid import FindCaseLawIdentifier
-from .neutral_citation import NeutralCitationNumber
-from .press_summary_ncn import PressSummaryRelatedNCNIdentifier
 
 IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
-    "fclid": FindCaseLawIdentifier,
-    "ukncn": NeutralCitationNumber,
-    "uksummaryofncn": PressSummaryRelatedNCNIdentifier,
+    identifier_type.schema.namespace: identifier_type for identifier_type in SUPPORTED_IDENTIFIER_TYPES
 }
 
 

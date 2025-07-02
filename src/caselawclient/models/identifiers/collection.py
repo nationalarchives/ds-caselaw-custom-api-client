@@ -6,10 +6,19 @@ from caselawclient.types import SuccessFailureMessageTuple
 
 from . import Identifier
 from .exceptions import UUIDMismatchError
+from .fclid import FindCaseLawIdentifier
+from .neutral_citation import NeutralCitationNumber
+from .press_summary_ncn import PressSummaryRelatedNCNIdentifier
 
 if TYPE_CHECKING:
     from caselawclient.Client import MarklogicApiClient
     from caselawclient.models.documents import Document
+
+SUPPORTED_IDENTIFIER_TYPES: list[type["Identifier"]] = [
+    FindCaseLawIdentifier,
+    NeutralCitationNumber,
+    PressSummaryRelatedNCNIdentifier,
+]
 
 
 class IdentifiersCollection(dict[str, Identifier]):
