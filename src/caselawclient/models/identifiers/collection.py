@@ -53,6 +53,9 @@ class IdentifiersCollection(dict[str, Identifier]):
         if not self.contains(identifier):
             self[identifier.uuid] = identifier
 
+    def valid_new_identifier_types(self, document_type: type[Document]) -> list[type[Identifier]]:
+        pass
+
     def __delitem__(self, key: Union[Identifier, str]) -> None:
         if isinstance(key, Identifier):
             super().__delitem__(key.uuid)
