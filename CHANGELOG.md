@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **IdentifierSchema**: rename validate_identifier to validate_identifier_value
 - **Identifier**: add ability to validate that identifiers are globally unique
 - **IdentifierSchema**: add new allow_editing flag to identifier schemas
+- **Document**: expose xml with dynamic FRBR uris from document properties using XLST
 
 ### Fix
 

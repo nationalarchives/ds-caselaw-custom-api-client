@@ -2,16 +2,30 @@
     xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
     <judgment>
         <meta>
-            <identification>
+            <identification source="#tna">
                 <FRBRWork>
-                    <FRBRthis value="https://caselaw.nationalarchives.gov.uk/id/uksc/2024/1234"/>
-                    <FRBRuri value="https://caselaw.nationalarchives.gov.uk/id/uksc/2024/1234"/>
-                    <FRBRdate date="2024-01-01" name="judgment"/>
-                    <FRBRauthor href="#uksc"/>
-                    <FRBRcountry value="GB-UKM"/>
-                    <FRBRnumber value="1234"/>
-                    <FRBRname value="Test Claimant v TestDefendant"/>
+                    <FRBRthis value="https://caselaw.nationalarchives.gov.uk/id/uksc/2024/1234" />
+                    <FRBRuri value="https://caselaw.nationalarchives.gov.uk/id/uksc/2024/1234" />
+                    <FRBRdate date="2024-01-01" name="judgment" />
+                    <FRBRauthor href="#uksc" />
+                    <FRBRcountry value="GB-UKM" />
+                    <FRBRnumber value="1234" />
+                    <FRBRname value="Test Claimant v TestDefendant" />
                 </FRBRWork>
+                <FRBRExpression>
+                    <FRBRthis value="https://caselaw.nationalarchives.gov.uk/uksc/2024/1234" />
+                    <FRBRuri value="https://caselaw.nationalarchives.gov.uk/uksc/2024/1234" />
+                    <FRBRdate date="2024-01-01" name="judgment" />
+                    <FRBRauthor href="#uksc" />
+                    <FBRRlanguage language="eng" />
+                </FRBRExpression>
+                <FRBRManifestation>
+                    <FRBRthis value="https://caselaw.nationalarchives.gov.uk/d-a1b2c3/xml" />
+                    <FRBRuri value="https://caselaw.nationalarchives.gov.uk/d-a1b2c3/data.xml" />
+                    <FRBRdate date="2024-01-01" name="judgment" />
+                    <FRBRauthor href="#uksc" />
+                    <FRBRformat value="application/xml" />
+                </FRBRManifestation>
             </identification>
         </meta>
         <header>

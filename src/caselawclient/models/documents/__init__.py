@@ -566,3 +566,13 @@ class Document:
     def content_as_html(self) -> str | None:
         xlst_image_location = os.getenv("XSLT_IMAGE_LOCATION", "")
         return self.body.content_html(f"{xlst_image_location}/{self.uri}")
+
+    def xml_with_correct_frbr(self) -> bytes:
+        """Dynamically modify FRBR uris to reflect current storage location and FCL id"""
+        fcl_identifiers = self.identifiers.of_type(FindCaseLawIdentifier)
+        work_uri = f"https://caselaw.nationalarchives.gov.uk/id/{fcl_identifiers[0].url_slug}"
+        expression_uri = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}"
+        manifestation_uri = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}/data.xml"
+        return self.body.apply_xslt(
+            "modify_xml_live.xsl", work_uri=work_uri, expression_uri=expression_uri, manifestation_uri=manifestation_uri
+        )
