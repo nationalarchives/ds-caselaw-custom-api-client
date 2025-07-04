@@ -6,7 +6,7 @@ from ds_caselaw_utils.courts import Court
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
-from caselawclient.models.identifiers import Identifiers
+from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.responses.search_result import (
     EditorPriority,
     EditorStatus,
@@ -184,7 +184,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
         identifiers = search_result.identifiers
-        assert isinstance(identifiers, Identifiers)
+        assert isinstance(identifiers, IdentifiersCollection)
         (identifier_1,) = identifiers.values()
         assert identifier_1.value == "[1901] UKSC 1"
         assert search_result.slug == "uksc/1901/1"
@@ -206,7 +206,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
         identifiers = search_result.identifiers
-        assert isinstance(identifiers, Identifiers)
+        assert isinstance(identifiers, IdentifiersCollection)
         assert not identifiers
         with pytest.raises(RuntimeError):
             search_result.slug
@@ -248,7 +248,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
         identifiers = search_result.identifiers
-        assert isinstance(identifiers, Identifiers)
+        assert isinstance(identifiers, IdentifiersCollection)
         (identifier_1,) = identifiers.values()
         assert identifier_1.value == "[1901] UKSC 1"
         assert search_result.slug == "uksc/1901/1"

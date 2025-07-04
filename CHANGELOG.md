@@ -8,11 +8,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- `identifiers.Identifiers` is now `identifiers.collection.IdentifierCollection`
 - `Identifiers.validate()` is now `Identifiers.validate_uuids_match_keys()`
 - `IdentifierSchema.validate_identifier` has been renamed `IdentifierSchema.validate_identifier_value`
 
 ### Feat
 
+- **identifiers**: canonical list of supported identifiers now lives in identifiers.collection
 - **Document**: saving identifiers now correctly raises exception when validation fails
 - move to using structured objects to represent validation failures rather than exceptions
 - **Identifiers**: validating identifiers now performs a full check of all individual identifiers
@@ -24,6 +26,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **deps**: update dependency boto3 to v1.38.42
+- **deps**: update boto packages to v1.38.39
+- **deps**: update dependency boto3 to v1.38.37
 - **deps**: update dependency certifi to >=2025.6.15,<2025.7.0
 - **deps**: update dependency boto3 to v1.38.36
 - **deps**: update dependency boto3 to v1.38.33
@@ -35,6 +40,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Refactor
 
+- **Identifiers**: rename Identifiers to IdentifierCollection and move to submodule
 - refine how identifiers validity checks are performed
 
 ## v37.4.0 (2025-06-04)
