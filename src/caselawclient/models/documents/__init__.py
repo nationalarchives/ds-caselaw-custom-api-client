@@ -570,7 +570,7 @@ class Document:
     def xml_with_correct_frbr(self) -> bytes:
         """Dynamically modify FRBR uris to reflect current storage location and FCL id"""
         fcl_identifiers = self.identifiers.of_type(FindCaseLawIdentifier)
-        work_uri = f"https://caselaw.nationalarchives.gov.uk/id/{fcl_identifiers[0].url_slug}"
+        work_uri = f"https://caselaw.nationalarchives.gov.uk/id/doc/{fcl_identifiers[0].value}"
         expression_uri = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}"
         manifestation_uri = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}/data.xml"
         return self.body.apply_xslt(
