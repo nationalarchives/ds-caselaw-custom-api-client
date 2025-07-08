@@ -47,3 +47,11 @@ class TestDocumentXml:
         assert root.xpath("//akn:attribute/@attribute", namespaces=DEFAULT_NAMESPACES) == ["wolf"]
         # but text does not contain wierd namespacing artifacts
         assert b"<text>lion</text>" in modified_xml
+
+    def test_modify_leaves_okay_namespaces(self):
+        document_xml = XML(b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                           <judgment name="decision"> <meta> <identification source="#tna">
+                           <FRBRWork> <akn:FRBRthis xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" value="https://caselaw.nationalarchives.gov.uk/id/doc/tn4t35ts"></akn:FRBRthis>
+                           </FRBRWork> </identification></meta><header></header><judgmentBody><decision><p>This is a document.</p></decision></judgmentBody></judgment></akomaNtoso>""")
+        modified_xml = document_xml.apply_xslt("sample.xsl")
+        assert b"<FRBRthis" in modified_xml
