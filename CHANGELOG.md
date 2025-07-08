@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v38.0.1 (2025-07-08)
+
+- Canonicalise XML output of apply_xslt to avoid weird namespacing artifacts
+- Use `/id/doc` namespace for work with no `tna.` prefix
+
 ## v38.0.0 (2025-07-07)
 
 ### BREAKING CHANGE
