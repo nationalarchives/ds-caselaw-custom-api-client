@@ -325,10 +325,10 @@ class TestDocumentXMLWithCorrectFRBR:
 
         root = etree.fromstring(doc.xml_with_correct_frbr())
         assert root.xpath("//akn:FRBRWork/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
-            "https://caselaw.nationalarchives.gov.uk/id/tna.tn4t35ts"
+            "https://caselaw.nationalarchives.gov.uk/id/doc/tn4t35ts"
         ]
         assert root.xpath("//akn:FRBRWork/akn:FRBRuri/@value", namespaces=DEFAULT_NAMESPACES) == [
-            "https://caselaw.nationalarchives.gov.uk/id/tna.tn4t35ts"
+            "https://caselaw.nationalarchives.gov.uk/id/doc/tn4t35ts"
         ]
         assert root.xpath("//akn:FRBRExpression/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
             "https://caselaw.nationalarchives.gov.uk/d-1234"
