@@ -42,5 +42,8 @@ class TestDocumentXml:
 
         modified_xml = document_xml.apply_xslt("sample.xsl", cat="lion", dog="wolf")
         root = etree.fromstring(modified_xml)
+        # XML is correctly namespaced
         assert root.xpath("//akn:text/text()", namespaces=DEFAULT_NAMESPACES) == ["lion"]
         assert root.xpath("//akn:attribute/@attribute", namespaces=DEFAULT_NAMESPACES) == ["wolf"]
+        # but text does not contain wierd namespacing artifacts
+        assert b"<text>lion</text>" in modified_xml
