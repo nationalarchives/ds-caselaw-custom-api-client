@@ -33,10 +33,18 @@ class IdentifiersCollection(dict[str, Identifier]):
     def perform_all_validations(
         self, document_type: type["Document"], api_client: "MarklogicApiClient"
     ) -> SuccessFailureMessageTuple:
-        self.validate_uuids_match_keys()
-
         success = True
         messages: list[str] = []
+
+        # Run collection-level validations
+        collection_validations_to_run: list[SuccessFailureMessageTuple] = [
+            self.validate_uuids_match_keys(),
+        ]
+
+        for validation in collection_validations_to_run:
+            if not validation.success:
+                success = False
+                messages += validation.messages
 
         for _, identifier in self.items():
             validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
