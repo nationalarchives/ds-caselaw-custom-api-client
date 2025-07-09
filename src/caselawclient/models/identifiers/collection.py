@@ -46,7 +46,7 @@ class IdentifiersCollection(dict[str, Identifier]):
         return SuccessFailureMessageTuple(success, messages)
 
     def contains(self, other_identifier: Identifier) -> bool:
-        "Do the identifier's value and namespace already exist in this group?"
+        """Does the identifier's value and namespace already exist in this group?"""
         return any(other_identifier.same_as(identifier) for identifier in self.values())
 
     def add(self, identifier: Identifier) -> None:
