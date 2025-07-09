@@ -86,6 +86,15 @@ class IdentifiersCollection(dict[str, Identifier]):
         if not self.contains(identifier):
             self[identifier.uuid] = identifier
 
+    def valid_new_identifier_types(self, document_type: type["Document"]) -> list[type[Identifier]]:
+        """Return a list of identifier types which can be added to a document of the given type, given identifiers already in this collection."""
+        return [
+            t
+            for t in SUPPORTED_IDENTIFIER_TYPES
+            if t.schema.allow_editing
+            and (not t.schema.document_types or document_type.__name__ in t.schema.document_types)
+        ]
+
     def __delitem__(self, key: Union[Identifier, str]) -> None:
         if isinstance(key, Identifier):
             super().__delitem__(key.uuid)
