@@ -4,7 +4,7 @@ from lxml import etree
 
 from caselawclient.types import SuccessFailureMessageTuple
 
-from . import Identifier
+from . import Identifier, IdentifierSchema
 from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
 from .press_summary_ncn import PressSummaryRelatedNCNIdentifier
@@ -30,6 +30,28 @@ class IdentifiersCollection(dict[str, Identifier]):
 
         return SuccessFailureMessageTuple(True, [])
 
+    def check_only_single_non_deprecated_identifier_where_multiples_not_allowed(self) -> SuccessFailureMessageTuple:
+        """Check that only one non-deprecated identifier exists per schema where that schema does not allow multiples."""
+
+        schema_to_identifiers: dict[type[IdentifierSchema], list[Identifier]] = {}
+
+        for identifier in self.values():
+            schema = getattr(identifier, "schema", None)
+            if schema is not None:
+                schema_to_identifiers.setdefault(schema, []).append(identifier)
+
+        for schema, identifiers in schema_to_identifiers.items():
+            non_deprecated_identifiers = [i for i in identifiers if not i.deprecated]
+            if len(non_deprecated_identifiers) > 1:
+                return SuccessFailureMessageTuple(
+                    False,
+                    [
+                        f"Multiple non-deprecated identifiers found for schema '{schema.name}': {', '.join(i.value for i in non_deprecated_identifiers)}"
+                    ],
+                )
+
+        return SuccessFailureMessageTuple(True, [])
+
     def perform_all_validations(
         self, document_type: type["Document"], api_client: "MarklogicApiClient"
     ) -> SuccessFailureMessageTuple:
@@ -39,6 +61,7 @@ class IdentifiersCollection(dict[str, Identifier]):
         # Run collection-level validations
         collection_validations_to_run: list[SuccessFailureMessageTuple] = [
             self.validate_uuids_match_keys(),
+            self.check_only_single_non_deprecated_identifier_where_multiples_not_allowed(),
         ]
 
         for validation in collection_validations_to_run:
