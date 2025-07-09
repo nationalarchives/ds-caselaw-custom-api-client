@@ -5,7 +5,6 @@ from lxml import etree
 from caselawclient.types import SuccessFailureMessageTuple
 
 from . import Identifier
-from .exceptions import UUIDMismatchError
 from .fclid import FindCaseLawIdentifier
 from .neutral_citation import NeutralCitationNumber
 from .press_summary_ncn import PressSummaryRelatedNCNIdentifier
@@ -22,11 +21,14 @@ SUPPORTED_IDENTIFIER_TYPES: list[type["Identifier"]] = [
 
 
 class IdentifiersCollection(dict[str, Identifier]):
-    def validate_uuids_match_keys(self) -> None:
+    def validate_uuids_match_keys(self) -> SuccessFailureMessageTuple:
         for uuid, identifier in self.items():
             if uuid != identifier.uuid:
-                msg = "Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"
-                raise UUIDMismatchError(msg)
+                return SuccessFailureMessageTuple(
+                    False, [f"Key of {identifier} in Identifiers is {uuid} not {identifier.uuid}"]
+                )
+
+        return SuccessFailureMessageTuple(True, [])
 
     def perform_all_validations(
         self, document_type: type["Document"], api_client: "MarklogicApiClient"
