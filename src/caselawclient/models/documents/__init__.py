@@ -31,7 +31,7 @@ from caselawclient.models.utilities.aws import (
     request_parse,
     unpublish_documents,
 )
-from caselawclient.types import DocumentURIString
+from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
 
 from .body import DocumentBody
 from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
@@ -521,9 +521,12 @@ class Document:
         """
         return self.body.has_content
 
+    def validate_identifiers(self) -> SuccessFailureMessageTuple:
+        return self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
+
     def save_identifiers(self) -> None:
         """Validate the identifiers, and if the validation passes save them to MarkLogic"""
-        validations = self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
+        validations = self.validate_identifiers()
         if validations.success is True:
             self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
         else:
