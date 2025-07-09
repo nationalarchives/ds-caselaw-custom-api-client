@@ -157,6 +157,10 @@ class TestIdentifierScoring:
         identifier = TestIdentifier(value="TEST-123")
         assert identifier.score == 2.5
 
+    def test_deprecated_identifier_scoring(self):
+        identifier = TestIdentifier(value="TEST-123", deprecated=True)
+        assert identifier.score == 0
+
     def test_sorting(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.by_score() == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
 
