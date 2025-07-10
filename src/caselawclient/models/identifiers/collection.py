@@ -52,13 +52,12 @@ class IdentifiersCollection(dict[str, Identifier]):
 
         return SuccessFailureMessageTuple(True, [])
 
-    def perform_all_validations(
-        self, document_type: type["Document"], api_client: "MarklogicApiClient"
-    ) -> SuccessFailureMessageTuple:
+    def _perform_collection_level_validations(self) -> SuccessFailureMessageTuple:
+        """Perform identifier validations which are only possible at the collection level, such as UUID integrity and identifying exclusivity problems."""
+
         success = True
         messages: list[str] = []
 
-        # Run collection-level validations
         collection_validations_to_run: list[SuccessFailureMessageTuple] = [
             self.validate_uuids_match_keys(),
             self.check_only_single_non_deprecated_identifier_where_multiples_not_allowed(),
@@ -69,6 +68,16 @@ class IdentifiersCollection(dict[str, Identifier]):
                 success = False
                 messages += validation.messages
 
+        return SuccessFailureMessageTuple(success, messages)
+
+    def _perform_identifier_level_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
+        """Perform identifier validations at the individual identifier level."""
+
+        success = True
+        messages: list[str] = []
+
         for _, identifier in self.items():
             validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
             if validations.success is False:
@@ -77,6 +86,21 @@ class IdentifiersCollection(dict[str, Identifier]):
             messages += validations.messages
 
         return SuccessFailureMessageTuple(success, messages)
+
+    def perform_all_validations(
+        self, document_type: type["Document"], api_client: "MarklogicApiClient"
+    ) -> SuccessFailureMessageTuple:
+        """Perform all possible identifier validations on this collection, both at the individual and collection level."""
+
+        identifier_level_success, identifier_level_messages = self._perform_identifier_level_validations(
+            document_type=document_type, api_client=api_client
+        )
+        collection_level_success, collection_level_messages = self._perform_collection_level_validations()
+
+        success = all([identifier_level_success, collection_level_success])
+        all_messages = identifier_level_messages + collection_level_messages
+
+        return SuccessFailureMessageTuple(success, all_messages)
 
     def contains(self, other_identifier: Identifier) -> bool:
         """Does the identifier's value and namespace already exist in this group?"""
