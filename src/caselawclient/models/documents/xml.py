@@ -59,7 +59,7 @@ class XML:
         passable_values = {k: etree.XSLT.strparam(v) for k, v in values.items()}
         xslt_transform = etree.XSLT(etree.fromstring(xslt))
         noncanonical_xml = xslt_transform(self.xml_as_tree, profile_run=False, **passable_values)
-        return etree.tostring(noncanonical_xml, method="c14n")
+        return etree.tostring(noncanonical_xml, method="c14n2")
 
     def apply_xslt(self, xslt_filename: str, **values: str) -> bytes:
         """XSLT transform this XML, given a path to a stylesheet"""
