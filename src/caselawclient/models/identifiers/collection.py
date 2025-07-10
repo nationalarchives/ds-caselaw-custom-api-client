@@ -30,17 +30,19 @@ class IdentifiersCollection(dict[str, Identifier]):
 
         return SuccessFailureMessageTuple(True, [])
 
+    def _list_all_identifiers_by_schema(self) -> dict[type[IdentifierSchema], list[Identifier]]:
+        """Get a list of all identifiers, grouped by their schema."""
+        identifiers_by_schema: dict[type[IdentifierSchema], list[Identifier]] = {}
+
+        for identifier in self.values():
+            identifiers_by_schema.setdefault(identifier.schema, []).append(identifier)
+
+        return identifiers_by_schema
+
     def check_only_single_non_deprecated_identifier_where_multiples_not_allowed(self) -> SuccessFailureMessageTuple:
         """Check that only one non-deprecated identifier exists per schema where that schema does not allow multiples."""
 
-        schema_to_identifiers: dict[type[IdentifierSchema], list[Identifier]] = {}
-
-        for identifier in self.values():
-            schema = getattr(identifier, "schema", None)
-            if schema is not None:
-                schema_to_identifiers.setdefault(schema, []).append(identifier)
-
-        for schema, identifiers in schema_to_identifiers.items():
+        for schema, identifiers in self._list_all_identifiers_by_schema().items():
             non_deprecated_identifiers = [i for i in identifiers if not i.deprecated]
             if len(non_deprecated_identifiers) > 1:
                 return SuccessFailureMessageTuple(
