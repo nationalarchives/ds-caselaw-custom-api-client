@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v39.0.0
 
 ### BREAKING CHANGE
 
@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **IdentifiersCollection**: add validation for only one non-deprecated identifier of type
 - **IdentifiersCollection**: validating UUID integrity now returns success/failure and message rather than exception
 - **Document**: break identifier validation into own method
+- **Document**: don't add spurious akn: namespaces to live xml
 - **Identifier**: deprecated identifiers score 0 during ranking
 
 ### Refactor
