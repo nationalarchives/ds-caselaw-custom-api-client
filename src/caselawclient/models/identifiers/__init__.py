@@ -149,6 +149,9 @@ class Identifier(ABC):
     @property
     def score(self) -> float:
         """Return the score of this identifier, used to calculate the preferred identifier for a document."""
+        if self.deprecated:
+            return 0
+
         return 1 * self.schema.base_score_multiplier
 
     def same_as(self, other: "Identifier") -> bool:

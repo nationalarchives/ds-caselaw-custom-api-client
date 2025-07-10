@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- IdentifiersCollection.validate_uuids_match_keys() now returns SuccessFailureMessageTuple instead of None
+
+### Feat
+
+- **IdentifiersCollection**: add method to return all possible new identifier types for collection
+- **IdentifiersCollection**: add validation for only one non-deprecated identifier of type
+- **IdentifiersCollection**: validating UUID integrity now returns success/failure and message rather than exception
+- **Document**: break identifier validation into own method
+- **Identifier**: deprecated identifiers score 0 during ranking
+
+### Refactor
+
+- **IdentifiersCollection**: break up validation functions to improve readability
+- **IdentifiersCollection**: refactor how we run collection-level validations to support message bubbling
+
 ## v38.0.0 (2025-07-07)
 
 ### BREAKING CHANGE

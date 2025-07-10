@@ -6,7 +6,7 @@ from lxml import etree
 from caselawclient.models.documents import Document
 from caselawclient.models.identifiers import Identifier, IdentifierSchema
 from caselawclient.models.identifiers.collection import IdentifiersCollection
-from caselawclient.models.identifiers.exceptions import IdentifierValidationException, UUIDMismatchError
+from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.types import DocumentIdentifierSlug
 
@@ -157,6 +157,10 @@ class TestIdentifierScoring:
         identifier = TestIdentifier(value="TEST-123")
         assert identifier.score == 2.5
 
+    def test_deprecated_identifier_scoring(self):
+        identifier = TestIdentifier(value="TEST-123", deprecated=True)
+        assert identifier.score == 0
+
     def test_sorting(self, mixed_identifiers: IdentifiersCollection):
         assert mixed_identifiers.by_score() == [TEST_IDENTIFIER_999, TEST_NCN_1701, TEST_NCN_1234]
 
@@ -173,13 +177,14 @@ class TestIdentifierScoring:
 class TestIdentifierValidation:
     def test_validate_uuids_match_keys(self):
         identifiers = IdentifiersCollection({"id-1": TestIdentifier(uuid="id-2", value="TEST-123")})
-        with pytest.raises(UUIDMismatchError):
-            identifiers.validate_uuids_match_keys()
+        validate_uuids_match_keys = identifiers.validate_uuids_match_keys()
+        assert validate_uuids_match_keys.success is False
+        assert validate_uuids_match_keys.messages == ["Key of TEST-123 in Identifiers is id-1 not id-2"]
 
     def test_perform_all_validations_runs_expected_validations(self, mock_api_client):
         """Check that when we try to validate an entire set of Identifiers we do what is expected"""
         identifier_1 = TestIdentifier(uuid="id-1", value="TEST-123")
-        identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456")
+        identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456", deprecated=True)
         identifiers = IdentifiersCollection(
             {
                 "id-1": identifier_1,
