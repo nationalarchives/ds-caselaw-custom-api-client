@@ -319,11 +319,15 @@ class TestDocumentXMLWithCorrectFRBR:
         with open(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), "xslt", "test_standard_judgment.xml"), "r"
         ) as file:
+            xml_string = file.read()
             doc = DocumentFactory.build(
-                uri=DocumentURIString("d-1234"), body=DocumentBodyFactory.build(name="docname", xml_string=file.read())
+                uri=DocumentURIString("d-1234"), body=DocumentBodyFactory.build(name="docname", xml_string=xml_string)
             )
 
+        assert "akn:" not in xml_string
         root = etree.fromstring(doc.xml_with_correct_frbr())
+        assert b"akn:" not in etree.tostring(root, method="c14n")
+
         assert root.xpath("//akn:FRBRWork/akn:FRBRthis/@value", namespaces=DEFAULT_NAMESPACES) == [
             "https://caselaw.nationalarchives.gov.uk/id/doc/tn4t35ts"
         ]
@@ -342,3 +346,5 @@ class TestDocumentXMLWithCorrectFRBR:
         assert root.xpath("//akn:FRBRManifestation/akn:FRBRuri/@value", namespaces=DEFAULT_NAMESPACES) == [
             "https://caselaw.nationalarchives.gov.uk/d-1234/data.xml"
         ]
+
+        assert b"<FRBRthis" in etree.tostring(root, method="c14n")
