@@ -30,7 +30,7 @@ class TestErrors(unittest.TestCase):
                 status=504,
                 body="Example Gateway Timeout.",
             )
-            response = requests.get("http://example.com")
+            response = requests.get("http://example.com")  # noqa: S113
         with pytest.raises(GatewayTimeoutError) as gateway_exception:
             self.client._raise_for_status(response)
         assert "Example Gateway Timeout" in str(gateway_exception.value)

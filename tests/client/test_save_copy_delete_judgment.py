@@ -2,9 +2,9 @@ import json
 import os
 import unittest
 from unittest.mock import patch
-from xml.etree import ElementTree
 
 import pytest
+from defusedxml import ElementTree
 
 import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient

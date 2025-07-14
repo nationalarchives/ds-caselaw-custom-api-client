@@ -7,11 +7,12 @@ import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree import ElementTree
-from xml.etree.ElementTree import Element, ParseError, fromstring
+from xml.etree.ElementTree import Element
 
 import environ
 import requests
+from defusedxml import ElementTree
+from defusedxml.ElementTree import ParseError, fromstring
 from ds_caselaw_utils.types import NeutralCitationString
 from lxml import etree
 from requests.auth import HTTPBasicAuth
@@ -258,10 +259,12 @@ class MarklogicApiClient:
             return "Unknown error, Marklogic returned a null or empty response"
         try:
             xml = fromstring(content_as_xml)
-            return xml.find(
-                "message-code",
-                namespaces={"": "http://marklogic.com/xdmp/error"},
-            ).text  # type: ignore
+            return str(
+                xml.find(
+                    "message-code",
+                    namespaces={"": "http://marklogic.com/xdmp/error"},
+                ).text
+            )
         except (ParseError, TypeError, AttributeError):
             return "Unknown error, Marklogic returned a null or empty response"
 
@@ -682,10 +685,12 @@ class MarklogicApiClient:
         if content == "":
             return None
         response_xml = ElementTree.fromstring(content)
-        return response_xml.find(
-            "dls:annotation",
-            namespaces={"dls": "http://marklogic.com/xdmp/dls"},
-        ).text  # type: ignore
+        return str(
+            response_xml.find(
+                "dls:annotation",
+                namespaces={"dls": "http://marklogic.com/xdmp/dls"},
+            ).text
+        )
 
     def get_judgment_version(
         self,

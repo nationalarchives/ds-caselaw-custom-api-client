@@ -29,6 +29,7 @@ pytz = ">2024"
 python-dateutil = "^2.9.0-post.0"
 saxonche = "^12.5.0"
 sqids = "^0.5.0"
+defusedxml = "^0.7.1"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "7.9.2"
@@ -69,14 +70,15 @@ line-length = 120
 
 [tool.ruff.lint]
 ignore = ["E501", "G004", "PLR2004", "RUF005", "RUF012", "UP040"] # longlines, fstrings in logs, magic values, consider not concat, mutable classbits, type instead of TypeAlias
-extend-select = ["W", "I", "SLF", "SIM", "C90"]
-# extend-select = [ "B", "Q", "I", "UP", "YTT", "ASYNC", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "DJ", "EM", "EXE", "FA",
+extend-select = ["W", "I", "SLF", "SIM", "C90", "S"]
+# extend-select = [ "B", "Q", "I", "UP", "YTT", "ASYNC", "BLE", "A", "COM", "C4", "DTZ", "T10", "DJ", "EM", "EXE", "FA",
 #                  "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLOT", "TID", "TCH", "INT", "PTH",
 #                  "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "RUF"]
 unfixable = ["ERA"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = ["S101"]  # `assert` is fine in tests
+"smoketest/*" = ["S101"] # `assert` is fine in tests
 "tests/client/test_client.py" = ["SLF001"]  # TODO: This really shouldn't be the case, but it's not important to fix right now.
 
 # things skipped:
