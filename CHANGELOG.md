@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v39.0.0 (2025-07-16)
 
 ### BREAKING CHANGE
 
@@ -18,8 +18,16 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Document**: break identifier validation into own method
 - **Identifier**: deprecated identifiers score 0 during ranking
 
+### Fix
+
+- **deps**: update dependency certifi to v2025.7.14
+- **deps**: update dependency boto3 to v1.39.4
+- **deps**: update dependency certifi to >=2025.7.9,<2025.8.0
+- **Document**: don't add spurious akn: namespaces to live xml
+
 ### Refactor
 
+- **IdentifiersCollection**: refactor getting all identifiers by schema so it's clearer
 - **IdentifiersCollection**: break up validation functions to improve readability
 - **IdentifiersCollection**: refactor how we run collection-level validations to support message bubbling
 
