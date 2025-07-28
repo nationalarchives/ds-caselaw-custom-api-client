@@ -25,6 +25,7 @@ class PressSummary(NeutralCitationMixin, Document):
     document_noun = "press summary"
     document_noun_plural = "press summaries"
     type_collection_name = "press-summary"
+    _default_reparse_document_type = "pressSummary"
 
     def __init__(self, uri: DocumentURIString, *args: Any, **kwargs: Any) -> None:
         super().__init__(self.document_noun, uri, *args, **kwargs)

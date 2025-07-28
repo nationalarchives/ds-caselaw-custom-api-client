@@ -425,6 +425,54 @@ class TestReparse:
             },
         }
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.utilities.aws.create_sns_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
+    def test_force_reparse_base_document(self, sns, mock_api_client):
+        document = Document(DocumentURIString("test/2023/123"), mock_api_client)
+        document.consignment_reference = "TDR-12345"
+
+        document.force_reparse()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/2023/123",
+            "last_sent_to_parser",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        # first call, second argument (the kwargs), so [0][1]
+        returned_message = json.loads(
+            sns.return_value.publish.call_args_list[0][1]["Message"],
+        )
+        # hide random parameters
+        del returned_message["properties"]["timestamp"]
+        del returned_message["properties"]["executionId"]
+
+        assert returned_message == {
+            "properties": {
+                "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
+                "function": "fcl-judgment-parse-request",
+                "producer": "FCL",
+                "parentExecutionId": None,
+            },
+            "parameters": {
+                "s3Bucket": "MY_BUCKET",
+                "s3Key": "test/2023/123/test_2023_123.docx",
+                "reference": "TDR-12345",
+                "originator": "FCL",
+                "parserInstructions": {
+                    "metadata": {
+                        "name": None,
+                        "cite": None,
+                        "court": None,
+                        "date": None,
+                        "uri": "test/2023/123",
+                    },
+                },
+            },
+        }
+
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
     def test_reparse_sets_last_sent_if_no_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
