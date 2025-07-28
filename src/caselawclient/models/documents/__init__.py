@@ -465,7 +465,13 @@ class Document:
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
-        parser_type_noun = {"judgment": "judgment", "press summary": "pressSummary"}[self.document_noun]
+        parser_document_type = None
+
+        if self.document_noun == "judgment":
+            parser_document_type = "judgment"
+        elif self.document_noun == "press summary":
+            parser_document_type = "pressSummary"
+
         checked_date: Optional[str] = (
             self.body.document_date_as_date.isoformat()
             if self.body.document_date_as_date and self.body.document_date_as_date > datetime.date(1001, 1, 1)
@@ -477,15 +483,17 @@ class Document:
         # values are "" from the API, we should pass None instead in this case.
 
         parser_instructions: ParserInstructionsDict = {
-            "documentType": parser_type_noun,
             "metadata": {
                 "name": self.body.name or None,
                 "cite": None,
                 "court": self.body.court or None,
                 "date": checked_date,
                 "uri": self.uri,
-            },
+            }
         }
+
+        if parser_document_type:
+            parser_instructions["documentType"] = parser_document_type
 
         ## TODO: Remove this hack around the fact that NCNs are assumed to be present for all documents' metadata, but actually different document classes may have different metadata
         if hasattr(self, "neutral_citation"):
