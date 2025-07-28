@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v39.1.0 (2025-07-28)
+
+### Fix
+
+- Fixed `document.force_reparse` for parser failures, specifically when we do not know whether it should be a press summary or judgment
+
 ## v39.0.0 (2025-07-16)
 
 ### BREAKING CHANGE
