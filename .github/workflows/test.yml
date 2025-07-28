@@ -62,15 +62,5 @@ jobs:
       - name: Install libraries
         run: poetry install
 
-      - name: Run tests with coverage
-        run: poetry run coverage run -m pytest
-
-      - name: Generate coverage XML
-        if: ${{ matrix.python-version == '3.13' }}
-        run: poetry run coverage xml
-
-      - name: Upload coverage to CodeClimate
-        uses: paambaati/codeclimate-action@f429536ee076d758a24705203199548125a28ca7 # v9.0.0
-        if: ${{ matrix.python-version == '3.13' }}
-        env:
-          CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+      - name: Run tests
+        run: poetry run pytest
