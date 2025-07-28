@@ -407,6 +407,8 @@ class Document:
 
     def publish(self) -> None:
         """
+        Assuming that a document passes pre-publish checks, perform all necessary operations to put it into a published state.
+
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
