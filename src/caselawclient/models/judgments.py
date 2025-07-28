@@ -24,6 +24,7 @@ class Judgment(NeutralCitationMixin, Document):
     document_noun = "judgment"
     document_noun_plural = "judgments"
     type_collection_name = "judgment"
+    _default_reparse_document_type = "judgment"
 
     def __init__(self, uri: DocumentURIString, *args: Any, **kwargs: Any) -> None:
         super().__init__(self.document_noun, uri, *args, **kwargs)

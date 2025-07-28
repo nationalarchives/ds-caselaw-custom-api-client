@@ -63,6 +63,9 @@ class Document:
     document_noun_plural = "documents"
     """ The noun for a plural of this document type. """
 
+    _default_reparse_document_type: Optional[str] = None
+    """ The default noun to pass to the parser when reparsing given the document type if known. This is used to determine how the document should be parsed and processed."""
+
     type_collection_name: str
 
     attributes_to_validate: list[tuple[str, bool, str]] = [
@@ -465,13 +468,6 @@ class Document:
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
-        parser_document_type = None
-
-        if self.document_noun == "judgment":
-            parser_document_type = "judgment"
-        elif self.document_noun == "press summary":
-            parser_document_type = "pressSummary"
-
         checked_date: Optional[str] = (
             self.body.document_date_as_date.isoformat()
             if self.body.document_date_as_date and self.body.document_date_as_date > datetime.date(1001, 1, 1)
@@ -492,8 +488,8 @@ class Document:
             }
         }
 
-        if parser_document_type:
-            parser_instructions["documentType"] = parser_document_type
+        if self._default_reparse_document_type:
+            parser_instructions["documentType"] = self._default_reparse_document_type
 
         ## TODO: Remove this hack around the fact that NCNs are assumed to be present for all documents' metadata, but actually different document classes may have different metadata
         if hasattr(self, "neutral_citation"):

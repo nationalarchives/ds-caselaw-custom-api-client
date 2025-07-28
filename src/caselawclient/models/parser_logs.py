@@ -11,3 +11,4 @@ class ParserLog(Document):
     document_noun = "parser log"
     document_noun_plural = "parser logs"
     type_collection_name = "parser-log"
+    _default_reparse_document_type = "parserLog"
