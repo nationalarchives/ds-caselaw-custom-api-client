@@ -78,7 +78,7 @@ extend-select = ["W", "I", "SLF", "SIM", "C90", "S"]
 unfixable = ["ERA"]
 
 [tool.ruff.lint.extend-per-file-ignores]
-"tests/*" = ["S101"]  # `assert` is fine in tests
+"tests/*" = ["S101"] # `assert` is fine in tests
 "smoketest/*" = ["S101"] # `assert` is fine in tests
 "tests/client/test_client.py" = ["SLF001"]  # TODO: This really shouldn't be the case, but it's not important to fix right now.
 

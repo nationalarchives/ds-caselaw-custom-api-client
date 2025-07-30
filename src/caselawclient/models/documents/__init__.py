@@ -9,6 +9,7 @@ from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
 from requests_toolbelt.multipart import decoder
 
+import caselawclient.models.documents.comparison as comparison
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
@@ -583,3 +584,6 @@ class Document:
         return self.body.apply_xslt(
             "modify_xml_live.xsl", work_uri=work_uri, expression_uri=expression_uri, manifestation_uri=manifestation_uri
         )
+
+    def compare_to(self, that_doc: "Document") -> comparison.Comparison:
+        return comparison.Comparison(self, that_doc)
