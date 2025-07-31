@@ -123,6 +123,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **MarklogicApiClient**: add new method for getting list of documents missing a FCLID
+- Remove warning about `verify unpublished judgments` being called.
 
 ### Fix
 
