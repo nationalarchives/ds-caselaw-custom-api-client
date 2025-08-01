@@ -96,6 +96,8 @@ def check_docx_exists(uri: DocumentURIString) -> bool:
     except botocore.exceptions.ClientError as e:
         if e.response["Error"]["Code"] == "404":
             return False
+        if e.response["Error"]["Code"] == "403":
+            e.add_note("403 on reading {s3_key}")
         raise
 
 
