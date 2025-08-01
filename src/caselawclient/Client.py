@@ -170,6 +170,7 @@ class MarklogicApiClient:
     error_code_classes: dict[str, Type[MarklogicAPIError]] = {
         "XDMP-DOCNOTFOUND": MarklogicResourceNotFoundError,
         "XDMP-LOCKCONFLICT": MarklogicResourceLockedError,
+        "XDMP-LOCKED": MarklogicResourceLockedError,
         "DLS-UNMANAGED": MarklogicResourceUnmanagedError,
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
