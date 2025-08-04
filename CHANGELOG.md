@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ## v39.1.1 (2025-08-07)
 
 - **Github Actions**: Migrate from CodeClimate to Codecov
+- **Eval**: Set configurable timeouts when evaling against MarkLogic: default 3.05s (connect) and 27s (read)
 
 ## v39.1.0 (2025-07-28)
 

@@ -9,6 +9,8 @@ import responses
 from requests import Request
 
 from caselawclient.Client import (
+    CONNECT_TIMEOUT,
+    READ_TIMEOUT,
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
     get_multipart_strings_from_marklogic_response,
@@ -137,6 +139,7 @@ class ApiClientTest(unittest.TestCase):
                     "Accept": "multipart/mixed",
                 },
                 data={"xquery": "mock-query", "vars": '{{"testvar":"test"}}'},
+                timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
             )
 
     @patch("caselawclient.Client.Path")

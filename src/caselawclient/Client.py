@@ -56,6 +56,11 @@ from .errors import (
 )
 
 env = environ.Env()
+
+# Requests timeouts: https://requests.readthedocs.io/en/latest/user/advanced/
+CONNECT_TIMEOUT = float(os.environ.get("CONNECT_TIMEOUT", "3.05"))
+READ_TIMEOUT = float(os.environ.get("READ_TIMEOUT", "27"))
+
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
 
@@ -744,6 +749,7 @@ class MarklogicApiClient:
             url=self._path_to_request_url(path),
             headers=headers,
             data=data,
+            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
         )
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
