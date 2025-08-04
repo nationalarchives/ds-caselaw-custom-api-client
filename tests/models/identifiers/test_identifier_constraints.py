@@ -55,7 +55,9 @@ class TestRequireGloballyUniqueIdentifierConstraint:
         new_identifier = TestGloballyUniqueIdentifier(value="TEST-123")
 
         validation = new_identifier.validate_require_globally_unique(api_client=mock_api_client)
-        mock_api_client.resolve_from_identifier_value.assert_called_once_with(identifier_value="TEST-123")
+        mock_api_client.resolve_from_identifier_value.assert_called_once_with(
+            identifier_value="TEST-123", published_only=False
+        )
 
         assert validation.success is False
         assert validation.messages == ['Identifiers in scheme "test" must be unique; "TEST-123" already exists!']
@@ -67,7 +69,9 @@ class TestRequireGloballyUniqueIdentifierConstraint:
         new_identifier = TestGloballyUniqueIdentifier(value="TEST-123")
 
         validation = new_identifier.validate_require_globally_unique(api_client=mock_api_client)
-        mock_api_client.resolve_from_identifier_value.assert_called_once_with(identifier_value="TEST-123")
+        mock_api_client.resolve_from_identifier_value.assert_called_once_with(
+            identifier_value="TEST-123", published_only=False
+        )
 
         assert validation.success is True
         assert validation.messages == []
@@ -83,7 +87,9 @@ class TestRequireGloballyUniqueIdentifierConstraint:
         new_identifier = TestGloballyUniqueIdentifier(value="TEST-123")
 
         validation = new_identifier.validate_require_globally_unique(api_client=mock_api_client)
-        mock_api_client.resolve_from_identifier_value.assert_called_once_with(identifier_value="TEST-123")
+        mock_api_client.resolve_from_identifier_value.assert_called_once_with(
+            identifier_value="TEST-123", published_only=False
+        )
 
         assert validation.success is True
         assert validation.messages == []

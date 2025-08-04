@@ -166,7 +166,9 @@ class Identifier(ABC):
         """
         resolutions = [
             resolution
-            for resolution in api_client.resolve_from_identifier_value(identifier_value=self.value)
+            for resolution in api_client.resolve_from_identifier_value(
+                identifier_value=self.value, published_only=False
+            )
             if resolution.identifier_namespace == self.schema.namespace
         ]
         if len(resolutions) > 0:
