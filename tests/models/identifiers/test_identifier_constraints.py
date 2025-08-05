@@ -44,15 +44,15 @@ class TestIncorrectDocumentType(Document):
     {"test": TestGloballyUniqueIdentifier, "other-namespace": TestGloballyUniqueIdentifier},
 )
 class TestRequireGloballyUniqueIdentifierConstraint:
-    def test_adding_id_if_duplicate_exists(self, mock_api_client):
+    def test_adding_id_if_exists_with_different_uuid(self, mock_api_client):
         resolutions = IdentifierResolutionsFactory.build(
             [
-                IdentifierResolutionFactory.build(namespace="test", value="TEST-123"),
+                IdentifierResolutionFactory.build(resolution_uuid="a1b2c3", namespace="test", value="TEST-123"),
             ]
         )
         mock_api_client.resolve_from_identifier_value.return_value = resolutions
 
-        new_identifier = TestGloballyUniqueIdentifier(value="TEST-123")
+        new_identifier = TestGloballyUniqueIdentifier(uuid="d4e5f6", value="TEST-123")
 
         validation = new_identifier.validate_require_globally_unique(api_client=mock_api_client)
         mock_api_client.resolve_from_identifier_value.assert_called_once_with(
@@ -61,6 +61,23 @@ class TestRequireGloballyUniqueIdentifierConstraint:
 
         assert validation.success is False
         assert validation.messages == ['Identifiers in scheme "test" must be unique; "TEST-123" already exists!']
+
+    def test_adding_id_if_exists_with_same_uuid(self, mock_api_client):
+        resolutions = IdentifierResolutionsFactory.build(
+            [
+                IdentifierResolutionFactory.build(resolution_uuid="a1b2c3", namespace="test", value="TEST-123"),
+            ]
+        )
+        mock_api_client.resolve_from_identifier_value.return_value = resolutions
+
+        new_identifier = TestGloballyUniqueIdentifier(uuid="a1b2c3", value="TEST-123")
+
+        validation = new_identifier.validate_require_globally_unique(api_client=mock_api_client)
+        mock_api_client.resolve_from_identifier_value.assert_called_once_with(
+            identifier_value="TEST-123", published_only=False
+        )
+
+        assert validation.success is True
 
     def test_adding_id_if_no_resolutions(self, mock_api_client):
         resolutions = IdentifierResolutionsFactory.build([])
