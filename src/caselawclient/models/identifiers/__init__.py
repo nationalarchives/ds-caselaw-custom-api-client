@@ -166,8 +166,10 @@ class Identifier(ABC):
         """
         resolutions = [
             resolution
-            for resolution in api_client.resolve_from_identifier_value(identifier_value=self.value)
-            if resolution.identifier_namespace == self.schema.namespace
+            for resolution in api_client.resolve_from_identifier_value(
+                identifier_value=self.value, published_only=False
+            )
+            if resolution.identifier_namespace == self.schema.namespace and resolution.identifier_uuid != self.uuid
         ]
         if len(resolutions) > 0:
             return SuccessFailureMessageTuple(
