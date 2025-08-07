@@ -35,7 +35,12 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
 
 from .body import DocumentBody
-from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import (
+    CannotEnrichUnenrichableDocument,
+    CannotPublishUnpublishableDocument,
+    DocumentDoesNotValidateWarning,
+    DocumentNotSafeForDeletion,
+)
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -524,6 +529,9 @@ class Document:
         """
         Is it possible to enrich this document?
         """
+        if not self.validates_against_schema:
+            msg = f"{self.uri} does not validate against the schema"
+            warnings.warn(msg, DocumentDoesNotValidateWarning)
         return self.body.has_content
 
     def validate_identifiers(self) -> SuccessFailureMessageTuple:
