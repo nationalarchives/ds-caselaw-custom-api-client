@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
-
-### Feat
+## v39.1.1 (2025-08-07)
 
 - **Github Actions**: Migrate from CodeClimate to Codecov
 
