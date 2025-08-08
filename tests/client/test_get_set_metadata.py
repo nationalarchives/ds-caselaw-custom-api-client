@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 import warnings
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
@@ -169,6 +169,7 @@ class TestGetSetMetadata(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "set_metadata_this_uri.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )
 
     def test_set_internal_uri_no_leading_slash(self):

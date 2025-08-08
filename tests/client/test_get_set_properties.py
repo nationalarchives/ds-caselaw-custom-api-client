@@ -1,7 +1,7 @@
 import json
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
@@ -25,6 +25,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )
 
     def test_set_boolean_property_false(self):
@@ -41,6 +42,7 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "set_boolean_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )
 
     def test_get_unset_boolean_property(self):
@@ -109,4 +111,5 @@ class TestGetSetJudgmentProperties(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "set_property.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )

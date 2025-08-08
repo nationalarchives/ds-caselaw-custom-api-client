@@ -59,7 +59,7 @@ env = environ.Env()
 
 # Requests timeouts: https://requests.readthedocs.io/en/latest/user/advanced/
 CONNECT_TIMEOUT = float(os.environ.get("CONNECT_TIMEOUT", "3.05"))
-READ_TIMEOUT = float(os.environ.get("READ_TIMEOUT", "27"))
+READ_TIMEOUT = float(os.environ.get("READ_TIMEOUT", "10.0"))
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
@@ -323,11 +323,13 @@ class MarklogicApiClient:
         self,
         vars: query_dicts.MarkLogicAPIDict,
         xquery_file_name: str,
+        timeout: tuple[float, float] = (CONNECT_TIMEOUT, READ_TIMEOUT),
     ) -> requests.Response:
         return self.eval(
             self._xquery_path(xquery_file_name),
             vars=json.dumps(vars),
             accept_header="application/xml",
+            timeout=timeout,
         )
 
     def _eval_and_decode(
@@ -730,6 +732,7 @@ class MarklogicApiClient:
         xquery_path: str,
         vars: str,
         accept_header: str = "multipart/mixed",
+        timeout: tuple[float, float] = (CONNECT_TIMEOUT, READ_TIMEOUT),
     ) -> requests.Response:
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
@@ -749,7 +752,7 @@ class MarklogicApiClient:
             url=self._path_to_request_url(path),
             headers=headers,
             data=data,
-            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+            timeout=timeout,
         )
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
