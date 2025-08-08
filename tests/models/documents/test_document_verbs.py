@@ -14,6 +14,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
+from caselawclient.models.documents.exceptions import DocumentDoesNotValidateWarning
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
@@ -179,6 +180,45 @@ class TestDocumentForceEnrich:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.can_enrich = False
         with pytest.raises(CannotEnrichUnenrichableDocument):
+            document.force_enrich()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        mock_announce_document_event.assert_not_called()
+
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch(
+        "caselawclient.models.documents.body.DocumentBody.has_content", new_callable=PropertyMock, return_value=False
+    )
+    def test_force_enrich_but_no_body(self, mock_has_content, mock_announce_document_event, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.can_enrich = False
+        with pytest.raises(CannotEnrichUnenrichableDocument):
+            document.force_enrich()
+
+        mock_api_client.set_property.assert_called_once_with(
+            "test/1234",
+            "last_sent_to_enrichment",
+            "1955-11-05T06:00:00+00:00",
+        )
+
+        mock_announce_document_event.assert_not_called()
+
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch(
+        "caselawclient.models.documents.Document.validates_against_schema",
+        new_callable=PropertyMock,
+        return_value=False,
+    )
+    def test_force_enrich_but_does_not_validate(self, mock_validates, mock_announce_document_event, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        with pytest.raises(CannotEnrichUnenrichableDocument), pytest.warns(DocumentDoesNotValidateWarning):
             document.force_enrich()
 
         mock_api_client.set_property.assert_called_once_with(

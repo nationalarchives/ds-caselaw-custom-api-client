@@ -8,3 +8,7 @@ class CannotEnrichUnenrichableDocument(Exception):
 
 class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
+
+
+class DocumentDoesNotValidateWarning(UserWarning):
+    """We tried to validate a document when attempting an operation expecting it to succeed and it failed."""
