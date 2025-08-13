@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unpublished
+
+- **Eval**: Set configurable timeouts when evaling against MarkLogic: default 3.05s (connect) and 10s (read)
+
 ## v39.1.1 (2025-08-07)
 
 - **Github Actions**: Migrate from CodeClimate to Codecov

@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
@@ -27,6 +27,7 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "checkout_judgment.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )
 
     def test_checkout_judgment_with_midnight_timeout(self):
@@ -147,4 +148,5 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 os.path.join(ROOT_DIR, "xquery", "break_judgment_checkout.xqy"),
                 vars=json.dumps(expected_vars),
                 accept_header="application/xml",
+                timeout=ANY,
             )
