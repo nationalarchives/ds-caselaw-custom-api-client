@@ -7,14 +7,13 @@ import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree.ElementTree import Element
 
 import environ
+import lxml.etree
 import requests
-from defusedxml import ElementTree
-from defusedxml.ElementTree import ParseError, fromstring
 from ds_caselaw_utils.types import NeutralCitationString
 from lxml import etree
+from lxml.etree import _Element as lxmlElement
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -259,14 +258,12 @@ class MarklogicApiClient:
         if not content_as_xml:
             return "Unknown error, Marklogic returned a null or empty response"
         try:
-            xml = fromstring(content_as_xml)
+            xml = lxml.etree.fromstring(content_as_xml)
             return str(
-                xml.find(
-                    "message-code",
-                    namespaces={"": "http://marklogic.com/xdmp/error"},
-                ).text
+                xml.xpath("//ml-error:message-code", namespaces={"ml-error": "http://marklogic.com/xdmp/error"})[0].text
             )
-        except (ParseError, TypeError, AttributeError):
+            breakpoint()
+        except (lxml.etree.XMLSyntaxError, TypeError, AttributeError, IndexError):
             return "Unknown error, Marklogic returned a null or empty response"
 
     def _raise_for_status(self, response: requests.Response) -> None:
@@ -567,7 +564,7 @@ class MarklogicApiClient:
     def insert_document_xml(
         self,
         document_uri: DocumentURIString,
-        document_xml: Element,
+        document_xml: lxmlElement,
         document_type: type[Document],
         annotation: VersionAnnotation,
     ) -> requests.Response:
@@ -581,7 +578,7 @@ class MarklogicApiClient:
 
         :return: The response object from MarkLogic
         """
-        xml = ElementTree.tostring(document_xml)
+        xml_string: str = lxml.etree.tostring(document_xml).decode("utf-8")
 
         uri = self._format_uri_for_marklogic(document_uri)
 
@@ -591,7 +588,7 @@ class MarklogicApiClient:
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
             "type_collection": document_type.type_collection_name,
-            "document": xml.decode("utf-8"),
+            "document": xml_string,
             "annotation": annotation.as_json,
         }
 
@@ -600,7 +597,7 @@ class MarklogicApiClient:
     def update_document_xml(
         self,
         document_uri: DocumentURIString,
-        document_xml: Element,
+        document_xml: lxmlElement,
         annotation: VersionAnnotation,
     ) -> requests.Response:
         """
@@ -614,7 +611,7 @@ class MarklogicApiClient:
 
         :return: The response object from MarkLogic
         """
-        xml = ElementTree.tostring(document_xml)
+        xml_string: str = lxml.etree.tostring(document_xml).decode("utf-8")
 
         uri = self._format_uri_for_marklogic(document_uri)
 
@@ -623,7 +620,7 @@ class MarklogicApiClient:
 
         vars: query_dicts.UpdateDocumentDict = {
             "uri": uri,
-            "judgment": xml.decode("utf-8"),
+            "judgment": xml_string,
             "annotation": annotation.as_json,
         }
 
@@ -685,12 +682,12 @@ class MarklogicApiClient:
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
         if content == "":
             return None
-        response_xml = ElementTree.fromstring(content)
+        response_xml = lxml.etree.fromstring(content)
         return str(
-            response_xml.find(
+            response_xml.xpath(
                 "dls:annotation",
                 namespaces={"dls": "http://marklogic.com/xdmp/dls"},
-            ).text
+            )[0].text
         )
 
     def get_judgment_version(
@@ -709,16 +706,8 @@ class MarklogicApiClient:
         }
         response = self._send_to_eval(vars, "validate_document.xqy")
         content = decoder.MultipartDecoder.from_response(response).parts[0].text
-        xml = ElementTree.fromstring(content)
-        return (
-            len(
-                xml.findall(
-                    ".//error:error",
-                    {"error": "http://marklogic.com/xdmp/error"},
-                ),
-            )
-            == 0
-        )
+        xml = lxml.etree.fromstring(content)
+        return len(xml.xpath(".//ml-error:error", namespaces={"ml-error": "http://marklogic.com/xdmp/error"})) == 0
 
     def eval(
         self,
