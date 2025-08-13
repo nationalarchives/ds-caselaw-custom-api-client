@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unpublished
+## v39.2.0 (2025-08-13)
+
+### Changed
 
 - **Eval**: Set configurable timeouts when evaling against MarkLogic: default 3.05s (connect) and 10s (read)
+- Updated `ds-caselaw-utils` to `v2.5.0` to support more historic tribunal court definitions
 
 ## v39.1.1 (2025-08-07)
 
