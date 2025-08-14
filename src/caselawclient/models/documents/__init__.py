@@ -422,7 +422,7 @@ class Document:
             uri=self.uri,
             status="publish",
         )
-        self.enrich()
+        self.enrich(accept_failures=True)
 
     def unpublish(self) -> None:
         self.api_client.break_checkout(self.uri)
