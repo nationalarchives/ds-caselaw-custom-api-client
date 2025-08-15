@@ -186,6 +186,13 @@ class DocumentBody:
 
         return False
 
+    @cached_property
+    def has_external_data(self) -> bool:
+        """Is there data which is not present within the source document:
+        is there a spreadsheet which has populated some fields. The current implementation
+        "is there a uk:party tag" is intended as a stopgap whilst we're not importing that data."""
+        return bool(self._xml.xml_as_tree.xpath("//uk:party", namespaces=DEFAULT_NAMESPACES))
+
     @cache
     def content_html(self, image_prefix: str) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""

@@ -429,5 +429,16 @@ class TestDocumentBody:
 
     def test_minimal_xml_behaves_ok(self):
         body = DocumentBodyFactory.build("""
-            <akomaNtoso/>""")
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"/>
+            """)
         assert not (body.has_content)
+        assert not body.has_external_data
+
+    def test_uk_party(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <sometag>
+                    <uk:party type='example'>someone</uk:party>
+                </sometag>
+            </akomaNtoso>""")
+        assert body.has_external_data
