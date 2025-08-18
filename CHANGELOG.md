@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- Minimum Python version has changed from 3.10 to 3.12
+
+### Feat
+
+- change minimum Python version from 3.10 to 3.12
+
 ## v39.2.1 (2025-08-14)
 
 - **Enrichment**: When publishing, don't fail if the document is unenrichable
