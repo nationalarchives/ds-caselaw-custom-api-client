@@ -13,6 +13,8 @@ from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.models.identifiers.collection import IdentifiersCollection
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
+from caselawclient.models.identifiers.press_summary_ncn import PressSummaryRelatedNCNIdentifier
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
@@ -196,14 +198,18 @@ class SearchResult:
         return str(preferred.url_slug)
 
     @property
-    def neutral_citation(self) -> str:
+    def neutral_citation(self) -> Optional[str]:
         """
-        :return: The neutral citation of the search result, or the judgment it is a press summary of.
+        :return: If present, the value of preferred neutral citation of the document.
         """
 
-        return self._get_xpath_match_string(
-            "search:extracted/uk:cite/text()",
-        ) or self._get_xpath_match_string("search:extracted/akn:neutralCitation/text()")
+        preferred_ncn = self.identifiers.preferred(type=NeutralCitationNumber)
+
+        # If the result doesn't have a preferred NCN, maybe it has a preferred press summary related NCN?
+        if not preferred_ncn:
+            preferred_ncn = self.identifiers.preferred(type=PressSummaryRelatedNCNIdentifier)
+
+        return preferred_ncn.value if preferred_ncn else None
 
     @property
     def name(self) -> str:
