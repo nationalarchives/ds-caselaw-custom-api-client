@@ -407,6 +407,8 @@ class Document:
 
     def publish(self) -> None:
         """
+        Assuming that a document passes pre-publish checks, perform all necessary operations to put it into a published state.
+
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
@@ -416,12 +418,19 @@ class Document:
         ## Make sure the document has an FCLID
         self.assign_fclid_if_missing()
 
+        ## Copy the document assets into the appropriate place in S3
         publish_documents(self.uri)
+
+        ## Set the fact the document is published
         self.api_client.set_published(self.uri, True)
+
+        ## Announce the publication on the event bus
         announce_document_event(
             uri=self.uri,
             status="publish",
         )
+
+        ## Send the document off for enrichment, but accept if we can't for any reason
         self.enrich(accept_failures=True)
 
     def unpublish(self) -> None:
