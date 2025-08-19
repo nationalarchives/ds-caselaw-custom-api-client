@@ -310,6 +310,10 @@ class Document:
         return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
 
     @cached_property
+    def has_ever_been_published(self) -> bool:
+        return self.is_published or self.first_published_datetime is not None
+
+    @cached_property
     def validation_failure_messages(self) -> list[str]:
         exception_list = []
         for function_name, pass_value, message in self.attributes_to_validate:
