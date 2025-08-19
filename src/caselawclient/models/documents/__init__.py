@@ -306,6 +306,10 @@ class Document:
         return not self.validation_failure_messages
 
     @cached_property
+    def first_published_datetime(self) -> Optional[datetime.datetime]:
+        return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
+
+    @cached_property
     def validation_failure_messages(self) -> list[str]:
         exception_list = []
         for function_name, pass_value, message in self.attributes_to_validate:
@@ -423,6 +427,12 @@ class Document:
 
         ## Set the fact the document is published
         self.api_client.set_published(self.uri, True)
+
+        ## If necessary, set the first published date
+        if not self.first_published_datetime:
+            self.api_client.set_datetime_property(
+                self.uri, "first_published_datetime", datetime.datetime.now(datetime.timezone.utc)
+            )
 
         ## Announce the publication on the event bus
         announce_document_event(
