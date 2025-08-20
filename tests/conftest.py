@@ -27,9 +27,19 @@ def valid_search_result_xml_fixture() -> str:
         '<FRBRname value="Another made up case name" xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"/>'
         '<FRBRdate date="2023-04-09T18:05:45" name="transform" xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"/>'
         '<uk:court xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">A-C</uk:court>'
-        '<uk:cite xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">[2015] A 20 (C)</uk:cite>'
+        '<uk:cite xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">[2015] UKSC 123</uk:cite>'
         '<uk:hash xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">test_content_hash</uk:hash>'
-        '<neutralCitation xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">[2015] A 0020 (C)</neutralCitation>'
+        '<neutralCitation xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">[2015] UKSC 123</neutralCitation>'
+        "</search:extracted>"
+        '<search:extracted kind="identifiers">'
+        "<identifiers>"
+        "<identifier>"
+        "<namespace>ukncn</namespace>"
+        "<uuid>2d80bf1d-e3ea-452f-965c-041f4399f2dd</uuid>"
+        "<value>[2015] UKSC 123</value>"
+        "<url_slug>uksc/2015/123</url_slug>"
+        "</identifier>"
+        "</identifiers>"
         "</search:extracted>"
         "</search:result>"
     )

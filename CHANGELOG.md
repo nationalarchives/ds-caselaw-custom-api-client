@@ -8,10 +8,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- `SearchResult` will no longer return `""` when a Neutral Citation Number is missing. Instead, it will return `None`.
 - Minimum Python version has changed from 3.10 to 3.12
 
 ### Feat
 
+- **SearchResult**: neutral_citation of a search result is now derived from structured identifiers
 - change minimum Python version from 3.10 to 3.12
 
 ## v39.2.1 (2025-08-14)

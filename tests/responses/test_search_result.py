@@ -45,7 +45,7 @@ class TestSearchResult:
             search_result = SearchResult(node, self.client)
 
             assert search_result.uri == "a/c/2015/20"
-            assert search_result.neutral_citation == "[2015] A 20 (C)"
+            assert search_result.neutral_citation == "[2015] UKSC 123"
             assert search_result.name == "Another made up case name"
             assert search_result.date == datetime.datetime(2017, 8, 8, 0, 0)
             assert search_result.court is None
@@ -59,7 +59,7 @@ class TestSearchResult:
             assert search_result.metadata.last_modified == "bar"
             assert (
                 str(search_result)
-                == "<SearchResult a/c/2015/20 **NO SLUG** Another made up case name 2017-08-08 00:00:00>"
+                == "<SearchResult a/c/2015/20 uksc/2015/123 Another made up case name 2017-08-08 00:00:00>"
             )
 
     def test_create_from_node_with_unparsable_date(self):
@@ -158,6 +158,17 @@ class TestSearchResult:
 
         assert search_result.court and search_result.court.name == "First-tier Tribunal (General Regulatory Chamber)"
 
+
+class TestSearchResultIdentifierHandling:
+    def setup_method(self):
+        self.client = MarklogicApiClient(
+            host="",
+            username="",
+            password="",
+            use_https=False,
+            user_agent="marklogic-api-client-test",
+        )
+
     def test_has_identifiers(self):
         """
         GIVEN an XML node with identifiers
@@ -186,6 +197,7 @@ class TestSearchResult:
         identifiers = search_result.identifiers
         assert isinstance(identifiers, IdentifiersCollection)
         (identifier_1,) = identifiers.values()
+        assert search_result.neutral_citation == "[1901] UKSC 1"
         assert identifier_1.value == "[1901] UKSC 1"
         assert search_result.slug == "uksc/1901/1"
         assert str(search_result) == "<SearchResult a/c/2015/20 uksc/1901/1 **NO NAME** None>"
@@ -206,6 +218,7 @@ class TestSearchResult:
         node = etree.fromstring(xml)
         search_result = SearchResult(node, self.client)
         identifiers = search_result.identifiers
+        assert search_result.neutral_citation is None
         assert isinstance(identifiers, IdentifiersCollection)
         assert not identifiers
         with pytest.raises(RuntimeError):
