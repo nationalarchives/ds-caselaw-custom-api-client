@@ -11,6 +11,7 @@ from xml.etree.ElementTree import Element
 
 import environ
 import requests
+from dateutil.parser import isoparse
 from defusedxml import ElementTree
 from defusedxml.ElementTree import ParseError, fromstring
 from ds_caselaw_utils.types import NeutralCitationString
@@ -948,11 +949,49 @@ class MarklogicApiClient:
             "value": string_value,
             "name": name,
         }
+        """
+        Set a property within MarkLogic which is specifically a boolean.
+
+        Since XML has no concept of boolean, the actual value in the database is set to `"true"` or `"false"`.
+        """
         return self._send_to_eval(vars, "set_boolean_property.xqy")
 
     def get_boolean_property(self, judgment_uri: DocumentURIString, name: str) -> bool:
+        """
+        Get a property from MarkLogic which is specifically a boolean.
+
+        :return: `True` if the property exists and has a value of `"true"`, otherwise `False`
+        """
         content = self.get_property(judgment_uri, name)
         return content == "true"
+
+    def set_datetime_property(
+        self,
+        judgment_uri: DocumentURIString,
+        name: str,
+        value: datetime,
+    ) -> requests.Response:
+        """Set a property within MarkLogic which is specifically a datetime."""
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: query_dicts.SetDatetimePropertyDict = {
+            "uri": uri,
+            "value": value.isoformat(),
+            "name": name,
+        }
+        return self._send_to_eval(vars, "set_datetime_property.xqy")
+
+    def get_datetime_property(self, judgment_uri: DocumentURIString, name: str) -> Optional[datetime]:
+        """
+        Get a property from MarkLogic which is specifically a datetime.
+
+        :return: A datetime with the value of the property, or `None` if it does not exist
+        """
+        content = self.get_property(judgment_uri, name)
+
+        if content:
+            return isoparse(content)
+
+        return None
 
     def set_published(
         self,

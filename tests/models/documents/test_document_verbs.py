@@ -131,6 +131,45 @@ class TestDocumentPublish:
         assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
         assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "tn4t35ts"
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
+    def test_publish_sets_first_published_date_if_unset(
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_publishable = True
+        document.first_published_datetime = None
+        document.publish()
+
+        mock_api_client.set_datetime_property.assert_called_once_with(
+            "test/1234", "first_published_datetime", datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc)
+        )
+
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
+    def test_publish_does_not_set_first_published_date_if_already_set(
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_publishable = True
+        document.first_published_datetime = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        document.publish()
+
+        mock_api_client.set_datetime_property.assert_not_called()
+
 
 class TestDocumentUnpublish:
     @patch("caselawclient.models.documents.announce_document_event")

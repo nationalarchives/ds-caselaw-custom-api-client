@@ -166,6 +166,13 @@ class SetBooleanPropertyDict(MarkLogicAPIDict):
     value: str
 
 
+# set_datetime_property.xqy
+class SetDatetimePropertyDict(MarkLogicAPIDict):
+    name: str
+    uri: MarkLogicDocumentURIString
+    value: str
+
+
 # set_metadata_citation.xqy
 class SetMetadataCitationDict(MarkLogicAPIDict):
     content: str
