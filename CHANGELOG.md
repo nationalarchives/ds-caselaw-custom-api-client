@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- **DocumentBody**: update category to match the first category without a parent
+- **DocumentBody**: add secondary_category
+- **DocumentBody**: add subcategory
+- **DocumentBody**: add secondary_subcategory
+
 ### BREAKING CHANGE
 
 - `SearchResult` will no longer return `""` when a Neutral Citation Number is missing. Instead, it will return `None`.
