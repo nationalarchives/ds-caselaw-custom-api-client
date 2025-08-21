@@ -2,13 +2,15 @@ import datetime
 import os
 import warnings
 from functools import cache, cached_property
-from typing import Optional
+from typing import List, Optional
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
+from lxml import etree
 from saxonche import PySaxonProcessor
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
+from caselawclient.types import DocumentCategory
 
 from .xml import XML
 
@@ -37,6 +39,9 @@ class DocumentBody:
     def get_xpath_match_strings(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[str]:
         return self._xml.get_xpath_match_strings(xpath, namespaces)
 
+    def get_xpath_nodes(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[etree._Element]:
+        return self._xml.get_xpath_nodes(xpath, namespaces)
+
     @cached_property
     def name(self) -> str:
         return self.get_xpath_match_string(
@@ -50,6 +55,40 @@ class DocumentBody:
     @cached_property
     def jurisdiction(self) -> str:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
+
+    @cached_property
+    def categories(self) -> List[DocumentCategory]:
+        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
+        nodes = self.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
+
+        categories: dict[str, DocumentCategory] = {}
+        children_map: dict[str, list[DocumentCategory]] = {}
+
+        for node in nodes:
+            name = node.text
+            if name is None or not name.strip():
+                continue
+
+            parent = node.get("parent")
+
+            category = DocumentCategory(name=name)
+            categories[name] = category
+
+            if parent:
+                children_map.setdefault(parent, []).append(category)
+
+        for parent, subcategories in children_map.items():
+            if parent in categories:
+                categories[parent].subcategories.extend(subcategories)
+
+        top_level_categories = [
+            categories[name]
+            for node in nodes
+            if node.get("parent") is None
+            if (name := node.text) and name in categories
+        ]
+
+        return top_level_categories
 
     @cached_property
     def category(self) -> Optional[str]:

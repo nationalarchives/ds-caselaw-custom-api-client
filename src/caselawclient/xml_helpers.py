@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 
 from lxml import etree
 
@@ -7,9 +7,20 @@ DEFAULT_NAMESPACES = {
     "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
 }
 
+# _Element is the only class lxml exposes, so need to use the private class for typing
+Element = etree._Element  # noqa: SLF001
+
+
+def get_xpath_nodes(
+    node: Element,
+    path: str,
+    namespaces: Optional[Dict[str, str]] = None,
+) -> list[Element]:
+    return cast(list[Element], node.xpath(path, namespaces=namespaces))
+
 
 def get_xpath_match_string(
-    node: etree._Element,
+    node: Element,
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
     fallback: str = "",
@@ -18,7 +29,7 @@ def get_xpath_match_string(
 
 
 def get_xpath_match_strings(
-    node: etree._Element,
+    node: Element,
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
 ) -> list[str]:
