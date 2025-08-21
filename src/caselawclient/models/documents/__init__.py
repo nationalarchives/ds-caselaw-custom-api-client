@@ -647,3 +647,27 @@ class Document:
 
     def compare_to(self, that_doc: "Document") -> comparison.Comparison:
         return comparison.Comparison(self, that_doc)
+
+    def can_merge(target, source: "Document") -> bool:
+        """Are we permitted to merge source document on top of this one?"""
+
+        # source document must have exactly one version
+        if len(source.versions) != 1:
+            return False
+
+        # source document must never have been published
+        if source.has_ever_been_published:
+            return False
+
+        # source must be newer than target
+        # TODO
+
+        # ensure that the types aren't Document
+        if type(target) is Document or type(source) is Document:
+            raise RuntimeError("Cannot merge documents that are the base class")
+
+        # source must be same document type as target
+        if type(source) is not type(target):  # noqa: SIM103
+            return False
+
+        return True
