@@ -137,6 +137,87 @@ class TestDocumentBody:
             ('doc name="pressSummary"', "doc"),
         ],
     )
+    def test_subcategory(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Breach of code of standards</uk:category>
+                            <uk:category parent="Breach of code of standards">Standards not met</uk:category>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.subcategory == "Standards not met"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_secondary_category(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Breach of code of standards</uk:category>
+                            <uk:category parent="Breach of code of standards">Standards not met</uk:category>
+                            <uk:category>Appeals</uk:category>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.secondary_category == "Appeals"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_secondary_subcategory(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Breach of code of standards</uk:category>
+                            <uk:category parent="Breach of code of standards">Standards not met</uk:category>
+                            <uk:category>Appeals</uk:category>
+                            <uk:category parent="Appeals">Registration variation</uk:category>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.secondary_subcategory == "Registration variation"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
     def test_case_number(self, opening_tag, closing_tag):
         body = DocumentBody(
             f"""
