@@ -1,4 +1,4 @@
-from typing import Dict, Optional, cast
+from typing import Dict, Optional
 
 from lxml import etree
 
@@ -16,7 +16,12 @@ def get_xpath_nodes(
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
 ) -> list[Element]:
-    return cast(list[Element], node.xpath(path, namespaces=namespaces))
+    result = node.xpath(path, namespaces=namespaces)
+
+    if not isinstance(result, list) or not all(isinstance(x, Element) for x in result):
+        raise TypeError(f"Expected to return list[Element], got {type(result).__name__}")
+
+    return result
 
 
 def get_xpath_match_string(
