@@ -9,9 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **DocumentBody**: update category to match the first category without a parent
-- **DocumentBody**: add secondary_category
-- **DocumentBody**: add subcategory
-- **DocumentBody**: add secondary_subcategory
+- **DocumentBody**: add a categories function that returns all categories and related subcategories for a document
 
 ### BREAKING CHANGE
 
