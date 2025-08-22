@@ -97,24 +97,6 @@ class DocumentBody:
         )
 
     @cached_property
-    def secondary_category(self) -> Optional[str]:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category[not(@parent)][2]/text()"
-        )
-
-    @cached_property
-    def subcategory(self) -> Optional[str]:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category[@parent][1]/text()"
-        )
-
-    @cached_property
-    def secondary_subcategory(self) -> Optional[str]:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category[@parent][2]/text()"
-        )
-
-    @cached_property
     def case_number(self) -> Optional[str]:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()")
 
