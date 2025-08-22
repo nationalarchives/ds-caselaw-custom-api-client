@@ -159,6 +159,36 @@ class TestDocument:
         published_document.assigned_to = "duck"
         assert published_document.status == DOCUMENT_STATUS_PUBLISHED
 
+    def test_document_first_published_datetime(self, mock_api_client):
+        mock_api_client.get_datetime_property.return_value = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.first_published_datetime == datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
+
+    @pytest.mark.parametrize(
+        "is_published, first_published_datetime, expected_outcome",
+        [
+            (False, None, False),
+            (True, None, True),
+            (False, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
+            (True, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
+        ],
+    )
+    def test_document_has_ever_been_published(
+        self, mock_api_client, is_published, first_published_datetime, expected_outcome
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_published = is_published
+        document.first_published_datetime = first_published_datetime
+
+        assert document.has_ever_been_published is expected_outcome
+
     def test_document_best_identifier(self, mock_api_client):
         example_document = Document(DocumentURIString("uri"), mock_api_client)
         assert example_document.best_human_identifier is None

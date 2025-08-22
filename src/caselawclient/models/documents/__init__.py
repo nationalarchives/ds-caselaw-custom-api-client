@@ -306,6 +306,14 @@ class Document:
         return not self.validation_failure_messages
 
     @cached_property
+    def first_published_datetime(self) -> Optional[datetime.datetime]:
+        return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
+
+    @cached_property
+    def has_ever_been_published(self) -> bool:
+        return self.is_published or self.first_published_datetime is not None
+
+    @cached_property
     def validation_failure_messages(self) -> list[str]:
         exception_list = []
         for function_name, pass_value, message in self.attributes_to_validate:
@@ -407,6 +415,8 @@ class Document:
 
     def publish(self) -> None:
         """
+        Assuming that a document passes pre-publish checks, perform all necessary operations to put it into a published state.
+
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
@@ -416,12 +426,25 @@ class Document:
         ## Make sure the document has an FCLID
         self.assign_fclid_if_missing()
 
+        ## Copy the document assets into the appropriate place in S3
         publish_documents(self.uri)
+
+        ## Set the fact the document is published
         self.api_client.set_published(self.uri, True)
+
+        ## If necessary, set the first published date
+        if not self.first_published_datetime:
+            self.api_client.set_datetime_property(
+                self.uri, "first_published_datetime", datetime.datetime.now(datetime.timezone.utc)
+            )
+
+        ## Announce the publication on the event bus
         announce_document_event(
             uri=self.uri,
             status="publish",
         )
+
+        ## Send the document off for enrichment, but accept if we can't for any reason
         self.enrich(accept_failures=True)
 
     def unpublish(self) -> None:

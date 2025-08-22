@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v40.0.0 (2025-08-20)
 
 ### Feat
 
@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **Document**: add new has_ever_been_published property
+- **Document**: documents can now retrieve and will set first_published_datetime
+- **Client**: add methods for getting/setting datetime properties in MarkLogic
 - **SearchResult**: neutral_citation of a search result is now derived from structured identifiers
 - change minimum Python version from 3.10 to 3.12
 
