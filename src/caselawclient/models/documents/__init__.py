@@ -35,7 +35,12 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
 
 from .body import DocumentBody
-from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import (
+    CannotEnrichUnenrichableDocument,
+    CannotMergeUnmergableDocument,
+    CannotPublishUnpublishableDocument,
+    DocumentNotSafeForDeletion,
+)
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
@@ -667,7 +672,57 @@ class Document:
             raise RuntimeError("Cannot merge documents that are the base class")
 
         # source must be same document type as target
-        if type(source) is not type(target):  # noqa: SIM103
+        if type(source) is not type(target):
+            return False
+
+        # we will want to delete the source, should be redundant but
+        # we might change safe_to_delete
+        if not source.safe_to_delete:  # noqa: SIM103
             return False
 
         return True
+
+    def merge(target, source: "Document") -> None:
+        # 1. Check that constraints are met
+        if not target.can_merge(source):
+            msg = f"Tried to merge {source} onto {target}"
+            raise CannotMergeUnmergableDocument(msg)
+
+        # 2. Get the XML from the source document
+        source_xml = source.body.content_as_xml
+
+        # 3. Get the history from the source document
+        # source_history = source.vers
+        ...
+
+        # 4. Begin atomic MarkLogic operations
+        # 5. Unpublish the target document, if published
+        target.unpublish()
+
+        # 6. Append the history of the source document to the history of the target document
+        ...
+
+        # 7. Add the XML of the source document as a new version to the target document;
+        #    the VersionAnnotation of the new version should record the fact that it's a merge operation
+        ...
+
+        # 8. Merge any document identifiers. If necessary, deprecate those of the target document.
+        #     1. For all identifiers in the source document:
+        #         1. Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
+        #         2. If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
+        #         3. If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
+        #         4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
+        ...  # (this should probably be a function)
+
+        # 9. Delete non-targz assets from the target document (published and unpublished buckets)
+        ...
+
+        # 10. Copy over all unpublished assets from the source document to the prefix of the target document.
+        ...
+
+        # 11. Delete the source document
+        # (We check this is possible in can_merge)
+        source.delete()
+        ...
+
+        # 12. End atomic MarkLogic operations
