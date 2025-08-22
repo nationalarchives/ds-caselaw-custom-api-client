@@ -2,7 +2,7 @@ import datetime
 import os
 import warnings
 from functools import cache, cached_property
-from typing import List, Optional
+from typing import Optional
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
@@ -57,7 +57,7 @@ class DocumentBody:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
 
     @cached_property
-    def categories(self) -> List[DocumentCategory]:
+    def categories(self) -> list[DocumentCategory]:
         xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
         nodes = self.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
 
@@ -69,10 +69,10 @@ class DocumentBody:
             if name is None or not name.strip():
                 continue
 
-            parent = node.get("parent")
-
             category = DocumentCategory(name=name)
             categories[name] = category
+
+            parent = node.get("parent")
 
             if parent:
                 children_map.setdefault(parent, []).append(category)
