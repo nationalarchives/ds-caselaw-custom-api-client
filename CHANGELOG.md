@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## v40.0.0 (2025-08-20)
 
+### Feat
+
+- **DocumentBody**: update category to match the first category without a parent
+- **DocumentBody**: add a categories function that returns all categories and related subcategories for a document
+
 ### BREAKING CHANGE
 
 - `SearchResult` will no longer return `""` when a Neutral Citation Number is missing. Instead, it will return `None`.

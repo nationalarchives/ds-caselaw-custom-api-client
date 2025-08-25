@@ -11,6 +11,7 @@ from caselawclient.models.documents import (
 from caselawclient.models.documents.body import (
     UnparsableDate,
 )
+from caselawclient.types import DocumentCategory
 
 
 class TestDocumentBody:
@@ -104,6 +105,39 @@ class TestDocumentBody:
         )
 
         assert body.jurisdiction == "SoftwareTesting"
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_categories(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Breach of code of standards</uk:category>
+                            <uk:category parent="Breach of code of standards">Standards not met</uk:category>
+                            <uk:category>Appeals</uk:category>
+                            <uk:category parent="Appeals">Registration variation</uk:category>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.categories == [
+            DocumentCategory(
+                name="Breach of code of standards", subcategories=[DocumentCategory(name="Standards not met")]
+            ),
+            DocumentCategory(name="Appeals", subcategories=[DocumentCategory(name="Registration variation")]),
+        ]
 
     @pytest.mark.parametrize(
         "opening_tag, closing_tag",

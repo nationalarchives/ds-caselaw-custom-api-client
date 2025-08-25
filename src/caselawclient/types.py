@@ -1,4 +1,11 @@
-from typing import NamedTuple
+from dataclasses import dataclass, field
+from typing import List, NamedTuple
+
+
+@dataclass
+class DocumentCategory:
+    name: str
+    subcategories: List["DocumentCategory"] = field(default_factory=list)
 
 
 class InvalidDocumentURIException(Exception):

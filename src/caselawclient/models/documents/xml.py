@@ -2,7 +2,7 @@ import os
 
 from lxml import etree
 
-from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings
+from caselawclient.xml_helpers import get_xpath_match_string, get_xpath_match_strings, get_xpath_nodes
 
 
 def _xslt_path(xslt_file_name: str) -> str:
@@ -49,6 +49,9 @@ class XML:
         namespaces: dict[str, str],
     ) -> list[str]:
         return get_xpath_match_strings(self.xml_as_tree, xpath, namespaces)
+
+    def get_xpath_nodes(self, xpath: str, namespaces: dict[str, str]) -> list[etree._Element]:
+        return get_xpath_nodes(self.xml_as_tree, xpath, namespaces)
 
     def _modified(
         self,
