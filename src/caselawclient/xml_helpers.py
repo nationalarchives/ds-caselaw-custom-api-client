@@ -7,9 +7,25 @@ DEFAULT_NAMESPACES = {
     "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
 }
 
+# _Element is the only class lxml exposes, so need to use the private class for typing
+Element = etree._Element  # noqa: SLF001
+
+
+def get_xpath_nodes(
+    node: Element,
+    path: str,
+    namespaces: Optional[Dict[str, str]] = None,
+) -> list[Element]:
+    result = node.xpath(path, namespaces=namespaces)
+
+    if not isinstance(result, list) or not all(isinstance(x, Element) for x in result):
+        raise TypeError(f"Expected to return list[Element], got {type(result).__name__}")
+
+    return result
+
 
 def get_xpath_match_string(
-    node: etree._Element,
+    node: Element,
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
     fallback: str = "",
@@ -18,7 +34,7 @@ def get_xpath_match_string(
 
 
 def get_xpath_match_strings(
-    node: etree._Element,
+    node: Element,
     path: str,
     namespaces: Optional[Dict[str, str]] = None,
 ) -> list[str]:
