@@ -90,6 +90,7 @@ class DocumentBody:
 
         return top_level_categories
 
+    # NOTE: Deprecated - use categories function
     @cached_property
     def category(self) -> Optional[str]:
         return self.get_xpath_match_string(
