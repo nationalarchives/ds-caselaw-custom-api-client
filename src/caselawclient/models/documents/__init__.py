@@ -4,6 +4,7 @@ import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
+import environ
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
@@ -25,7 +26,9 @@ from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
     check_docx_exists,
+    copy_assets,
     delete_documents_from_private_bucket,
+    delete_non_targz_from_bucket,
     generate_docx_url,
     generate_pdf_url,
     publish_documents,
@@ -44,6 +47,8 @@ from .exceptions import (
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+
+env = environ.Env()
 
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
@@ -715,14 +720,13 @@ class Document:
         ...  # (this should probably be a function)
 
         # 9. Delete non-targz assets from the target document (published and unpublished buckets)
-        ...
+        delete_non_targz_from_bucket(target.uri, env("PRIVATE_ASSET_BUCKET"))
 
         # 10. Copy over all unpublished assets from the source document to the prefix of the target document.
-        ...
+        copy_assets(old_uri=source.uri, new_uri=target.uri)
 
         # 11. Delete the source document
         # (We check this is possible in can_merge)
         source.delete()
-        ...
 
         # 12. End atomic MarkLogic operations
