@@ -170,3 +170,37 @@ class IdentifiersCollection(dict[str, Identifier]):
         if len(self.by_score(type)) == 0:
             return None
         return self.by_score(type)[0]
+
+    def should_merge_one(self, identifier: Identifier) -> Identifier | None:
+        # Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
+        # TODO: should this check for non-deprecation?
+        if self.contains(identifier):
+            return None
+
+        # If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
+        if identifier.deprecated:
+            return identifier
+
+        # If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
+        if identifier.schema.allow_multiple:
+            return identifier
+
+        # 4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
+        identifier.deprecated = True
+        return identifier
+
+    def merge_logic(self, source: "IdentifiersCollection") -> "IdentifiersCollection":
+        """
+        Return an IdentifiersCollection suitable for replacing the 'self' IdentifiersCollection
+        when 'other' is being merged into it. Getting the identifiers and saving them is the
+        responsibility of a Document.
+        """
+
+        # should probably work on a copy of self, not self itself.
+        source_identifiers: list[Identifier] = list(source.values())
+        for identifier in source_identifiers:
+            # Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
+            if self.should_merge_one(identifier):
+                self.add(identifier)
+        identifier.deprecated
+        return self
