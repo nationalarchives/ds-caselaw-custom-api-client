@@ -153,6 +153,12 @@ class TestIdentifiersCRUD:
         assert "[1234] UKSC 999" not in str(mixed_identifiers)
 
 
+class TestIdentifierCollectionMerge:
+    def test_merge_basic(self, mixed_identifiers: IdentifiersCollection):
+        mixed_identifiers.merge_logic(mixed_identifiers)
+        1 / 0
+
+
 class TestIdentifierScoring:
     def test_base_scoring(self):
         identifier = TestIdentifier(value="TEST-123")
