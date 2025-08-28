@@ -172,7 +172,7 @@ class IdentifiersCollection(dict[str, Identifier]):
             return None
         return self.by_score(type)[0]
 
-    def mergeable_identifier(self, identifier: Identifier) -> Identifier | None:
+    def _mergeable_identifier(self, identifier: Identifier) -> Identifier | None:
         """Return the specified identifier if it is mergable with this Collection,
         deprecating it if necessary, and not returning it if it is not."""
 
@@ -194,16 +194,15 @@ class IdentifiersCollection(dict[str, Identifier]):
         identifier_copy.deprecated = True
         return identifier_copy
 
-    def merge_logic(self, source: "IdentifiersCollection") -> "IdentifiersCollection":
+    def merge(self, source: "IdentifiersCollection") -> "IdentifiersCollection":
         """
         Return an IdentifiersCollection suitable for replacing the 'self' IdentifiersCollection
         when 'other' is being merged into it. Getting the identifiers and saving them is the
         responsibility of a Document.
         """
 
-        # should probably work on a copy of self, not self itself.
         target = copy.copy(self)
         for identifier in source.values():
-            if mergeable_identifier := self.mergeable_identifier(identifier):
+            if mergeable_identifier := self._mergeable_identifier(identifier):
                 target.add(mergeable_identifier)
         return target

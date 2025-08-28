@@ -717,7 +717,10 @@ class Document:
         #         2. If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
         #         3. If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
         #         4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
+
         ...  # (this should probably be a function)
+
+        target.identifiers = target.identifiers.merge(source.identifiers)
 
         # 9. Delete non-targz assets from the target document (published and unpublished buckets)
         delete_non_targz_from_bucket(target.uri, env("PRIVATE_ASSET_BUCKET"))
