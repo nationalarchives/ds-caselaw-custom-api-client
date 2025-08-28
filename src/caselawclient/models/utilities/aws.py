@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import uuid
+from collections.abc import Callable
 from typing import Any, Literal, Optional, TypedDict, overload
 
 import boto3
@@ -118,17 +119,30 @@ def generate_pdf_url(uri: DocumentURIString) -> str:
 
 
 def delete_from_bucket(uri: DocumentURIString, bucket: str) -> None:
+    delete_some_from_bucket(uri=uri, bucket=bucket, filter=lambda x: True)
+
+
+def delete_some_from_bucket(
+    uri: DocumentURIString, bucket: str, filter: Callable[[ObjectIdentifierTypeDef], bool]
+) -> None:
     client = create_s3_client()
     response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
 
     if response.get("Contents"):
-        objects_to_delete: list[ObjectIdentifierTypeDef] = [{"Key": obj["Key"]} for obj in response.get("Contents", [])]
+        objects_to_maybe_delete: list[ObjectIdentifierTypeDef] = [
+            {"Key": obj["Key"]} for obj in response.get("Contents", [])
+        ]
+        objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
         client.delete_objects(
             Bucket=bucket,
             Delete={
                 "Objects": objects_to_delete,
             },
         )
+
+
+def delete_non_targz_from_bucket(uri: DocumentURIString, bucket: str) -> None:
+    delete_some_from_bucket(uri=uri, bucket=bucket, filter=lambda x: not x["Key"].endswith(".tar.gz"))
 
 
 def publish_documents(uri: DocumentURIString) -> None:

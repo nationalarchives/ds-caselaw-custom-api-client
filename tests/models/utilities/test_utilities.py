@@ -15,6 +15,7 @@ from caselawclient.models.utilities.aws import (
     build_new_key,
     check_docx_exists,
     copy_assets,
+    delete_non_targz_from_bucket,
 )
 
 
@@ -85,6 +86,17 @@ class TestAWSUtils:
             {"Bucket": "MY_BUCKET", "Key": "uksc/2023/1/uksc_2023_1.docx"},
             "MY_BUCKET",
             "ukpc/1999/9/ukpc_1999_9.docx",
+        )
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    def test_delete_non_tar_gz(self, client):
+        client.return_value.list_objects.return_value = {
+            "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}, {"Key": "uksc/2023/1/TDR-2023-AAA.tar.gz"}]
+        }
+        delete_non_targz_from_bucket(DocumentURIString("uksc/2023/1"), "fake_bucket")
+        client.return_value.list_objects.assert_called_with(Bucket="fake_bucket", Prefix="uksc/2023/1/")
+        client.return_value.delete_objects.assert_called_with(
+            Bucket="fake_bucket", Delete={"Objects": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]}
         )
 
 
