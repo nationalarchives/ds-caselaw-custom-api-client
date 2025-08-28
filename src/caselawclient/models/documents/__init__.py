@@ -4,6 +4,7 @@ import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
+import environ
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
@@ -25,7 +26,9 @@ from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
     check_docx_exists,
+    copy_assets,
     delete_documents_from_private_bucket,
+    delete_non_targz_from_bucket,
     generate_docx_url,
     generate_pdf_url,
     publish_documents,
@@ -35,10 +38,17 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
 
 from .body import DocumentBody
-from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import (
+    CannotEnrichUnenrichableDocument,
+    CannotMergeUnmergableDocument,
+    CannotPublishUnpublishableDocument,
+    DocumentNotSafeForDeletion,
+)
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+
+env = environ.Env()
 
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
@@ -610,3 +620,79 @@ class Document:
 
     def compare_to(self, that_doc: "Document") -> comparison.Comparison:
         return comparison.Comparison(self, that_doc)
+
+    def can_merge(target, source: "Document") -> bool:
+        """Are we permitted to merge source document on top of this one?"""
+
+        # source document must have exactly one version
+        if len(source.versions) != 1:
+            return False
+
+        # source document must never have been published
+        if source.has_ever_been_published:
+            return False
+
+        # source must be newer than target
+        # TODO
+
+        # ensure that the types aren't Document
+        if type(target) is Document or type(source) is Document:
+            raise RuntimeError("Cannot merge documents that are the base class")
+
+        # source must be same document type as target
+        if type(source) is not type(target):
+            return False
+
+        # we will want to delete the source, should be redundant but
+        # we might change safe_to_delete
+        if not source.safe_to_delete:  # noqa: SIM103
+            return False
+
+        return True
+
+    def merge(target, source: "Document") -> None:
+        # 1. Check that constraints are met
+        if not target.can_merge(source):
+            msg = f"Tried to merge {source} onto {target}"
+            raise CannotMergeUnmergableDocument(msg)
+
+        # 2. Get the XML from the source document
+        source_xml = source.body.content_as_xml
+
+        # 3. Get the history from the source document
+        # source_history = source.vers
+        ...
+
+        # 4. Begin atomic MarkLogic operations
+        # 5. Unpublish the target document, if published
+        target.unpublish()
+
+        # 6. Append the history of the source document to the history of the target document
+        ...
+
+        # 7. Add the XML of the source document as a new version to the target document;
+        #    the VersionAnnotation of the new version should record the fact that it's a merge operation
+        ...
+
+        # 8. Merge any document identifiers. If necessary, deprecate those of the target document.
+        #     1. For all identifiers in the source document:
+        #         1. Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
+        #         2. If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
+        #         3. If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
+        #         4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
+
+        ...  # (this should probably be a function)
+
+        target.identifiers = target.identifiers.merge(source.identifiers)
+
+        # 9. Delete non-targz assets from the target document (published and unpublished buckets)
+        delete_non_targz_from_bucket(target.uri, env("PRIVATE_ASSET_BUCKET"))
+
+        # 10. Copy over all unpublished assets from the source document to the prefix of the target document.
+        copy_assets(old_uri=source.uri, new_uri=target.uri)
+
+        # 11. Delete the source document
+        # (We check this is possible in can_merge)
+        source.delete()
+
+        # 12. End atomic MarkLogic operations

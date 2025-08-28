@@ -46,7 +46,10 @@ class IdentifierSchema(ABC):
     """ Should editors be allowed to manually manipulate identifiers under this schema? """
 
     require_globally_unique: bool = True
-    """ Must this identifier be globally unique? """
+    """ Must this identifier be globally unique? (appear on no other documents) """
+
+    allow_multiple: bool = False
+    """ May documents have more than one non-deprecated identifier of this type? """
 
     document_types: Optional[list[str]] = None
     """

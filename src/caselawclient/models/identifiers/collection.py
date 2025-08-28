@@ -1,3 +1,4 @@
+import copy
 from typing import TYPE_CHECKING, Optional, Union
 
 from lxml import etree
@@ -43,6 +44,8 @@ class IdentifiersCollection(dict[str, Identifier]):
         """Check that only one non-deprecated identifier exists per schema where that schema does not allow multiples."""
 
         for schema, identifiers in self._list_all_identifiers_by_schema().items():
+            if schema.allow_multiple:
+                continue
             non_deprecated_identifiers = [i for i in identifiers if not i.deprecated]
             if len(non_deprecated_identifiers) > 1:
                 return SuccessFailureMessageTuple(
@@ -168,3 +171,38 @@ class IdentifiersCollection(dict[str, Identifier]):
         if len(self.by_score(type)) == 0:
             return None
         return self.by_score(type)[0]
+
+    def _mergeable_identifier(self, identifier: Identifier) -> Identifier | None:
+        """Return the specified identifier if it is mergable with this Collection,
+        deprecating it if necessary, and not returning it if it is not."""
+
+        # Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
+        # TODO: should this check for non-deprecation?
+        if self.contains(identifier):
+            return None
+
+        # If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
+        if identifier.deprecated:
+            return identifier
+
+        # If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
+        if identifier.schema.allow_multiple:
+            return identifier
+
+        # 4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
+        identifier_copy = copy.copy(identifier)
+        identifier_copy.deprecated = True
+        return identifier_copy
+
+    def merge(self, source: "IdentifiersCollection") -> "IdentifiersCollection":
+        """
+        Return an IdentifiersCollection suitable for replacing the 'self' IdentifiersCollection
+        when 'other' is being merged into it. Getting the identifiers and saving them is the
+        responsibility of a Document.
+        """
+
+        target = copy.copy(self)
+        for identifier in source.values():
+            if mergeable_identifier := self._mergeable_identifier(identifier):
+                target.add(mergeable_identifier)
+        return target
