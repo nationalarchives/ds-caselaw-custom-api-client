@@ -1,3 +1,4 @@
+import copy
 from typing import TYPE_CHECKING, Optional, Union
 
 from lxml import etree
@@ -171,7 +172,10 @@ class IdentifiersCollection(dict[str, Identifier]):
             return None
         return self.by_score(type)[0]
 
-    def should_merge_one(self, identifier: Identifier) -> Identifier | None:
+    def mergeable_identifier(self, identifier: Identifier) -> Identifier | None:
+        """Return the specified identifier if it is mergable with this Collection,
+        deprecating it if necessary, and not returning it if it is not."""
+
         # Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
         # TODO: should this check for non-deprecation?
         if self.contains(identifier):
@@ -186,8 +190,9 @@ class IdentifiersCollection(dict[str, Identifier]):
             return identifier
 
         # 4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
-        identifier.deprecated = True
-        return identifier
+        identifier_copy = copy.copy(identifier)
+        identifier_copy.deprecated = True
+        return identifier_copy
 
     def merge_logic(self, source: "IdentifiersCollection") -> "IdentifiersCollection":
         """
@@ -197,10 +202,8 @@ class IdentifiersCollection(dict[str, Identifier]):
         """
 
         # should probably work on a copy of self, not self itself.
-        source_identifiers: list[Identifier] = list(source.values())
-        for identifier in source_identifiers:
-            # Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
-            if self.should_merge_one(identifier):
-                self.add(identifier)
-        identifier.deprecated
-        return self
+        target = copy.copy(self)
+        for identifier in source.values():
+            if mergeable_identifier := self.mergeable_identifier(identifier):
+                target.add(mergeable_identifier)
+        return target
