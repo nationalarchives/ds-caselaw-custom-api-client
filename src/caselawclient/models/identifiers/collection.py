@@ -43,6 +43,8 @@ class IdentifiersCollection(dict[str, Identifier]):
         """Check that only one non-deprecated identifier exists per schema where that schema does not allow multiples."""
 
         for schema, identifiers in self._list_all_identifiers_by_schema().items():
+            if schema.allow_multiple:
+                continue
             non_deprecated_identifiers = [i for i in identifiers if not i.deprecated]
             if len(non_deprecated_identifiers) > 1:
                 return SuccessFailureMessageTuple(
