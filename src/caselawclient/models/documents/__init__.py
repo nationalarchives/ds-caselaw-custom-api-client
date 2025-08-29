@@ -540,14 +540,14 @@ class Document:
         """
         Is it sensible to reparse this document?
         """
-        return self.docx_exists()
+        return self.docx_exists() and not self.body.has_external_data
 
     @cached_property
     def can_enrich(self) -> bool:
         """
         Is it possible to enrich this document?
         """
-        return self.body.has_content
+        return self.body.has_content and not self.body.has_external_data
 
     def validate_identifiers(self) -> SuccessFailureMessageTuple:
         return self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
