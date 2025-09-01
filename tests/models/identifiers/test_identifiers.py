@@ -8,7 +8,7 @@ from caselawclient.models.identifiers import Identifier, IdentifierSchema
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
-from caselawclient.types import DocumentIdentifierSlug
+from caselawclient.types import DocumentIdentifierSlug, SuccessFailureMessageTuple
 
 
 class TestIdentifierSchema(IdentifierSchema):
@@ -18,6 +18,7 @@ class TestIdentifierSchema(IdentifierSchema):
     namespace = "test"
     human_readable = True
     base_score_multiplier = 2.5
+    allow_multiple = True
 
     @classmethod
     def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
@@ -200,3 +201,38 @@ class TestIdentifierValidation:
             mock_validate_uuids_match_keys.assert_called_once()
             mock_identifier_1_validate.assert_called_once_with(document_type=Document, api_client=mock_api_client)
             mock_identifier_2_validate.assert_called_once_with(document_type=Document, api_client=mock_api_client)
+
+
+class TestIdentifierCollectionValidation:
+    def test_check_only_single_ok_if_multiple_allowed(self):
+        identifier_1 = TestIdentifier(uuid="id-1", value="TEST-123")
+        identifier_2 = TestIdentifier(uuid="id-2", value="TEST-456")
+        identifiers = IdentifiersCollection(
+            {
+                "id-1": identifier_1,
+                "id-2": identifier_2,
+            }
+        )
+        assert (
+            identifiers.check_only_single_non_deprecated_identifier_where_multiples_not_allowed()
+            == SuccessFailureMessageTuple(success=True, messages=[])
+        )
+
+    def test_check_only_single_fails_if_multiple_not_allowed(self):
+        identifier_1 = NeutralCitationNumber(uuid="id-1", value="[2023] UKSC 1")
+        identifier_2 = NeutralCitationNumber(uuid="id-2", value="[2023] UKSC 2")
+        identifiers = IdentifiersCollection(
+            {
+                "id-1": identifier_1,
+                "id-2": identifier_2,
+            }
+        )
+        assert (
+            identifiers.check_only_single_non_deprecated_identifier_where_multiples_not_allowed()
+            == SuccessFailureMessageTuple(
+                success=False,
+                messages=[
+                    "Multiple non-deprecated identifiers found for schema 'Neutral Citation Number': [2023] UKSC 1, [2023] UKSC 2"
+                ],
+            )
+        )
