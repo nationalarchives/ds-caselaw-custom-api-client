@@ -98,7 +98,7 @@ class Document:
         (
             "has_unique_content_hash",
             True,
-            "This {document_noun} does not have a unique content hash",
+            "There is another document with identical content",
         ),
     ]
     """

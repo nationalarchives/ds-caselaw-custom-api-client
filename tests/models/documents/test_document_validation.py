@@ -107,7 +107,7 @@ class TestDocumentValidation:
 
         assert document.validation_failure_messages == sorted(
             [
-                "This document does not have a unique content hash",
+                "There is another document with identical content",
                 "This document failed to parse",
                 "This document is currently parked at a temporary URI",
                 "This document is currently on hold",

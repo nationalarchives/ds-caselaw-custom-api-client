@@ -44,7 +44,7 @@ class TestDocument:
         assert document.is_publishable is False
         # The failure messages should mention both unique content hash and missing name
         messages = document.validation_failure_messages
-        assert any("unique content hash" in msg for msg in messages)
+        assert any("There is another document with identical content" in msg for msg in messages)
         assert any("no name" in msg for msg in messages)
 
     def test_has_unique_content_hash_true(self, mock_api_client):
@@ -62,7 +62,7 @@ class TestDocument:
         mock_api_client.has_unique_content_hash.return_value = False
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         messages = document.validation_failure_messages
-        assert any("unique content hash" in msg for msg in messages)
+        assert any("There is another document with identical content" in msg for msg in messages)
 
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
         document = Judgment(DocumentURIString("test/1234"), mock_api_client)
