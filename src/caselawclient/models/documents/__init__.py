@@ -670,8 +670,7 @@ class Document:
         if source.has_ever_been_published:
             return False
 
-        # source must be newer than target
-        # TODO
+        # source must be newer than target -- TODO
 
         # ensure that the types aren't Document
         if type(target) is Document or type(source) is Document:
@@ -710,6 +709,7 @@ class Document:
         annotation = VersionAnnotation(
             automated=False, message=annotation_message, version_type=VersionType.MERGE, payload={}
         )
+        # TODO - the payload should be the same as the payload of the source's annotation.
 
         target.api_client.update_document_xml(
             document_uri=target.document_uri,
