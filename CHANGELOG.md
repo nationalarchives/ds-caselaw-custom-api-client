@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unpublished
 
+## v40.1.0 (2025-09-02)
+
+### Feat
+
 - Added `api_client.has_unique_content_hash`
 - Added `Document.has_unique_content_hash`
 - Extended `Document`'s `attributes_to_validate` to consider `has_unique_content_hash`
