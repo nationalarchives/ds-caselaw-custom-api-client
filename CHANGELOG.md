@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unpublished
+## v41.0.0 (2025-09-02)
 
 - Added `api_client.has_unique_content_hash`
 - Added `Document.has_unique_content_hash`
