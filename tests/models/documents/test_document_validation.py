@@ -47,14 +47,15 @@ class TestDocumentValidation:
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_failure, is_parked, is_held, has_name, has_valid_court, publishable",
+        "is_failure, is_parked, is_held, has_name, has_valid_court, has_unique_content_hash, publishable",
         [
-            (False, False, False, True, True, True),  # Publishable
-            (True, False, False, False, False, False),  # Parser failure
-            (False, False, True, True, True, False),  # Held
-            (False, True, False, True, True, False),  # Parked
-            (False, False, False, False, True, False),  # No name
-            (False, False, False, True, False, False),  # Invalid court
+            (False, False, False, True, True, True, True),  # Publishable
+            (True, False, False, False, False, False, False),  # Parser failure
+            (False, False, True, True, True, True, False),  # Held
+            (False, True, False, True, True, True, False),  # Parked
+            (False, False, False, False, True, True, False),  # No name
+            (False, False, False, True, False, True, False),  # Invalid court
+            (False, False, False, True, True, False, False),  # Content hash not unique
         ],
     )
     def test_document_is_publishable_conditions(
@@ -65,8 +66,10 @@ class TestDocumentValidation:
         is_parked,
         has_name,
         has_valid_court,
+        has_unique_content_hash,
         publishable,
     ):
+        mock_api_client.has_unique_content_hash.return_value = has_unique_content_hash
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_failure = is_failure
         document.is_parked = is_parked
@@ -77,6 +80,7 @@ class TestDocumentValidation:
         assert document.is_publishable is publishable
 
     def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
+        mock_api_client.has_unique_content_hash.return_value = True
         mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                         xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
@@ -103,6 +107,7 @@ class TestDocumentValidation:
 
         assert document.validation_failure_messages == sorted(
             [
+                "This document does not have a unique content hash",
                 "This document failed to parse",
                 "This document is currently parked at a temporary URI",
                 "This document is currently on hold",

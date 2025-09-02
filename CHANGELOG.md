@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unpublished
 
+- Added `api_client.has_unique_content_hash`
+- Added `Document.has_unique_content_hash`
+- Extended `Document`'s `attributes_to_validate` to consider `has_unique_content_hash`
 - **Reparse/Enrichment**: Don't reparse/enrich documents that have external data
 
 ## v40.0.0 (2025-08-20)

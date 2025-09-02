@@ -32,6 +32,38 @@ from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 
 class TestDocument:
+    def test_is_publishable_false_with_multiple_failures(self, mock_api_client):
+        # Simulate a document with non-unique content hash and missing name
+        mock_api_client.has_unique_content_hash.return_value = False
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        # Force the body.name to be empty (missing name)
+        document.body.name = ""
+        # Patch has_name to False
+        document.has_name = False
+        # is_publishable should be False
+        assert document.is_publishable is False
+        # The failure messages should mention both unique content hash and missing name
+        messages = document.validation_failure_messages
+        assert any("unique content hash" in msg for msg in messages)
+        assert any("no name" in msg for msg in messages)
+
+    def test_has_unique_content_hash_true(self, mock_api_client):
+        mock_api_client.has_unique_content_hash.return_value = True
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        assert document.has_unique_content_hash is True
+        mock_api_client.has_unique_content_hash.assert_called_once_with("test/1234")
+
+    def test_has_unique_content_hash_false(self, mock_api_client):
+        mock_api_client.has_unique_content_hash.return_value = False
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        assert document.has_unique_content_hash is False
+
+    def test_validation_failure_message_for_nonunique_content_hash(self, mock_api_client):
+        mock_api_client.has_unique_content_hash.return_value = False
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        messages = document.validation_failure_messages
+        assert any("unique content hash" in msg for msg in messages)
+
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
         document = Judgment(DocumentURIString("test/1234"), mock_api_client)
         document.body.name = "Document Name"

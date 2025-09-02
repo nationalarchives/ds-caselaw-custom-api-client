@@ -23,6 +23,11 @@ class BreakJudgmentCheckoutDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# check_content_hash_unique_by_uri.xqy
+class CheckContentHashUniqueByUriDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # checkin_judgment.xqy
 class CheckinJudgmentDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString

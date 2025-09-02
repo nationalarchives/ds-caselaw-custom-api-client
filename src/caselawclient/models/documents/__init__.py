@@ -95,6 +95,11 @@ class Document:
             True,
             "The court for this {document_noun} is not valid",
         ),
+        (
+            "has_unique_content_hash",
+            True,
+            "This {document_noun} does not have a unique content hash",
+        ),
     ]
     """
     A list of tuples in the form:
@@ -324,6 +329,11 @@ class Document:
     @cached_property
     def annotation(self) -> str:
         return self.api_client.get_version_annotation(self.uri)
+
+    @cached_property
+    def has_unique_content_hash(self) -> bool:
+        """Check if the content hash of this document is unique compared to all other documents in MarkLogic."""
+        return self.api_client.has_unique_content_hash(self.uri)
 
     @cached_property
     def version_created_datetime(self) -> datetime.datetime:
