@@ -110,6 +110,7 @@ class TestPressSummaryValidation:
         assert press_summary.validation_failure_messages == sorted(
             [
                 "This document failed to parse",
+                "There is another document with identical content",
                 "This press summary is currently parked at a temporary URI",
                 "This press summary is currently on hold",
                 "This press summary has no name",

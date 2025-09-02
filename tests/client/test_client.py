@@ -87,6 +87,23 @@ class TestMarklogicResponseHandlers(unittest.TestCase):
 
 
 class ApiClientTest(unittest.TestCase):
+    @patch("caselawclient.Client.MarklogicApiClient._format_uri_for_marklogic")
+    @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
+    def test_has_unique_content_hash_true(self, mock_eval_and_decode, mock_format_uri):
+        mock_format_uri.return_value = "/2029/eat/1.xml"
+        mock_eval_and_decode.return_value = "true"
+        result = self.client.has_unique_content_hash(DocumentURIString("2029/eat/1"))
+        assert result is True
+        mock_eval_and_decode.assert_called_with({"uri": "/2029/eat/1.xml"}, "check_content_hash_unique_by_uri.xqy")
+
+    @patch("caselawclient.Client.MarklogicApiClient._format_uri_for_marklogic")
+    @patch("caselawclient.Client.MarklogicApiClient._eval_and_decode")
+    def test_has_unique_content_hash_false(self, mock_eval_and_decode, mock_format_uri):
+        mock_format_uri.return_value = "/2029/eat/1.xml"
+        mock_eval_and_decode.return_value = "false"
+        result = self.client.has_unique_content_hash(DocumentURIString("2029/eat/1"))
+        assert result is False
+
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
 

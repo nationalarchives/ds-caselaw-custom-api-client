@@ -101,6 +101,7 @@ class TestJudgmentValidation:
         assert judgment.validation_failure_messages == sorted(
             [
                 "This document failed to parse",
+                "There is another document with identical content",
                 "This judgment is currently parked at a temporary URI",
                 "This judgment is currently on hold",
                 "This judgment has no name",

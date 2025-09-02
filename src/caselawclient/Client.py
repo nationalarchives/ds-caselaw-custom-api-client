@@ -34,6 +34,7 @@ from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentURIString
 from caselawclient.xquery_type_dicts import (
+    CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
     MarkLogicDocumentVersionURIString,
     MarkLogicPrivilegeURIString,
@@ -727,6 +728,14 @@ class MarklogicApiClient:
             )
             == 0
         )
+
+    def has_unique_content_hash(self, judgment_uri: DocumentURIString) -> bool:
+        """
+        Returns True if the content hash for this document is unique (not shared with other documents).
+        """
+        uri = self._format_uri_for_marklogic(judgment_uri)
+        vars: CheckContentHashUniqueByUriDict = {"uri": uri}
+        return self._eval_and_decode(vars, "check_content_hash_unique_by_uri.xqy") == "true"
 
     def eval(
         self,
