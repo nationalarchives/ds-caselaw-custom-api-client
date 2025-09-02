@@ -5,12 +5,14 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
 import environ
+from defusedxml.etree import ElementTree
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
 from requests_toolbelt.multipart import decoder
 
 import caselawclient.models.documents.comparison as comparison
+from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
@@ -47,7 +49,6 @@ from .exceptions import (
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
-
 env = environ.Env()
 
 
@@ -693,33 +694,30 @@ class Document:
             msg = f"Tried to merge {source} onto {target}"
             raise CannotMergeUnmergableDocument(msg)
 
-        # 2. Get the XML from the source document
-        source_xml = source.body.content_as_xml
+        # 3. Get the history from the source document -- TODO
+        # source_history = source.versions[0]['uri']
 
-        # 3. Get the history from the source document
-        # source_history = source.vers
-        ...
+        # 4. Begin atomic MarkLogic operations -- TODO
 
-        # 4. Begin atomic MarkLogic operations
         # 5. Unpublish the target document, if published
         target.unpublish()
 
+        # 2. Get the XML from the source document
         # 6. Append the history of the source document to the history of the target document
-        ...
-
         # 7. Add the XML of the source document as a new version to the target document;
         #    the VersionAnnotation of the new version should record the fact that it's a merge operation
-        ...
+        annotation_message: str = target.api_client.get_version_annotation(judgment_uri=source.document_uri)
+        annotation = VersionAnnotation(
+            automated=False, message=annotation_message, version_type=VersionType.MERGE, payload={}
+        )
+
+        target.api_client.update_document_xml(
+            document_uri=target.document_uri,
+            document_xml=ElementTree.fromstring(source.body.content_as_xml),
+            annotation=annotation,
+        )
 
         # 8. Merge any document identifiers. If necessary, deprecate those of the target document.
-        #     1. For all identifiers in the source document:
-        #         1. Is there a matching identifier (type and value) in the target? If so, disregard this source identifier
-        #         2. If the identifier doesn't match and the source identifier is deprecated, copy it over. Multiple deprecated identifiers are fine for all types.
-        #         3. If the source identifier isn't deprecated, does this identifier type support multiple current (ie non-deprecated) identifiers? If so, copy the source identifier into the target identifiers
-        #         4. If the existing identifier type doesn't support multiple current identifiers, deprecate the existing current one and copy the source identifier over
-
-        ...  # (this should probably be a function)
-
         target.identifiers = target.identifiers.merge(source.identifiers)
 
         # 9. Delete non-targz assets from the target document (published and unpublished buckets)

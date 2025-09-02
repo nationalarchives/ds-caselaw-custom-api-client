@@ -155,7 +155,7 @@ class TestIdentifiersCRUD:
 
 class TestIdentifierCollectionMerge:
     def test_merge_basic(self, mixed_identifiers: IdentifiersCollection):
-        mixed_identifiers.merge_logic(mixed_identifiers)
+        mixed_identifiers.merge(mixed_identifiers)
         1 / 0
 
 
