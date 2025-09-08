@@ -34,7 +34,7 @@ defusedxml = "^0.7.1"
 [tool.poetry.group.dev.dependencies]
 coverage = "7.10.6"
 pytest = "8.4.2"
-pytest-cov = "6.2.1"
+pytest-cov = "6.3.0"
 beautifulsoup4 = "4.13.5"
 responses = "0.25.8"
 python-dotenv = "1.1.1"
