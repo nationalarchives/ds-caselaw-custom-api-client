@@ -61,6 +61,8 @@ class DocumentFactory:
         "source_name": "Example Uploader",
         "source_email": "uploader@example.com",
         "consignment_reference": "TDR-12345",
+        "first_published_datetime": None,
+        "has_ever_been_published": False,
         "assigned_to": "",
         "versions": [],
     }
