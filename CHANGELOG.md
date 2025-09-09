@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Document**: first_published_datetime now interprets sentinel values
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.40.25
+- **deps**: update dependency boto3 to v1.40.22
+- **deps**: update dependency ds-caselaw-utils to v2.7.1
+- **deps**: update dependency ds-caselaw-utils to v2.7.0
+- **deps**: update dependency boto3 to v1.40.20
+- **deps**: update dependency boto3 to v1.40.17
+- **deps**: update dependency typing-extensions to v4.15.0
+- **deps**: update dependency boto3 to v1.40.16
+- **deps**: update dependency lxml to v6.0.1
+- **deps**: update dependency boto3 to v1.40.13
+
+## v40.0.0 (2025-08-20)
+
 ## v41.0.0 (2025-09-02)
 
 - Added `api_client.has_unique_content_hash`

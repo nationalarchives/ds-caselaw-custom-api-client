@@ -312,10 +312,37 @@ class Document:
 
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:
+        """
+        Return the database value for the date and time this document was first published.
+
+        :return: The datetime value in the database for "first published".
+        """
         return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
 
     @cached_property
+    def first_published_datetime_display(self) -> Optional[datetime.datetime]:
+        """
+        Return the display value for the date and time this document was first published.
+
+        A value of 1970-01-01 00:00 indicates that the document has been published previously, but the exact date and time is unknown. In this case, return `None`. This can be used alongside `has_ever_been_published` to indicate an "unknown" state.
+
+        :return: The datetime value to be displayed to end users for "first published".
+        """
+
+        if self.first_published_datetime == datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc):
+            return None
+
+        return self.first_published_datetime
+
+    @cached_property
     def has_ever_been_published(self) -> bool:
+        """
+        Do we consider this document to have ever been published?
+
+        This is `True` if either the document is currently published, or if `first_published_datetime` has any value (including the sentinel value).
+
+        :return: A boolean indicating if the document has ever been published.
+        """
         return self.is_published or self.first_published_datetime is not None
 
     @cached_property

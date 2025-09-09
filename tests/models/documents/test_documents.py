@@ -203,6 +203,29 @@ class TestDocument:
         )
         mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
 
+    def test_document_first_published_datetime_display(self, mock_api_client):
+        mock_api_client.get_datetime_property.return_value = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.first_published_datetime_display == datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
+
+    def test_document_first_published_datetime_display_sentinel(self, mock_api_client):
+        """We expect that our sentinel value will return `None`."""
+        mock_api_client.get_datetime_property.return_value = datetime.datetime(
+            1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc
+        )
+
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.first_published_datetime_display is None
+        mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
+
     @pytest.mark.parametrize(
         "is_published, first_published_datetime, expected_outcome",
         [
@@ -210,6 +233,8 @@ class TestDocument:
             (True, None, True),
             (False, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
             (True, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
+            (False, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), True),
+            (True, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), True),
         ],
     )
     def test_document_has_ever_been_published(
