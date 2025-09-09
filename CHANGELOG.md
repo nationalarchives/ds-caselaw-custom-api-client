@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **DocumentFactory**: document factories now correctly set a default first published datetime
 - **deps**: update dependency boto3 to v1.40.25
 - **deps**: update dependency boto3 to v1.40.22
 - **deps**: update dependency ds-caselaw-utils to v2.7.1
