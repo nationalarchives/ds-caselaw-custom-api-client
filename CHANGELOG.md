@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **has_unique_content_hash**: correctly exclude document versions from checking for duplicate hashes
+
 ## v41.1.0 (2025-09-09)
 
 ### Feat
