@@ -12,4 +12,4 @@ let $count := count(cts:uris(
     cts:collection-query("http://marklogic.com/collections/dls/latest-version")
   ))
 ))
-return $count
+return $count = 1
