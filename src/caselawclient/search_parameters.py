@@ -15,6 +15,8 @@ class SearchParameters:
     judge: Optional[str] = None
     party: Optional[str] = None
     neutral_citation: Optional[str] = None
+    document_name: Optional[str] = None
+    consignment_number: Optional[str] = None
     specific_keyword: Optional[str] = None
     order: Optional[str] = None
     date_from: Optional[str] = None
@@ -39,6 +41,8 @@ class SearchParameters:
             "q": str(self.query or ""),
             "party": str(self.party or ""),
             "neutral_citation": str(self.neutral_citation or ""),
+            "document_name": str(self.document_name or ""),
+            "consignment_number": str(self.consignment_number or ""),
             "specific_keyword": str(self.specific_keyword or ""),
             "order": str(self.order or ""),
             "from": str(self.date_from or ""),
