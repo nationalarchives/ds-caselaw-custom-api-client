@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v41.1.3 (2025-09-10)
+
+### Feat
+
+- **Search**: adds neutral_citation and consignment_number as search options
+
 ## v41.1.2 (2025-09-10)
 
 ### Fix
