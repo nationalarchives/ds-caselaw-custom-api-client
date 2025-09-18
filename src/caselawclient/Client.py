@@ -802,7 +802,7 @@ class MarklogicApiClient:
         :param judge:
         :param party:
         :param neutral_citation:
-        :param name:
+        :param document_name:
         :param consignment_number:
         :param specific_keyword:
         :param order:
