@@ -310,6 +310,36 @@ class Document:
         # An empty list (which is falsy) therefore means the judgment can be published safely.
         return not self.validation_failure_messages
 
+    def check_has_only_one_version(self) -> SuccessFailureMessageTuple:
+        """Make sure the document has exactly one version."""
+        if len(self.versions) > 1:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document has more than one version"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
+        """
+        Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
+        """
+
+        validations = [
+            self.check_has_only_one_version(),
+        ]
+
+        success = True
+        messages: list[str] = []
+
+        for validation in validations:
+            if validation.success is False:
+                success = False
+
+            messages += validation.messages
+
+        return SuccessFailureMessageTuple(success, messages)
+
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:
         """
