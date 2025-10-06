@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Document**: merge source checks now ensure a document is safe to delete
+- **Document**: merge source checks now ensure a document has never been published
+- **Document**: add new methods to check if a document is safe to use as merge source
+
+### Fix
+
+- **deps**: update dependency boto3 to v1.40.36
+- **deps**: update dependency lxml to v6.0.2
+- **deps**: update dependency boto3 to v1.40.34
+
 ## v41.1.3 (2025-09-10)
 
 ### Feat

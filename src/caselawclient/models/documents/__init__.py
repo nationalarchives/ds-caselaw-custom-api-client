@@ -310,6 +310,58 @@ class Document:
         # An empty list (which is falsy) therefore means the judgment can be published safely.
         return not self.validation_failure_messages
 
+    def check_has_only_one_version(self) -> SuccessFailureMessageTuple:
+        """Make sure the document has exactly one version."""
+        if len(self.versions) > 1:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document has more than one version"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_has_never_been_published(self) -> SuccessFailureMessageTuple:
+        """Make sure the document has never been published."""
+        if self.has_ever_been_published:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document has previously been published"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_is_safe_to_delete(self) -> SuccessFailureMessageTuple:
+        """Make sure the document is safe to delete."""
+        if not self.safe_to_delete:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document cannot be deleted because it is published"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
+        """
+        Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
+        """
+
+        validations = [
+            self.check_has_only_one_version(),
+            self.check_has_never_been_published(),
+            self.check_is_safe_to_delete(),
+        ]
+
+        success = True
+        messages: list[str] = []
+
+        for validation in validations:
+            if validation.success is False:
+                success = False
+
+            messages += validation.messages
+
+        return SuccessFailureMessageTuple(success, messages)
+
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:
         """
