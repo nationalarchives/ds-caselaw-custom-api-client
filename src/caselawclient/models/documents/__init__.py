@@ -330,6 +330,16 @@ class Document:
 
         return SuccessFailureMessageTuple(True, [])
 
+    def check_is_safe_to_delete(self) -> SuccessFailureMessageTuple:
+        """Make sure the document is safe to delete."""
+        if not self.safe_to_delete:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document cannot be deleted because it is published"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
     def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
         """
         Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
@@ -338,6 +348,7 @@ class Document:
         validations = [
             self.check_has_only_one_version(),
             self.check_has_never_been_published(),
+            self.check_is_safe_to_delete(),
         ]
 
         success = True
