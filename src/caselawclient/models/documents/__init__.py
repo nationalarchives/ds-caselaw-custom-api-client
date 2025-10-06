@@ -320,6 +320,16 @@ class Document:
 
         return SuccessFailureMessageTuple(True, [])
 
+    def check_has_never_been_published(self) -> SuccessFailureMessageTuple:
+        """Make sure the document has never been published."""
+        if self.has_ever_been_published:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document has previously been published"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
     def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
         """
         Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
@@ -327,6 +337,7 @@ class Document:
 
         validations = [
             self.check_has_only_one_version(),
+            self.check_has_never_been_published(),
         ]
 
         success = True

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **Document**: merge source checks now ensure a document has never been published
 - **Document**: add new methods to check if a document is safe to use as merge source
 
 ### Fix
