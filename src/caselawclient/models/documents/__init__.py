@@ -340,17 +340,29 @@ class Document:
 
         return SuccessFailureMessageTuple(True, [])
 
-    def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
-        """
-        Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
-        """
+    def check_is_same_type_as(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check to see if this document is the same type as a target document."""
+        if type(self) is not type(target_document):
+            return SuccessFailureMessageTuple(
+                False,
+                [
+                    f"The type of {self.uri} ({type(self).document_noun}) does not match the type of {target_document.uri} ({type(target_document).document_noun})"
+                ],
+            )
+        return SuccessFailureMessageTuple(True, [])
 
-        validations = [
-            self.check_has_only_one_version(),
-            self.check_has_never_been_published(),
-            self.check_is_safe_to_delete(),
-        ]
+    def check_is_newer_than(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check to see if the created datetime of the latest version of this document is newer than the created datetime of the latest version of a target document."""
+        if self.version_created_datetime < target_document.version_created_datetime:
+            return SuccessFailureMessageTuple(
+                False, [f"The document at {self.uri} is older than the latest version of {target_document.uri}"]
+            )
+        return SuccessFailureMessageTuple(True, [])
 
+    def _combine_list_of_successfailure_results(
+        self, validations: list[SuccessFailureMessageTuple]
+    ) -> SuccessFailureMessageTuple:
+        """Given a list of SuccessFailureMessageTuples, combine the success/failure states and any messages into a single new object representing the overall success/failure state."""
         success = True
         messages: list[str] = []
 
@@ -361,6 +373,29 @@ class Document:
             messages += validation.messages
 
         return SuccessFailureMessageTuple(success, messages)
+
+    def check_is_safe_as_merge_source(self) -> SuccessFailureMessageTuple:
+        """
+        Is this document safe to be considered as a merge source, ie the document which will make a new version atop a target.
+        """
+
+        return self._combine_list_of_successfailure_results(
+            [
+                self.check_has_only_one_version(),
+                self.check_has_never_been_published(),
+                self.check_is_safe_to_delete(),
+            ]
+        )
+
+    def check_is_safe_to_merge_into(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check that this document is safe to merge into a given target document."""
+
+        return self._combine_list_of_successfailure_results(
+            [
+                self.check_is_same_type_as(target_document),
+                self.check_is_newer_than(target_document),
+            ]
+        )
 
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:

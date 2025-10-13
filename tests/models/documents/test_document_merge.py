@@ -1,6 +1,9 @@
+from datetime import datetime
 from unittest.mock import patch
 
 from caselawclient.models.documents import Document, DocumentURIString
+from caselawclient.models.judgments import Judgment
+from caselawclient.models.press_summaries import PressSummary
 from caselawclient.types import SuccessFailureMessageTuple
 
 
@@ -130,3 +133,65 @@ class TestDocumentSafeAsMergeSource:
                 "This document has more than one version",
                 "This document has previously been published",
             ]
+
+
+class TestDocumentSafeToMergeWithTarget:
+    def test_check_is_same_type_as_when_types_match(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+        target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
+
+        check_result = source_document.check_is_same_type_as(target_document)
+
+        assert check_result.success is True
+        assert check_result.messages == []
+
+    def test_check_is_same_type_as_when_types_mismatch(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+        target_document = PressSummary(DocumentURIString("test/5678"), mock_api_client)
+
+        check_result = source_document.check_is_same_type_as(target_document)
+
+        assert check_result.success is False
+        assert check_result.messages == [
+            "The type of test/1234 (judgment) does not match the type of test/5678 (press summary)"
+        ]
+
+    def test_check_is_newer_than_when_source_is_newer(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+        target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
+
+        source_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56)
+        target_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56)
+
+        check_result = source_document.check_is_newer_than(target_document)
+
+        assert check_result.success is True
+        assert check_result.messages == []
+
+    def test_check_is_newer_than_when_source_is_older(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+        target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
+
+        source_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56)
+        target_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56)
+
+        check_result = source_document.check_is_newer_than(target_document)
+
+        assert check_result.success is False
+        assert check_result.messages == ["The document at test/1234 is older than the latest version of test/5678"]
+
+    def test_check_is_safe_to_merge_into_runs_expected_checks(self, mock_api_client):
+        source_document = Document(DocumentURIString("test/1234"), mock_api_client)
+        target_document = Document(DocumentURIString("test/5678"), mock_api_client)
+
+        with (
+            patch.object(source_document, "check_is_same_type_as") as mock_check_is_same_type_as,
+            patch.object(source_document, "check_is_newer_than") as mock_check_is_newer_than,
+        ):
+            mock_check_is_same_type_as.return_value = SuccessFailureMessageTuple(True, [])
+            mock_check_is_newer_than.return_value = SuccessFailureMessageTuple(True, [])
+
+            source_document.check_is_safe_to_merge_into(target_document)
+
+            mock_check_is_same_type_as.assert_called_once_with(target_document)
+            mock_check_is_newer_than.assert_called_once_with(target_document)
