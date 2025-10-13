@@ -8,12 +8,14 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **Document**: add new method to check a document can be merged into a given target
 - **Document**: merge source checks now ensure a document is safe to delete
 - **Document**: merge source checks now ensure a document has never been published
 - **Document**: add new methods to check if a document is safe to use as merge source
 
 ### Fix
 
+- **deps**: update dependency certifi to >=2025.10.5,<2025.11.0
 - **deps**: update dependency boto3 to v1.40.36
 - **deps**: update dependency lxml to v6.0.2
 - **deps**: update dependency boto3 to v1.40.34
