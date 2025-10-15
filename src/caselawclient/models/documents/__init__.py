@@ -340,6 +340,15 @@ class Document:
 
         return SuccessFailureMessageTuple(True, [])
 
+    def check_is_not_same_document_as(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check that the target document isn't the same as the source document"""
+        if self.uri == target_document.uri:
+            return SuccessFailureMessageTuple(
+                False,
+                ["You cannot merge a document with itself"],
+            )
+        return SuccessFailureMessageTuple(True, [])
+
     def check_is_same_type_as(self, target_document: "Document") -> SuccessFailureMessageTuple:
         """Check to see if this document is the same type as a target document."""
         if type(self) is not type(target_document):
@@ -392,6 +401,7 @@ class Document:
 
         return self._combine_list_of_successfailure_results(
             [
+                self.check_is_not_same_document_as(target_document),
                 self.check_is_same_type_as(target_document),
                 self.check_is_newer_than(target_document),
             ]

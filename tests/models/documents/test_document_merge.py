@@ -136,6 +136,23 @@ class TestDocumentSafeAsMergeSource:
 
 
 class TestDocumentSafeToMergeWithTarget:
+    def test_check_is_not_same_document_as_when_documents_differ(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+        target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
+
+        check_result = source_document.check_is_not_same_document_as(target_document)
+
+        assert check_result.success is True
+        assert check_result.messages == []
+
+    def test_check_is_not_same_document_as_when_documents_match(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+
+        check_result = source_document.check_is_not_same_document_as(source_document)
+
+        assert check_result.success is False
+        assert check_result.messages == ["You cannot merge a document with itself"]
+
     def test_check_is_same_type_as_when_types_match(self, mock_api_client):
         source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
         target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
@@ -185,13 +202,16 @@ class TestDocumentSafeToMergeWithTarget:
         target_document = Document(DocumentURIString("test/5678"), mock_api_client)
 
         with (
+            patch.object(source_document, "check_is_not_same_document_as") as mock_check_is_not_same_document_as,
             patch.object(source_document, "check_is_same_type_as") as mock_check_is_same_type_as,
             patch.object(source_document, "check_is_newer_than") as mock_check_is_newer_than,
         ):
+            mock_check_is_not_same_document_as.return_value = SuccessFailureMessageTuple(True, [])
             mock_check_is_same_type_as.return_value = SuccessFailureMessageTuple(True, [])
             mock_check_is_newer_than.return_value = SuccessFailureMessageTuple(True, [])
 
             source_document.check_is_safe_to_merge_into(target_document)
 
+            mock_check_is_not_same_document_as.assert_called_once_with(target_document)
             mock_check_is_same_type_as.assert_called_once_with(target_document)
             mock_check_is_newer_than.assert_called_once_with(target_document)
