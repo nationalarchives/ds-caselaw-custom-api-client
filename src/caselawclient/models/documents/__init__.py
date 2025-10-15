@@ -310,6 +310,16 @@ class Document:
         # An empty list (which is falsy) therefore means the judgment can be published safely.
         return not self.validation_failure_messages
 
+    def check_source_is_not_version(self) -> SuccessFailureMessageTuple:
+        """Check that the source document URI isn't a specific version"""
+        if self.is_version:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document is a specific version, and cannot be used as a merge source"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
     def check_has_only_one_version(self) -> SuccessFailureMessageTuple:
         """Make sure the document has exactly one version."""
         if len(self.versions) > 1:
@@ -338,6 +348,24 @@ class Document:
                 ["This document cannot be deleted because it is published"],
             )
 
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_is_not_same_document_as(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check that the target document isn't the same as the source document"""
+        if self.uri == target_document.uri:
+            return SuccessFailureMessageTuple(
+                False,
+                ["You cannot merge a document with itself"],
+            )
+        return SuccessFailureMessageTuple(True, [])
+
+    def check_target_is_not_version(self, target_document: "Document") -> SuccessFailureMessageTuple:
+        """Check that the target document URI isn't a specific version"""
+        if target_document.is_version:
+            return SuccessFailureMessageTuple(
+                False,
+                [f"The document at {target_document.uri} is a specific version, and cannot be merged into"],
+            )
         return SuccessFailureMessageTuple(True, [])
 
     def check_is_same_type_as(self, target_document: "Document") -> SuccessFailureMessageTuple:
@@ -381,6 +409,7 @@ class Document:
 
         return self._combine_list_of_successfailure_results(
             [
+                self.check_source_is_not_version(),
                 self.check_has_only_one_version(),
                 self.check_has_never_been_published(),
                 self.check_is_safe_to_delete(),
@@ -392,6 +421,8 @@ class Document:
 
         return self._combine_list_of_successfailure_results(
             [
+                self.check_is_not_same_document_as(target_document),
+                self.check_target_is_not_version(target_document),
                 self.check_is_same_type_as(target_document),
                 self.check_is_newer_than(target_document),
             ]
