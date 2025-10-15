@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- Merge check methods in the `Document` class now live in the new `MergeManager` class.
+
 ### Feat
 
 - **Document**: add new method to check a document can be merged into a given target
@@ -22,6 +26,10 @@ The format is based on [Keep a Changelog 1.0.0].
 - **deps**: update dependency boto3 to v1.40.36
 - **deps**: update dependency lxml to v6.0.2
 - **deps**: update dependency boto3 to v1.40.34
+
+### Refactor
+
+- **MergeManager**: move existing merge integrity checks to new MergeManager class
 
 ## v41.1.3 (2025-09-10)
 
