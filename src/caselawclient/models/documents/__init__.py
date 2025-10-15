@@ -310,6 +310,16 @@ class Document:
         # An empty list (which is falsy) therefore means the judgment can be published safely.
         return not self.validation_failure_messages
 
+    def check_source_is_not_version(self) -> SuccessFailureMessageTuple:
+        """Check that the source document URI isn't a specific version"""
+        if self.is_version:
+            return SuccessFailureMessageTuple(
+                False,
+                ["This document is a specific version, and cannot be used as a merge source"],
+            )
+
+        return SuccessFailureMessageTuple(True, [])
+
     def check_has_only_one_version(self) -> SuccessFailureMessageTuple:
         """Make sure the document has exactly one version."""
         if len(self.versions) > 1:
@@ -399,6 +409,7 @@ class Document:
 
         return self._combine_list_of_successfailure_results(
             [
+                self.check_source_is_not_version(),
                 self.check_has_only_one_version(),
                 self.check_has_never_been_published(),
                 self.check_is_safe_to_delete(),

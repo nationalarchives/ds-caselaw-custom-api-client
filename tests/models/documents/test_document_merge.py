@@ -8,6 +8,22 @@ from caselawclient.types import SuccessFailureMessageTuple
 
 
 class TestDocumentSafeAsMergeSource:
+    def test_check_source_is_not_version_when_not_version(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
+
+        check_result = source_document.check_source_is_not_version()
+
+        assert check_result.success is True
+        assert check_result.messages == []
+
+    def test_check_source_is_not_version_when_version(self, mock_api_client):
+        source_document = Judgment(DocumentURIString("test/1234/xml_versions/1-"), mock_api_client)
+
+        check_result = source_document.check_source_is_not_version()
+
+        assert check_result.success is False
+        assert check_result.messages == ["This document is a specific version, and cannot be used as a merge source"]
+
     def test_check_has_only_one_version_if_only_one_version(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.versions = [
@@ -80,16 +96,19 @@ class TestDocumentSafeAsMergeSource:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         with (
+            patch.object(document, "check_source_is_not_version") as mock_check_source_is_not_version,
             patch.object(document, "check_has_only_one_version") as mock_check_has_only_one_version,
             patch.object(document, "check_has_never_been_published") as mock_check_has_never_been_published,
             patch.object(document, "check_is_safe_to_delete") as mock_check_is_safe_to_delete,
         ):
+            mock_check_source_is_not_version.return_value = SuccessFailureMessageTuple(True, [])
             mock_check_has_only_one_version.return_value = SuccessFailureMessageTuple(True, [])
             mock_check_has_never_been_published.return_value = SuccessFailureMessageTuple(True, [])
             mock_check_is_safe_to_delete.return_value = SuccessFailureMessageTuple(True, [])
 
             document.check_is_safe_as_merge_source()
 
+            mock_check_source_is_not_version.assert_called_once()
             mock_check_has_only_one_version.assert_called_once()
             mock_check_has_never_been_published.assert_called_once()
             mock_check_is_safe_to_delete.assert_called_once()
