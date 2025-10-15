@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **Document**: merge source checks now check the source is not a specific version
+- **Document**: merge target checks now check the target is not a specific version
+- **Document**: merge target checks now make sure you're not merging a document with itself
 - **deps**: update dependency certifi to >=2025.10.5,<2025.11.0
 - **deps**: update dependency boto3 to v1.40.36
 - **deps**: update dependency lxml to v6.0.2
