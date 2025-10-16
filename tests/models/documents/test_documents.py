@@ -17,6 +17,7 @@ from caselawclient.factories import (
     IdentifierResolutionFactory,
     IdentifierResolutionsFactory,
     JudgmentFactory,
+    PressSummaryFactory,
 )
 from caselawclient.models.documents import (
     DOCUMENT_STATUS_HOLD,
@@ -27,6 +28,7 @@ from caselawclient.models.documents import (
     DocumentURIString,
 )
 from caselawclient.models.judgments import Judgment
+from caselawclient.models.utilities import VersionsDict
 from caselawclient.types import InvalidDocumentURIException
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
@@ -435,3 +437,53 @@ class TestDocumentXMLWithCorrectFRBR:
         ]
 
         assert b"<FRBRthis" in etree.tostring(root, method="c14n")
+
+
+class TestCanMerge:
+    def test_can_merge_(self):
+        doc = JudgmentFactory.build(uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname"))
+        other_doc = JudgmentFactory.build(
+            uri=DocumentURIString("test/6789"), body=DocumentBodyFactory.build(name="otherdoc")
+        )
+        other_doc.versions = [VersionsDict(uri=DocumentURIString("test/1234"), version=1)]
+        other_doc.has_ever_been_published = False
+        assert doc.can_merge(other_doc)
+
+    def test_cant_merge_no_version(self):
+        doc = JudgmentFactory.build(uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname"))
+        other_doc = JudgmentFactory.build(
+            uri=DocumentURIString("test/6789"), body=DocumentBodyFactory.build(name="otherdoc")
+        )
+        other_doc.versions = []
+        other_doc.has_ever_been_published = False
+        assert not doc.can_merge(other_doc)
+
+    def test_cant_merge_published(self):
+        doc = JudgmentFactory.build(uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname"))
+        other_doc = JudgmentFactory.build(
+            uri=DocumentURIString("test/6789"), body=DocumentBodyFactory.build(name="otherdoc")
+        )
+        other_doc.versions = [VersionsDict(uri=DocumentURIString("test/1234"), version=1)]
+        other_doc.has_ever_been_published = True
+        assert not doc.can_merge(other_doc)
+
+    def test_cant_merge_base_type(self):
+        doc = DocumentFactory.build(uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname"))
+        other_doc = JudgmentFactory.build(
+            uri=DocumentURIString("test/6789"), body=DocumentBodyFactory.build(name="otherdoc")
+        )
+        other_doc.versions = [VersionsDict(uri=DocumentURIString("test/1234"), version=1)]
+        other_doc.has_ever_been_published = False
+        with pytest.raises(RuntimeError):
+            doc.can_merge(other_doc)
+
+    def test_cant_merge_press_and_judgment(self):
+        doc = PressSummaryFactory.build(
+            uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname")
+        )
+        other_doc = JudgmentFactory.build(
+            uri=DocumentURIString("test/6789"), body=DocumentBodyFactory.build(name="otherdoc")
+        )
+        other_doc.versions = [VersionsDict(uri=DocumentURIString("test/1234"), version=1)]
+        other_doc.has_ever_been_published = False
+        assert not doc.can_merge(other_doc)
