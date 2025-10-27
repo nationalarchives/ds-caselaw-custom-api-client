@@ -1,5 +1,5 @@
+from collections import UserList
 from dataclasses import dataclass, field
-from typing import NamedTuple
 
 
 @dataclass
@@ -70,9 +70,39 @@ class DocumentIdentifierValue(str):
     pass
 
 
-SuccessFailureMessageTuple = NamedTuple("SuccessFailureMessageTuple", [("success", bool), ("messages", list[str])])
-"""
-A tuple used to return if an operation has succeeded or failed (and optionally a list of messages associated with that operation).
+class SuccessFailureMessageTuple(UserList):
+    """
+    Return whether an operation has succeeded or failed
+    (and optionally a list of messages associated with that operation).
+    Typically the messages will be exposed to the end-user.
+    Use only where a failure is a routine event (such as during validation).
+    """
 
-This should only be used where a failure is considered a routine part of the application (eg during validation options); where an unexpected action has led to a failure the application should raise an appropriate exception.
-"""
+    def __init__(self, success: bool, messages: list[str]):
+        self.data = [success, messages]
+
+    @property
+    def success(self) -> bool:
+        return self.data[0]
+
+    @property
+    def messages(self) -> list[str]:
+        return self.data[1]
+
+    def __repr__(self) -> str:
+        return f"SuccessFailureMessageTuple({self.success!r}, {self.messages!r})"
+
+    def __bool__(self) -> bool:
+        return self.success
+
+
+def SuccessTuple() -> SuccessFailureMessageTuple:
+    return SuccessFailureMessageTuple(True, [])
+
+
+def FailureTuple(message=str | list) -> SuccessFailureMessageTuple:
+    if isinstance(message, str):
+        messages = [message]
+    else:
+        messages = message
+    return SuccessFailureMessageTuple(success=False, messages=message)
