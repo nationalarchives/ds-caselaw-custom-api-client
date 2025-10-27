@@ -1,4 +1,3 @@
-from collections import UserList
 from dataclasses import dataclass, field
 
 
@@ -70,7 +69,7 @@ class DocumentIdentifierValue(str):
     pass
 
 
-class SuccessFailureMessageTuple(UserList):
+class SuccessFailureMessageTuple(tuple[bool, list[str]]):
     """
     Return whether an operation has succeeded or failed
     (and optionally a list of messages associated with that operation).
@@ -78,16 +77,16 @@ class SuccessFailureMessageTuple(UserList):
     Use only where a failure is a routine event (such as during validation).
     """
 
-    def __init__(self, success: bool, messages: list[str]):
-        self.data = [success, messages]
+    def __new__(cls, success: bool, messages: list[str]) -> "SuccessFailureMessageTuple":
+        return super().__new__(cls, [success, messages])
 
     @property
     def success(self) -> bool:
-        return self.data[0]
+        return self[0]
 
     @property
     def messages(self) -> list[str]:
-        return self.data[1]
+        return self[1]
 
     def __repr__(self) -> str:
         return f"SuccessFailureMessageTuple({self.success!r}, {self.messages!r})"
@@ -95,14 +94,15 @@ class SuccessFailureMessageTuple(UserList):
     def __bool__(self) -> bool:
         return self.success
 
+    def __or__(self, other: "SuccessFailureMessageTuple") -> "SuccessFailureMessageTuple":
+        """Allows us to write combined_tuple = first_tuple | second_tuple"""
+        return SuccessFailureMessageTuple(self.success and other.success, self.messages + other.messages)
+
 
 def SuccessTuple() -> SuccessFailureMessageTuple:
     return SuccessFailureMessageTuple(True, [])
 
 
-def FailureTuple(message=str | list) -> SuccessFailureMessageTuple:
-    if isinstance(message, str):
-        messages = [message]
-    else:
-        messages = message
-    return SuccessFailureMessageTuple(success=False, messages=message)
+def FailureTuple(message: str | list[str]) -> SuccessFailureMessageTuple:
+    messages = message if isinstance(message, list) else [message]
+    return SuccessFailureMessageTuple(success=False, messages=messages)
