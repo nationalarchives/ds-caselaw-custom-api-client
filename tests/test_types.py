@@ -2,9 +2,11 @@ from pytest import raises
 
 from caselawclient.types import (
     DocumentURIString,
+    FailureTuple,
     InvalidDocumentURIException,
     InvalidMarkLogicDocumentURIException,
     MarkLogicDocumentURIString,
+    SuccessTuple,
 )
 
 
@@ -61,3 +63,23 @@ class TestDocumentURIString:
 
         assert marklogic_uri == "/test/2025/123.xml"
         assert type(marklogic_uri) is MarkLogicDocumentURIString
+
+
+class TestSuccessFailureMessageTuple:
+    def test_or(self):
+        assert SuccessTuple() | SuccessTuple() == SuccessTuple()
+        assert SuccessTuple() | FailureTuple("cow") == FailureTuple("cow")
+        assert FailureTuple("cow") | FailureTuple(["bat", "ant"]) == FailureTuple(["cow", "bat", "ant"])
+
+    def test_bool(self):
+        assert SuccessTuple()
+        assert not FailureTuple("")
+
+        assert SuccessTuple().success
+        assert not FailureTuple("").success
+
+        assert SuccessTuple()[0]
+        assert not FailureTuple("")[0]
+
+    def test_repr(self):
+        assert repr(FailureTuple("cow")) == "SuccessFailureMessageTuple(False, ['cow'])"
