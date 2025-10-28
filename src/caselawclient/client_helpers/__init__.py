@@ -38,6 +38,9 @@ class VersionType(Enum):
     EDIT = "edit"
     """ This version has been created as the result of a manual edit. """
 
+    MERGE = "merge"
+    """ This version has been created as the result of a merge. """
+
 
 class VersionAnnotation:
     """A class holding structured data about the reason for a version."""
