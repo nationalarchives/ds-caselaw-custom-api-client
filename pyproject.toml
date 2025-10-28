@@ -37,7 +37,7 @@ pytest = "8.4.2"
 pytest-cov = "7.0.0"
 beautifulsoup4 = "4.14.2"
 responses = "0.25.8"
-python-dotenv = "1.1.1"
+python-dotenv = "1.2.1"
 time-machine = "2.19.0"
 moto = {version = "5.1.15", extras = ["all"]}
 
