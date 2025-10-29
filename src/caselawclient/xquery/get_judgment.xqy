@@ -17,6 +17,10 @@ let $number_marks_xslt := (
                   xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                   version="2.0">
     <xsl:output method="xml" />
+    <xsl:template match="/">
+      <xsl:variable name="first_post_meta_mark" select="count(//uk:mark[not(ancestor::akn:meta)])"/>
+      <xsl:apply-templates />
+    </xsl:template>
     <xsl:template match="@*|node()">
       <xsl:copy>
         <xsl:apply-templates select="@*|node()"/>
