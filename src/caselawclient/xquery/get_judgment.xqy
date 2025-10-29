@@ -31,11 +31,12 @@ let $number_marks_xslt := (
     </xsl:template>
     <xsl:template match="uk:mark">
       <xsl:copy>
-          <xsl:copy-of select="@*" />
-          <xsl:attribute name="id">
-              <xsl:text>mark_</xsl:text>
-              <xsl:number count="//uk:mark" level="any" from="//*[ancestor::akn:meta]" />
-          </xsl:attribute>
+          <uk:mark>
+              <xsl:attribute name="id">
+                <xsl:text>mark_</xsl:text>
+                <xsl:number count="uk:mark" level="any" />
+              </xsl:attribute>
+          </uk:mark>
           <xsl:apply-templates />
       </xsl:copy>
     </xsl:template>
