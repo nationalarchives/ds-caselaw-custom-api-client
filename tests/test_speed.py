@@ -18,18 +18,18 @@ client = MarklogicApiClient(MARKLOGIC_HOST, MARKLOGIC_USER, MARKLOGIC_PASSWORD, 
 last_200 = '="mark_729">a</uk:mark> false explanation of the transfer.</span></p>\n\t      </content>\n\t    </subparagraph>\n\t  </paragraph>\n\t</level>\n      </decision>\n    </judgmentBody>\n  </judgment>\n</akomaNtoso>'
 
 def get_judgment():
-    judgment= Judgment("ewhc/ch/2024/505", api_client=client, search_query="a "*100)
+    judgment= Judgment("ewhc/ch/2024/505", api_client=client, search_query="a EWHC ")
+    breakpoint()
     assert "mark_729" in judgment.body.content_as_xml[-200:], judgment.body.content_as_xml[-200:]
     assert "mark_729" in judgment.body.content_as_xml
     assert "mark_730" not in judgment.body.content_as_xml
-    # breakpoint()
 
 def get_judgment_all():
     judgment= Judgment("ewhc/ch/2024/505", api_client=client, search_query="to")
     
 
 def test_speed():
-    speed = (timeit.timeit(get_judgment_all, number=1))
+    speed = (timeit.timeit(get_judgment, number=1))
     assert speed < 0 
 
     # running it with "a "*X is Y seconds
