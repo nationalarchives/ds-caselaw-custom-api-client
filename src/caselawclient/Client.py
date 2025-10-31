@@ -28,6 +28,7 @@ from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
 )
+from caselawclient.models.documents.xml import XML
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
@@ -439,7 +440,8 @@ class MarklogicApiClient:
                 "The document is not published and show_unpublished was not set",
             )
 
-        return response
+        # we move the numbering logic into Python
+        return XML(response).apply_xslt("number_search_marks.xsl")
 
     def get_judgment_xml(
         self,
