@@ -3,6 +3,8 @@ import os
 import unittest
 from unittest.mock import patch
 
+from lxml import etree
+
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
 
@@ -38,7 +40,7 @@ class TestGetJudgment(unittest.TestCase):
                 "</judgment>\n"
                 "</akomaNtoso>"
             )
-            assert result == expected
+            assert etree.canonicalize(result) == etree.canonicalize(expected)
 
     def test_get_judgment_version(self):
         with patch.object(self.client, "eval") as mock_eval:
