@@ -1,6 +1,7 @@
 import io
 import os
 from unittest.mock import MagicMock, Mock, patch
+from urllib import parse
 
 import boto3
 import ds_caselaw_utils
@@ -12,6 +13,7 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.utilities import aws as aws_utils
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
+    are_unpublished_assets_clean,
     build_new_key,
     check_docx_exists,
     copy_assets,
@@ -125,6 +127,28 @@ class TestMove:
         fake_copy.assert_called_with("old/uri", "new/uri")
         fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
         fake_api_client.delete_judgment.assert_called_with("old/uri")
+
+
+class TestCheckCleaningTags:
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "bucket"})
+    @mock_aws
+    def test_check_cleaning_tags(aws):
+        url = DocumentURIString("ewhc/2023/1")
+        s3 = boto3.resource("s3", region_name="us-east-1")
+        bucket = s3.create_bucket(Bucket="bucket")
+        tags = parse.urlencode({"DOCUMENT_PROCESSOR_VERSION": "1.0.0", "OTHER_TAG": "X"})
+        # we don't alert if a file is tagged
+        bucket.upload_fileobj(
+            Key="ewhc/2023/1/ewhc_2023_1.png", Fileobj=io.BytesIO(b"placeholder file"), ExtraArgs={"Tagging": tags}
+        )
+        # or if it's a .tar.gz file
+        bucket.upload_fileobj(Key="ewhc/2023/1/TDR-2025-AAA.tar.gz", Fileobj=io.BytesIO(b"placeholder file"))
+        # or if it's in an unrelated location
+        bucket.upload_fileobj(Key="unrelated/file.docx", Fileobj=io.BytesIO(b"placeholder file"))
+        assert are_unpublished_assets_clean(url)
+        # but we do alert for untagged, non-targz files in the right location, even if the other things exist
+        bucket.upload_fileobj(Key="ewhc/2023/1/ewhc_2023_1.jpg", Fileobj=io.BytesIO(b"placeholder file"))
+        assert not (are_unpublished_assets_clean(url))
 
 
 class TestCheckDocx:

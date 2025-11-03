@@ -231,6 +231,25 @@ def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
             )
 
 
+def are_unpublished_assets_clean(uri: DocumentURIString) -> bool:
+    """Have all the S3 assets associated with this document been cleaned? (ignore tar.gz)
+    Note: no assets implies they're all clean"""
+    client = create_s3_client()
+    bucket = env("PRIVATE_ASSET_BUCKET")
+    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
+    for result in response.get("Contents", []):
+        file_key = str(result["Key"])
+        # ignore original tar.gz files
+        if file_key.endswith(".tar.gz"):
+            continue
+
+        # check if assets are tagged as being processed by S3
+        tag_response = client.get_object_tagging(Bucket=bucket, Key=file_key)
+        if not (any(tag["Key"] == "DOCUMENT_PROCESSOR_VERSION" for tag in tag_response["TagSet"])):
+            return False
+    return True
+
+
 def build_new_key(old_key: str, new_uri: DocumentURIString) -> str:
     """Ensure that DOCX and PDF filenames are modified to reflect their new home
     as we get the name of the new S3 path"""
