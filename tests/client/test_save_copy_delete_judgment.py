@@ -8,9 +8,9 @@ from defusedxml import ElementTree
 
 import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
-from caselawclient.client_helpers import VersionAnnotation, VersionType
 from caselawclient.errors import InvalidContentHashError
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.judgments import Judgment
 
 

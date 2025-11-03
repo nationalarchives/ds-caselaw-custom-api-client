@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- VersionAnnotation is now located at models.documents.versions, and not client_helpers as previously.
+
 ### Feat
 
 - **types** SuccessFailureMessageTuple acts as a boolean and keeps previous behaviour
+- **Document**: add new structured_annotation property to retrieve a version annotation as a dict
+
+### Refactor
+
+- **VersionAnnotation**: move VersionAnnotation and associated bits into Document model subclass
 
 ## v42.0.0 (2025-10-24)
 
