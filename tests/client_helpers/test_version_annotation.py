@@ -1,6 +1,6 @@
 import pytest
 
-from caselawclient.client_helpers import VersionAnnotation, VersionType
+from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 
 
 class TestVersionAnnotation:
