@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import NeutralCitationString
+from pydantic import TypeAdapter
 from requests_toolbelt.multipart import decoder
 
 import caselawclient.models.documents.comparison as comparison
@@ -16,6 +17,7 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
+from caselawclient.models.documents.versions import AnnotationDataDict
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
@@ -356,6 +358,12 @@ class Document:
     @cached_property
     def annotation(self) -> str:
         return self.api_client.get_version_annotation(self.uri)
+
+    @cached_property
+    def structured_annotation(self) -> AnnotationDataDict:
+        annotation_data_dict_loader = TypeAdapter(AnnotationDataDict)
+
+        return annotation_data_dict_loader.validate_json(self.annotation)
 
     @cached_property
     def has_unique_content_hash(self) -> bool:
