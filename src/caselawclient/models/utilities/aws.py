@@ -232,8 +232,9 @@ def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
 
 
 def are_unpublished_assets_clean(uri: DocumentURIString) -> bool:
-    """Have all the S3 assets associated with this document been cleaned? (ignore tar.gz)
-    Note: no assets implies they're all clean"""
+    """Returns true if all non-tar.gz assets in the relevant S3 bucket have been cleaned
+    (they have a DOCUMENT_PROCESSOR_VERSION tag)
+    Note: if there are no assets, then this returns true."""
     client = create_s3_client()
     bucket = env("PRIVATE_ASSET_BUCKET")
     response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
