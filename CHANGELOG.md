@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v43.0.0 (2025-11-04)
 
 ### BREAKING CHANGE
 
@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- **types** SuccessFailureMessageTuple acts as a boolean and keeps previous behaviour
+- **types** SuccessFailureMessageTuple can now be used as a boolean value
 - **Document**: add new structured_annotation property to retrieve a version annotation as a dict
 
 ### Refactor
