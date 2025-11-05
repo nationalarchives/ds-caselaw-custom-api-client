@@ -47,15 +47,46 @@ class TestDocumentValidation:
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_failure, is_parked, is_held, has_name, has_valid_court, has_unique_content_hash, publishable",
+        "is_failure, is_parked, is_held, has_name, has_valid_court, has_unique_content_hash, has_only_cleaned_assets, publishable, test_case",
         [
-            (False, False, False, True, True, True, True),  # Publishable
-            (True, False, False, False, False, False, False),  # Parser failure
-            (False, False, True, True, True, True, False),  # Held
-            (False, True, False, True, True, True, False),  # Parked
-            (False, False, False, False, True, True, False),  # No name
-            (False, False, False, True, False, True, False),  # Invalid court
-            (False, False, False, True, True, False, False),  # Content hash not unique
+            (False, False, False, True, True, True, True, True, "Publishable"),
+            (True, False, False, False, False, False, True, False, "Parser failure"),
+            (
+                False,
+                False,
+                True,
+                True,
+                True,
+                True,
+                True,
+                False,
+                "Held",
+            ),
+            (
+                False,
+                True,
+                False,
+                True,
+                True,
+                True,
+                True,
+                False,
+                "Parked",
+            ),
+            (
+                False,
+                False,
+                False,
+                False,
+                True,
+                True,
+                True,
+                False,
+                "No name",
+            ),
+            (False, False, False, True, False, True, True, False, "Invalid court"),
+            (False, False, False, True, True, False, True, False, "Content hash not unique"),
+            (False, False, False, True, True, True, False, False, "Has uncleaned asset"),
         ],
     )
     def test_document_is_publishable_conditions(
@@ -67,15 +98,18 @@ class TestDocumentValidation:
         has_name,
         has_valid_court,
         has_unique_content_hash,
+        has_only_cleaned_assets,
         publishable,
+        test_case,
     ):
         mock_api_client.has_unique_content_hash.return_value = has_unique_content_hash
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document = Document(DocumentURIString(f"test/1234/{test_case.replace(' ', '_')}"), mock_api_client)
         document.is_failure = is_failure
         document.is_parked = is_parked
         document.is_held = is_held
         document.has_name = has_name
         document.has_valid_court = has_valid_court
+        document.has_only_clean_assets = has_only_cleaned_assets
 
         assert document.is_publishable is publishable
 
