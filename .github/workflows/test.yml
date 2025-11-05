@@ -38,10 +38,10 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
         experimental: [false]
         include:
-          - version: "3.14"
+          - version: "3.15"
             experimental: true
 
     steps:
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
-        if: ${{ matrix.python-version == '3.13' }}
+        if: ${{ matrix.python-version == '3.14' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
