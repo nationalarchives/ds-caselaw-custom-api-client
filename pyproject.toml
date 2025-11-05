@@ -46,7 +46,7 @@ moto = {version = "5.1.16", extras = ["all"]}
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-pdoc = "^15.0.0"
+pdoc = "^16.0.0"
 
 
 [tool.commitizen]
