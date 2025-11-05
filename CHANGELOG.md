@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **types** SuccessFailureMessageTuple can now be used as a boolean value
 - **Document**: add new structured_annotation property to retrieve a version annotation as a dict
+- **Cleansing**: Detect uncleansed assets in unpublished bucket (for use before publication)
 
 ### Refactor
 

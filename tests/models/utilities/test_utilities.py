@@ -1,6 +1,7 @@
 import io
 import os
 from unittest.mock import MagicMock, Mock, patch
+from urllib import parse
 
 import boto3
 import ds_caselaw_utils
@@ -12,6 +13,7 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.utilities import aws as aws_utils
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
+    are_unpublished_assets_clean,
     build_new_key,
     check_docx_exists,
     copy_assets,
@@ -125,6 +127,61 @@ class TestMove:
         fake_copy.assert_called_with("old/uri", "new/uri")
         fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
         fake_api_client.delete_judgment.assert_called_with("old/uri")
+
+
+class TestCheckCleaningTags:
+    @pytest.fixture
+    def bucket(self):
+        with patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "bucket"}), mock_aws():
+            s3 = boto3.resource("s3", region_name="us-east-1")
+            yield s3.create_bucket(Bucket="bucket")
+
+    @pytest.fixture
+    def url(self):
+        return DocumentURIString("ewhc/2023/1")
+
+    def test_accepts_properly_tagged_files(self, bucket, url):
+        """Files with correct tags should pass validation."""
+        tags = parse.urlencode({"DOCUMENT_PROCESSOR_VERSION": "1.0.0"})
+        bucket.upload_fileobj(
+            Key="ewhc/2023/1/ewhc_2023_1.png", Fileobj=io.BytesIO(b"test file"), ExtraArgs={"Tagging": tags}
+        )
+
+        assert are_unpublished_assets_clean(url)
+
+    def test_ignores_tar_gz_files(self, bucket, url):
+        """Tar.gz archives should not require tags."""
+        bucket.upload_fileobj(Key="ewhc/2023/1/TDR-2025-AAA.tar.gz", Fileobj=io.BytesIO(b"archive"))
+
+        assert are_unpublished_assets_clean(url)
+
+    def test_ignores_files_outside_document_path(self, bucket, url):
+        """Files in unrelated S3 locations should be ignored."""
+        bucket.upload_fileobj(Key="unrelated/file.docx", Fileobj=io.BytesIO(b"unrelated"))
+
+        assert are_unpublished_assets_clean(url)
+
+    def test_rejects_untagged_image_files(self, bucket, url):
+        """Untagged image files should fail validation."""
+        bucket.upload_fileobj(Key="ewhc/2023/1/ewhc_2023_1.jpg", Fileobj=io.BytesIO(b"image without tags"))
+
+        assert not are_unpublished_assets_clean(url)
+
+    def test_rejects_when_mix_of_tagged_and_untagged_files(self, bucket, url):
+        """Should fail if ANY file is untagged, even if others are tagged."""
+        # Tagged file - OK
+        tags = parse.urlencode({"DOCUMENT_PROCESSOR_VERSION": "1.0.0"})
+        irrelevant_tags = parse.urlencode({"IRRELEVANT_TAG": "YES"})
+        bucket.upload_fileobj(
+            Key="ewhc/2023/1/ewhc_2023_1.png", Fileobj=io.BytesIO(b"tagged"), ExtraArgs={"Tagging": tags}
+        )
+
+        # Untagged file - NOT OK
+        bucket.upload_fileobj(
+            Key="ewhc/2023/1/ewhc_2023_1.jpg", Fileobj=io.BytesIO(b"untagged"), ExtraArgs={"Tagging": irrelevant_tags}
+        )
+
+        assert not are_unpublished_assets_clean(url)
 
 
 class TestCheckDocx:
