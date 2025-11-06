@@ -106,9 +106,11 @@ class TestPressSummaryValidation:
         press_summary.has_name = False
         press_summary.has_valid_ncn = False
         press_summary.has_valid_court = False
+        press_summary.has_only_clean_assets = False
 
         assert press_summary.validation_failure_messages == sorted(
             [
+                "An uncleaned asset exists for this document",
                 "This document failed to parse",
                 "There is another document with identical content",
                 "This press summary is currently parked at a temporary URI",

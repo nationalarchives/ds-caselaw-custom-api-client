@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from caselawclient.models.documents import Document, DocumentURIString
@@ -113,7 +115,8 @@ class TestDocumentValidation:
 
         assert document.is_publishable is publishable
 
-    def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
+    @patch("caselawclient.models.documents.are_unpublished_assets_clean", return_value=True)
+    def test_document_validation_failure_messages_if_no_messages(self, clean_assets, mock_api_client):
         mock_api_client.has_unique_content_hash.return_value = True
         mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
@@ -138,9 +141,11 @@ class TestDocumentValidation:
         document.is_held = True
         document.has_name = False
         document.has_valid_court = False
+        document.has_only_clean_assets = False
 
         assert document.validation_failure_messages == sorted(
             [
+                "An uncleaned asset exists for this document",
                 "There is another document with identical content",
                 "This document failed to parse",
                 "This document is currently parked at a temporary URI",

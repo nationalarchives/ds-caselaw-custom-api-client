@@ -32,7 +32,8 @@ from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 
 class TestDocument:
-    def test_is_publishable_false_with_multiple_failures(self, mock_api_client):
+    @patch("caselawclient.models.documents.are_unpublished_assets_clean", return_value=True)
+    def test_is_publishable_false_with_multiple_failures(self, clean_assets, mock_api_client):
         # Simulate a document with non-unique content hash and missing name
         mock_api_client.has_unique_content_hash.return_value = False
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -58,7 +59,8 @@ class TestDocument:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         assert document.has_unique_content_hash is False
 
-    def test_validation_failure_message_for_nonunique_content_hash(self, mock_api_client):
+    @patch("caselawclient.models.documents.are_unpublished_assets_clean", return_value=True)
+    def test_validation_failure_message_for_nonunique_content_hash(self, clean_assets, mock_api_client):
         mock_api_client.has_unique_content_hash.return_value = False
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         messages = document.validation_failure_messages

@@ -97,9 +97,11 @@ class TestJudgmentValidation:
         judgment.has_name = False
         judgment.has_valid_ncn = False
         judgment.has_valid_court = False
+        judgment.has_only_clean_assets = False
 
         assert judgment.validation_failure_messages == sorted(
             [
+                "An uncleaned asset exists for this document",
                 "This document failed to parse",
                 "There is another document with identical content",
                 "This judgment is currently parked at a temporary URI",
