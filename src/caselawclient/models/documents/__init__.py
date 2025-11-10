@@ -26,6 +26,7 @@ from caselawclient.models.utilities import VersionsDict, extract_version, render
 from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
     announce_document_event,
+    are_unpublished_assets_clean,
     check_docx_exists,
     delete_documents_from_private_bucket,
     generate_docx_url,
@@ -101,6 +102,11 @@ class Document:
             "has_unique_content_hash",
             True,
             "There is another document with identical content",
+        ),
+        (
+            "has_only_clean_assets",
+            True,
+            "An uncleaned asset exists for this document",
         ),
     ]
     """
@@ -369,6 +375,11 @@ class Document:
     def has_unique_content_hash(self) -> bool:
         """Check if the content hash of this document is unique compared to all other documents in MarkLogic."""
         return self.api_client.has_unique_content_hash(self.uri)
+
+    @cached_property
+    def has_only_clean_assets(self) -> bool:
+        """False if any non-tar.gz assets associated with this document have not been cleaned."""
+        return are_unpublished_assets_clean(self.uri)
 
     @cached_property
     def version_created_datetime(self) -> datetime.datetime:

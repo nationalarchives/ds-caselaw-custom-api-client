@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from caselawclient.models.documents import Document, DocumentURIString
@@ -47,15 +49,46 @@ class TestDocumentValidation:
         assert document_without_court.has_valid_court is False
 
     @pytest.mark.parametrize(
-        "is_failure, is_parked, is_held, has_name, has_valid_court, has_unique_content_hash, publishable",
+        "is_failure, is_parked, is_held, has_name, has_valid_court, has_unique_content_hash, has_only_cleaned_assets, publishable, test_case",
         [
-            (False, False, False, True, True, True, True),  # Publishable
-            (True, False, False, False, False, False, False),  # Parser failure
-            (False, False, True, True, True, True, False),  # Held
-            (False, True, False, True, True, True, False),  # Parked
-            (False, False, False, False, True, True, False),  # No name
-            (False, False, False, True, False, True, False),  # Invalid court
-            (False, False, False, True, True, False, False),  # Content hash not unique
+            (False, False, False, True, True, True, True, True, "Publishable"),
+            (True, False, False, False, False, False, True, False, "Parser failure"),
+            (
+                False,
+                False,
+                True,
+                True,
+                True,
+                True,
+                True,
+                False,
+                "Held",
+            ),
+            (
+                False,
+                True,
+                False,
+                True,
+                True,
+                True,
+                True,
+                False,
+                "Parked",
+            ),
+            (
+                False,
+                False,
+                False,
+                False,
+                True,
+                True,
+                True,
+                False,
+                "No name",
+            ),
+            (False, False, False, True, False, True, True, False, "Invalid court"),
+            (False, False, False, True, True, False, True, False, "Content hash not unique"),
+            (False, False, False, True, True, True, False, False, "Has uncleaned asset"),
         ],
     )
     def test_document_is_publishable_conditions(
@@ -67,19 +100,23 @@ class TestDocumentValidation:
         has_name,
         has_valid_court,
         has_unique_content_hash,
+        has_only_cleaned_assets,
         publishable,
+        test_case,
     ):
         mock_api_client.has_unique_content_hash.return_value = has_unique_content_hash
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document = Document(DocumentURIString(f"test/1234/{test_case.replace(' ', '_')}"), mock_api_client)
         document.is_failure = is_failure
         document.is_parked = is_parked
         document.is_held = is_held
         document.has_name = has_name
         document.has_valid_court = has_valid_court
+        document.has_only_clean_assets = has_only_cleaned_assets
 
         assert document.is_publishable is publishable
 
-    def test_document_validation_failure_messages_if_no_messages(self, mock_api_client):
+    @patch("caselawclient.models.documents.are_unpublished_assets_clean", return_value=True)
+    def test_document_validation_failure_messages_if_no_messages(self, clean_assets, mock_api_client):
         mock_api_client.has_unique_content_hash.return_value = True
         mock_api_client.get_judgment_xml_bytestring.return_value = b"""
             <akomaNtoso xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
@@ -104,9 +141,11 @@ class TestDocumentValidation:
         document.is_held = True
         document.has_name = False
         document.has_valid_court = False
+        document.has_only_clean_assets = False
 
         assert document.validation_failure_messages == sorted(
             [
+                "An uncleaned asset exists for this document",
                 "There is another document with identical content",
                 "This document failed to parse",
                 "This document is currently parked at a temporary URI",
