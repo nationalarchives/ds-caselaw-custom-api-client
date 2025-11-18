@@ -571,7 +571,7 @@ class MarklogicApiClient:
             "annotation": annotation.as_json,
         }
 
-        return self._send_to_eval(vars, "update_locked_judgment.xqy")
+        return self._send_to_eval(vars, "update_locked_judgment.xqy", timeout=(999.0, 999.0))
 
     def insert_document_xml(
         self,

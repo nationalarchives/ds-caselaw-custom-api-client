@@ -8,6 +8,7 @@ declare variable $judgment as xs:string external;
 declare variable $annotation as xs:string external;
 
 let $judgment_xml := xdmp:unquote($judgment)
+let $_ := xdmp:set-request-time-limit(600)
 
 return dls:document-update(
    $uri,
