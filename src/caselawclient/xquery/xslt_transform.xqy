@@ -17,27 +17,6 @@ let $xsl_path := fn:concat("judgments/xslts/", $xsl_filename)
 
 let $params := map:map()
 
-let $number_marks_xslt := (
-  <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                  version="2.0">
-    <xsl:output method="html" />
-    <xsl:template match="@*|node()">
-      <xsl:copy>
-        <xsl:apply-templates select="@*|node()"/>
-      </xsl:copy>
-    </xsl:template>
-    <xsl:template match="mark">
-      <xsl:copy>
-          <xsl:copy-of select="*" />
-          <xsl:attribute name="id">
-              <xsl:text>mark_</xsl:text>
-              <xsl:value-of select="count(preceding::mark)"/>
-          </xsl:attribute>
-          <xsl:apply-templates />
-      </xsl:copy>
-    </xsl:template>
-  </xsl:stylesheet>
-)
 (: change the image-base of the document to match the location of the assets in $image_base
    so that references to images point to the correct places on the internet :)
 let $_put := map:put(
@@ -59,13 +38,10 @@ let $retrieved_value := if (xs:boolean($is_published) or $show_unpublished) then
         ()
 
 let $return_value := if($query) then
-      xdmp:xslt-eval(
-        $number_marks_xslt,
-        cts:highlight(
-          $retrieved_value,
-          helper:make-q-query($query),
-          <mark>{$cts:text}</mark>
-        )
+      cts:highlight(
+        $retrieved_value,
+        helper:make-q-query($query),
+        <mark>{$cts:text}</mark>
       )
     else
       $retrieved_value
