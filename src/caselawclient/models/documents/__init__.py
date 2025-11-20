@@ -258,7 +258,7 @@ class Document:
         """
         if self.is_version:
             raise NotSupportedOnVersion(
-                "Cannot get versions of a version for {self.uri}",
+                f"Cannot get versions of a version for {self.uri}",
             )
         docs = []
         for version in self.versions:
