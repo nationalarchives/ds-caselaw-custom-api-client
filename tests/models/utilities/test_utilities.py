@@ -18,7 +18,15 @@ from caselawclient.models.utilities.aws import (
     check_docx_exists,
     copy_assets,
     delete_non_targz_from_bucket,
+    upload_asset_to_private_bucket,
 )
+
+
+@pytest.fixture
+def fake_bucket():
+    with patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "bucket"}), mock_aws():
+        s3 = boto3.resource("s3", region_name="us-east-1")
+        yield s3.create_bucket(Bucket="bucket")
 
 
 class TestVersionUtils:
@@ -100,6 +108,12 @@ class TestAWSUtils:
         client.return_value.delete_objects.assert_called_with(
             Bucket="fake_bucket", Delete={"Objects": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]}
         )
+
+    @mock_aws
+    def test_upload(self, fake_bucket):
+        upload_asset_to_private_bucket(b"%PDF", "s3/key.pdf")
+        s3_object = fake_bucket.Object("s3/key.pdf").get()
+        assert s3_object["Body"].read() == b"%PDF"
 
 
 class TestMove:
