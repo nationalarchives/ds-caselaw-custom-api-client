@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unpublished
+
+### Feat
+
+- Only check header when working out if something `has_content`
+
 ## v43.1.0 (2025-11-05)
 
 ### Feat

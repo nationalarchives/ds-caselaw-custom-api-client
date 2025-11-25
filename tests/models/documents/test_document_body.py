@@ -382,27 +382,14 @@ class TestDocumentBody:
 
         assert prettified_transformed_html == prettified_target_html
 
-    def test_actual_content_body(self):
-        body = DocumentBodyFactory.build("""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
-            <judgment name="decision">
-                <meta/><header/>
-                <judgmentBody>
-                <decision>
-                a
-                <p/>
-                </decision>
-                </judgmentBody>
-            </judgment>
-            </akomaNtoso>""")
-        assert body.has_content
-
     def test_actual_content_header(self):
         body = DocumentBodyFactory.build("""
             <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
             <judgment name="decision">
                 <meta/>
-                <header>a</header>
+                <header>
+                    <sometag>a</sometag>
+                </header>
                 <judgmentBody>
                 <decision>
                 <p/>
