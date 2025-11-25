@@ -1,11 +1,7 @@
 from unittest.mock import patch
 
-from pytest import raises
-
 from caselawclient.managers.merge import (
     MergeManager,
-    MergeSourceIsUnsafe,
-    MergeTargetIsUnsafe,
     _combine_list_of_successfailure_results,
 )
 from caselawclient.models.documents import Document, DocumentURIString
@@ -47,7 +43,7 @@ class TestCombineListOfSuccessFailureResults:
         assert check_result.messages == ["Validation message one", "Validation message two"]
 
 
-class TestMergeManagerClassMethods:
+class TestMergeManagerSafetyMethods:
     """Check the class methods on MergeManager which we use to make sure documents are valid candidates for merging in the first place."""
 
     def test_check_is_safe_as_merge_source_runs_expected_checks(self, mock_api_client):
@@ -79,8 +75,6 @@ class TestMergeManagerClassMethods:
             mock_check_document_has_never_been_published.assert_called_once()
             mock_check_document_is_safe_to_delete.assert_called_once()
 
-
-class TestDocumentSafeToMergeWithTarget:
     def test_check_is_safe_to_merge_into_runs_expected_checks(self, mock_api_client):
         source_document = Document(DocumentURIString("test/1234"), mock_api_client)
         target_document = Document(DocumentURIString("test/5678"), mock_api_client)
@@ -110,45 +104,3 @@ class TestDocumentSafeToMergeWithTarget:
             mock_check_document_is_not_version.assert_called_once_with(target_document)
             mock_check_documents_are_same_type.assert_called_once_with(source_document, target_document)
             mock_check_source_document_is_newer_than_target.assert_called_once_with(source_document, target_document)
-
-
-class TestMergeDocuments:
-    def test_merge_documents_raises_on_unsafe_source(self, mock_api_client):
-        source_document = Document(DocumentURIString("test/1234"), mock_api_client)
-        target_document = Document(DocumentURIString("test/5678"), mock_api_client)
-
-        with (
-            patch(
-                "caselawclient.managers.merge.MergeManager.check_document_is_safe_as_merge_source"
-            ) as mock_check_document_is_safe_as_merge_source,
-            raises(
-                MergeSourceIsUnsafe,
-                match="Document is unsafe to use as merge source: Failure one, Failure two",
-            ),
-        ):
-            mock_check_document_is_safe_as_merge_source.return_value = SuccessFailureMessageTuple(
-                False, ["Failure one", "Failure two"]
-            )
-            MergeManager.merge_documents(source_document=source_document, target_document=target_document)
-
-    def test_merge_documents_raises_on_unsafe_target(self, mock_api_client):
-        source_document = Document(DocumentURIString("test/1234"), mock_api_client)
-        target_document = Document(DocumentURIString("test/5678"), mock_api_client)
-
-        with (
-            patch(
-                "caselawclient.managers.merge.MergeManager.check_document_is_safe_as_merge_source"
-            ) as mock_check_document_is_safe_as_merge_source,
-            patch(
-                "caselawclient.managers.merge.MergeManager.check_source_document_is_safe_to_merge_into_target"
-            ) as mock_check_source_document_is_safe_to_merge_into_target,
-            raises(
-                MergeTargetIsUnsafe,
-                match="Document is unsafe to use as merge target: Failure one, Failure two",
-            ),
-        ):
-            mock_check_document_is_safe_as_merge_source.return_value = SuccessFailureMessageTuple(True, [])
-            mock_check_source_document_is_safe_to_merge_into_target.return_value = SuccessFailureMessageTuple(
-                False, ["Failure one", "Failure two"]
-            )
-            MergeManager.merge_documents(source_document=source_document, target_document=target_document)

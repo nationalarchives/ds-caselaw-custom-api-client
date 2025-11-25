@@ -23,6 +23,13 @@ class VersionType(Enum):
     ENRICHMENT = "enrichment"
     """ This version has been created through an enrichment process. """
 
+    MERGE = "merge"
+    """
+    This version has been created as the result of a document merge operation.
+
+    This is also implicitly a submission, since we can only merge documents with a single version, and there's no way to get a document with a single version which isn't also an original submission.
+    """
+
     EDIT = "edit"
     """ This version has been created as the result of a manual edit. """
 
