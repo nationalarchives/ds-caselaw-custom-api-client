@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - Only check header when working out if something `has_content`
+- Move to pure XPath for `has_content`
 
 ## v43.1.0 (2025-11-05)
 
