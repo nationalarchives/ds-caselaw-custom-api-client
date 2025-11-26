@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v44.0.1 (2025-11-26)
+
+### Fix
+
+- Ensure default XML document for tests has content in the header so has_content returns true still
+
 ## v44.0.0 (2025-11-26)
 
 ### Breaking change
