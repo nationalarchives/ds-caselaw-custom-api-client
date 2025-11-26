@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unpublished
+## v44.0.0 (2025-11-26)
+
+### Breaking change
+
+- Remove recursive numbering of `<uk:mark>` tags for performance reasons. Use JS instead.
 
 ### Feat
 
