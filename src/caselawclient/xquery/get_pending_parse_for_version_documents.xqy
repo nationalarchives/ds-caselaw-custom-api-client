@@ -19,7 +19,7 @@ xdmp:to-json(xdmp:sql(
     (parser_major_version <= @target_major_version AND parser_minor_version < @target_minor_version)
   )
   AND (minutes_since_parse_request > 43200 OR minutes_since_parse_request IS NULL)
-  ORDER BY parser_major_version ASC NULLS FIRST, parser_minor_version ASC
+  ORDER BY parser_major_version ASC NULLS FIRST, parser_minor_version ASC, minutes_since_parse_request DESC
   LIMIT @maximum_records",
   "array",
   map:new((

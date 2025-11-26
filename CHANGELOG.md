@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- list of documents awaiting reparse is now correctly sorted by oldest parse attempt
 - **deps**: update dependency certifi to >=2025.11.12,<2025.12.0
 
 ## v43.1.0 (2025-11-05)
