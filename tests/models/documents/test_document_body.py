@@ -388,7 +388,7 @@ class TestDocumentBody:
             <judgment name="decision">
                 <meta/>
                 <header>
-                    <sometag>a</sometag>
+                    <p><span>a</span></p>
                 </header>
                 <judgmentBody>
                 <decision>
