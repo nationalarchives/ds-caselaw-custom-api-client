@@ -20,7 +20,7 @@ T = TypeVar("T")
 
 DEFAULT_DOCUMENT_BODY_XML = """<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
             <judgment name="decision">
-                <meta/><header/>
+                <meta/><header><p>Header contains text</p></header>
                 <judgmentBody>
                 <decision>
                 <p>This is a document.</p>
