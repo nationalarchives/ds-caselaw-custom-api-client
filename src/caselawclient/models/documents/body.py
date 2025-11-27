@@ -177,14 +177,9 @@ class DocumentBody:
     def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
         the contents of the judgment, but will contain a preamble."""
-        trailing_tags = self._xml.xml_as_tree.xpath("//akn:header/*", namespaces=DEFAULT_NAMESPACES)
-        for tag in trailing_tags:
-            if tag.tail and tag.tail.strip():
-                return True
-            if tag.text and tag.text.strip():
-                return True
-
-        return False
+        return bool(
+            self._xml.xml_as_tree.xpath("//akn:header[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
+        )
 
     @cached_property
     def has_external_data(self) -> bool:
