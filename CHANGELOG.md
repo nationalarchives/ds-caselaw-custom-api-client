@@ -20,6 +20,17 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - Only check header when working out if something `has_content`
 
+## Unreleased
+
+### Feat
+
+- **MarklogicApiClient**: add new method to get total number of documents awaiting reparse
+
+### Fix
+
+- list of documents awaiting reparse is now correctly sorted by oldest parse attempt
+- **deps**: update dependency certifi to >=2025.11.12,<2025.12.0
+
 ## v43.1.0 (2025-11-05)
 
 ### Feat

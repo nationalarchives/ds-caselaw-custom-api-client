@@ -1222,13 +1222,13 @@ class MarklogicApiClient:
 
         return (int(table[1][1]), int(table[1][2]))
 
-    def get_pending_parse_for_version(
+    def get_documents_pending_parse_for_version(
         self,
         target_version: tuple[int, int],
         maximum_records: int = 1000,
     ) -> list[list[Any]]:
-        """Retrieve documents which are not yet parsed with a given version."""
-        vars: query_dicts.GetPendingParseForVersionDict = {
+        """Retrieve a list of documents which are not yet parsed with a given version."""
+        vars: query_dicts.GetPendingParseForVersionDocumentsDict = {
             "target_major_version": target_version[0],
             "target_minor_version": target_version[1],
             "maximum_records": maximum_records,
@@ -1237,12 +1237,32 @@ class MarklogicApiClient:
             get_single_string_from_marklogic_response(
                 self._send_to_eval(
                     vars,
-                    "get_pending_parse_for_version.xqy",
+                    "get_pending_parse_for_version_documents.xqy",
                 ),
             ),
         )
 
         return results
+
+    def get_count_pending_parse_for_version(
+        self,
+        target_version: tuple[int, int],
+    ) -> int:
+        """Get the total number of documents which are not yet parsed with a given version."""
+        vars: query_dicts.GetPendingParseForVersionCountDict = {
+            "target_major_version": target_version[0],
+            "target_minor_version": target_version[1],
+        }
+        results = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval(
+                    vars,
+                    "get_pending_parse_for_version_count.xqy",
+                ),
+            ),
+        )
+
+        return int(results[1][0])
 
     def get_recently_parsed(
         self,
