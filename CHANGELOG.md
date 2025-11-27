@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v44.0.2 (2025-11-27)
+
+### Fix
+
+- Get total number of documents awaiting reparse
+- Search for content using pure XPath (this fixes a bug)
+
 ## v44.0.1 (2025-11-26)
 
 ### Fix
