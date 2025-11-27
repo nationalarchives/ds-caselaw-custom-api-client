@@ -379,6 +379,7 @@ class Document:
     @cached_property
     def has_only_clean_assets(self) -> bool:
         """False if any non-tar.gz assets associated with this document have not been cleaned."""
+        return True  # TODO: Remove this once we have enabled the asset cleaning pipeline.
         return are_unpublished_assets_clean(self.uri)
 
     @cached_property
