@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Fix
 
 - **Document**: temporarily short-circuit clean asset checks until asset cleaning is enabled
+- Add a method to allow editors to upload an asset to the unpublished bucket
 
 ## v44.0.2 (2025-11-27)
 

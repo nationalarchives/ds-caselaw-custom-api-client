@@ -208,6 +208,13 @@ def announce_document_event(uri: DocumentURIString, status: str, enrich: bool = 
     )
 
 
+def upload_asset_to_private_bucket(body: bytes, s3_key: str) -> None:
+    """Upload an asset to the private bucket."""
+    bucket: str = env("PRIVATE_ASSET_BUCKET")
+    s3client = create_s3_client()
+    s3client.put_object(Body=body, Bucket=bucket, Key=s3_key, Tagging="pdfsource=custom-pdfs")
+
+
 def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
     """
     Copy *unpublished* assets from one path to another,
