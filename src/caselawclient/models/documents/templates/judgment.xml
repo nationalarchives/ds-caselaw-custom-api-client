@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+  <judgment name="decision">
+    <meta>
+      <identification source="#tna">
+        <FRBRWork>
+          <FRBRthis value="" />
+          <FRBRuri value="" />
+          <FRBRdate date="{{decision_date}}" name="decision" />
+          <FRBRauthor href="#{{court_code.lower()}}" />
+          <FRBRcountry value="GB-UKM" />
+          <FRBRname value="{{title}}" />
+        </FRBRWork>
+        <FRBRExpression>
+          <FRBRthis value="" />
+          <FRBRuri value="" />
+          <FRBRdate date="{{decision_date}}" name="decision" />
+          <FRBRauthor href="#{{court_code.lower()}}" />
+          <FRBRlanguage language="eng" />
+        </FRBRExpression>
+        <FRBRManifestation>
+          <FRBRthis value="" />
+          <FRBRuri value="" />
+          <FRBRdate date="{{transform_datetime}}" name="transform" />
+          <FRBRauthor href="#tna" />
+          <FRBRformat value="application/xml" />
+        </FRBRManifestation>
+      </identification>
+      <lifecycle source="#">
+        <eventRef date="{{decision_date}}" refersTo="#decision" source="#" />
+      </lifecycle>
+      <references source="#tna">
+        <TLCOrganization
+                    eId="tna"
+                    href="https://www.nationalarchives.gov.uk/"
+                    showAs="The National Archives"
+                />
+        <TLCOrganization
+                    eId="{{court_code.lower()}}"
+                    href="{{court_url}}"
+                    showAs="{{court_full_name}}"
+                />
+        <TLCEvent eId="decision" href="#" showAs="decision" />
+      </references>
+      <proprietary
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                source="#"
+            >
+        <uk:court>{{court_code.upper()}}</uk:court>
+        <uk:year>{{year}}</uk:year>
+        {% for case_number in case_numbers %}
+            <uk:caseNumber>{{case_number}}</uk:caseNumber>
+        {% endfor %}
+        {% for party in parties %}
+           <uk:party role="{{party.role}}">{{party.name}}</uk:party>
+        {% endfor %}
+        <uk:sourceFormat>application/pdf</uk:sourceFormat>
+      </proprietary>
+    </meta>
+    <header />
+    <judgmentBody>
+      <decision>
+        <p />
+      </decision>
+    </judgmentBody>
+  </judgment>
+</akomaNtoso>
