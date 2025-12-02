@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import StrictUndefined, Template
 from typing_extensions import TypedDict
 
 
@@ -15,7 +15,7 @@ class EditorStubData(TypedDict):
     court_code_upper: str  # should be populated from court_code_
     title: str
     year: str
-    case_number: list[str]  # can be none
+    case_numbers: list[str]  # can be none
     parties: list[PartyData]  # (type (claimant|defendant), name)
 
 
@@ -30,12 +30,13 @@ def add_other_stub_fields(editor_data: EditorStubData) -> RenderStubData:
         **editor_data,
         "court_code_lower": editor_data["court_code_upper"].lower(),
         # TODO: look up in utils
-        "court_url": "https://www.courts.gov.uk/example_court",
-        "court_full_name": "Example Court",
+        "court_url": "todo",
+        "court_full_name": "todo",
     }
 
 
-def create_stub(data: RenderStubData) -> bytes:
+def create_stub(editor_data: EditorStubData) -> bytes:
+    render_data = add_other_stub_fields(editor_data)
     from caselawclient.Client import ROOT_DIR
 
     judgment_path = Path(ROOT_DIR) / "models" / "documents" / "templates" / "judgment.xml"
@@ -43,6 +44,6 @@ def create_stub(data: RenderStubData) -> bytes:
     with (judgment_path).open("r") as f:
         template = f.read()
 
-    rendered = bytes(Template(template).render(data).encode("utf-8"))
+    rendered = bytes(Template(template, undefined=StrictUndefined).render(render_data).encode("utf-8"))
 
     return rendered

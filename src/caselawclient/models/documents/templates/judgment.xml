@@ -21,7 +21,7 @@
         <FRBRManifestation>
           <FRBRthis value="" />
           <FRBRuri value="" />
-          <FRBRdate date="{{transform_date}}" name="transform" />
+          <FRBRdate date="{{transform_datetime}}" name="transform" />
           <FRBRauthor href="#tna" />
           <FRBRformat value="application/xml" />
         </FRBRManifestation>
