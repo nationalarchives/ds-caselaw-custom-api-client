@@ -33,7 +33,7 @@ def test_create_stub():
     assert b"<uk:year>2025</uk:year>" in stub
     assert b'<uk:party role="Claimant">Jerry</uk:party>' in stub
     assert b'<uk:party role="Defendant">Tom</uk:party>' in stub
-    assert b"<uk:parser>0</uk:parser>" in stub  # TODO: fix this
+    assert b"<uk:parser>no</uk:parser>" in stub  # TODO: fix this
     assert b'<FRBRdate date="2025-01-01T00:00:00" name="transform"/>' in stub
     assert b"<uk:caseNumber>AB-12345</uk:caseNumber>" in stub
     assert b"<uk:caseNumber>CD-67890</uk:caseNumber>" in stub

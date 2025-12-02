@@ -55,7 +55,7 @@
            <uk:party role="{{party.role}}">{{party.name}}</uk:party>
         {% endfor %}
         <uk:sourceFormat>application/pdf</uk:sourceFormat>
-        <uk:parser>0</uk:parser>
+        <uk:parser>no</uk:parser>
       </proprietary>
     </meta>
     <header />
