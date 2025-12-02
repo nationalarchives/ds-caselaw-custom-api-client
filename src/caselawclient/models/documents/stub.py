@@ -9,20 +9,33 @@ class PartyData(TypedDict):
     name: str
 
 
-class StubData(TypedDict):
+class EditorStubData(TypedDict):
     decision_date: str  # day precision
     transform_datetime: str  # second precision
-    court_code_upper: str
-    court_code_lower: str  # should be populated from court_code_
+    court_code_upper: str  # should be populated from court_code_
     title: str
-    court_url: str  # should be populated from utils/courts.cs
-    court_full_name: str  # ditto
     year: str
     case_number: list[str]  # can be none
     parties: list[PartyData]  # (type (claimant|defendant), name)
 
 
-def create_stub(data: StubData) -> bytes:
+class RenderStubData(EditorStubData):
+    court_code_lower: str
+    court_url: str  # should be populated from utils/courts.cs
+    court_full_name: str  # ditto
+
+
+def add_other_stub_fields(editor_data: EditorStubData) -> RenderStubData:
+    return {
+        **editor_data,
+        "court_code_lower": editor_data["court_code_upper"].lower(),
+        # TODO: look up in utils
+        "court_url": "https://www.courts.gov.uk/example_court",
+        "court_full_name": "Example Court",
+    }
+
+
+def create_stub(data: RenderStubData) -> bytes:
     from caselawclient.Client import ROOT_DIR
 
     judgment_path = Path(ROOT_DIR) / "models" / "documents" / "templates" / "judgment.xml"
