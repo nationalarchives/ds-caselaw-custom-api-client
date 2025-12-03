@@ -40,7 +40,7 @@ beautifulsoup4 = "4.14.3"
 responses = "0.25.8"
 python-dotenv = "1.2.1"
 time-machine = "3.1.0"
-moto = {version = "5.1.17", extras = ["all"]}
+moto = {version = "5.1.18", extras = ["all"]}
 
 [tool.poetry.group.docs]
 optional = true
