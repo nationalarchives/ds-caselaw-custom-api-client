@@ -16,6 +16,7 @@ xdmp:to-json(xdmp:sql(
   )
   WHERE (
     (parser_version_string IS NULL) OR
+    (parser_major_version < @target_major_version) OR
     (parser_major_version <= @target_major_version AND parser_minor_version < @target_minor_version)
   )
   AND (minutes_since_parse_request > 43200 OR minutes_since_parse_request IS NULL)
