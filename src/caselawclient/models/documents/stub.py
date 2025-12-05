@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from ds_caselaw_utils.courts import courts
 from jinja2 import StrictUndefined, Template
 from typing_extensions import TypedDict
 
@@ -26,12 +27,13 @@ class RenderStubData(EditorStubData):
 
 
 def add_other_stub_fields(editor_data: EditorStubData) -> RenderStubData:
+    court = courts.get_court_by_code(editor_data["court_code_upper"])
     return {
         **editor_data,
         "court_code_lower": editor_data["court_code_upper"].lower(),
         # TODO: look up in utils
-        "court_url": "todo",
-        "court_full_name": "todo",
+        "court_url": court.identifier_iri,
+        "court_full_name": court.long_name,
     }
 
 
