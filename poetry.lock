@@ -1336,26 +1336,26 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.42.1"
-description = "Type annotations for boto3 S3 1.42.1 service generated with mypy-boto3-builder 8.12.0"
+version = "1.42.3"
+description = "Type annotations for boto3 S3 1.42.3 service generated with mypy-boto3-builder 8.12.0"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "mypy_boto3_s3-1.42.1-py3-none-any.whl", hash = "sha256:e5f4e0c23384ba7d7ee20b9532a7676e93f920f5c1e4611376b38d996aa338e1"},
-    {file = "mypy_boto3_s3-1.42.1.tar.gz", hash = "sha256:57714a6c7a47c87b340bf905dc6e6ca7bb698896e74ad5bbce8c5e0d544de387"},
+    {file = "mypy_boto3_s3-1.42.3-py3-none-any.whl", hash = "sha256:97c5171928a2ae8c7b60a60700f395407cb5eca60704c7ab6a1ff0861f4db997"},
+    {file = "mypy_boto3_s3-1.42.3.tar.gz", hash = "sha256:2507bdfa17829f1f422b8bf334db836689b0529fbe6635af4e0f3aaa72f92806"},
 ]
 
 [[package]]
 name = "mypy-boto3-sns"
-version = "1.41.0"
-description = "Type annotations for boto3 SNS 1.41.0 service generated with mypy-boto3-builder 8.12.0"
+version = "1.42.3"
+description = "Type annotations for boto3 SNS 1.42.3 service generated with mypy-boto3-builder 8.12.0"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "mypy_boto3_sns-1.41.0-py3-none-any.whl", hash = "sha256:5067c290055f949a58d1c35a6c2723a42a0fbba4fca55f312297b2e715b06e1c"},
-    {file = "mypy_boto3_sns-1.41.0.tar.gz", hash = "sha256:c8a2572978802d796cf08933d59065f9f209940231daba432da01b1677fd7a4b"},
+    {file = "mypy_boto3_sns-1.42.3-py3-none-any.whl", hash = "sha256:97d1ee3b4a3a31b51939a20b1f31c5e87b6842d2086397f64a9b25133aea378a"},
+    {file = "mypy_boto3_sns-1.42.3.tar.gz", hash = "sha256:1edfe88bf30eb191dc499378e75e78001ccf0c29e372ac49a8cfcc86005d8a7e"},
 ]
 
 [[package]]
