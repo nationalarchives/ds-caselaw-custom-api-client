@@ -32,7 +32,7 @@ from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
-from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentURIString
+from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
 from caselawclient.xquery_type_dicts import (
     CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
@@ -1278,6 +1278,19 @@ class MarklogicApiClient:
         )
 
         return results
+
+    def get_locked_documents(
+        self,
+    ) -> list[DocumentLock]:
+        """Retrieve all currently locked documents."""
+        results = [
+            DocumentLock.from_string(lock)
+            for lock in get_multipart_strings_from_marklogic_response(
+                self._send_to_eval({}, "get_locked_documents.xqy")
+            )
+        ]
+
+        return sorted(results, key=lambda lock: lock.timestamp)
 
     def get_missing_fclid(
         self,
