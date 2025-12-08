@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **MarklogicApiClient**: add new method to retrieve list of document locks
+
 ## v44.1.1 (2025-12-04)
 
 ### Fix

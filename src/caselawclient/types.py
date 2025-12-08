@@ -1,4 +1,7 @@
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
+
+from lxml import etree
 
 
 @dataclass
@@ -106,3 +109,42 @@ def SuccessTuple() -> SuccessFailureMessageTuple:
 def FailureTuple(message: str | list[str]) -> SuccessFailureMessageTuple:
     messages = message if isinstance(message, list) else [message]
     return SuccessFailureMessageTuple(success=False, messages=messages)
+
+
+@dataclass
+class DocumentLock:
+    document_uri: DocumentURIString
+    owner: str
+    timestamp: datetime
+    timeout: int
+
+    NAMESPACES = {
+        "lock": "http://marklogic.com/xdmp/lock",
+    }
+
+    @classmethod
+    def from_string(cls, xml_string: str) -> "DocumentLock":
+        root = etree.fromstring(xml_string.encode("utf-8"))
+
+        return cls(
+            document_uri=MarkLogicDocumentURIString(root.xpath("/lock/document/text()")[0]).as_document_uri(),
+            owner=root.xpath(
+                "/lock/details/lock:lock/lock:active-locks/lock:active-lock/lock:owner/text()",
+                namespaces=cls.NAMESPACES,
+            )[0],
+            timestamp=datetime.fromtimestamp(
+                int(
+                    root.xpath(
+                        "/lock/details/lock:lock/lock:active-locks/lock:active-lock/lock:timestamp/text()",
+                        namespaces=cls.NAMESPACES,
+                    )[0]
+                ),
+                tz=UTC,
+            ),
+            timeout=int(
+                root.xpath(
+                    "/lock/details/lock:lock/lock:active-locks/lock:active-lock/lock:timeout/text()",
+                    namespaces=cls.NAMESPACES,
+                )[0]
+            ),
+        )

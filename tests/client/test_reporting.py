@@ -1,11 +1,15 @@
 import unittest
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.types import DocumentURIString
+
+from ..test_helpers import MockMultipartResponse
 
 
-class TestReporting(unittest.TestCase):
-    """Check that our reporting functions are continuing to make calls as expected"""
+class TestPendingParseReports(unittest.TestCase):
+    """Check that our reporting functions for getting documents pending parsing are working as expected"""
 
     def setUp(self):
         self.client = MarklogicApiClient("", "", "", False)
@@ -66,3 +70,44 @@ class TestReporting(unittest.TestCase):
             result = self.client.get_count_pending_parse_for_version(target_version=(1, 2))
 
             assert result == 5678
+
+
+class TestDocumentLockReports(unittest.TestCase):
+    """Check that our reporting functions around document locking are working as expected"""
+
+    def setUp(self):
+        self.client = MarklogicApiClient("", "", "", False)
+
+    def test_get_locked_documents(self):
+        with patch.object(self.client, "eval") as mock_eval:
+            mock_eval.return_value = MockMultipartResponse("""
+                <lock>
+                    <document>/test/1234.xml</document>
+                    <details>
+                        <lock:lock
+                            xmlns:lock="http://marklogic.com/xdmp/lock">
+                            <lock:lock-type>write</lock:lock-type>
+                            <lock:lock-scope>exclusive</lock:lock-scope>
+                            <lock:active-locks>
+                                <lock:active-lock>
+                                    <lock:depth>0</lock:depth>
+                                    <lock:owner>Judgment locked for editing by enrichment-engine</lock:owner>
+                                    <lock:timeout>0</lock:timeout>
+                                    <lock:lock-token>http://marklogic.com/xdmp/locks/a1b2c3d4</lock:lock-token>
+                                    <lock:timestamp>1752871661</lock:timestamp>
+                                    <sec:user-id
+                                        xmlns:sec="http://marklogic.com/xdmp/security">1029384756
+                                    </sec:user-id>
+                                </lock:active-lock>
+                            </lock:active-locks>
+                        </lock:lock>
+                    </details>
+                </lock>
+                """)
+
+            result = self.client.get_locked_documents()
+
+            assert len(result) == 1
+            assert result[0].document_uri == DocumentURIString("test/1234")
+            assert result[0].timestamp == datetime(2025, 7, 18, 20, 47, 41, tzinfo=UTC)
+            assert result[0].timeout == 0
