@@ -176,9 +176,10 @@ class DocumentBody:
     @cached_property
     def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
-        the contents of the judgment, but will contain a preamble."""
+        the contents of the judgment, but will contain a preamble (a header if a judgment or a preface if a press summary)"""
         return bool(
             self._xml.xml_as_tree.xpath("//akn:header[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
+            or self._xml.xml_as_tree.xpath("//akn:preface[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
         )
 
     @cached_property
