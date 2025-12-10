@@ -399,6 +399,21 @@ class TestDocumentBody:
             </akomaNtoso>""")
         assert body.has_content
 
+        def test_actual_content_preface(self):
+            body = DocumentBodyFactory.build("""
+                <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <doc name="pressSummary">
+                    <meta/>
+                    <preface>
+                        <p><span>a</span></p>
+                    </preface>
+                    <mainBody>
+                        <p/>
+                    </mainBody>
+                </doc>
+                </akomaNtoso>""")
+            assert body.has_content
+
     def test_no_actual_content(self):
         body = DocumentBodyFactory.build("""
             <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
