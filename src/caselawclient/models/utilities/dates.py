@@ -4,7 +4,7 @@ from dateutil.parser import isoparse
 from pytz import UTC, tzinfo
 
 
-def parse_string_date_as_utc(iso_string: str, timezone: tzinfo.BaseTzInfo) -> datetime:
+def parse_string_date_as_utc(iso_string: str, timezone: tzinfo.DstTzInfo) -> datetime:
     """iso_string might be aware or unaware:
     ensure that it is converted to a UTC-aware datetime"""
 

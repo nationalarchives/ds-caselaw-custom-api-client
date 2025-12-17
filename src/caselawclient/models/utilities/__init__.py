@@ -17,10 +17,12 @@ class VersionsDict(TypedDict):
 
 def render_versions(decoded_versions: list[BodyPart]) -> list[VersionsDict]:
     versions: list[VersionsDict] = [
-        {
-            "uri": MarkLogicDocumentURIString(part.text).as_document_uri(),
-            "version": extract_version(part.text),
-        }
+        VersionsDict(
+            {
+                "uri": MarkLogicDocumentURIString(part.text).as_document_uri(),
+                "version": extract_version(part.text),
+            }
+        )
         for part in decoded_versions
     ]
     sorted_versions = sorted(versions, key=lambda d: -d["version"])

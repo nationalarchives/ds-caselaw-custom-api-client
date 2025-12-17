@@ -7,6 +7,7 @@ from typing import Any, Literal, Optional, TypedDict, overload
 
 import boto3
 import botocore.client
+import botocore.exceptions
 import environ
 from mypy_boto3_s3.client import S3Client
 from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef
@@ -130,7 +131,7 @@ def delete_some_from_bucket(
 
     if response.get("Contents"):
         objects_to_maybe_delete: list[ObjectIdentifierTypeDef] = [
-            {"Key": obj["Key"]} for obj in response.get("Contents", [])
+            ObjectIdentifierTypeDef({"Key": obj["Key"]}) for obj in response.get("Contents", [])
         ]
         objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
         client.delete_objects(
@@ -186,19 +187,26 @@ def announce_document_event(uri: DocumentURIString, status: str, enrich: bool = 
     client = create_sns_client()
 
     message_attributes: dict[str, MessageAttributeValueTypeDef] = {}
-    message_attributes["update_type"] = {
-        "DataType": "String",
-        "StringValue": status,
-    }
-    message_attributes["uri_reference"] = {
-        "DataType": "String",
-        "StringValue": uri,
-    }
-    if enrich:
-        message_attributes["trigger_enrichment"] = {
+    message_attributes["update_type"] = MessageAttributeValueTypeDef(
+        {
             "DataType": "String",
-            "StringValue": "1",
+            "StringValue": status,
         }
+    )
+    message_attributes["uri_reference"] = MessageAttributeValueTypeDef(
+        {
+            "DataType": "String",
+            "StringValue": uri,
+        }
+    )
+
+    if enrich:
+        message_attributes["trigger_enrichment"] = MessageAttributeValueTypeDef(
+            {
+                "DataType": "String",
+                "StringValue": "1",
+            }
+        )
 
     client.publish(
         TopicArn=env("SNS_TOPIC"),  # this is the ANNOUNCE SNS topic

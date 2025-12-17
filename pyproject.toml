@@ -25,7 +25,7 @@ boto3 = "^1.26.112"
 typing-extensions = "^4.7.1"
 mypy-boto3-s3 = "^1.26.104"
 mypy-boto3-sns = "^1.26.69"
-pytz = ">2024"
+pytz = ">=2025.2"
 python-dateutil = "^2.9.0-post.0"
 saxonche = "^12.5.0"
 sqids = "^0.5.0"
@@ -96,3 +96,9 @@ unfixable = ["ERA"]
 # ERA: lots of false positives, not a good autofix
 # PD, NPY, AIR: ignored, panda / numpy / airflow specific
 # FURB: not yet out of preview
+
+[tool.ty.src]
+exclude = ["tests", "smoketest"]
+
+[tool.ty.rules]
+unresolved-import = "ignore"
