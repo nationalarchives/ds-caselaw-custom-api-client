@@ -11,13 +11,9 @@ from saxonche import PySaxonProcessor
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
+from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 from .xml import XML
-
-DEFAULT_NAMESPACES = {
-    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-}
 
 
 class UnparsableDate(Warning):
@@ -176,10 +172,11 @@ class DocumentBody:
     @cached_property
     def has_content(self) -> bool:
         """If we do not have a word document, the XML will not contain
-        the contents of the judgment, but will contain a preamble (a header if a judgment or a preface if a press summary)"""
+        the contents of the judgment, but will have content in the header if a judgment.
+        All press summaries (which have <doc> not <judgment> tags) are assumed to have content"""
         return bool(
             self._xml.xml_as_tree.xpath("//akn:header[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
-            or self._xml.xml_as_tree.xpath("//akn:preface[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
+            or self._xml.xml_as_tree.xpath("//akn:doc", namespaces=DEFAULT_NAMESPACES)
         )
 
     @cached_property
