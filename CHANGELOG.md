@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- Support lazy loading of images in HTML output
+
 ### Fix
 
 - Don't create blank uk:jurisdiction tags when updating edited metadata
