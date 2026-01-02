@@ -34,4 +34,4 @@ cts:search(doc($uri),
 cts:element-query(xs:QName('uk:jurisdiction'),cts:and-query(()))))) then
     if ($content = "") then local:delete($uri) else local:edit($uri, $content)
 else
-    local:add($uri, $content)
+    if ($content != "") then local:add($uri, $content) else ()
