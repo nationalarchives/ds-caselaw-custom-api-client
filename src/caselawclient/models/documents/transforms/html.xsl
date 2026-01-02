@@ -734,7 +734,7 @@
 </xsl:template>
 
 <xsl:template match="img">
-	<img>
+	<img loading="lazy">
 		<xsl:apply-templates select="@*" />
 		<xsl:apply-templates />
 	</img>
