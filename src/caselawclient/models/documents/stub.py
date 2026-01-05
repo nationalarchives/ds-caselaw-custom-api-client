@@ -8,7 +8,7 @@ from typing_extensions import TypedDict
 
 
 class PartyData(TypedDict):
-    role: Literal["Claimant", "Defendant"]
+    role: Literal["Claimant", "Respondent", "Appellant", "Defendant"]
     name: str
 
 
