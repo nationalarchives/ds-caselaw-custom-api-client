@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Fix
 
 - Don't create blank uk:jurisdiction tags when updating edited metadata
+- Assume press summaries always have content
+- Lazy load images
 
 ## v44.3.0 (2025-12-18)
 
