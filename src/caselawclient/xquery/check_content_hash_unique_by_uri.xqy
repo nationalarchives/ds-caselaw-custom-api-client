@@ -5,11 +5,14 @@ declare variable $uri as xs:string external;
 
 let $doc := doc($uri)
 let $hash := $doc//uk:hash/text()
-let $count := count(cts:uris(
-  (), (),
-  cts:and-query((
-    cts:element-value-query(xs:QName("uk:hash"), $hash),
-    cts:collection-query("http://marklogic.com/collections/dls/latest-version")
-  ))
-))
-return $count = 1
+let $count :=
+  if (not($hash)) then 1
+  else
+    count(cts:uris(
+      (), (),
+      cts:and-query((
+        cts:element-value-query(xs:QName("uk:hash"), $hash),
+        cts:collection-query("http://marklogic.com/collections/dls/latest-version")
+      ))
+    ))
+return ($count = 1)
