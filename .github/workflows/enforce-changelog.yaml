@@ -1,0 +1,35 @@
+name: Enforce update to changelog
+permissions: {}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches:
+      - main
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Skip if PR has no-changelog label
+        if: "contains( github.event.pull_request.labels.*.name, 'no-changelog')"
+        run: |
+          echo "✅ Skipping changelog check due to no-changelog label"
+      - name: Check changelog has been updated
+        if: "!contains(github.event.pull_request.labels.*.name, 'no-changelog')"
+        run: |
+          git fetch origin main
+          # Check for a non-whitespace change to CHANGELOG.md
+          if git diff --ignore-all-space --name-only origin/main...HEAD | grep -q "^CHANGELOG.md$"; then
+            echo "✅ Changelog has been updated"
+          else
+            echo "❌ CHANGELOG.md must be updated in this PR"
+            echo "   (or add the 'no-changelog' label to bypass)"
+            exit 1
+          fi

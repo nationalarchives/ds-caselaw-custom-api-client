@@ -11,4 +11,3 @@ FCL-
 - [ ] I have written tests to cover the new behaviour
 - [ ] I have created/updated method docstrings (if necessary)
 - [ ] I have considered if this is a breaking change
-- [ ] I have updated the changelog (if necessary)
