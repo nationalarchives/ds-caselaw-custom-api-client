@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v44.4.2 (2026-02-02)
+
+### Fix
+
+- **deps**: update dependency certifi to v2026
+- **deps**: update pre-commit hook ds-caselaw-utils to v4
+
 ## v44.4.1
 
 ### Fix
