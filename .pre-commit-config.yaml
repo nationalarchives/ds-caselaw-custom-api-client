@@ -77,7 +77,7 @@ repos:
         stages:
           - pre-push
     repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.12.1
+    rev: v4.13.0
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
     rev: v1.22.0
