@@ -18,6 +18,9 @@ from caselawclient.models.utilities.aws import (
     check_docx_exists,
     copy_assets,
     delete_non_targz_from_bucket,
+    generate_docx_url,
+    generate_pdf_url,
+    generate_signed_asset_url,
     upload_asset_to_private_bucket,
 )
 
@@ -114,6 +117,35 @@ class TestAWSUtils:
         upload_asset_to_private_bucket(b"%PDF", "s3/key.pdf")
         s3_object = fake_bucket.Object("s3/key.pdf").get()
         assert s3_object["Body"].read() == b"%PDF"
+
+
+@patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+@mock_aws
+class TestSignedLinks:
+    def test_signed_link_direct(self):
+        signed_link = generate_signed_asset_url("key.png")
+        assert signed_link.startswith("https://s3.amazonaws.com/MY_BUCKET/key.png?")
+        assert "response-content-disposition" not in signed_link
+
+    def test_signed_link_docx(self):
+        signed_link = generate_docx_url(DocumentURIString("d-a1"))
+        assert signed_link.startswith(
+            "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.docx?response-content-disposition=attachment%3Bfilename%3Dd-a1.docx&"
+        )
+
+    def test_signed_link_pdf(self):
+        signed_link = generate_pdf_url(DocumentURIString("d-a1"))
+        assert signed_link.startswith(
+            "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.pdf?response-content-disposition=attachment%3Bfilename%3Dd-a1.pdf&"
+        )
+
+    def test_signed_link_direct_custom_filename(self):
+        signed_link = generate_signed_asset_url(
+            "key.png", force_download=True, content_disposition_filename="filename.png"
+        )
+        assert signed_link.startswith(
+            "https://s3.amazonaws.com/MY_BUCKET/key.png?response-content-disposition=attachment%3Bfilename%3Dfilename.png&"
+        )
 
 
 class TestMove:

@@ -69,19 +69,26 @@ def uri_for_s3(uri: DocumentURIString) -> S3PrefixString:
     return S3PrefixString(uri + "/")
 
 
-def generate_signed_asset_url(key: str) -> str:
+def generate_signed_asset_url(
+    key: str, force_download: bool = False, content_disposition_filename: None | str = None
+) -> str:
     # If there isn't a PRIVATE_ASSET_BUCKET, don't try to get the bucket.
     # This helps local environment setup where we don't use S3.
+    if not content_disposition_filename:
+        content_disposition_filename = key.rpartition("/")[-1]
     bucket = env("PRIVATE_ASSET_BUCKET", None)
     if not bucket:
         return ""
 
     client = create_s3_client()
+    params = {"Bucket": bucket, "Key": key}
+    if force_download:
+        params["ResponseContentDisposition"] = f"attachment;filename={content_disposition_filename}"
 
     return str(
         client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": bucket, "Key": key},
+            Params=params,
         ),
     )
 
@@ -109,13 +116,13 @@ def generate_docx_key(uri: DocumentURIString) -> str:
 
 def generate_docx_url(uri: DocumentURIString) -> str:
     """from a canonical caselaw URI (eat/2022/1) return a signed S3 link for the front end"""
-    return generate_signed_asset_url(generate_docx_key(uri))
+    return generate_signed_asset_url(generate_docx_key(uri), force_download=True)
 
 
 def generate_pdf_url(uri: DocumentURIString) -> str:
     key = f"{uri}/{uri.replace('/', '_')}.pdf"
 
-    return generate_signed_asset_url(key)
+    return generate_signed_asset_url(key, force_download=True)
 
 
 def delete_from_bucket(uri: DocumentURIString, bucket: str) -> None:
