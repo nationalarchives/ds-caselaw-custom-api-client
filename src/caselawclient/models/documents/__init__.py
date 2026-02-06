@@ -226,10 +226,12 @@ class Document:
 
     @property
     def docx_url(self) -> str:
+        """This generates a signed link to the unpublished S3 bucket and should not be used in public contexts."""
         return generate_docx_url(self.uri)
 
     @property
     def pdf_url(self) -> str:
+        """This generates a signed link to the unpublished S3 bucket and should not be used in public contexts."""
         return generate_pdf_url(self.uri)
 
     @cached_property
