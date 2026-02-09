@@ -29,9 +29,12 @@ DRY_RUN = bool(os.environ["DRY_RUN"])
 MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
 MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
 
+S3_CLIENT = boto3.client("s3", region_name="eu-west-2")
+SNS_CLIENT = boto3.client("sns", region_name="eu-west-2")
 
-def paginated_bucket(s3_client, bucket_name) -> Iterable[str]:
-    paginator = s3_client.get_paginator("list_objects_v2")
+
+def paginated_bucket(bucket_name) -> Iterable[str]:
+    paginator = S3_CLIENT.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket_name):
         for obj in page.get("Contents", []):
             yield obj["Key"]
@@ -58,11 +61,11 @@ def should_process_file(key: str, has_docx: bool) -> bool:
     return False
 
 
-def get_document_uris_and_files(s3_client, bucket_name: str) -> dict[str, dict]:
+def get_document_uris_and_files(bucket_name: str) -> dict[str, dict]:
     print(f"\n=== Analyzing bucket structure: {bucket_name} ===")
 
     uri_data: dict[str, Any] = defaultdict(lambda: {"has_docx": False, "files": []})
-    for key in paginated_bucket(s3_client, bucket_name):
+    for key in paginated_bucket(bucket_name):
         uri = extract_uri_from_key(key)
 
         if uri:
@@ -80,11 +83,11 @@ def get_document_uris_and_files(s3_client, bucket_name: str) -> dict[str, dict]:
     return dict(uri_data)
 
 
-def get_published_uris_needing_processing(s3_client, bucket_name: str) -> tuple[set[str], set[str]]:
+def get_published_uris_needing_processing(bucket_name: str) -> tuple[set[str], set[str]]:
     all_uris = set()
     uris_needing_processing = set()
 
-    for key in paginated_bucket(s3_client, bucket_name):
+    for key in paginated_bucket(bucket_name):
         uri = extract_uri_from_key(key)
 
         if not uri or key.endswith(".tar.gz") or key.endswith("parser.log"):
@@ -96,7 +99,7 @@ def get_published_uris_needing_processing(s3_client, bucket_name: str) -> tuple[
             continue
 
         try:
-            tag_response = s3_client.get_object_tagging(Bucket=bucket_name, Key=key)
+            tag_response = S3_CLIENT.get_object_tagging(Bucket=bucket_name, Key=key)
             tags = {tag["Key"]: tag["Value"] for tag in tag_response.get("TagSet", [])}
 
             if "DOCUMENT_PROCESSOR_VERSION" not in tags:
@@ -115,10 +118,10 @@ def get_published_uris_needing_processing(s3_client, bucket_name: str) -> tuple[
     return uris_needing_processing, all_uris
 
 
-def trigger_processing(s3_client, sns_client, bucket_name: str, published_uris: set[str]) -> dict[str, list[str]]:
+def trigger_processing(bucket_name: str, published_uris: set[str]) -> dict[str, list[str]]:
     print(f"\n=== Step 1: Triggering processing for {bucket_name} ===")
 
-    uri_data = get_document_uris_and_files(s3_client, bucket_name)
+    uri_data = get_document_uris_and_files(bucket_name)
 
     uri_files_to_process = defaultdict(list)
     total_files = 0
@@ -150,7 +153,7 @@ def trigger_processing(s3_client, sns_client, bucket_name: str, published_uris: 
                 }
 
                 if not DRY_RUN:
-                    sns_client.publish(
+                    SNS_CLIENT.publish(
                         TopicArn=SNS_TOPIC_ARN, Message=json.dumps(s3_event), Subject=f"Batch processing: {key}"
                     )
 
@@ -172,7 +175,7 @@ def trigger_processing(s3_client, sns_client, bucket_name: str, published_uris: 
     return dict(uri_files_to_process)
 
 
-def wait_for_processing(s3_client, bucket_name: str, uri_files: dict[str, list[str]]) -> tuple[list[str], list[str]]:
+def wait_for_processing(bucket_name: str, uri_files: dict[str, list[str]]) -> tuple[list[str], list[str]]:
     print("\n=== Step 2: Waiting for processing to complete ===")
 
     if DRY_RUN:
@@ -195,7 +198,7 @@ def wait_for_processing(s3_client, bucket_name: str, uri_files: dict[str, list[s
             uri_complete = True
             for key in files:
                 try:
-                    tag_response = s3_client.get_object_tagging(Bucket=bucket_name, Key=key)
+                    tag_response = S3_CLIENT.get_object_tagging(Bucket=bucket_name, Key=key)
                     tags = {tag["Key"]: tag["Value"] for tag in tag_response.get("TagSet", [])}
 
                     if "DOCUMENT_PROCESSOR_VERSION" not in tags:
@@ -297,10 +300,7 @@ def main():
             print("Aborted.")
             return
 
-    s3_client = boto3.client("s3")
-    sns_client = boto3.client("sns")
-
-    uris_to_process, all_published_uris = get_published_uris_needing_processing(s3_client, PUBLISHED_BUCKET)
+    uris_to_process, all_published_uris = get_published_uris_needing_processing(PUBLISHED_BUCKET)
 
     if not uris_to_process:
         print("\nAll published documents are already processed!")
@@ -311,9 +311,9 @@ def main():
         print(f"\nLimiting to {MAX_DOCUMENTS} documents (out of {len(uris_to_process)} needing processing)")
         uris_to_process = set(list(uris_to_process)[:MAX_DOCUMENTS])
 
-    uri_files = trigger_processing(s3_client, sns_client, UNPUBLISHED_BUCKET, uris_to_process)
+    uri_files = trigger_processing(UNPUBLISHED_BUCKET, uris_to_process)
 
-    processed_uris, failed_uris = wait_for_processing(s3_client, UNPUBLISHED_BUCKET, uri_files)
+    processed_uris, failed_uris = wait_for_processing(UNPUBLISHED_BUCKET, uri_files)
 
     if failed_uris:
         print(f"\n{len(failed_uris)} URIs failed to process or timed out")
