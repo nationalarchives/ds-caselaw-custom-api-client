@@ -4,24 +4,29 @@ Bulk process all documents in unpublished bucket and republish to published buck
 """
 
 import json
+import os
 import time
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
 import boto3
+from dotenv import load_dotenv
 
 from caselawclient.models.utilities.aws import publish_documents
 from caselawclient.types import DocumentURIString
 
+load_dotenv(".env.staging")
 # Configuration
-UNPUBLISHED_BUCKET = "unpublished-bucket-name"
-PUBLISHED_BUCKET = "published-bucket-name"
-SNS_TOPIC_ARN = "arn:aws:sns:region:account:topic-arn"
-CHECK_INTERVAL_SECONDS = 30
-MAX_WAIT_MINUTES = 60
-DRY_RUN = True
-MAX_DOCUMENTS = None
+
+UNPUBLISHED_BUCKET = os.environ["UNPUBLISHED_BUCKET"]
+PUBLISHED_BUCKET = os.environ["PUBLISHED_BUCKET"]
+SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
+CHECK_INTERVAL_SECONDS = int(os.environ.get("CHECK_INTERVAL_SECONDS", 30))
+MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
+DRY_RUN = bool(os.environ["DRY_RUN"])
+MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
+MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
 
 
 def extract_uri_from_key(key: str) -> str | None:
@@ -281,7 +286,7 @@ def main():
     print(f"SNS Topic: {SNS_TOPIC_ARN}")
 
     if DRY_RUN:
-        print(r"\DRY RUN MODE: No actual changes will be made")
+        print("DRY RUN MODE: No actual changes will be made")
         print("Set DRY_RUN = False to execute for real")
     else:
         print("\nLIVE MODE: This will process and republish all PUBLISHED documents!")
