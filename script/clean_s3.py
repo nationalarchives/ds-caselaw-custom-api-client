@@ -9,7 +9,7 @@ import time
 import warnings
 from collections import defaultdict
 from datetime import datetime
-from typing import Any
+from typing import Any, Iterable
 
 import boto3
 from dotenv import load_dotenv
@@ -28,6 +28,13 @@ MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
 DRY_RUN = bool(os.environ["DRY_RUN"])
 MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
 MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
+
+
+def paginated_bucket(s3_client, bucket_name) -> Iterable[str]:
+    paginator = s3_client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket_name):
+        for obj in page.get("Contents", []):
+            yield obj["Key"]
 
 
 def extract_uri_from_key(key: str) -> str | None:
@@ -55,17 +62,13 @@ def get_document_uris_and_files(s3_client, bucket_name: str) -> dict[str, dict]:
     print(f"\n=== Analyzing bucket structure: {bucket_name} ===")
 
     uri_data: dict[str, Any] = defaultdict(lambda: {"has_docx": False, "files": []})
-    paginator = s3_client.get_paginator("list_objects_v2")
+    for key in paginated_bucket(s3_client, bucket_name):
+        uri = extract_uri_from_key(key)
 
-    for page in paginator.paginate(Bucket=bucket_name):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            uri = extract_uri_from_key(key)
-
-            if uri:
-                uri_data[uri]["files"].append(key)
-                if key.endswith(".docx"):
-                    uri_data[uri]["has_docx"] = True
+        if uri:
+            uri_data[uri]["files"].append(key)
+            if key.endswith(".docx"):
+                uri_data[uri]["has_docx"] = True
 
     print(f"  Found {len(uri_data)} document URIs")
 
@@ -81,30 +84,27 @@ def get_published_uris_needing_processing(s3_client, bucket_name: str) -> tuple[
     all_uris = set()
     uris_needing_processing = set()
 
-    paginator = s3_client.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket_name):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            uri = extract_uri_from_key(key)
+    for key in paginated_bucket(s3_client, bucket_name):
+        uri = extract_uri_from_key(key)
 
-            if not uri or key.endswith(".tar.gz") or key.endswith("parser.log"):
-                continue
+        if not uri or key.endswith(".tar.gz") or key.endswith("parser.log"):
+            continue
 
-            all_uris.add(uri)
+        all_uris.add(uri)
 
-            if uri in uris_needing_processing:
-                continue
+        if uri in uris_needing_processing:
+            continue
 
-            try:
-                tag_response = s3_client.get_object_tagging(Bucket=bucket_name, Key=key)
-                tags = {tag["Key"]: tag["Value"] for tag in tag_response.get("TagSet", [])}
+        try:
+            tag_response = s3_client.get_object_tagging(Bucket=bucket_name, Key=key)
+            tags = {tag["Key"]: tag["Value"] for tag in tag_response.get("TagSet", [])}
 
-                if "DOCUMENT_PROCESSOR_VERSION" not in tags:
-                    uris_needing_processing.add(uri)
-
-            except Exception as e:
-                print(f"  Warning: Error checking {key}: {e}")
+            if "DOCUMENT_PROCESSOR_VERSION" not in tags:
                 uris_needing_processing.add(uri)
+
+        except Exception as e:
+            print(f"  Warning: Error checking {key}: {e}")
+            uris_needing_processing.add(uri)
 
     uris_already_processed = len(all_uris) - len(uris_needing_processing)
 
