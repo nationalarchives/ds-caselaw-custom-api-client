@@ -6,6 +6,7 @@ Bulk process all documents in unpublished bucket and republish to published buck
 import json
 import os
 import time
+import warnings
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
@@ -38,16 +39,16 @@ def extract_uri_from_key(key: str) -> str | None:
 
 
 def should_process_file(key: str, has_docx: bool) -> bool:
-    if key.endswith(".tar.gz") or key.endswith("parser.log"):
+    extension = key.rpartition(".")[-1].lower()
+    if extension in ("pdf",):
+        return not has_docx
+    # explicitly exclude parser.log and TDR tar.gz files
+    if extension in ("gz", "log"):
         return False
-
-    if key.endswith(".png") or key.endswith(".jpeg") or key.endswith(".jpg"):
+    if extension in ("png", "jpeg", "jpg", "docx"):
         return True
-
-    if has_docx:
-        return key.endswith(".docx")
-
-    return key.endswith(".pdf")
+    warnings.warn(f"{key} has unexpected extension {extension}, skipping by default")
+    return False
 
 
 def get_document_uris_and_files(s3_client, bucket_name: str) -> dict[str, dict]:
