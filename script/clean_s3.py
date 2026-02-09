@@ -106,8 +106,7 @@ def get_published_uris_needing_processing(bucket_name: str) -> tuple[set[str], s
                 uris_needing_processing.add(uri)
 
         except Exception as e:
-            print(f"  Warning: Error checking {key}: {e}")
-            uris_needing_processing.add(uri)
+            warnings.warn(f"  Warning: Error checking {key}: {e}. Not processed.")
 
     uris_already_processed = len(all_uris) - len(uris_needing_processing)
 
