@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased (2026-02-05)
-
-### Fix
+## v44.4.3 (2026-02-06)
 
 - Ensure editor DOCX links download in Edge (content-disposition)
 
