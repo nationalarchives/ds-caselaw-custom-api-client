@@ -87,15 +87,22 @@ def get_published_uris_needing_processing(bucket_name: str) -> tuple[set[str], s
     all_uris = set()
     uris_needing_processing = set()
 
+    count_entirely_ignored = 0
+    counted_twice = 0
+    count_already_done = 0
+    count_needs_processing = 0
+
     for key in paginated_bucket(bucket_name):
         uri = extract_uri_from_key(key)
 
         if not uri or key.endswith(".tar.gz") or key.endswith("parser.log"):
+            count_entirely_ignored += 1
             continue
 
         all_uris.add(uri)
 
         if uri in uris_needing_processing:
+            counted_twice += 1
             continue
 
         try:
@@ -104,14 +111,15 @@ def get_published_uris_needing_processing(bucket_name: str) -> tuple[set[str], s
 
             if "DOCUMENT_PROCESSOR_VERSION" not in tags:
                 uris_needing_processing.add(uri)
+                count_needs_processing += 1
+            else:
+                count_already_done += 1
 
         except Exception as e:
             warnings.warn(f"  Warning: Error checking {key}: {e}. Not processed.")
 
-    uris_already_processed = len(all_uris) - len(uris_needing_processing)
-
     print(f"  Found {len(all_uris)} published document URIs")
-    print(f"  Already processed (skipping): {uris_already_processed}")
+    print(f"  Already processed (skipping): {count_already_done}")
     print(f"  Need processing: {len(uris_needing_processing)}")
 
     return uris_needing_processing, all_uris

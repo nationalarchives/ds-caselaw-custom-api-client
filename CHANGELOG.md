@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## v44.4.3 (2026-02-06)
 
+- Ensure stub generates valid XML if ampersands present
+- Ensure stub rejects angle brackets
 - Ensure editor DOCX links download in Edge (content-disposition)
 
 ## v44.4.2 (2026-02-02)
