@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 from ds_caselaw_utils.courts import courts
 from ds_caselaw_utils.types import CourtCode
 from jinja2 import StrictUndefined, Template
+from saxonche import PySaxonProcessor
 from typing_extensions import TypedDict
 
 
@@ -36,7 +38,7 @@ def add_other_stub_fields(editor_data: EditorStubData) -> RendererStubData:
     }
 
 
-def render_stub_xml(editor_data: EditorStubData) -> bytes:
+def render_stub_xml_old(editor_data: EditorStubData) -> bytes:
     render_data = add_other_stub_fields(editor_data)
     from caselawclient.Client import ROOT_DIR
 
@@ -48,3 +50,32 @@ def render_stub_xml(editor_data: EditorStubData) -> bytes:
     rendered = bytes(Template(template, undefined=StrictUndefined).render(render_data).encode("utf-8"))
 
     return rendered
+
+
+def render_stub_xml(editor_data: EditorStubData) -> bytes:
+    render_data = add_other_stub_fields(editor_data)
+    xquery_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "judgment.xqy")
+
+    with PySaxonProcessor() as proc:
+        xquery = proc.new_xquery_processor()
+    xquery.set_query_file(file_name=xquery_location)
+
+    xquery.set_parameter("decision_date", proc.make_string_value(render_data["decision_date"]))
+    xquery.set_parameter("transform_datetime", proc.make_string_value(render_data["transform_datetime"]))
+    xquery.set_parameter("court_code", proc.make_string_value(render_data["court_code"]))
+    xquery.set_parameter("title", proc.make_string_value(render_data["title"]))
+    xquery.set_parameter("year", proc.make_string_value(render_data["year"]))
+    xquery.set_parameter("court_url", proc.make_string_value(render_data["court_url"]))
+    xquery.set_parameter("court_full_name", proc.make_string_value(render_data["court_full_name"]))
+    xquery.set_parameter(
+        "case_numbers", proc.make_array([proc.make_string_value(x) for x in render_data["case_numbers"]])
+    )
+
+    builder = []
+    for party in render_data["parties"]:
+        builder.append(
+            proc.make_map({proc.make_string_value(key): proc.make_string_value(value) for key, value in party.items()})
+        )
+
+    xquery.set_parameter("parties", proc.make_array(builder))
+    return cast(bytes, xquery.run_query_to_string().encode("utf-8"))
