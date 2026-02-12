@@ -17,20 +17,7 @@ from dotenv import load_dotenv
 from caselawclient.models.utilities.aws import publish_documents
 from caselawclient.types import DocumentURIString
 
-load_dotenv(".env.staging")
 # Configuration
-
-UNPUBLISHED_BUCKET = os.environ["UNPUBLISHED_BUCKET"]
-PUBLISHED_BUCKET = os.environ["PUBLISHED_BUCKET"]
-SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
-CHECK_INTERVAL_SECONDS = int(os.environ.get("CHECK_INTERVAL_SECONDS", 30))
-MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
-DRY_RUN = bool(os.environ["DRY_RUN"])
-MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
-MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
-
-S3_CLIENT = boto3.client("s3", region_name="eu-west-2")
-SNS_CLIENT = boto3.client("sns", region_name="eu-west-2")
 
 
 def paginated_bucket(bucket_name) -> Iterable[str]:
@@ -346,4 +333,18 @@ def main():
 
 
 if __name__ == "__main__":
+    load_dotenv(".env.staging")
+
+    UNPUBLISHED_BUCKET = os.environ["UNPUBLISHED_BUCKET"]
+    PUBLISHED_BUCKET = os.environ["PUBLISHED_BUCKET"]
+    SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
+    CHECK_INTERVAL_SECONDS = int(os.environ.get("CHECK_INTERVAL_SECONDS", 30))
+    MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
+    DRY_RUN = bool(os.environ["DRY_RUN"])
+    MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
+    MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
+
+    S3_CLIENT = boto3.client("s3", region_name="eu-west-2")
+    SNS_CLIENT = boto3.client("sns", region_name="eu-west-2")
+
     main()
