@@ -340,7 +340,7 @@ if __name__ == "__main__":
     SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
     CHECK_INTERVAL_SECONDS = int(os.environ.get("CHECK_INTERVAL_SECONDS", 30))
     MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
-    DRY_RUN = bool(os.environ["DRY_RUN"])
+    DRY_RUN = os.environ.get("DRY_RUN", default="true").lower() != "false"
     MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
     MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
 
