@@ -23,6 +23,7 @@ from caselawclient.types import DocumentURIString
 def paginated_bucket(bucket_name) -> Iterable[str]:
     paginator = S3_CLIENT.get_paginator("list_objects_v2")
     for i, page in enumerate(paginator.paginate(Bucket=bucket_name)):
+        print(f"page {i}")
         for obj in page.get("Contents", []):
             yield obj["Key"]
         if i == BUCKET_LIMIT:
