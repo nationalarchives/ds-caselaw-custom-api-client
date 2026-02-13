@@ -60,7 +60,7 @@ def get_document_uris_and_files(bucket_name: str) -> dict[str, dict]:
             if key.endswith(".docx"):
                 uri_data[uri]["has_docx"] = True
 
-    print(f"  Found {len(uri_data)} document URIs")
+    print(f"  Found {len(uri_data)} Document URIs")
 
     with_docx_count = sum(1 for d in uri_data.values() if d["has_docx"])
     without_docx_count = len(uri_data) - with_docx_count
@@ -279,8 +279,8 @@ def main():
     print("Bulk Document Processing and Publishing")
     print("=" * 60)
     print(f"Mode: {'DRY RUN' if DRY_RUN else 'LIVE'}")
-    print(f"Unpublished Bucket: {UNPUBLISHED_BUCKET}")
-    print(f"Published Bucket: {PUBLISHED_BUCKET}")
+    print(f"Unpublished Bucket: {UNPUBLISHED_ASSET_BUCKET}")
+    print(f"Published Bucket: {PUBLISHED_ASSET_BUCKET}")
     print(f"SNS Topic: {SNS_TOPIC_ARN}")
 
     if DRY_RUN:
@@ -294,7 +294,7 @@ def main():
             print("Aborted.")
             return
 
-    uris_to_process, all_published_uris = get_published_uris_needing_processing(PUBLISHED_BUCKET)
+    uris_to_process, all_published_uris = get_published_uris_needing_processing(PUBLISHED_ASSET_BUCKET)
 
     if not uris_to_process:
         print("\nAll published documents are already processed!")
@@ -305,9 +305,9 @@ def main():
         print(f"\nLimiting to {MAX_DOCUMENTS} documents (out of {len(uris_to_process)} needing processing)")
         uris_to_process = set(list(uris_to_process)[:MAX_DOCUMENTS])
 
-    uri_files = trigger_processing(UNPUBLISHED_BUCKET, uris_to_process)
+    uri_files = trigger_processing(UNPUBLISHED_ASSET_BUCKET, uris_to_process)
 
-    processed_uris, failed_uris = wait_for_processing(UNPUBLISHED_BUCKET, uri_files)
+    processed_uris, failed_uris = wait_for_processing(UNPUBLISHED_ASSET_BUCKET, uri_files)
 
     if failed_uris:
         print(f"\n{len(failed_uris)} URIs failed to process or timed out")
@@ -335,8 +335,8 @@ def main():
 if __name__ == "__main__":
     load_dotenv(".env.staging")
 
-    UNPUBLISHED_BUCKET = os.environ["UNPUBLISHED_BUCKET"]
-    PUBLISHED_BUCKET = os.environ["PUBLISHED_BUCKET"]
+    UNPUBLISHED_ASSET_BUCKET = os.environ["UNPUBLISHED_ASSET_BUCKET"]
+    PUBLISHED_ASSET_BUCKET = os.environ["PUBLISHED_ASSET_BUCKET"]
     SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
     CHECK_INTERVAL_SECONDS = int(os.environ.get("CHECK_INTERVAL_SECONDS", 30))
     MAX_WAIT_MINUTES = int(os.environ.get("MAX_WAIT_MINUTES", 60))
