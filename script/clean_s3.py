@@ -22,9 +22,12 @@ from caselawclient.types import DocumentURIString
 
 def paginated_bucket(bucket_name) -> Iterable[str]:
     paginator = S3_CLIENT.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket_name):
+    for i, page in enumerate(paginator.paginate(Bucket=bucket_name)):
         for obj in page.get("Contents", []):
             yield obj["Key"]
+        if i == BUCKET_LIMIT:
+            print(f"Bucket limit of {BUCKET_LIMIT} reached, stopping pagination")
+            return
 
 
 def extract_uri_from_key(key: str) -> str | None:
@@ -333,7 +336,7 @@ def main():
 
 
 if __name__ == "__main__":
-    load_dotenv(".env.staging")
+    load_dotenv(".env")
 
     UNPUBLISHED_ASSET_BUCKET = os.environ["UNPUBLISHED_ASSET_BUCKET"]
     PUBLISHED_ASSET_BUCKET = os.environ["PUBLISHED_ASSET_BUCKET"]
@@ -343,7 +346,8 @@ if __name__ == "__main__":
     DRY_RUN = os.environ.get("DRY_RUN", default="true").lower() != "false"
     MAX_DOCUMENTS: int | None = int(os.environ.get("MAX_DOCUMENTS", default=-1) or -1)
     MAX_DOCUMENTS = MAX_DOCUMENTS if MAX_DOCUMENTS != -1 else None
-
+    BUCKET_LIMIT: int | None = int(os.environ.get("BUCKET_LIMIT", default=-1) or -1)
+    BUCKET_LIMIT = BUCKET_LIMIT if BUCKET_LIMIT != -1 else None
     S3_CLIENT = boto3.client("s3", region_name="eu-west-2")
     SNS_CLIENT = boto3.client("sns", region_name="eu-west-2")
 
