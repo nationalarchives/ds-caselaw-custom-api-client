@@ -1,10 +1,8 @@
 import os
-from pathlib import Path
 from typing import Literal, cast
 
 from ds_caselaw_utils.courts import courts
 from ds_caselaw_utils.types import CourtCode
-from jinja2 import StrictUndefined, Template
 from saxonche import PySaxonProcessor
 from typing_extensions import TypedDict
 
@@ -36,20 +34,6 @@ def add_other_stub_fields(editor_data: EditorStubData) -> RendererStubData:
         "court_url": court.identifier_iri,
         "court_full_name": court.long_name,
     }
-
-
-def render_stub_xml_old(editor_data: EditorStubData) -> bytes:
-    render_data = add_other_stub_fields(editor_data)
-    from caselawclient.Client import ROOT_DIR
-
-    judgment_path = Path(ROOT_DIR) / "models" / "documents" / "templates" / "judgment.xml"
-
-    with (judgment_path).open("r") as f:
-        template = f.read()
-
-    rendered = bytes(Template(template, undefined=StrictUndefined).render(render_data).encode("utf-8"))
-
-    return rendered
 
 
 def render_stub_xml(editor_data: EditorStubData) -> bytes:
