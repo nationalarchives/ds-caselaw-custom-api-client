@@ -377,3 +377,66 @@ class TestSearchResultMeta:
         meta = SearchResultMetadata(node, last_modified="foo")
 
         assert meta.submission_datetime == datetime.datetime.min
+
+
+class TestSearchResultMetadataSubmissionDatetime:
+    def test_submission_datetime_TDR_only(self):
+        """
+        GIVEN an XML node and last_modified string data
+        WHEN SearchResultMetadata is initialized with them
+        THEN all properties are set correctly
+        """
+        node = etree.fromstring(
+            "<property-results>"
+            "<property-result>"
+            "<transfer-received-at>1111-11-11T11:11:11Z</transfer-received-at>"
+            "</property-result>"
+            "</property-results>",
+        )
+        meta = SearchResultMetadata(node, last_modified="test_last_modified")
+        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11)
+
+    def test_submission_datetime_both(self):
+        """
+        GIVEN an XML node and last_modified string data
+        WHEN SearchResultMetadata is initialized with them
+        THEN all properties are set correctly
+        """
+        node = etree.fromstring(
+            "<property-results>"
+            "<property-result>"
+            "<email-received-at>2222-02-22T22:22:22Z</email-received-at>"
+            "<transfer-received-at>1111-11-11T11:11:11Z</transfer-received-at>"
+            "</property-result>"
+            "</property-results>",
+        )
+        meta = SearchResultMetadata(node, last_modified="test_last_modified")
+        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11)
+
+    def test_submission_datetime_email(self):
+        """
+        GIVEN an XML node and last_modified string data
+        WHEN SearchResultMetadata is initialized with them
+        THEN all properties are set correctly
+        """
+        node = etree.fromstring(
+            "<property-results>"
+            "<property-result>"
+            "<email-received-at>2222-02-22T22:22:22Z</email-received-at>"
+            "</property-result>"
+            "</property-results>",
+        )
+        meta = SearchResultMetadata(node, last_modified="test_last_modified")
+        assert meta.submission_datetime == datetime.datetime(2222, 2, 22, 22, 22, 22)
+
+    def test_submission_datetime_neither(self):
+        """
+        GIVEN an XML node and last_modified string data
+        WHEN SearchResultMetadata is initialized with them
+        THEN all properties are set correctly
+        """
+        node = etree.fromstring(
+            "<property-results><property-result></property-result></property-results>",
+        )
+        meta = SearchResultMetadata(node, last_modified="test_last_modified")
+        assert meta.submission_datetime == datetime.datetime(1, 1, 1, 0, 0, 0)
