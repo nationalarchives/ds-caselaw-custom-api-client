@@ -9,7 +9,8 @@ let $properties := (
     fn:QName("", 'source-email'),
     fn:QName("", 'transfer-consignment-reference'),
     fn:QName("", 'transfer-received-at'),
-    fn:QName("", 'published')
+    fn:QName("", 'published'),
+    fn:QName("", 'email-received-at')
 )
 
 return <property-results>{
