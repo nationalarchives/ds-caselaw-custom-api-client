@@ -114,15 +114,15 @@ def generate_docx_key(uri: DocumentURIString) -> str:
     return f"{uri}/{uri.replace('/', '_')}.docx"
 
 
-def generate_docx_url(uri: DocumentURIString) -> str:
+def generate_docx_url(uri: DocumentURIString, force_download: bool = True) -> str:
     """from a canonical caselaw URI (eat/2022/1) return a signed S3 link for the front end"""
-    return generate_signed_asset_url(generate_docx_key(uri), force_download=True)
+    return generate_signed_asset_url(generate_docx_key(uri), force_download=force_download)
 
 
-def generate_pdf_url(uri: DocumentURIString) -> str:
+def generate_pdf_url(uri: DocumentURIString, force_download: bool = False) -> str:
     key = f"{uri}/{uri.replace('/', '_')}.pdf"
 
-    return generate_signed_asset_url(key, force_download=True)
+    return generate_signed_asset_url(key, force_download=force_download)
 
 
 def delete_from_bucket(uri: DocumentURIString, bucket: str) -> None:

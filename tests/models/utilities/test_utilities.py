@@ -127,14 +127,19 @@ class TestSignedLinks:
         assert signed_link.startswith("https://s3.amazonaws.com/MY_BUCKET/key.png?")
         assert "response-content-disposition" not in signed_link
 
-    def test_signed_link_docx(self):
+    def test_signed_link_docx_default(self):
         signed_link = generate_docx_url(DocumentURIString("d-a1"))
         assert signed_link.startswith(
             "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.docx?response-content-disposition=attachment%3Bfilename%3Dd-a1.docx&"
         )
 
-    def test_signed_link_pdf(self):
+    def test_signed_link_pdf_default(self):
         signed_link = generate_pdf_url(DocumentURIString("d-a1"))
+        assert signed_link.startswith("https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.pdf?")
+        assert "response-content-disposition" not in signed_link
+
+    def test_signed_link_pdf_force_download(self):
+        signed_link = generate_pdf_url(DocumentURIString("d-a1"), force_download=True)
         assert signed_link.startswith(
             "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.pdf?response-content-disposition=attachment%3Bfilename%3Dd-a1.pdf&"
         )
