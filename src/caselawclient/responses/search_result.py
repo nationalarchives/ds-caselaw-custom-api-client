@@ -113,15 +113,11 @@ class SearchResultMetadata:
         """
         :return: The submission datetime
         """
-
-        extracted_submission_datetime = self._get_xpath_match_string(
-            "//transfer-received-at/text()",
-        )
-        return (
-            datetime.strptime(extracted_submission_datetime, "%Y-%m-%dT%H:%M:%SZ")
-            if extracted_submission_datetime
-            else datetime.min
-        )
+        if tdr_time := self._get_xpath_match_string("//transfer-received-at/text()"):
+            return datetime.strptime(tdr_time, "%Y-%m-%dT%H:%M:%SZ")
+        if email_time := self._get_xpath_match_string("//email-received-at/text()"):
+            return datetime.strptime(email_time, "%Y-%m-%dT%H:%M:%SZ")
+        return datetime.min
 
     @property
     def editor_status(
