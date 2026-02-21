@@ -37,7 +37,7 @@ coverage = "7.13.4"
 pytest = "9.0.2"
 pytest-cov = "7.0.0"
 beautifulsoup4 = "4.14.3"
-responses = "0.25.8"
+responses = "0.26.0"
 python-dotenv = "1.2.1"
 time-machine = "3.2.0"
 moto = {version = "5.1.21", extras = ["all"]}
