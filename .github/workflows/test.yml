@@ -66,14 +66,14 @@ jobs:
         run: poetry run pytest --cov --junitxml=junit.xml -o junit_family=legacy --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
         if: ${{ matrix.python-version == '3.14' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # zizmor: ignore[secrets-outside-env]
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
         with:
           report_type: test_results
           token: ${{ secrets.CODECOV_TOKEN }} # zizmor: ignore[secrets-outside-env]
