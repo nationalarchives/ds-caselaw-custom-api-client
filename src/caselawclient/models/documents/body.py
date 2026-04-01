@@ -219,3 +219,107 @@ class DocumentBody:
 
     def apply_xslt(self, xslt_filename: str, **values: str) -> bytes:
         return self._xml.apply_xslt(xslt_filename, **values)
+
+    def set_name(self, name: str) -> None:
+        """
+        Set the document name (FRBRname/@value in metadata).
+
+        Clears cached `name` property after mutation.
+
+        :param name: The new name value
+        """
+        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
+        try:
+            self._xml.set_xpath_attribute(xpath, "value", name, DEFAULT_NAMESPACES)
+        except ValueError:
+            # Element doesn't exist, create it
+            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+            elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRname", DEFAULT_NAMESPACES)
+            elem.set("value", name)
+
+        # Invalidate cached property
+        self.__dict__.pop("name", None)
+
+    def set_date(self, date: str) -> None:
+        """
+        Set the document date (FRBRdate/@date in metadata).
+
+        Clears cached `document_date_as_string` and `document_date_as_date` properties after mutation.
+
+        :param date: The new date value (e.g., "2023-01-15")
+        """
+        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate"
+        try:
+            self._xml.set_xpath_attribute(xpath, "date", date, DEFAULT_NAMESPACES)
+        except ValueError:
+            # Element doesn't exist, create it
+            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+            elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRdate", DEFAULT_NAMESPACES)
+            elem.set("date", date)
+
+        # Invalidate cached properties
+        self.__dict__.pop("document_date_as_string", None)
+        self.__dict__.pop("document_date_as_date", None)
+
+    def set_court(self, court: str) -> None:
+        """
+        Set the court (uk:court in proprietary metadata).
+
+        Clears cached `court` and `court_and_jurisdiction_identifier_string` properties after mutation.
+
+        :param court: The new court value
+        """
+        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court"
+        try:
+            nodes = self._xml.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
+            if nodes:
+                nodes[0].text = court
+        except (ValueError, IndexError):
+            # Element doesn't exist, create it
+            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+            elem = self._xml.get_or_create_element(parent_xpath, "uk:court", DEFAULT_NAMESPACES)
+            elem.text = court
+
+        # Invalidate cached properties
+        self.__dict__.pop("court", None)
+
+    def set_jurisdiction(self, jurisdiction: str) -> None:
+        """
+        Set the jurisdiction (uk:jurisdiction in proprietary metadata).
+
+        Clears cached `jurisdiction` and `court_and_jurisdiction_identifier_string` properties after mutation.
+
+        :param jurisdiction: The new jurisdiction value
+        """
+        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction"
+        try:
+            nodes = self._xml.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
+            if nodes:
+                nodes[0].text = jurisdiction
+        except (ValueError, IndexError):
+            # Element doesn't exist, create it
+            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+            elem = self._xml.get_or_create_element(parent_xpath, "uk:jurisdiction", DEFAULT_NAMESPACES)
+            elem.text = jurisdiction
+
+        # Invalidate cached properties
+        self.__dict__.pop("jurisdiction", None)
+
+    def set_court_and_jurisdiction(self, combined: str) -> None:
+        """
+        Set court and jurisdiction from a combined string.
+
+        Parses a 'court/jurisdiction' string and sets both values separately.
+        If no slash present, sets court and clears jurisdiction.
+
+        :param combined: Combined value like "UK Supreme Court/Civil"
+        """
+        if "/" in combined:
+            import re
+
+            court, jurisdiction = re.split(r"\s*/\s*", combined)
+            self.set_court(court)
+            self.set_jurisdiction(jurisdiction)
+        else:
+            self.set_court(combined)
+            self.set_jurisdiction("")
