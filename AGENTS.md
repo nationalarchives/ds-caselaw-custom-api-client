@@ -11,6 +11,6 @@ The process for committing in this repository is:
 
 ## Testing
 
-Each commit should include a suite of tests for changes made.
+We prefer test-driven development. Each commit should include a suite of tests for changes made, covering all new features. Where changes are made tests should include a regression test. The entire test suite should be run prior to committing.
 
 Tests can be run using `poetry run pytest`

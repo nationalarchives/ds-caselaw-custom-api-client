@@ -171,12 +171,21 @@ class TestMove:
         ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
         fake_api_client = MagicMock()
         fake_api_client.document_exists.return_value = False
+
+        # Mock the document and its body for the new API
+        mock_doc = MagicMock()
+        mock_body = MagicMock()
+        mock_doc.body = mock_body
+        fake_api_client.get_document_by_uri.return_value = mock_doc
+
         move.update_document_uri(DocumentURIString("old/uri"), NeutralCitationString("[2023] EAT 1"), fake_api_client)
 
         fake_api_client.copy_document.assert_called_with("old/uri", "new/uri")
         fake_metadata.assert_called_with("old/uri", "new/uri", fake_api_client)
         fake_copy.assert_called_with("old/uri", "new/uri")
-        fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
+        fake_api_client.get_document_by_uri.assert_called_with("new/uri")
+        mock_body.set_this_uri.assert_called_with("new/uri")
+        mock_doc.save.assert_called()
         fake_api_client.delete_judgment.assert_called_with("old/uri")
 
 

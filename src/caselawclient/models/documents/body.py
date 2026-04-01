@@ -1,6 +1,7 @@
 import datetime
 import os
 import warnings
+from contextlib import suppress
 from functools import cache, cached_property
 from typing import Optional
 
@@ -332,3 +333,74 @@ class DocumentBody:
         else:
             self.set_court(combined)
             self.set_jurisdiction("")
+
+    def set_this_uri(self, uri: str) -> None:
+        """
+        Update the FRBR URIs to reflect the document's location.
+
+        Sets three related URIs based on the provided URI:
+        - FRBRWork: https://caselaw.nationalarchives.gov.uk/id/{uri}
+        - FRBRExpression: https://caselaw.nationalarchives.gov.uk/{uri}
+        - FRBRManifestation: https://caselaw.nationalarchives.gov.uk/{uri}/data.xml
+
+        This is typically called when a document is moved to a new location (e.g., due to corrected citation).
+
+        :param uri: The document URI without leading slash (e.g., "ewca/civ/2024/123")
+        """
+        uri_stripped = uri.lstrip("/")
+
+        # Build the three URI variants
+        work_uri = f"https://caselaw.nationalarchives.gov.uk/id/{uri_stripped}"
+        expression_uri = f"https://caselaw.nationalarchives.gov.uk/{uri_stripped}"
+        manifestation_uri = f"https://caselaw.nationalarchives.gov.uk/{uri_stripped}/data.xml"
+
+        # Update FRBRWork URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRuri",
+                "value",
+                work_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRthis",
+                "value",
+                work_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        # Update FRBRExpression URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/akn:FRBRuri",
+                "value",
+                expression_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/akn:FRBRthis",
+                "value",
+                expression_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        # Update FRBRManifestation URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRuri",
+                "value",
+                manifestation_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRthis",
+                "value",
+                manifestation_uri,
+                DEFAULT_NAMESPACES,
+            )
