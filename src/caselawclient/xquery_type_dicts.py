@@ -239,6 +239,7 @@ class SetPropertyAsNodeDict(MarkLogicAPIDict):
 # update_document.xqy
 class UpdateDocumentDict(MarkLogicAPIDict):
     annotation: str
+    from_version: Optional[int]
     judgment: str
     uri: MarkLogicDocumentURIString
 

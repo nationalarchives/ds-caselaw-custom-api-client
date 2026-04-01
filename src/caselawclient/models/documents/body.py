@@ -38,6 +38,15 @@ class DocumentBody:
     def get_xpath_nodes(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[etree._Element]:
         return self._xml.get_xpath_nodes(xpath, namespaces)
 
+    @property
+    def xml_tree(self) -> etree._Element:
+        """
+        Return the underlying XML tree for persistence operations.
+
+        :return: The lxml Element tree
+        """
+        return self._xml.xml_as_tree
+
     @cached_property
     def name(self) -> str:
         return self.get_xpath_match_string(

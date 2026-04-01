@@ -7,7 +7,6 @@ import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree.ElementTree import Element
 
 import environ
 import requests
@@ -33,6 +32,7 @@ from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
+from caselawclient.xml_helpers import Element
 from caselawclient.xquery_type_dicts import (
     CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
@@ -611,6 +611,7 @@ class MarklogicApiClient:
         document_uri: DocumentURIString,
         document_xml: Element,
         annotation: VersionAnnotation,
+        from_version: Optional[int] = None,
     ) -> requests.Response:
         """
         Updates an existing XML document in MarkLogic with a new version.
@@ -620,6 +621,10 @@ class MarklogicApiClient:
         :param document_uri: The URI of the document to update
         :param document_xml: The new XML content of the document
         :param annotation: Annotations to record alongside this version
+        :param from_version: Optional version number for optimistic locking. If provided,
+                            the update will only succeed if the document's current version
+                            matches this number. If there's a mismatch, VersionMismatchError
+                            will be raised.
 
         :return: The response object from MarkLogic
         """
@@ -634,6 +639,7 @@ class MarklogicApiClient:
             "uri": uri,
             "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "from_version": from_version,
         }
 
         return self._send_to_eval(vars, "update_document.xqy")

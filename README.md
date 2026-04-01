@@ -16,6 +16,45 @@ This package is published on PyPI: https://pypi.org/project/ds-caselaw-marklogic
 
 You can find documentation of the client class and available methods [here](https://nationalarchives.github.io/ds-caselaw-custom-api-client).
 
+### Modifying Document Metadata
+
+To modify document metadata (name, date, court, jurisdiction, etc.), use in-memory mutations followed by an explicit save:
+
+```python
+# Load a document
+doc = api_client.get_document_by_uri(uri)
+
+# Modify metadata in-memory
+doc.set_name("New Document Name")
+doc.set_date("2024-01-15")
+doc.set_court("Court of Appeal")
+
+# Persist changes to MarkLogic
+doc.save()
+```
+
+The `save()` method uses MarkLogic's atomic `dls:document-checkout-update-checkin` operation to ensure data consistency and automatically creates a new version.
+
+#### Optimistic Locking
+
+To prevent lost updates when documents may be modified concurrently, use the `from_version` parameter:
+
+```python
+doc = api_client.get_document_by_uri(uri)
+current_version = doc.version_number
+
+# ... time passes, other processes might modify the document ...
+
+doc.set_name("Updated Name")
+try:
+    doc.save(from_version=current_version)
+except VersionMismatchError:
+    # Document was modified elsewhere; fetch fresh and retry
+    doc = api_client.get_document_by_uri(uri)
+    doc.set_name("Updated Name")
+    doc.save()
+```
+
 ## Testing
 
 To run the test suite:
