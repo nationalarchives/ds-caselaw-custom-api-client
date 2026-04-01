@@ -27,6 +27,10 @@
                     <FRBRformat value="application/xml" />
                 </FRBRManifestation>
             </identification>
+            <proprietary>
+                <uk:court>Original Court</uk:court>
+                <uk:jurisdiction>Original Jurisdiction</uk:jurisdiction>
+            </proprietary>
         </meta>
         <header>
             <p><img src="image1.png" style="width:99.05pt;height:99.05pt"/></p>
