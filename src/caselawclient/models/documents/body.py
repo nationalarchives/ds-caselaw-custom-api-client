@@ -238,14 +238,9 @@ class DocumentBody:
 
         :param name: The new name value
         """
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
-        try:
-            self._xml.set_xpath_attribute(xpath, "value", name, DEFAULT_NAMESPACES)
-        except ValueError:
-            # Element doesn't exist, create it
-            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
-            elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRname", DEFAULT_NAMESPACES)
-            elem.set("value", name)
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+        elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRname", DEFAULT_NAMESPACES)
+        elem.set("value", name)
 
         # Invalidate cached property
         self.__dict__.pop("name", None)
@@ -258,14 +253,9 @@ class DocumentBody:
 
         :param date: The new date value (e.g., "2023-01-15")
         """
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate"
-        try:
-            self._xml.set_xpath_attribute(xpath, "date", date, DEFAULT_NAMESPACES)
-        except ValueError:
-            # Element doesn't exist, create it
-            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
-            elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRdate", DEFAULT_NAMESPACES)
-            elem.set("date", date)
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+        elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRdate", DEFAULT_NAMESPACES)
+        elem.set("date", date)
 
         # Invalidate cached properties
         self.__dict__.pop("document_date_as_string", None)
@@ -279,16 +269,9 @@ class DocumentBody:
 
         :param court: The new court value
         """
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court"
-        try:
-            nodes = self._xml.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
-            if nodes:
-                nodes[0].text = court
-        except (ValueError, IndexError):
-            # Element doesn't exist, create it
-            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
-            elem = self._xml.get_or_create_element(parent_xpath, "uk:court", DEFAULT_NAMESPACES)
-            elem.text = court
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+        elem = self._xml.get_or_create_element(parent_xpath, "uk:court", DEFAULT_NAMESPACES)
+        elem.text = court
 
         # Invalidate cached properties
         self.__dict__.pop("court", None)
@@ -301,16 +284,9 @@ class DocumentBody:
 
         :param jurisdiction: The new jurisdiction value
         """
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction"
-        try:
-            nodes = self._xml.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
-            if nodes:
-                nodes[0].text = jurisdiction
-        except (ValueError, IndexError):
-            # Element doesn't exist, create it
-            parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
-            elem = self._xml.get_or_create_element(parent_xpath, "uk:jurisdiction", DEFAULT_NAMESPACES)
-            elem.text = jurisdiction
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+        elem = self._xml.get_or_create_element(parent_xpath, "uk:jurisdiction", DEFAULT_NAMESPACES)
+        elem.text = jurisdiction
 
         # Invalidate cached properties
         self.__dict__.pop("jurisdiction", None)
