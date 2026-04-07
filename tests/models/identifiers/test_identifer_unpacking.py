@@ -32,6 +32,7 @@ class TestIdentifierUnpacking(unittest.TestCase):
 
         unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
 
+        assert unpacked_identifier is not None
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.uuid == "2d80bf1d-e3ea-452f-965c-041f4399f2dd"
         assert unpacked_identifier.value == "TEST-123"
@@ -49,6 +50,7 @@ class TestIdentifierUnpacking(unittest.TestCase):
 
         unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
 
+        assert unpacked_identifier is not None
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.deprecated is True
 
@@ -64,6 +66,7 @@ class TestIdentifierUnpacking(unittest.TestCase):
 
         unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
 
+        assert unpacked_identifier is not None
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.deprecated is False
 
@@ -80,6 +83,7 @@ class TestIdentifierUnpacking(unittest.TestCase):
 
         unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
 
+        assert unpacked_identifier is not None
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.deprecated is False
 
@@ -136,6 +140,7 @@ class TestIdentifierPackUnpackRoundTrip:
 
         unpacked_identifier = unpack_an_identifier_from_etree(xml_tree)
 
+        assert unpacked_identifier is not None
         assert type(unpacked_identifier) is TestIdentifier
         assert unpacked_identifier.uuid == original_identifier.uuid
         assert unpacked_identifier.value == "TEST-123"

@@ -44,7 +44,7 @@ repos:
         id: mypy
         name: mypy-src
     repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.0
   - hooks:
       - language: python
         additional_dependencies:
@@ -59,7 +59,7 @@ repos:
         id: mypy
         name: mypy-tests
     repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.0
   - hooks:
       - id: prettier
         types_or:
