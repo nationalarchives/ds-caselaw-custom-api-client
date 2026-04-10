@@ -34,7 +34,7 @@ repos:
           - types-requests==2.33.0.20260402
           - boto3-stubs[s3,sns]==1.42.85
           - types-python-dateutil==2.9.0.20260408
-          - types-pytz==2026.1.1.20260402
+          - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.1.1
           - pydantic==2.12.5
@@ -51,7 +51,7 @@ repos:
           - types-requests==2.33.0.20260402
           - boto3-stubs[s3,sns]==1.42.85
           - types-python-dateutil==2.9.0.20260408
-          - types-pytz==2026.1.1.20260402
+          - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.1.1
           - pydantic==2.12.5
