@@ -3,11 +3,9 @@ import json
 import logging
 import os
 import re
-import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree.ElementTree import Element
 
 import environ
 import requests
@@ -33,6 +31,7 @@ from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
+from caselawclient.xml_helpers import Element
 from caselawclient.xquery_type_dicts import (
     CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
@@ -455,101 +454,6 @@ class MarklogicApiClient:
             search_query=search_query,
         ).decode(encoding="utf-8")
 
-    def set_document_name(
-        self,
-        document_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(document_uri)
-        vars: query_dicts.SetMetadataNameDict = {"uri": uri, "content": content}
-        return self._send_to_eval(vars, "set_metadata_name.xqy")
-
-    def set_judgment_date(
-        self,
-        judgment_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        warnings.warn(
-            "set_judgment_date() is deprecated, use set_document_work_expression_date()",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.set_document_work_expression_date(judgment_uri, content)
-
-    def set_document_work_expression_date(
-        self,
-        document_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(document_uri)
-        vars: query_dicts.SetMetadataWorkExpressionDateDict = {
-            "uri": uri,
-            "content": content,
-        }
-
-        return self._send_to_eval(vars, "set_metadata_work_expression_date.xqy")
-
-    def set_judgment_citation(
-        self,
-        judgment_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        vars: query_dicts.SetMetadataCitationDict = {
-            "uri": uri,
-            "content": content.strip(),
-        }
-
-        return self._send_to_eval(vars, "set_metadata_citation.xqy")
-
-    def set_document_court(
-        self,
-        document_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(document_uri)
-        vars: query_dicts.SetMetadataCourtDict = {"uri": uri, "content": content}
-
-        return self._send_to_eval(vars, "set_metadata_court.xqy")
-
-    def set_document_jurisdiction(
-        self,
-        document_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(document_uri)
-        vars: query_dicts.SetMetadataJurisdictionDict = {"uri": uri, "content": content}
-        return self._send_to_eval(vars, "set_metadata_jurisdiction.xqy")
-
-    def set_document_court_and_jurisdiction(
-        self,
-        document_uri: DocumentURIString,
-        content: str,
-    ) -> requests.Response:
-        if "/" in content:
-            court, jurisdiction = re.split("\\s*/\\s*", content)
-            self.set_document_court(document_uri, court)
-            return self.set_document_jurisdiction(document_uri, jurisdiction)
-        self.set_document_court(document_uri, content)
-        return self.set_document_jurisdiction(document_uri, "")
-
-    def set_judgment_this_uri(
-        self,
-        judgment_uri: DocumentURIString,
-    ) -> requests.Response:
-        uri = self._format_uri_for_marklogic(judgment_uri)
-        content_with_id = f"https://caselaw.nationalarchives.gov.uk/id/{judgment_uri.lstrip('/')}"
-        content_without_id = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}"
-        content_with_xml = f"https://caselaw.nationalarchives.gov.uk/{judgment_uri.lstrip('/')}/data.xml"
-        vars: query_dicts.SetMetadataThisUriDict = {
-            "uri": uri,
-            "content_with_id": content_with_id,
-            "content_without_id": content_without_id,
-            "content_with_xml": content_with_xml,
-        }
-
-        return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
-
     def save_locked_judgment_xml(
         self,
         judgment_uri: DocumentURIString,
@@ -611,6 +515,7 @@ class MarklogicApiClient:
         document_uri: DocumentURIString,
         document_xml: Element,
         annotation: VersionAnnotation,
+        from_version: Optional[int] = None,
     ) -> requests.Response:
         """
         Updates an existing XML document in MarkLogic with a new version.
@@ -620,6 +525,10 @@ class MarklogicApiClient:
         :param document_uri: The URI of the document to update
         :param document_xml: The new XML content of the document
         :param annotation: Annotations to record alongside this version
+        :param from_version: Optional version number for optimistic locking. If provided,
+                            the update will only succeed if the document's current version
+                            matches this number. If there's a mismatch, VersionMismatchError
+                            will be raised.
 
         :return: The response object from MarkLogic
         """
@@ -634,6 +543,7 @@ class MarklogicApiClient:
             "uri": uri,
             "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "from_version": from_version,
         }
 
         return self._send_to_eval(vars, "update_document.xqy")
