@@ -45,7 +45,15 @@ When making a change, update the [changelog](CHANGELOG.md) using the
 [Keep a Changelog 1.0.0](https://keepachangelog.com/en/1.0.0/) format. Pull
 requests should not be merged before any relevant updates are made.
 
+## Deployment
+
+<!-- last_review: 2026-04-13 -->
+
+This repository will auto-deploy [documentation](https://nationalarchives.github.io/ds-caselaw-custom-api-client) to GitHub Pages when changes are made to `main`.
+
 ## Releasing
+
+<!-- last_review: 2026-04-13 -->
 
 When making a new release, update the [changelog](CHANGELOG.md) in the release
 pull request.
