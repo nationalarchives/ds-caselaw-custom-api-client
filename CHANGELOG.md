@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+##  Unreleased
+
+- Add `assert_is_publishable` to give reasons for `CannotPublishUnpublishableDocument`
+
 ## v44.4.5 (2026-02-24)
 
 - Ensure PDFs aren't force-downloaded in Edge (content-disposition was wrong)
@@ -1095,7 +1099,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Release 5.1.2]
 
-** This release had a bug where the Editor UI was unusable. **
+**This release had a bug where the Editor UI was unusable.**
 
 - Ensure Work Date and Court values are returned as text
 

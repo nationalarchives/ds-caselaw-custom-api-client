@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from caselawclient.models.documents import Document, DocumentURIString
+from caselawclient.models.documents.exceptions import CannotPublishUnpublishableDocument
 
 
 class TestDocumentValidation:
@@ -154,3 +155,31 @@ class TestDocumentValidation:
                 "The court for this document is not valid",
             ],
         )
+
+    def test_assert_is_publishable_raises_error_if_single_issue(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.has_valid_court = False
+        document.has_name = True
+        document.has_unique_content_hash = True
+
+        msg = "^Document test/1234 cannot be published due to the following issues: The court for this document is not valid$"
+        with pytest.raises(CannotPublishUnpublishableDocument, match=msg):
+            document.assert_is_publishable()
+
+    def test_assert_is_publishable_raises_error_if_multiple_issues(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.has_valid_court = False
+        document.has_name = True
+        document.has_unique_content_hash = False
+
+        msg = "^Document test/1234 cannot be published due to the following issues: The court for this document is not valid, There is another document with identical content$"
+        with pytest.raises(CannotPublishUnpublishableDocument, match=msg):
+            document.assert_is_publishable()
+
+    def test_assert_is_publishable_does_nothing_if_no_issues(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.has_valid_court = True
+        document.has_name = True
+        document.has_unique_content_hash = True
+
+        document.assert_is_publishable()  # doesn't raise an exception

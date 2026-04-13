@@ -320,6 +320,19 @@ class Document:
         # An empty list (which is falsy) therefore means the judgment can be published safely.
         return not self.validation_failure_messages
 
+    def assert_is_publishable(self) -> None:
+        """
+        Assert that this document is in a state where it can be published, and raise an exception if not.
+
+        :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
+        such cannot be published.
+        """
+        if not self.is_publishable:
+            raise CannotPublishUnpublishableDocument(
+                f"{self.document_noun.capitalize()} {self.uri} cannot be published due to the following issues: "
+                + ", ".join(self.validation_failure_messages),
+            )
+
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:
         """
@@ -479,8 +492,7 @@ class Document:
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
-        if not self.is_publishable:
-            raise CannotPublishUnpublishableDocument
+        self.assert_is_publishable()
 
         ## Make sure the document has an FCLID
         self.assign_fclid_if_missing()
