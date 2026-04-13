@@ -48,7 +48,11 @@ def update_document_uri(
         api_client.copy_document(source_uri, new_uri)
         set_metadata(source_uri, new_uri, api_client)
         copy_assets(source_uri, new_uri)
-        api_client.set_judgment_this_uri(new_uri)
+
+        # Update the document's this_uri to reflect the new location
+        doc = api_client.get_document_by_uri(new_uri)
+        doc.body.set_this_uri(new_uri)
+        doc.save()
     except MarklogicAPIError as e:
         raise MoveJudgmentError(
             f"Failure when attempting to copy judgment from {source_uri} to {new_uri}: {e}",

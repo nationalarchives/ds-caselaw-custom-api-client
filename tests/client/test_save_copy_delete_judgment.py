@@ -42,6 +42,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         "payload": {"test_payload": True},
                     },
                 ),
+                "from_version": None,
             }
             self.client.update_document_xml(
                 uri,

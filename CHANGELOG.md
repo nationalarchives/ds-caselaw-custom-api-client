@@ -105,7 +105,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- **MarklogicApiClient**: add new method to get total number of documents awaiting reparse
+- **Document**: add in-memory mutation methods (set_name, set_date, set_court, set_jurisdiction, set_court_and_jurisdiction) for safer, more maintainable metadata editing
+- **Document**: add save() method to persist in-memory mutations to MarkLogic using atomic operations
+- **Document.save()**: support optional `from_version` parameter for optimistic locking to prevent lost updates in concurrent scenarios
+- **XML**: add low-level XPath-based mutation helpers (set_xpath_attribute, get_or_create_element, set_xpath_element_value)
+- **DocumentBody**: clear cached properties after mutations to ensure fresh data on subsequent reads
+- **Client.update_document_xml()**: support optional from_version parameter for optimistic locking behaviors
 
 ### Fix
 

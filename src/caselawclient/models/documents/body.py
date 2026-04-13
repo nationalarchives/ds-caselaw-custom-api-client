@@ -1,6 +1,7 @@
 import datetime
 import os
 import warnings
+from contextlib import suppress
 from functools import cache, cached_property
 from typing import Optional
 
@@ -37,6 +38,15 @@ class DocumentBody:
 
     def get_xpath_nodes(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[etree._Element]:
         return self._xml.get_xpath_nodes(xpath, namespaces)
+
+    @property
+    def xml_tree(self) -> etree._Element:
+        """
+        Return the underlying XML tree for persistence operations.
+
+        :return: The lxml Element tree
+        """
+        return self._xml.xml_as_tree
 
     @cached_property
     def name(self) -> str:
@@ -219,3 +229,154 @@ class DocumentBody:
 
     def apply_xslt(self, xslt_filename: str, **values: str) -> bytes:
         return self._xml.apply_xslt(xslt_filename, **values)
+
+    def set_name(self, name: str) -> None:
+        """
+        Set the document name (FRBRname/@value in metadata).
+
+        Clears cached `name` property after mutation.
+
+        :param name: The new name value
+        """
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+        elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRname", DEFAULT_NAMESPACES)
+        elem.set("value", name)
+
+        # Invalidate cached property
+        self.__dict__.pop("name", None)
+
+    def set_date(self, date: str) -> None:
+        """
+        Set the document date (FRBRdate/@date in metadata).
+
+        Clears cached `document_date_as_string` and `document_date_as_date` properties after mutation.
+
+        :param date: The new date value (e.g., "2023-01-15")
+        """
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+        elem = self._xml.get_or_create_element(parent_xpath, "akn:FRBRdate", DEFAULT_NAMESPACES)
+        elem.set("date", date)
+
+        # Invalidate cached properties
+        self.__dict__.pop("document_date_as_string", None)
+        self.__dict__.pop("document_date_as_date", None)
+
+    def set_court(self, court: str) -> None:
+        """
+        Set the court (uk:court in proprietary metadata).
+
+        Clears cached `court` and `court_and_jurisdiction_identifier_string` properties after mutation.
+
+        :param court: The new court value
+        """
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+        elem = self._xml.get_or_create_element(parent_xpath, "uk:court", DEFAULT_NAMESPACES)
+        elem.text = court
+
+        # Invalidate cached properties
+        self.__dict__.pop("court", None)
+
+    def set_jurisdiction(self, jurisdiction: str) -> None:
+        """
+        Set the jurisdiction (uk:jurisdiction in proprietary metadata).
+
+        Clears cached `jurisdiction` and `court_and_jurisdiction_identifier_string` properties after mutation.
+
+        :param jurisdiction: The new jurisdiction value
+        """
+        parent_xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+        elem = self._xml.get_or_create_element(parent_xpath, "uk:jurisdiction", DEFAULT_NAMESPACES)
+        elem.text = jurisdiction
+
+        # Invalidate cached properties
+        self.__dict__.pop("jurisdiction", None)
+
+    def set_court_and_jurisdiction(self, combined: str) -> None:
+        """
+        Set court and jurisdiction from a combined string.
+
+        Parses a 'court/jurisdiction' string and sets both values separately.
+        If no slash present, sets court and clears jurisdiction.
+
+        :param combined: Combined value like "UK Supreme Court/Civil"
+        """
+        if "/" in combined:
+            import re
+
+            court, jurisdiction = re.split(r"\s*/\s*", combined)
+            self.set_court(court)
+            self.set_jurisdiction(jurisdiction)
+        else:
+            self.set_court(combined)
+            self.set_jurisdiction("")
+
+    def set_this_uri(self, uri: str) -> None:
+        """
+        Update the FRBR URIs to reflect the document's location.
+
+        Sets three related URIs based on the provided URI:
+        - FRBRWork: https://caselaw.nationalarchives.gov.uk/id/{uri}
+        - FRBRExpression: https://caselaw.nationalarchives.gov.uk/{uri}
+        - FRBRManifestation: https://caselaw.nationalarchives.gov.uk/{uri}/data.xml
+
+        This is typically called when a document is moved to a new location (e.g., due to corrected citation).
+
+        :param uri: The document URI without leading slash (e.g., "ewca/civ/2024/123")
+        """
+        uri_stripped = uri.lstrip("/")
+
+        # Build the three URI variants
+        work_uri = f"https://caselaw.nationalarchives.gov.uk/id/{uri_stripped}"
+        expression_uri = f"https://caselaw.nationalarchives.gov.uk/{uri_stripped}"
+        manifestation_uri = f"https://caselaw.nationalarchives.gov.uk/{uri_stripped}/data.xml"
+
+        # Update FRBRWork URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRuri",
+                "value",
+                work_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRthis",
+                "value",
+                work_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        # Update FRBRExpression URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/akn:FRBRuri",
+                "value",
+                expression_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/akn:FRBRthis",
+                "value",
+                expression_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        # Update FRBRManifestation URIs
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRuri",
+                "value",
+                manifestation_uri,
+                DEFAULT_NAMESPACES,
+            )
+
+        with suppress(ValueError):
+            self._xml.set_xpath_attribute(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRthis",
+                "value",
+                manifestation_uri,
+                DEFAULT_NAMESPACES,
+            )

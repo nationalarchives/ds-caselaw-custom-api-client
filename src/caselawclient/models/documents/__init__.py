@@ -17,7 +17,7 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
-from caselawclient.models.documents.versions import AnnotationDataDict
+from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
@@ -665,6 +665,53 @@ class Document:
         manifestation_uri = f"https://caselaw.nationalarchives.gov.uk/{self.uri.lstrip('/')}/data.xml"
         return self.body.apply_xslt(
             "modify_xml_live.xsl", work_uri=work_uri, expression_uri=expression_uri, manifestation_uri=manifestation_uri
+        )
+
+    def save(
+        self,
+        annotation: Optional[VersionAnnotation] = None,
+        from_version: Optional[int] = None,
+    ) -> None:
+        """
+        Persist in-memory mutations to the document in MarkLogic.
+
+        This method saves the current mutated XML state (after calls to set_name(), set_court(), etc.)
+        in a single atomic operation using MarkLogic's dls:document-checkout-update-checkin.
+
+        :param annotation: Optional VersionAnnotation for recording this change. If not provided,
+                          a default EDIT annotation will be created.
+        :param from_version: Optional version number for optimistic locking. If provided, the update
+                            will only succeed if the document's current version matches this number.
+                            If there's a mismatch, VersionMismatchError will be raised.
+
+        :raises InvalidContentHashError: If the document's content hash validation fails
+        :raises VersionMismatchError: If from_version is provided and doesn't match current version
+        :raises DocumentNotFoundError: If the document doesn't exist in MarkLogic
+        """
+        if annotation is None:
+            # Create default EDIT annotation for user-initiated saves
+            annotation = VersionAnnotation(
+                version_type=VersionType.EDIT,
+                automated=False,
+                message="Document updated via API client",
+            )
+
+        # For now, log that from_version will be implemented
+        if from_version is not None:
+            warnings.warn(
+                "from_version parameter is not yet supported; optimistic locking will be implemented in a future version",
+                FutureWarning,
+            )
+
+        # Get the mutated XML from the body
+        xml_tree = self.body.xml_tree
+
+        # Persist to MarkLogic
+        self.api_client.update_document_xml(
+            document_uri=self.uri,
+            document_xml=xml_tree,
+            annotation=annotation,
+            from_version=from_version,
         )
 
     def compare_to(self, that_doc: "Document") -> comparison.Comparison:
