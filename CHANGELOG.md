@@ -1099,7 +1099,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## [Release 5.1.2]
 
-** This release had a bug where the Editor UI was unusable. **
+**This release had a bug where the Editor UI was unusable.**
 
 - Ensure Work Date and Court values are returned as text
 
