@@ -51,7 +51,7 @@ requests should not be merged before any relevant updates are made.
 
 This repository will auto-deploy [documentation](https://nationalarchives.github.io/ds-caselaw-custom-api-client) to GitHub Pages when changes are made to `main`.
 
-## Releasing
+## Release process
 
 <!-- last_review: 2026-04-13 -->
 
