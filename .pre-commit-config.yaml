@@ -37,7 +37,7 @@ repos:
           - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.1.1
-          - pydantic==2.12.5
+          - pydantic==2.13.0
         args:
           - --strict
         files: ^src/
@@ -54,7 +54,7 @@ repos:
           - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.1.1
-          - pydantic==2.12.5
+          - pydantic==2.13.0
         exclude: ^smoketest/
         id: mypy
         name: mypy-tests
