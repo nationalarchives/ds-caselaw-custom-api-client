@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- `get_xpath_match_string`/`get_xpath_match_strings`/`get_xpath_nodes` on both `Body` and `XML` no longer accept namespaces, and will always use the expected default namespaces for documents.
+
+### Feat
+
+- Add XML mutation helper methods to XML class
+
 ## v44.5.0 (2026-04-13)
 
 ### Feat

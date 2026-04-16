@@ -33,10 +33,7 @@ class PressSummary(NeutralCitationMixin, Document):
     @cached_property
     def neutral_citation(self) -> Optional[NeutralCitationString]:
         value_in_xml = self.body.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()",
-            {
-                "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-            },
+            "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()"
         )
         if value_in_xml:
             return NeutralCitationString(value_in_xml)

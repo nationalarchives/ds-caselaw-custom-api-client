@@ -29,14 +29,14 @@ class DocumentBody:
         self._xml = XML(xml_bytestring=xml_bytestring)
         """ This is an instance of the `Document.XML` class for manipulation of the XML document itself. """
 
-    def get_xpath_match_string(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> str:
-        return self._xml.get_xpath_match_string(xpath, namespaces)
+    def get_xpath_match_string(self, xpath: str) -> str:
+        return self._xml.get_xpath_match_string(xpath)
 
-    def get_xpath_match_strings(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[str]:
-        return self._xml.get_xpath_match_strings(xpath, namespaces)
+    def get_xpath_match_strings(self, xpath: str) -> list[str]:
+        return self._xml.get_xpath_match_strings(xpath)
 
-    def get_xpath_nodes(self, xpath: str, namespaces: dict[str, str] = DEFAULT_NAMESPACES) -> list[etree._Element]:
-        return self._xml.get_xpath_nodes(xpath, namespaces)
+    def get_xpath_nodes(self, xpath: str) -> list[etree._Element]:
+        return self._xml.get_xpath_nodes(xpath)
 
     @cached_property
     def name(self) -> str:
@@ -55,7 +55,7 @@ class DocumentBody:
     @cached_property
     def categories(self) -> list[DocumentCategory]:
         xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
-        nodes = self.get_xpath_nodes(xpath, DEFAULT_NAMESPACES)
+        nodes = self.get_xpath_nodes(xpath)
 
         categories: dict[str, DocumentCategory] = {}
         children_map: dict[str, list[DocumentCategory]] = {}
