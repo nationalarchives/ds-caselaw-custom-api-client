@@ -5,6 +5,7 @@ from lxml import etree
 
 from caselawclient.models.documents.body import DEFAULT_NAMESPACES
 from caselawclient.models.documents.xml import XML, NonXMLDocumentError
+from caselawclient.xml_helpers import Element
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def full_document_xml():
         return f.read()
 
 
-class TestDocumentXml:
+class TestDocumentXMLRepresentationMethods:
     def test_xml_as_string(self):
         document_xml = XML(b"<xml>content</xml>")
 
@@ -28,6 +29,8 @@ class TestDocumentXml:
 
         assert etree.tostring(document_xml.xml_as_tree) == b"<xml/>"
 
+
+class TestDocumentXMLRootCheckingMethods:
     def test_root_element_akomantoso(self):
         document_xml = XML(
             b"<akomaNtoso xmlns:uk='https://caselaw.nationalarchives.gov.uk/akn' xmlns='http://docs.oasis-open.org/legaldocml/ns/akn/3.0'>judgment</akomaNtoso>",
@@ -40,10 +43,14 @@ class TestDocumentXml:
 
         assert document_xml.root_element == "error"
 
+
+class TestDocumentXMLValidationMethods:
     def test_catch_malformed_xml(self):
         with pytest.raises(NonXMLDocumentError):
             XML(b"<error>malformed xml")
 
+
+class TestDocumentXMLXSLTMethods:
     def test_apply_xslt(self):
         document_xml = XML(
             b"""<akomaNtoso xmlns:uk='https://caselaw.nationalarchives.gov.uk/akn' xmlns='http://docs.oasis-open.org/legaldocml/ns/akn/3.0'>
@@ -58,7 +65,7 @@ class TestDocumentXml:
         # but text does not contain wierd namespacing artifacts
         assert b"<text>lion</text>" in modified_xml
 
-    def test_modify_leaves_okay_namespaces(self):
+    def test_applying_xslt_leaves_correct_namespaces(self):
         document_xml = XML(b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
                            <judgment name="decision"> <meta> <identification source="#tna">
                            <FRBRWork> <akn:FRBRthis xmlns:akn="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" value="https://caselaw.nationalarchives.gov.uk/id/doc/tn4t35ts"></akn:FRBRthis>
@@ -66,31 +73,8 @@ class TestDocumentXml:
         modified_xml = document_xml.apply_xslt("sample.xsl")
         assert b"<FRBRthis" in modified_xml
 
-    def test_xml_as_bytes_returns_canonicalized_xml(self, full_document_xml):
-        """Test that xml_as_bytes returns canonicalized XML bytes."""
-        document_xml = XML(full_document_xml)
-        result = document_xml.xml_as_bytes
 
-        # Should be bytes
-        assert isinstance(result, bytes)
-
-        # Should be parseable XML
-        tree = etree.fromstring(result)
-        assert tree.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}akomaNtoso"
-
-    def test_set_element_attribute_updates_existing_attribute(self, full_document_xml):
-        """Test that set_element_attribute updates an existing attribute value."""
-        document_xml = XML(full_document_xml)
-        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
-
-        document_xml.set_element_attribute(nodes[0], "value", "New Case Name")
-
-        # Verify the attribute was updated
-        result = document_xml.get_xpath_match_string(xpath + "/@value")
-        assert result == "New Case Name"
-
+class TestDocumentXMLXPathMethods:
     def test_get_xpath_nodes_returns_empty_for_nonexistent_element(self, full_document_xml):
         """Test that get_xpath_nodes returns empty list for non-existent elements."""
         document_xml = XML(full_document_xml)
@@ -99,7 +83,7 @@ class TestDocumentXml:
         nodes = document_xml.get_xpath_nodes(xpath)
         assert len(nodes) == 0
 
-    def test_set_element_attribute_detects_multiple_matches(self):
+    def test_get_xpath_nodes_detects_multiple_matches(self):
         """Test that get_xpath_nodes can return multiple elements."""
         # Create XML with multiple matching elements
         multi_match_xml = b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
@@ -115,8 +99,59 @@ class TestDocumentXml:
 
         nodes = document_xml.get_xpath_nodes(xpath)
         assert len(nodes) == 3
-        # Caller must validate before using set_element_attribute
-        assert len(nodes) > 1
+
+    def test_get_single_xpath_node_returns_element(self, full_document_xml):
+        """Test that get_single_xpath_node returns an Element."""
+        document_xml = XML(full_document_xml)
+        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
+
+        node = document_xml.get_single_xpath_node(xpath)
+        assert isinstance(node, Element)
+
+    def test_get_single_xpath_node_raises_error_on_empty_result(self, full_document_xml):
+        """Test that get_xpath_nodes returns empty list for non-existent elements."""
+        document_xml = XML(full_document_xml)
+        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:NonExistentElement"
+
+        with pytest.raises(
+            ValueError,
+            match="No element found at xpath: /akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:NonExistentElement",
+        ):
+            document_xml.get_single_xpath_node(xpath)
+
+    def test_get_single_xpath_node_raises_error_on_multiple_results(self):
+        """Test that get_xpath_nodes can return multiple elements."""
+        # Create XML with multiple matching elements
+        multi_match_xml = b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+            <judgment>
+                <p>First</p>
+                <p>Second</p>
+                <p>Third</p>
+            </judgment>
+        </akomaNtoso>"""
+        document_xml = XML(multi_match_xml)
+        # XPath that matches multiple <p> elements
+        xpath = "/akn:akomaNtoso/akn:judgment/akn:p"
+
+        with pytest.raises(
+            ValueError,
+            match="XPath expression matches 3 elements, expected exactly 1: /akn:akomaNtoso/akn:judgment/akn:p",
+        ):
+            document_xml.get_single_xpath_node(xpath)
+
+
+class TestDocumentXMLElementSetters:
+    def test_set_element_attribute_updates_existing_attribute(self, full_document_xml):
+        """Test that set_element_attribute updates an existing attribute value."""
+        document_xml = XML(full_document_xml)
+        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
+        node = document_xml.get_single_xpath_node(xpath)
+
+        document_xml.set_element_attribute(node, "value", "New Case Name")
+
+        # Verify the attribute was updated
+        result = document_xml.get_xpath_match_string(xpath + "/@value")
+        assert result == "New Case Name"
 
     def test_get_or_create_element_returns_existing_element(self, full_document_xml):
         """Test that get_or_create_element returns existing child element."""
@@ -130,7 +165,7 @@ class TestDocumentXml:
 
         # Should return the existing element with its current value
         assert result is not None
-        assert result.get("value") is not None
+        assert result.get("value") == "Test Claimant v TestDefendant"
 
     def test_get_or_create_element_creates_new_element(self, full_document_xml):
         """Test that get_or_create_element creates a new element if it doesn't exist."""
@@ -148,9 +183,8 @@ class TestDocumentXml:
 
         # Verify it's in the tree
         verify_xpath = parent_xpath + "/akn:FRBRcustom"
-        nodes = document_xml.get_xpath_nodes(verify_xpath)
-        assert len(nodes) == 1
-        assert nodes[0] is result
+        node = document_xml.get_single_xpath_node(verify_xpath)
+        assert node is result
 
     def test_get_or_create_element_with_namespace_prefix(self, full_document_xml):
         """Test that get_or_create_element correctly handles namespace URIs."""
@@ -167,37 +201,8 @@ class TestDocumentXml:
 
         # Verify it's in the tree under the correct namespace
         verify_xpath = parent_xpath + "/uk:customElement"
-        nodes = document_xml.get_xpath_nodes(verify_xpath)
-        assert len(nodes) == 1
-
-    def test_get_or_create_element_raises_error_if_parent_not_found(self, full_document_xml):
-        """Test that get_or_create_element raises ValueError if parent element doesn't exist."""
-        document_xml = XML(full_document_xml)
-        parent_xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:NonExistent"
-
-        with pytest.raises(ValueError, match="No parent element found"):
-            document_xml.get_or_create_element(
-                parent_xpath, "child", "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-            )
-
-    def test_get_or_create_element_raises_error_if_multiple_parents_match(self):
-        """Test that get_or_create_element raises ValueError if XPath matches multiple parent elements."""
-        # Create XML with multiple matching parent elements
-        multi_parent_xml = b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-            <judgment>
-                <section><p>First</p></section>
-                <section><p>Second</p></section>
-                <section><p>Third</p></section>
-            </judgment>
-        </akomaNtoso>"""
-        document_xml = XML(multi_parent_xml)
-        # XPath that matches multiple <section> elements
-        parent_xpath = "/akn:akomaNtoso/akn:judgment/akn:section"
-
-        with pytest.raises(ValueError, match="XPath expression matches 3 parent elements, expected exactly 1"):
-            document_xml.get_or_create_element(
-                parent_xpath, "child", "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-            )
+        node = document_xml.get_single_xpath_node(verify_xpath)
+        assert node is result
 
     def test_get_or_create_element_raises_error_if_invalid_namespace(self, full_document_xml):
         """Test that get_or_create_element raises ValueError if namespace is not in DEFAULT_NAMESPACES."""
@@ -234,10 +239,9 @@ class TestDocumentXml:
         """Test that set_element_value sets element text on existing element."""
         document_xml = XML(full_document_xml)
         xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
+        node = document_xml.get_single_xpath_node(xpath)
 
-        document_xml.set_element_value(nodes[0], "Supreme Court")
+        document_xml.set_element_value(node, "Supreme Court")
 
         # Verify the value was set
         result = document_xml.get_xpath_match_string(xpath + "/text()")
@@ -261,34 +265,3 @@ class TestDocumentXml:
         # Verify both mutations persisted by re-querying
         assert document_xml.get_xpath_match_string(name_xpath + "/@value") == "Updated Case Name"
         assert document_xml.get_xpath_match_string(court_xpath + "/text()") == "New Court"
-
-    def test_mutation_reflects_in_serialized_xml(self, full_document_xml):
-        """Test that mutations reflect in serialized XML output."""
-        document_xml = XML(full_document_xml)
-        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
-
-        document_xml.set_element_attribute(nodes[0], "value", "Updated Title")
-
-        # Get serialized XML
-        serialized = document_xml.xml_as_bytes.decode("utf-8")
-
-        # Verify the updated value is in the serialized output
-        assert "Updated Title" in serialized
-
-    def test_namespace_preservation_in_mutations(self, full_document_xml):
-        """Test that namespace declarations are preserved after mutations."""
-        document_xml = XML(full_document_xml)
-        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
-
-        document_xml.set_element_value(nodes[0], "Updated")
-
-        # Serialize and check namespace declarations
-        serialized = document_xml.xml_as_bytes.decode("utf-8")
-
-        # Both namespace declarations should still be present
-        assert "http://docs.oasis-open.org/legaldocml/ns/akn/3.0" in serialized
-        assert "https://caselaw.nationalarchives.gov.uk/akn" in serialized

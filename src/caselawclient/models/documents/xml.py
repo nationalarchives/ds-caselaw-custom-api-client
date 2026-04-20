@@ -43,15 +43,6 @@ class XML:
         return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
 
     @property
-    def xml_as_bytes(self) -> bytes:
-        """
-        Return XML tree as bytes (namespace-aware, canonicalized).
-
-        :return: The XML tree serialized to bytes
-        """
-        return etree.tostring(self.xml_as_tree, method="c14n2")
-
-    @property
     def root_element(self) -> str:
         return str(self.xml_as_tree.tag)
 
@@ -63,6 +54,18 @@ class XML:
 
     def get_xpath_nodes(self, xpath: str) -> list[Element]:
         return get_xpath_nodes(self.xml_as_tree, xpath, DEFAULT_NAMESPACES)
+
+    def get_single_xpath_node(self, xpath: str) -> Element:
+        """Return exactly one xpath node, and raise an exception if either it doesn't exist or exists multiple times."""
+
+        nodes = self.get_xpath_nodes(xpath)
+
+        if not nodes:
+            raise ValueError(f"No element found at xpath: {xpath}")
+        if len(nodes) > 1:
+            raise ValueError(f"XPath expression matches {len(nodes)} elements, expected exactly 1: {xpath}")
+
+        return nodes[0]
 
     def _modified(
         self,
@@ -92,15 +95,7 @@ class XML:
         :return: The existing or newly created element
         :raises ValueError: If parent not found at xpath, if multiple parents found, or if namespace not in DEFAULT_NAMESPACES
         """
-        parent_nodes = self.get_xpath_nodes(parent_xpath)
-        if not parent_nodes:
-            raise ValueError(f"No parent element found at xpath: {parent_xpath}")
-        if len(parent_nodes) > 1:
-            raise ValueError(
-                f"XPath expression matches {len(parent_nodes)} parent elements, expected exactly 1: {parent_xpath}"
-            )
-
-        parent = parent_nodes[0]
+        parent = self.get_single_xpath_node(parent_xpath)
 
         # Validate namespace if provided
         if namespace is not None:

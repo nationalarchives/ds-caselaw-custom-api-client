@@ -8,11 +8,22 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- Remove `XML.xml_as_bytes()`
 - `get_xpath_match_string`/`get_xpath_match_strings`/`get_xpath_nodes` on both `Body` and `XML` no longer accept namespaces, and will always use the expected default namespaces for documents.
 
 ### Feat
 
+- **XML**: add new get_single_xpath_node method
 - Add XML mutation helper methods to XML class
+
+### Fix
+
+- test now correctly checks for existing value
+- fix bad test naming and redundant assertion
+
+### Refactor
+
+- **XML**: remove redundant serialisation method and tests
 
 ## v44.5.0 (2026-04-13)
 
