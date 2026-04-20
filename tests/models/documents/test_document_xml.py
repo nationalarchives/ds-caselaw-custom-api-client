@@ -165,7 +165,7 @@ class TestDocumentXMLElementSetters:
 
         # Should return the existing element with its current value
         assert result is not None
-        assert result.get("value") is not None
+        assert result.get("value") == "Test Claimant v TestDefendant"
 
     def test_get_or_create_element_creates_new_element(self, full_document_xml):
         """Test that get_or_create_element creates a new element if it doesn't exist."""
