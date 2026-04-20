@@ -11,7 +11,7 @@ from saxonche import PySaxonProcessor
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
-from caselawclient.xml_helpers import DEFAULT_NAMESPACES
+from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
 
 from .xml import XML
 
@@ -168,6 +168,11 @@ class DocumentBody:
     @cached_property
     def content_as_xml(self) -> str:
         return self._xml.xml_as_string
+
+    @property
+    def content_as_xml_tree(self) -> Element:
+        """Get the XML tree representation of the document."""
+        return self._xml.xml_as_tree
 
     @cached_property
     def has_content(self) -> bool:

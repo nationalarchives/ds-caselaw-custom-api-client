@@ -7,7 +7,6 @@ import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree.ElementTree import Element
 
 import environ
 import requests
@@ -33,6 +32,7 @@ from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
+from caselawclient.xml_helpers import Element
 from caselawclient.xquery_type_dicts import (
     CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
