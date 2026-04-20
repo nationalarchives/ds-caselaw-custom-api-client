@@ -87,7 +87,7 @@ class TestDocumentXml:
         nodes = document_xml.get_xpath_nodes(xpath)
         assert len(nodes) == 0
 
-    def test_set_element_attribute_detects_multiple_matches(self):
+    def test_get_xpath_nodes_detects_multiple_matches(self):
         """Test that get_xpath_nodes can return multiple elements."""
         # Create XML with multiple matching elements
         multi_match_xml = b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
@@ -103,8 +103,6 @@ class TestDocumentXml:
 
         nodes = document_xml.get_xpath_nodes(xpath)
         assert len(nodes) == 3
-        # Caller must validate before using set_element_attribute
-        assert len(nodes) > 1
 
     def test_get_or_create_element_returns_existing_element(self, full_document_xml):
         """Test that get_or_create_element returns existing child element."""
