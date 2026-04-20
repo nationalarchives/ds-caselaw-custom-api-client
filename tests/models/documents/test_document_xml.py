@@ -66,18 +66,6 @@ class TestDocumentXml:
         modified_xml = document_xml.apply_xslt("sample.xsl")
         assert b"<FRBRthis" in modified_xml
 
-    def test_xml_as_bytes_returns_canonicalized_xml(self, full_document_xml):
-        """Test that xml_as_bytes returns canonicalized XML bytes."""
-        document_xml = XML(full_document_xml)
-        result = document_xml.xml_as_bytes
-
-        # Should be bytes
-        assert isinstance(result, bytes)
-
-        # Should be parseable XML
-        tree = etree.fromstring(result)
-        assert tree.tag == "{http://docs.oasis-open.org/legaldocml/ns/akn/3.0}akomaNtoso"
-
     def test_set_element_attribute_updates_existing_attribute(self, full_document_xml):
         """Test that set_element_attribute updates an existing attribute value."""
         document_xml = XML(full_document_xml)
@@ -261,34 +249,3 @@ class TestDocumentXml:
         # Verify both mutations persisted by re-querying
         assert document_xml.get_xpath_match_string(name_xpath + "/@value") == "Updated Case Name"
         assert document_xml.get_xpath_match_string(court_xpath + "/text()") == "New Court"
-
-    def test_mutation_reflects_in_serialized_xml(self, full_document_xml):
-        """Test that mutations reflect in serialized XML output."""
-        document_xml = XML(full_document_xml)
-        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
-
-        document_xml.set_element_attribute(nodes[0], "value", "Updated Title")
-
-        # Get serialized XML
-        serialized = document_xml.xml_as_bytes.decode("utf-8")
-
-        # Verify the updated value is in the serialized output
-        assert "Updated Title" in serialized
-
-    def test_namespace_preservation_in_mutations(self, full_document_xml):
-        """Test that namespace declarations are preserved after mutations."""
-        document_xml = XML(full_document_xml)
-        xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary/uk:court"
-        nodes = document_xml.get_xpath_nodes(xpath)
-        assert len(nodes) == 1
-
-        document_xml.set_element_value(nodes[0], "Updated")
-
-        # Serialize and check namespace declarations
-        serialized = document_xml.xml_as_bytes.decode("utf-8")
-
-        # Both namespace declarations should still be present
-        assert "http://docs.oasis-open.org/legaldocml/ns/akn/3.0" in serialized
-        assert "https://caselaw.nationalarchives.gov.uk/akn" in serialized

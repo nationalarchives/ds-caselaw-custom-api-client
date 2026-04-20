@@ -43,15 +43,6 @@ class XML:
         return str(etree.tostring(self.xml_as_tree).decode(encoding="utf-8"))
 
     @property
-    def xml_as_bytes(self) -> bytes:
-        """
-        Return XML tree as bytes (namespace-aware, canonicalized).
-
-        :return: The XML tree serialized to bytes
-        """
-        return etree.tostring(self.xml_as_tree, method="c14n2")
-
-    @property
     def root_element(self) -> str:
         return str(self.xml_as_tree.tag)
 
