@@ -1,7 +1,7 @@
 import datetime
 import os
 import warnings
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from lxml import etree
@@ -394,13 +394,13 @@ class TestLinkedDocumentResolutions:
 
     @patch.dict(os.environ, {"XSLT_IMAGE_LOCATION": "imagepath"}, clear=True)
     class TestDocumentContentAsHtml:
-        def test_document_content_as_html_calls_with_uri(self):
+        @patch("caselawclient.models.documents.DocumentBody.content_html", return_value="html")
+        def test_document_content_as_html_calls_with_uri(self, mock_content_html):
             doc = DocumentFactory.build(
                 uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname")
             )
-            doc.body.content_html = Mock()
             doc.content_as_html()
-            doc.body.content_html.assert_called_with("imagepath/test/1234")
+            mock_content_html.assert_called_with("imagepath/test/1234")
 
 
 class TestDocumentXMLWithCorrectFRBR:

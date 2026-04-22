@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **DocumentBody**: remove cache on content_html
 - test now correctly checks for existing value
 - fix bad test naming and redundant assertion
 
