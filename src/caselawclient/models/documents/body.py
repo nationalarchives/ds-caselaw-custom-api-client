@@ -1,7 +1,7 @@
 import datetime
 import os
 import warnings
-from functools import cache, cached_property
+from functools import cached_property
 from typing import Optional
 
 import pytz
@@ -186,7 +186,6 @@ class DocumentBody:
         "is there a uk:party tag" is intended as a stopgap whilst we're not importing that data."""
         return bool(self._xml.xml_as_tree.xpath("//uk:party", namespaces=DEFAULT_NAMESPACES))
 
-    @cache
     def content_html(self, image_prefix: str) -> Optional[str]:
         """Convert the XML representation of the Document into HTML for rendering."""
         """This used to be called content_as_html but we have changed the parameter passed to it from the
