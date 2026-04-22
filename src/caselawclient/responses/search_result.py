@@ -19,6 +19,8 @@ from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_fro
 from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import get_xpath_match_string
 
+logger = logging.getLogger(__name__)
+
 
 class EditorStatus(Enum):
     """
@@ -182,7 +184,7 @@ class SearchResult:
         identifiers_etrees = self._get_xpath(".//identifiers")
         count = len(identifiers_etrees)
         if count != 1:
-            logging.warning(f"{count} //identifiers nodes found in search result, expected 1.")
+            logger.warning("%s //identifiers nodes found in search result, expected 1.", count)
         identifiers_etree = None if not identifiers_etrees else identifiers_etrees[0]
         return unpack_all_identifiers_from_etree(identifiers_etree)
 
@@ -233,17 +235,20 @@ class SearchResult:
                     CourtCode(court_code), JurisdictionCode(jurisdiction_code)
                 )
             except CourtNotFoundException:
-                logging.warning(
-                    "Court not found with court code %s and jurisdiction code %s for judgment with NCN %s, falling back to court."
-                    % (court_code, jurisdiction_code, self.neutral_citation),
+                logger.warning(
+                    "Court not found with court code %s and jurisdiction code %s for judgment with NCN %s, falling back to court.",
+                    court_code,
+                    jurisdiction_code,
+                    self.neutral_citation,
                 )
         if court is None:
             try:
                 court = courts.get_by_code(CourtCode(court_code))
             except CourtNotFoundException:
-                logging.warning(
-                    "Court not found with court code %s for judgment with NCN %s, returning None."
-                    % (court_code, self.neutral_citation),
+                logger.warning(
+                    "Court not found with court code %s for judgment with NCN %s, returning None.",
+                    court_code,
+                    self.neutral_citation,
                 )
                 court = None
         return court
@@ -260,8 +265,10 @@ class SearchResult:
         try:
             date = dateparser.parse(date_string)
         except ParserError as e:
-            logging.warning(
-                f'Unable to parse document date "{date_string}". Full error: {e}',
+            logger.warning(
+                'Unable to parse document date "%s". Full error: %s',
+                date_string,
+                e,
             )
             date = None
         return date
