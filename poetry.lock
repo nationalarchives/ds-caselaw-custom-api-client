@@ -1355,14 +1355,14 @@ docs = ["sphinx (>=8,<9)", "sphinx-autobuild"]
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.42.85"
-description = "Type annotations for boto3 S3 1.42.85 service generated with mypy-boto3-builder 8.12.0"
+version = "1.42.94"
+description = "Type annotations for boto3 S3 1.42.94 service generated with mypy-boto3-builder 8.12.0"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "mypy_boto3_s3-1.42.85-py3-none-any.whl", hash = "sha256:b2cad995ea733b16ae3be5510fd6a0038aa44400c22d010d4def9286cf6eaf82"},
-    {file = "mypy_boto3_s3-1.42.85.tar.gz", hash = "sha256:401e3a184ac0973bc08b556cc3b2655d8f2e56570b6ed87ce635210df4f666fb"},
+    {file = "mypy_boto3_s3-1.42.94-py3-none-any.whl", hash = "sha256:d7c2111396d7ae344b241958b7df8ed33d478d746721202715f5c197f9cd0c83"},
+    {file = "mypy_boto3_s3-1.42.94.tar.gz", hash = "sha256:1d92d722cf00573b8111e98493ab386e0c1b59a1530b7fee4af77f2d9a1c477d"},
 ]
 
 [[package]]
@@ -2702,4 +2702,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12.0"
-content-hash = "51cb31a34d284e1dbc95153e2766217874b2bf213b2fc067f4885b41527e00bc"
+content-hash = "575f84b9dd5b7d5060e2d7e60310c060b688217b8816491241e25956f04917c7"
