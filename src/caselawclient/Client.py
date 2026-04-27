@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from datetime import datetime, time, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 from xml.etree.ElementTree import Element
@@ -73,6 +74,11 @@ except importlib.metadata.PackageNotFoundError:
 DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
 DEBUG: bool = bool(os.getenv("DEBUG", default=False))
+
+
+@lru_cache(maxsize=512)
+def _read_xquery_source(canonical_xquery_path: str) -> str:
+    return Path(canonical_xquery_path).read_text(encoding="utf-8")
 
 
 class NoResponse(Exception):
@@ -746,8 +752,9 @@ class MarklogicApiClient:
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
         }
+        canonical_path = os.path.normpath(os.path.abspath(xquery_path))
         data = {
-            "xquery": Path(xquery_path).read_text(),
+            "xquery": _read_xquery_source(canonical_path),
             "vars": vars,
         }
         path = "LATEST/eval"

@@ -1,4 +1,6 @@
+import os
 import re
+import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -14,6 +16,7 @@ from caselawclient.Client import (
     READ_TIMEOUT,
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
+    _read_xquery_source,
     get_multipart_strings_from_marklogic_response,
     get_single_string_from_marklogic_response,
 )
@@ -164,11 +167,8 @@ class ApiClientTest(unittest.TestCase):
             "document_exists.xqy",
         )
 
-    @patch("caselawclient.Client.Path")
-    def test_eval_calls_request(self, MockPath):
-        mock_path_instance = MockPath.return_value
-        mock_path_instance.read_text.return_value = "mock-query"
-
+    @patch("caselawclient.Client._read_xquery_source", return_value="mock-query")
+    def test_eval_calls_request(self, _mock_read_xquery):
         with patch.object(self.client.session, "request") as patched_request:
             self.client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
@@ -183,11 +183,7 @@ class ApiClientTest(unittest.TestCase):
                 timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
             )
 
-    @patch("caselawclient.Client.Path")
-    def test_invoke_calls_request(self, MockPath):
-        mock_path_instance = MockPath.return_value
-        mock_path_instance.read_text.return_value = "mock-query"
-
+    def test_invoke_calls_request(self):
         with patch.object(self.client.session, "request") as patched_request:
             self.client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
@@ -200,6 +196,20 @@ class ApiClientTest(unittest.TestCase):
                 },
                 data={"module": "mock-query-path.xqy", "vars": '{{"testvar":"test"}}'},
             )
+
+    def test_read_xquery_source_is_cached(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".xqy", delete=False, encoding="utf-8") as f:
+            f.write("first")
+            path = f.name
+        try:
+            canonical = os.path.normpath(os.path.abspath(path))
+            assert _read_xquery_source(canonical) == "first"
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("second")
+            assert _read_xquery_source(canonical) == "first"
+        finally:
+            _read_xquery_source.cache_clear()
+            os.unlink(path)
 
     def test_format_uri(self):
         uri = DocumentURIString("ewca/2022/123")
