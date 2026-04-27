@@ -36,6 +36,7 @@ class TestErrors(unittest.TestCase):
         with pytest.raises(GatewayTimeoutError) as gateway_exception:
             self.client._raise_for_status(response)
         assert "Example Gateway Timeout" in str(gateway_exception.value)
+        assert gateway_exception.value.response is None
 
 
 class TestMarklogicResponseHandlers(unittest.TestCase):

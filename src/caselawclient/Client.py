@@ -302,7 +302,6 @@ class MarklogicApiClient:
             new_exception = new_error_class(
                 f"{e}. Response body:\n{response_body}",
             )
-            new_exception.response = response
             raise new_exception
 
     def _format_uri_for_marklogic(
