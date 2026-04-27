@@ -376,8 +376,7 @@ class MarklogicApiClient:
         data: Optional[dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
-        self.session.headers = headers
-        response = self.session.request(method, **kwargs)
+        response = self.session.request(method, headers=headers, **kwargs)
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
         return response

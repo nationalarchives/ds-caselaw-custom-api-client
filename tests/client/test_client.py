@@ -7,6 +7,7 @@ import pytest
 import requests
 import responses
 from requests import Request
+from requests.structures import CaseInsensitiveDict
 
 from caselawclient.Client import (
     CONNECT_TIMEOUT,
@@ -18,6 +19,28 @@ from caselawclient.Client import (
 )
 from caselawclient.errors import GatewayTimeoutError
 from caselawclient.models.documents import DocumentURIString
+
+
+class TestMakeRequest(unittest.TestCase):
+    def test_make_request_merges_headers_without_clobbering_session_user_agent(self):
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client.session, "request") as mock_request:
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock(return_value=None)
+            mock_request.return_value = mock_response
+
+            client.make_request(
+                "GET",
+                "some/path",
+                CaseInsensitiveDict({"X-Custom-Header": "1"}),
+            )
+
+            mock_request.assert_called_once()
+            _args, call_kwargs = mock_request.call_args
+            assert call_kwargs["headers"]["X-Custom-Header"] == "1"
+
+        prepared = client.session.prepare_request(Request("GET", "http://example.invalid"))
+        assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", prepared.headers["user-agent"])
 
 
 class TestErrors(unittest.TestCase):
