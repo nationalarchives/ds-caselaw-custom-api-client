@@ -13,6 +13,8 @@ from requests.structures import CaseInsensitiveDict
 
 from caselawclient.Client import (
     CONNECT_TIMEOUT,
+    HTTP_POOL_CONNECTIONS,
+    HTTP_POOL_MAXSIZE,
     READ_TIMEOUT,
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
@@ -22,6 +24,22 @@ from caselawclient.Client import (
 )
 from caselawclient.errors import GatewayTimeoutError
 from caselawclient.models.documents import DocumentURIString
+
+
+class TestMarklogicApiClientConnectionPool(unittest.TestCase):
+    @patch("caselawclient.Client.HTTPAdapter")
+    def test_session_mounts_configured_http_adapter(self, mock_http_adapter):
+        adapter_instance = MagicMock()
+        mock_http_adapter.return_value = adapter_instance
+
+        client = MarklogicApiClient("", "", "", False)
+
+        mock_http_adapter.assert_called_once_with(
+            pool_connections=HTTP_POOL_CONNECTIONS,
+            pool_maxsize=HTTP_POOL_MAXSIZE,
+        )
+        assert client.session.adapters["https://"] is adapter_instance
+        assert client.session.adapters["http://"] is adapter_instance
 
 
 class TestMakeRequest(unittest.TestCase):
