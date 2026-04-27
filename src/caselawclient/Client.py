@@ -15,6 +15,7 @@ from defusedxml import ElementTree
 from defusedxml.ElementTree import ParseError, fromstring
 from ds_caselaw_utils.types import NeutralCitationString
 from lxml import etree
+from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -62,6 +63,8 @@ env = environ.Env()
 # Requests timeouts: https://requests.readthedocs.io/en/latest/user/advanced/
 CONNECT_TIMEOUT = float(os.environ.get("CONNECT_TIMEOUT", "3.05"))
 READ_TIMEOUT = float(os.environ.get("READ_TIMEOUT", "10.0"))
+HTTP_POOL_CONNECTIONS = int(os.environ.get("MARKLOGIC_HTTP_POOL_CONNECTIONS", "10"))
+HTTP_POOL_MAXSIZE = int(os.environ.get("MARKLOGIC_HTTP_POOL_MAXSIZE", "20"))
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
@@ -206,6 +209,12 @@ class MarklogicApiClient:
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.headers.update({"User-Agent": user_agent})
+        adapter = HTTPAdapter(
+            pool_connections=HTTP_POOL_CONNECTIONS,
+            pool_maxsize=HTTP_POOL_MAXSIZE,
+        )
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         self.user_agent = user_agent
 
     def get_press_summaries_for_document_uri(
@@ -380,7 +389,7 @@ class MarklogicApiClient:
         data: Optional[dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
-        self.session.headers = headers
+        kwargs["headers"] = headers
         response = self.session.request(method, **kwargs)
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
