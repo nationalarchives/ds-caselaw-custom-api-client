@@ -36,7 +36,7 @@ repos:
           - types-python-dateutil==2.9.0.20260408
           - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
-          - ds-caselaw-utils==4.1.1
+          - ds-caselaw-utils==4.2.0
           - pydantic==2.13.3
         args:
           - --strict
@@ -53,7 +53,7 @@ repos:
           - types-python-dateutil==2.9.0.20260408
           - types-pytz==2026.1.1.20260408
           - types-lxml==2026.2.16
-          - ds-caselaw-utils==4.1.1
+          - ds-caselaw-utils==4.2.0
           - pydantic==2.13.3
         exclude: ^smoketest/
         id: mypy
