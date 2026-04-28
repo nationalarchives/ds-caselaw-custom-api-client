@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Document**: add method to save document to MarkLogic
 
+### Refactor
+
+- swap from defusedxml to lxml for serialisation
+
 ## v45.0.1 (2026-04-28)
 
 ### Fix
