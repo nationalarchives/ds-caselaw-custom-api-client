@@ -1,9 +1,12 @@
 import glob
+import logging
 
 import environ
 from dotenv import load_dotenv
 
 from caselawclient import Client
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 env = environ.Env()
@@ -19,6 +22,6 @@ files = glob.glob("*.xqy")
 
 for file in files:
     path = f"../../../assertions/{file}"
-    print(path)
+    logger.info("Evaluating: %s", path)
     response = api_client._send_to_eval({}, path)  ## noqa: SLF001
-    print(Client.get_multipart_strings_from_marklogic_response(response))
+    logger.info("Response: %s", Client.get_multipart_strings_from_marklogic_response(response))

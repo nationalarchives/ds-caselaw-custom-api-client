@@ -74,6 +74,8 @@ DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
 DEBUG: bool = bool(os.getenv("DEBUG", default=False))
 
+logger = logging.getLogger(__name__)
+
 
 class NoResponse(Exception):
     """A requests HTTPError has no response. We expect this will never happen."""
@@ -251,7 +253,7 @@ class MarklogicApiClient:
         for regex, error in self.error_code_classes.items():
             if re.fullmatch(regex, error_code):
                 return error
-        print(f"No error code match found for {error_code}")
+        logger.warning("No error code match found for %s", error_code)
         return self.default_http_error_class
 
     def _path_to_request_url(self, path: str) -> str:
@@ -259,7 +261,7 @@ class MarklogicApiClient:
 
     @classmethod
     def _get_error_code(cls, content_as_xml: Optional[str]) -> str:
-        logging.warning(
+        logger.warning(
             "XMLTools is deprecated and will be removed in later versions. "
             "Use methods from MarklogicApiClient.Client instead.",
         )
@@ -384,7 +386,7 @@ class MarklogicApiClient:
         return response
 
     def GET(self, path: str, headers: dict[str, Any], **data: Any) -> requests.Response:
-        logging.warning("GET() is deprecated, use eval() or invoke()")
+        logger.warning("GET() is deprecated, use eval() or invoke()")
         return self.make_request("GET", path, headers, data)  # type: ignore
 
     def POST(
@@ -393,7 +395,7 @@ class MarklogicApiClient:
         headers: dict[str, Any],
         **data: Any,
     ) -> requests.Response:
-        logging.warning("POST() is deprecated, use eval() or invoke()")
+        logger.warning("POST() is deprecated, use eval() or invoke()")
         return self.make_request("POST", path, headers, data)  # type: ignore
 
     def document_exists(self, document_uri: DocumentURIString) -> bool:
@@ -744,6 +746,9 @@ class MarklogicApiClient:
         accept_header: str = "multipart/mixed",
         timeout: tuple[float, float] = (CONNECT_TIMEOUT, READ_TIMEOUT),
     ) -> requests.Response:
+
+        logger.debug("Evaluating XQuery at %s with variables %s", xquery_path, vars)
+
         headers = {
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
@@ -753,9 +758,6 @@ class MarklogicApiClient:
             "vars": vars,
         }
         path = "LATEST/eval"
-
-        if DEBUG:
-            print(f"Sending {vars} to {xquery_path}")
 
         response = self.session.request(
             "POST",

@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import warnings
 from functools import cached_property
@@ -40,6 +41,8 @@ from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
 from .body import DocumentBody
 from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
+
+logger = logging.getLogger(__name__)
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
 
@@ -440,10 +443,10 @@ class Document:
         Request enrichment of a document, if it's sensible to do so.
         """
         if not (even_if_recent) and self.enriched_recently:
-            print("Enrichment not requested as document was enriched recently")
+            logger.info("Enrichment not requested as document was enriched recently")
             return False
 
-        print("Enrichment requested")
+        logger.info("Enrichment requested for %s", self.uri)
 
         try:
             self.force_enrich()

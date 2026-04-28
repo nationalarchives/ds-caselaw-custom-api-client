@@ -225,7 +225,7 @@ class TestSearchResultIdentifierHandling:
             search_result.slug
         assert str(search_result) == "<SearchResult a/c/2015/20 **NO SLUG** **NO NAME** None>"
 
-    @patch("logging.warning")
+    @patch("caselawclient.responses.search_result.logger.warning")
     def test_has_many_identifiers(self, logging_warning):
         """
         GIVEN an XML node with multiple identifiers
@@ -265,7 +265,7 @@ class TestSearchResultIdentifierHandling:
         (identifier_1,) = identifiers.values()
         assert identifier_1.value == "[1901] UKSC 1"
         assert search_result.slug == "uksc/1901/1"
-        logging_warning.assert_called_with("2 //identifiers nodes found in search result, expected 1.")
+        logging_warning.assert_called_with("%s //identifiers nodes found in search result, expected 1.", 2)
 
 
 class TestSearchResultMeta:

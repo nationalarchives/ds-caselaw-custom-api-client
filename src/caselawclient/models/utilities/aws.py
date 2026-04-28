@@ -18,6 +18,8 @@ from caselawclient.types import DocumentURIString
 
 env = environ.Env()
 
+logger = logging.getLogger(__name__)
+
 
 class S3PrefixString(str):
     def __new__(cls, content: str) -> "S3PrefixString":
@@ -166,18 +168,21 @@ def publish_documents(uri: DocumentURIString) -> None:
     response = client.list_objects(Bucket=private_bucket, Prefix=uri_for_s3(uri))
 
     for result in response.get("Contents", []):
-        print(f"Contemplating copying {result!r}")
+        logger.debug("Contemplating copying %r", result)
         key = str(result["Key"])
 
         if not key.endswith("parser.log") and not key.endswith(".tar.gz"):
             source: CopySourceTypeDef = {"Bucket": private_bucket, "Key": key}
             extra_args: dict[str, str] = {}
             try:
-                print(f"Copying {key!r} from {private_bucket!r} to {public_bucket!r}")
+                logger.debug("Copying %s from %s to %s", key, private_bucket, public_bucket)
                 client.copy(source, public_bucket, key, extra_args)
             except botocore.client.ClientError as e:
-                logging.warning(
-                    f"Unable to copy file {key} to new location {public_bucket}, error: {e}",
+                logger.warning(
+                    "Unable to copy file %s to new location %s, error: %s",
+                    key,
+                    public_bucket,
+                    e,
                 )
 
 
@@ -240,8 +245,11 @@ def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
             source: CopySourceTypeDef = {"Bucket": bucket, "Key": old_key}
             client.copy(source, bucket, new_key)
         except botocore.client.ClientError as e:
-            logging.warning(
-                f"Unable to copy file {old_key} to new location {new_key}, error: {e}",
+            logger.warning(
+                "Unable to copy file %s to new location %s, error: %s",
+                old_key,
+                new_key,
+                e,
             )
 
 
