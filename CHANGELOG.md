@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v45.0.1 (2026-04-28)
+
+### Fix
+
+- **deps**: update boto packages to v1.42.96
+- **deps**: update boto packages to v1.42.95
+- **deps**: update boto packages to v1.42.94
+- **deps**: update dependency boto3 to v1.42.94
+- **deps**: update dependency certifi to >=2026.4.22,<2026.5.0
+- **deps**: update boto packages to v1.42.93
+- **deps**: update boto packages to v1.42.92
+- **deps**: pin dependencies
 
 ### Refactor
 
