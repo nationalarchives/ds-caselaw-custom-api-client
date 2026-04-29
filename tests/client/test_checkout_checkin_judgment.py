@@ -125,6 +125,49 @@ class TestGetCheckoutStatus(unittest.TestCase):
             result = self.client.get_judgment_checkout_status_message(DocumentURIString("ewca/2002/2"))
             assert result is None
 
+    def test_get_checkout_status_message_missing_annotation_element(self):
+        with patch.object(MarklogicApiClient, "eval") as mock_eval:
+            mock_eval.return_value.text = "true"
+            mock_eval.return_value.headers = {
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
+            }
+            # XML response without dls:annotation element
+            mock_eval.return_value.content = (
+                b"\r\n--595658fa1db1aa98\r\n"
+                b"Content-Type: application/xml\r\n"
+                b"X-Primitive: element()\r\n"
+                b"X-Path: /*\r\n\r\n"
+                b'<dls:checkout xmlns:dls="http://marklogic.com/xdmp/dls">'
+                b"<dls:document-uri>/ukpc/2022/17.xml</dls:document-uri>"
+                b"<dls:timeout>0</dls:timeout>"
+                b"</dls:checkout>"
+                b"\r\n--595658fa1db1aa98--\r\n"
+            )
+            result = self.client.get_judgment_checkout_status_message(DocumentURIString("ewca/2002/2"))
+            assert result is None
+
+    def test_get_checkout_status_message_annotation_element_no_text(self):
+        with patch.object(MarklogicApiClient, "eval") as mock_eval:
+            mock_eval.return_value.text = "true"
+            mock_eval.return_value.headers = {
+                "content-type": "multipart/mixed; boundary=595658fa1db1aa98",
+            }
+            # XML response with dls:annotation element but no text content
+            mock_eval.return_value.content = (
+                b"\r\n--595658fa1db1aa98\r\n"
+                b"Content-Type: application/xml\r\n"
+                b"X-Primitive: element()\r\n"
+                b"X-Path: /*\r\n\r\n"
+                b'<dls:checkout xmlns:dls="http://marklogic.com/xdmp/dls">'
+                b"<dls:document-uri>/ukpc/2022/17.xml</dls:document-uri>"
+                b"<dls:annotation></dls:annotation>"
+                b"<dls:timeout>0</dls:timeout>"
+                b"</dls:checkout>"
+                b"\r\n--595658fa1db1aa98--\r\n"
+            )
+            result = self.client.get_judgment_checkout_status_message(DocumentURIString("ewca/2002/2"))
+            assert result is None
+
     def test_calculate_seconds_until_midnight(self):
         dt = datetime.strptime(
             "2020-01-01 23:00",

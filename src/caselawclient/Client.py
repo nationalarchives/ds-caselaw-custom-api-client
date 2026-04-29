@@ -7,7 +7,6 @@ import warnings
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
-from xml.etree.ElementTree import Element
 
 import environ
 import requests
@@ -33,6 +32,7 @@ from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
+from caselawclient.xml_helpers import Element
 from caselawclient.xquery_type_dicts import (
     CheckContentHashUniqueByUriDict,
     MarkLogicDocumentURIString,
@@ -269,12 +269,13 @@ class MarklogicApiClient:
             return "Unknown error, Marklogic returned a null or empty response"
         try:
             xml = fromstring(content_as_xml)
-            return str(
-                xml.find(
-                    "message-code",
-                    namespaces={"": "http://marklogic.com/xdmp/error"},
-                ).text
+            message_code_element = xml.find(
+                "message-code",
+                namespaces={"": "http://marklogic.com/xdmp/error"},
             )
+            if message_code_element is None or message_code_element.text is None:
+                return "Unknown error, Marklogic returned a null or empty response"
+            return str(message_code_element.text)
         except (ParseError, TypeError, AttributeError):
             return "Unknown error, Marklogic returned a null or empty response"
 
@@ -592,7 +593,7 @@ class MarklogicApiClient:
 
         :return: The response object from MarkLogic
         """
-        xml = ElementTree.tostring(document_xml)
+        xml = etree.tostring(document_xml)
 
         uri = self._format_uri_for_marklogic(document_uri)
 
@@ -625,7 +626,7 @@ class MarklogicApiClient:
 
         :return: The response object from MarkLogic
         """
-        xml = ElementTree.tostring(document_xml)
+        xml = etree.tostring(document_xml)
 
         uri = self._format_uri_for_marklogic(document_uri)
 
@@ -697,12 +698,13 @@ class MarklogicApiClient:
         if content == "":
             return None
         response_xml = ElementTree.fromstring(content)
-        return str(
-            response_xml.find(
-                "dls:annotation",
-                namespaces={"dls": "http://marklogic.com/xdmp/dls"},
-            ).text
+        annotation_element = response_xml.find(
+            "dls:annotation",
+            namespaces={"dls": "http://marklogic.com/xdmp/dls"},
         )
+        if annotation_element is None or annotation_element.text is None:
+            return None
+        return str(annotation_element.text)
 
     def get_judgment_version(
         self,

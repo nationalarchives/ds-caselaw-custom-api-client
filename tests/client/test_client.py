@@ -234,3 +234,17 @@ class ApiClientTest(unittest.TestCase):
             result,
             "Unknown error, Marklogic returned a null or empty response",
         )
+
+    def test_get_error_code_message_code_element_no_text(self):
+        xml_string = """
+        <error-response xmlns="http://marklogic.com/xdmp/error">
+            <status-code>500</status-code>
+            <status>Internal Server Error</status>
+            <message-code></message-code>
+        </error-response>
+        """
+        result = self.client._get_error_code(xml_string)
+        self.assertEqual(
+            result,
+            "Unknown error, Marklogic returned a null or empty response",
+        )

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import pytest
-from defusedxml import ElementTree
+from lxml import etree
 
 import caselawclient.Client
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
@@ -28,7 +28,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             uri = DocumentURIString("ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
-            judgment_xml = ElementTree.fromstring(judgment_str)
+            judgment_xml = etree.fromstring(judgment_str)
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
                 "judgment": judgment_str,
@@ -128,7 +128,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
         with patch.object(self.client, "eval") as mock_eval:
             uri = DocumentURIString("ewca/civ/2004/632")
             document_str = "<root>My judgment</root>"
-            document_xml = ElementTree.fromstring(document_str)
+            document_xml = etree.fromstring(document_str)
             expected_vars = {
                 "uri": "/ewca/civ/2004/632.xml",
                 "type_collection": "judgment",
