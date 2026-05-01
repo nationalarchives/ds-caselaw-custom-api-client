@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from datetime import datetime, time, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 
@@ -15,6 +16,7 @@ from defusedxml import ElementTree
 from defusedxml.ElementTree import ParseError, fromstring
 from ds_caselaw_utils.types import NeutralCitationString
 from lxml import etree
+from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 from requests_toolbelt.multipart import decoder
@@ -62,6 +64,8 @@ env = environ.Env()
 # Requests timeouts: https://requests.readthedocs.io/en/latest/user/advanced/
 CONNECT_TIMEOUT = float(os.environ.get("CONNECT_TIMEOUT", "3.05"))
 READ_TIMEOUT = float(os.environ.get("READ_TIMEOUT", "10.0"))
+HTTP_POOL_CONNECTIONS = int(os.environ.get("MARKLOGIC_HTTP_POOL_CONNECTIONS", "10"))
+HTTP_POOL_MAXSIZE = int(os.environ.get("MARKLOGIC_HTTP_POOL_MAXSIZE", "20"))
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_XSL_TRANSFORM = "accessible-html.xsl"
@@ -75,6 +79,11 @@ DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 DEBUG: bool = bool(os.getenv("DEBUG", default=False))
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=512)
+def _read_xquery_source(canonical_xquery_path: str) -> str:
+    return Path(canonical_xquery_path).read_text(encoding="utf-8")
 
 
 class NoResponse(Exception):
@@ -206,6 +215,12 @@ class MarklogicApiClient:
         self.session = requests.Session()
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.headers.update({"User-Agent": user_agent})
+        adapter = HTTPAdapter(
+            pool_connections=HTTP_POOL_CONNECTIONS,
+            pool_maxsize=HTTP_POOL_MAXSIZE,
+        )
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         self.user_agent = user_agent
 
     def get_press_summaries_for_document_uri(
@@ -305,7 +320,6 @@ class MarklogicApiClient:
             new_exception = new_error_class(
                 f"{e}. Response body:\n{response_body}",
             )
-            new_exception.response = response
             raise new_exception
 
     def _format_uri_for_marklogic(
@@ -380,8 +394,7 @@ class MarklogicApiClient:
         data: Optional[dict[str, Any]] = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
-        self.session.headers = headers
-        response = self.session.request(method, **kwargs)
+        response = self.session.request(method, headers=headers, **kwargs)
         # Raise relevant exception for an erroneous response
         self._raise_for_status(response)
         return response
@@ -755,8 +768,9 @@ class MarklogicApiClient:
             "Content-type": "application/x-www-form-urlencoded",
             "Accept": accept_header,
         }
+        canonical_path = os.path.normpath(os.path.abspath(xquery_path))
         data = {
-            "xquery": Path(xquery_path).read_text(),
+            "xquery": _read_xquery_source(canonical_path),
             "vars": vars,
         }
         path = "LATEST/eval"

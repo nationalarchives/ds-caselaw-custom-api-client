@@ -1,4 +1,6 @@
+import os
 import re
+import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -7,17 +9,59 @@ import pytest
 import requests
 import responses
 from requests import Request
+from requests.structures import CaseInsensitiveDict
 
 from caselawclient.Client import (
     CONNECT_TIMEOUT,
+    HTTP_POOL_CONNECTIONS,
+    HTTP_POOL_MAXSIZE,
     READ_TIMEOUT,
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
+    _read_xquery_source,
     get_multipart_strings_from_marklogic_response,
     get_single_string_from_marklogic_response,
 )
 from caselawclient.errors import GatewayTimeoutError
 from caselawclient.models.documents import DocumentURIString
+
+
+class TestMarklogicApiClientConnectionPool(unittest.TestCase):
+    @patch("caselawclient.Client.HTTPAdapter")
+    def test_session_mounts_configured_http_adapter(self, mock_http_adapter):
+        adapter_instance = MagicMock()
+        mock_http_adapter.return_value = adapter_instance
+
+        client = MarklogicApiClient("", "", "", False)
+
+        mock_http_adapter.assert_called_once_with(
+            pool_connections=HTTP_POOL_CONNECTIONS,
+            pool_maxsize=HTTP_POOL_MAXSIZE,
+        )
+        assert client.session.adapters["https://"] is adapter_instance
+        assert client.session.adapters["http://"] is adapter_instance
+
+
+class TestMakeRequest(unittest.TestCase):
+    def test_make_request_merges_headers_without_clobbering_session_user_agent(self):
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client.session, "request") as mock_request:
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock(return_value=None)
+            mock_request.return_value = mock_response
+
+            client.make_request(
+                "GET",
+                "some/path",
+                CaseInsensitiveDict({"X-Custom-Header": "1"}),
+            )
+
+            mock_request.assert_called_once()
+            _args, call_kwargs = mock_request.call_args
+            assert call_kwargs["headers"]["X-Custom-Header"] == "1"
+
+        prepared = client.session.prepare_request(Request("GET", "http://example.invalid"))
+        assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", prepared.headers["user-agent"])
 
 
 class TestErrors(unittest.TestCase):
@@ -36,6 +80,7 @@ class TestErrors(unittest.TestCase):
         with pytest.raises(GatewayTimeoutError) as gateway_exception:
             self.client._raise_for_status(response)
         assert "Example Gateway Timeout" in str(gateway_exception.value)
+        assert gateway_exception.value.response is None
 
 
 class TestMarklogicResponseHandlers(unittest.TestCase):
@@ -140,11 +185,8 @@ class ApiClientTest(unittest.TestCase):
             "document_exists.xqy",
         )
 
-    @patch("caselawclient.Client.Path")
-    def test_eval_calls_request(self, MockPath):
-        mock_path_instance = MockPath.return_value
-        mock_path_instance.read_text.return_value = "mock-query"
-
+    @patch("caselawclient.Client._read_xquery_source", return_value="mock-query")
+    def test_eval_calls_request(self, _mock_read_xquery):
         with patch.object(self.client.session, "request") as patched_request:
             self.client.eval("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
@@ -159,11 +201,7 @@ class ApiClientTest(unittest.TestCase):
                 timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
             )
 
-    @patch("caselawclient.Client.Path")
-    def test_invoke_calls_request(self, MockPath):
-        mock_path_instance = MockPath.return_value
-        mock_path_instance.read_text.return_value = "mock-query"
-
+    def test_invoke_calls_request(self):
         with patch.object(self.client.session, "request") as patched_request:
             self.client.invoke("mock-query-path.xqy", vars='{{"testvar":"test"}}')
 
@@ -176,6 +214,20 @@ class ApiClientTest(unittest.TestCase):
                 },
                 data={"module": "mock-query-path.xqy", "vars": '{{"testvar":"test"}}'},
             )
+
+    def test_read_xquery_source_is_cached(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".xqy", delete=False, encoding="utf-8") as f:
+            f.write("first")
+            path = f.name
+        try:
+            canonical = os.path.normpath(os.path.abspath(path))
+            assert _read_xquery_source(canonical) == "first"
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("second")
+            assert _read_xquery_source(canonical) == "first"
+        finally:
+            _read_xquery_source.cache_clear()
+            os.unlink(path)
 
     def test_format_uri(self):
         uri = DocumentURIString("ewca/2022/123")
