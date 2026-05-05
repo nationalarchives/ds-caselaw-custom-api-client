@@ -8,7 +8,15 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **Client**: MarkLogic client uses HTTP(S) adapter pool
 - **Document**: add method to save document to MarkLogic
+
+### Fix
+
+- **deps**: update boto packages to v1.43.2
+- **deps**: update boto packages to v1.43.1
+- **deps**: update boto packages to v1.43.0
+- **deps**: update dependency boto3 to v1.42.97
 
 ### Refactor
 

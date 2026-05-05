@@ -7,9 +7,12 @@ import pytest
 import requests
 import responses
 from requests import Request
+from requests.structures import CaseInsensitiveDict
 
 from caselawclient.Client import (
     CONNECT_TIMEOUT,
+    HTTP_POOL_CONNECTIONS,
+    HTTP_POOL_MAXSIZE,
     READ_TIMEOUT,
     MarklogicApiClient,
     MultipartResponseLongerThanExpected,
@@ -18,6 +21,44 @@ from caselawclient.Client import (
 )
 from caselawclient.errors import GatewayTimeoutError
 from caselawclient.models.documents import DocumentURIString
+
+
+class TestMarklogicApiClientConnectionPool(unittest.TestCase):
+    @patch("caselawclient.Client.HTTPAdapter")
+    def test_session_mounts_configured_http_adapter(self, mock_http_adapter):
+        adapter_instance = MagicMock()
+        mock_http_adapter.return_value = adapter_instance
+
+        client = MarklogicApiClient("", "", "", False)
+
+        mock_http_adapter.assert_called_once_with(
+            pool_connections=HTTP_POOL_CONNECTIONS,
+            pool_maxsize=HTTP_POOL_MAXSIZE,
+        )
+        assert client.session.adapters["https://"] is adapter_instance
+        assert client.session.adapters["http://"] is adapter_instance
+
+
+class TestMakeRequest(unittest.TestCase):
+    def test_make_request_merges_headers_without_clobbering_session_user_agent(self):
+        client = MarklogicApiClient("", "", "", False)
+        with patch.object(client.session, "request") as mock_request:
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock(return_value=None)
+            mock_request.return_value = mock_response
+
+            client.make_request(
+                "GET",
+                "some/path",
+                CaseInsensitiveDict({"X-Custom-Header": "1"}),
+            )
+
+            mock_request.assert_called_once()
+            _args, call_kwargs = mock_request.call_args
+            assert call_kwargs["headers"]["X-Custom-Header"] == "1"
+
+        prepared = client.session.prepare_request(Request("GET", "http://example.invalid"))
+        assert re.match(r"^ds-caselaw-marklogic-api-client/\d+", prepared.headers["user-agent"])
 
 
 class TestErrors(unittest.TestCase):
