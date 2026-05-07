@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - loosen dependency pin for boto3
 
+### Feat
+
+- Adds more logs around document publish
+
 ## v46.0.0 (2026-05-07)
 
 ### BREAKING CHANGE
