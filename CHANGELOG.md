@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Build
+
+- loosen dependency pin for boto3
+
 ## v46.0.0 (2026-05-07)
 
 ### BREAKING CHANGE
