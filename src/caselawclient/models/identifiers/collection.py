@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional, Union
 from lxml import etree
 
 from caselawclient.types import SuccessFailureMessageTuple
+from caselawclient.xml_helpers import Element
 
 from . import Identifier, IdentifierSchema
 from .fclid import FindCaseLawIdentifier
@@ -143,7 +144,7 @@ class IdentifiersCollection(dict[str, Identifier]):
                 del self[uuid]
 
     @property
-    def as_etree(self) -> etree._Element:
+    def as_etree(self) -> Element:
         """Return an etree representation of all the Document's identifiers."""
         identifiers_root = etree.Element("identifiers")
 

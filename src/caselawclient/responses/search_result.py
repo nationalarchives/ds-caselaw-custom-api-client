@@ -17,7 +17,7 @@ from caselawclient.models.identifiers.neutral_citation import NeutralCitationNum
 from caselawclient.models.identifiers.press_summary_ncn import PressSummaryRelatedNCNIdentifier
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.types import DocumentURIString
-from caselawclient.xml_helpers import get_xpath_match_string
+from caselawclient.xml_helpers import Element, get_xpath_match_string
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class SearchResultMetadata:
     Represents the metadata of a search result.
     """
 
-    def __init__(self, node: etree._Element, last_modified: str):
+    def __init__(self, node: Element, last_modified: str):
         self.node = node
         self.last_modified = last_modified
 
@@ -153,7 +153,7 @@ class SearchResult:
     }
     """ Namespace mappings used in XPath expressions. """
 
-    def __init__(self, node: etree._Element, client: MarklogicApiClient):
+    def __init__(self, node: Element, client: MarklogicApiClient):
         """
         :param node: The XML element representing the search result
         """

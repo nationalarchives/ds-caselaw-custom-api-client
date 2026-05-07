@@ -1,9 +1,8 @@
 from typing import List
 
-from lxml import etree
-
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_result import SearchResult
+from caselawclient.xml_helpers import Element
 
 
 class SearchResponse:
@@ -14,7 +13,7 @@ class SearchResponse:
     NAMESPACES = {"search": "http://marklogic.com/appservices/search"}
     """ Namespaces used in XPath expressions."""
 
-    def __init__(self, node: etree._Element, client: MarklogicApiClient) -> None:
+    def __init__(self, node: Element, client: MarklogicApiClient) -> None:
         """
         Initializes a SearchResponse instance from an xml node.
 
