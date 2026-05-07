@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v46.0.0 (2026-05-07)
+
+### BREAKING CHANGE
+
+- This version correctly marks the change of `insert_document_xml` and `update_document_xml` signatures to require `lxml.etree._Element` as breaking.
 
 ### Fix
 
