@@ -1,4 +1,6 @@
 import io
+import json
+import logging
 import os
 from unittest.mock import MagicMock, Mock, patch
 from urllib import parse
@@ -13,6 +15,7 @@ from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.models.utilities import aws as aws_utils
 from caselawclient.models.utilities import extract_version, move, render_versions
 from caselawclient.models.utilities.aws import (
+    announce_document_event,
     are_unpublished_assets_clean,
     build_new_key,
     check_docx_exists,
@@ -110,6 +113,43 @@ class TestAWSUtils:
         client.return_value.list_objects.assert_called_with(Bucket="fake_bucket", Prefix="uksc/2023/1/")
         client.return_value.delete_objects.assert_called_with(
             Bucket="fake_bucket", Delete={"Objects": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]}
+        )
+
+    @patch("caselawclient.models.utilities.aws.create_sns_client")
+    @patch.dict(os.environ, {"SNS_TOPIC": "MY_SNS_TOPIC"})
+    def test_announce_document_event_with_enrich(self, client, caplog):
+        caplog.set_level(logging.INFO)
+
+        announce_document_event(DocumentURIString("uksc/2023/1"), "publish", enrich=True)
+
+        assert "Announcing document event for uksc/2023/1 with status publish and enrich True" in caplog.text
+        client.return_value.publish.assert_called_with(
+            TopicArn="MY_SNS_TOPIC",
+            Message=json.dumps({"uri_reference": "uksc/2023/1", "status": "publish"}),
+            Subject="Updated: uksc/2023/1 publish",
+            MessageAttributes={
+                "update_type": {"DataType": "String", "StringValue": "publish"},
+                "uri_reference": {"DataType": "String", "StringValue": "uksc/2023/1"},
+                "trigger_enrichment": {"DataType": "String", "StringValue": "1"},
+            },
+        )
+
+    @patch("caselawclient.models.utilities.aws.create_sns_client")
+    @patch.dict(os.environ, {"SNS_TOPIC": "MY_SNS_TOPIC"})
+    def test_announce_document_event_no_enrich(self, client, caplog):
+        caplog.set_level(logging.INFO)
+
+        announce_document_event(DocumentURIString("uksc/2023/1"), "publish", enrich=False)
+
+        assert "Announcing document event for uksc/2023/1 with status publish and enrich False" in caplog.text
+        client.return_value.publish.assert_called_with(
+            TopicArn="MY_SNS_TOPIC",
+            Message=json.dumps({"uri_reference": "uksc/2023/1", "status": "publish"}),
+            Subject="Updated: uksc/2023/1 publish",
+            MessageAttributes={
+                "update_type": {"DataType": "String", "StringValue": "publish"},
+                "uri_reference": {"DataType": "String", "StringValue": "uksc/2023/1"},
+            },
         )
 
     @mock_aws
