@@ -901,7 +901,7 @@ class MarklogicApiClient:
         }
         return self._eval_and_decode(vars, "get_property.xqy")
 
-    def get_property_as_node(self, judgment_uri: DocumentURIString, name: str) -> Optional[etree._Element]:
+    def get_property_as_node(self, judgment_uri: DocumentURIString, name: str) -> Optional[Element]:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyAsNodeDict = {
             "uri": uri,
@@ -948,7 +948,7 @@ class MarklogicApiClient:
         self,
         judgment_uri: DocumentURIString,
         name: str,
-        value: etree._Element,
+        value: Element,
     ) -> requests.Response:
         """Given a root node, set the value of the MarkLogic property for a document to the _contents_ of that root node. The root node itself is discarded."""
         uri = self._format_uri_for_marklogic(judgment_uri)

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- **deps**: update boto packages to v1.43.3
+
+### Refactor
+
+- standardise how we represent etree.\_Element type
+
 ## v45.1.0 (2026-05-05)
 
 ### Feat

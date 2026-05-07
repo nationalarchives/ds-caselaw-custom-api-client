@@ -5,6 +5,7 @@ from uuid import uuid4
 from lxml import etree
 
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, SuccessFailureMessageTuple
+from caselawclient.xml_helpers import Element
 
 from .exceptions import IdentifierValidationException
 
@@ -128,7 +129,7 @@ class Identifier(ABC):
         self.deprecated = deprecated
 
     @property
-    def as_xml_tree(self) -> etree._Element:
+    def as_xml_tree(self) -> Element:
         """Convert this Identifier into a packed XML representation for storage."""
         identifier_root = etree.Element("identifier")
 

@@ -6,7 +6,6 @@ from typing import Optional
 
 import pytz
 from ds_caselaw_utils.types import CourtCode
-from lxml import etree
 from saxonche import PySaxonProcessor
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
@@ -35,7 +34,7 @@ class DocumentBody:
     def get_xpath_match_strings(self, xpath: str) -> list[str]:
         return self._xml.get_xpath_match_strings(xpath)
 
-    def get_xpath_nodes(self, xpath: str) -> list[etree._Element]:
+    def get_xpath_nodes(self, xpath: str) -> list[Element]:
         return self._xml.get_xpath_nodes(xpath)
 
     @cached_property
