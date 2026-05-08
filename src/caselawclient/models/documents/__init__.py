@@ -453,8 +453,10 @@ class Document:
         except CannotEnrichUnenrichableDocument as e:
             if not accept_failures:
                 raise e
+            logger.warning("Enrichment failed for %s but proceeding anyway", self.uri, exc_info=True)
             return False
 
+        logger.info("Enrichment completed for %s", self.uri, exc_info=True)
         return True
 
     @cached_property
@@ -481,11 +483,15 @@ class Document:
     def assign_fclid_if_missing(self) -> Optional[FindCaseLawIdentifier]:
         """If the document does not have an FCLID already, mint a new one and save it."""
         if len(self.identifiers.of_type(FindCaseLawIdentifier)) == 0:
+            logger.info("Document has no FCLID, minting a new one")
             document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
+            logger.info("FCLID %s minted", document_fclid)
             self.identifiers.add(document_fclid)
             self.save_identifiers()
+            logger.info("FCLID %s assigned", document_fclid)
             return document_fclid
 
+        logger.info("Document already has an FCLID")
         return None
 
     def save(self, message: str) -> None:
@@ -517,8 +523,10 @@ class Document:
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
+        logger.debug("Assert that document is publishable")
         self.assert_is_publishable()
 
+        logger.info("Start publication process")
         ## Make sure the document has an FCLID
         self.assign_fclid_if_missing()
 
@@ -542,6 +550,8 @@ class Document:
 
         ## Send the document off for enrichment, but accept if we can't for any reason
         self.enrich(accept_failures=True)
+
+        logger.info("Document publication complete")
 
     def unpublish(self) -> None:
         self.api_client.break_checkout(self.uri)

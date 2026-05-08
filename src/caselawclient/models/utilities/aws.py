@@ -50,6 +50,7 @@ def create_aws_client(service: Literal["sns"]) -> SNSClient: ...
 
 
 def create_aws_client(service: Literal["s3", "sns"]) -> Any:
+    logger.info("Creating AWS client for service %s", service)
     aws = boto3.session.Session()
     return aws.client(
         service,
@@ -212,6 +213,7 @@ def announce_document_event(uri: DocumentURIString, status: str, enrich: bool = 
             "StringValue": "1",
         }
 
+    logger.info("Announcing document event for %s with status %s and enrich %s", uri, status, enrich)
     client.publish(
         TopicArn=env("SNS_TOPIC"),  # this is the ANNOUNCE SNS topic
         Message=json.dumps({"uri_reference": uri, "status": status}),
