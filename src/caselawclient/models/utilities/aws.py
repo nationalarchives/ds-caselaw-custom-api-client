@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from collections.abc import Callable
+from functools import cache
 from typing import Any, Literal, Optional, TypedDict, overload
 
 import boto3
@@ -42,14 +43,20 @@ class ParserInstructionsDict(TypedDict):
 
 
 @overload
-def create_aws_client(service: Literal["s3"]) -> S3Client: ...
+def create_aws_client(service: Literal["s3"]) -> S3Client:
+    """Creates a new s3 client on first call, then returns the cached client on subsequent calls"""
+    ...
 
 
 @overload
-def create_aws_client(service: Literal["sns"]) -> SNSClient: ...
+def create_aws_client(service: Literal["sns"]) -> SNSClient:
+    """Creates a new sns client on first call, then returns the cached client on subsequent calls"""
+    ...
 
 
+@cache
 def create_aws_client(service: Literal["s3", "sns"]) -> Any:
+    """Create an AWS client for the given service, caching it for future use."""
     logger.info("Creating AWS client for service %s", service)
     aws = boto3.session.Session()
     return aws.client(
@@ -60,10 +67,12 @@ def create_aws_client(service: Literal["s3", "sns"]) -> Any:
 
 
 def create_s3_client() -> S3Client:
+    """Creates a new s3 client on first call, then returns the cached client on subsequent calls"""
     return create_aws_client("s3")
 
 
 def create_sns_client() -> SNSClient:
+    """Creates a new sns client on first call, then returns the cached client on subsequent calls"""
     return create_aws_client("sns")
 
 

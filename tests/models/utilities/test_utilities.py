@@ -2,7 +2,7 @@ import io
 import json
 import logging
 import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib import parse
 
 import boto3
@@ -26,6 +26,14 @@ from caselawclient.models.utilities.aws import (
     generate_signed_asset_url,
     upload_asset_to_private_bucket,
 )
+
+
+@pytest.fixture(autouse=True)
+def clear_aws_client_cache():
+    """Clear the AWS client cache before and after each test to ensure test isolation."""
+    aws_utils.create_aws_client.cache_clear()  # type: ignore[attr-defined]
+    yield
+    aws_utils.create_aws_client.cache_clear()  # type: ignore[attr-defined]
 
 
 @pytest.fixture
@@ -85,6 +93,34 @@ class TestAWSUtils:
         old_key = "failures/TDR-2022-DNWR/image1.jpg"
         new_uri = DocumentURIString("ukpc/2023/120")
         assert build_new_key(old_key, new_uri) == "ukpc/2023/120/image1.jpg"
+
+    @patch("caselawclient.models.utilities.aws.boto3.session.Session")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET_REGION": "myregion-1"})
+    def test_create_aws_client_caches(self, mock_session, caplog: pytest.LogCaptureFixture):
+        caplog.set_level(logging.INFO)
+        mock_session.return_value.client.side_effect = [MagicMock(), MagicMock()]
+
+        s3Client = aws_utils.create_s3_client()
+        mock_session.return_value.client.assert_called_with("s3", region_name="myregion-1", config=ANY)
+        assert "Creating AWS client for service s3" in caplog.messages
+
+        snsClient = aws_utils.create_sns_client()
+        mock_session.return_value.client.assert_called_with("sns", region_name="myregion-1", config=ANY)
+        assert "Creating AWS client for service sns" in caplog.messages
+
+        assert mock_session.return_value.client.call_count == 2
+        assert s3Client is not snsClient
+
+        mock_session.reset_mock()
+        caplog.clear()
+
+        nextS3Client = aws_utils.create_s3_client()
+        nextSnsClient = aws_utils.create_sns_client()
+
+        assert s3Client is nextS3Client
+        assert snsClient is nextSnsClient
+        mock_session.return_value.client.assert_not_called()
+        assert caplog.text == ""
 
     @patch("caselawclient.models.utilities.aws.create_s3_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - Adds more logs around document publish
+- Caches AWS clients to prevent spiralling memory costs from creating new ones for each AWS operation
 
 ## v46.0.0 (2026-05-07)
 
