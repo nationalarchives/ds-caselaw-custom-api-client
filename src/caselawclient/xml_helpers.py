@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, TypeAlias
 
 from lxml import etree
 
@@ -8,7 +8,7 @@ DEFAULT_NAMESPACES = {
 }
 
 # _Element is the only class lxml exposes, so need to use the private class for typing
-Element = etree._Element  # noqa: SLF001
+Element: TypeAlias = etree._Element  # noqa: SLF001
 
 
 def get_xpath_nodes(
