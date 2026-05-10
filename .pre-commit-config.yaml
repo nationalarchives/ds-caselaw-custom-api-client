@@ -33,7 +33,7 @@ repos:
         additional_dependencies:
           - types-requests==2.33.0.20260503
           - boto3-stubs[s3,sns]==1.43.6
-          - types-python-dateutil==2.9.0.20260408
+          - types-python-dateutil==2.9.0.20260508
           - types-pytz==2026.2.0.20260506
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.2.1
@@ -50,7 +50,7 @@ repos:
         additional_dependencies:
           - types-requests==2.33.0.20260503
           - boto3-stubs[s3,sns]==1.43.6
-          - types-python-dateutil==2.9.0.20260408
+          - types-python-dateutil==2.9.0.20260508
           - types-pytz==2026.2.0.20260506
           - types-lxml==2026.2.16
           - types-defusedxml==0.7.0.20260504
