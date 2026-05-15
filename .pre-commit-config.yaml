@@ -31,7 +31,7 @@ repos:
   - hooks:
       - language: python
         additional_dependencies:
-          - types-requests==2.33.0.20260508
+          - types-requests==2.33.0.20260513
           - boto3-stubs[s3,sns]==1.43.6
           - types-python-dateutil==2.9.0.20260508
           - types-pytz==2026.2.0.20260506
@@ -48,7 +48,7 @@ repos:
   - hooks:
       - language: python
         additional_dependencies:
-          - types-requests==2.33.0.20260508
+          - types-requests==2.33.0.20260513
           - boto3-stubs[s3,sns]==1.43.6
           - types-python-dateutil==2.9.0.20260508
           - types-pytz==2026.2.0.20260506
