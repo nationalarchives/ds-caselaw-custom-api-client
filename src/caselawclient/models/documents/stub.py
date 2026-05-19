@@ -20,6 +20,7 @@ class EditorStubData(TypedDict):
     year: str
     case_numbers: list[str]  # can be none
     parties: list[PartyData]  # (type (claimant|defendant), name)
+    ncn: str  # empty string means "no NCN"
 
 
 class RendererStubData(EditorStubData):
@@ -54,6 +55,7 @@ def render_stub_xml(editor_data: EditorStubData) -> bytes:
     xquery.set_parameter(
         "case_numbers", proc.make_array([proc.make_string_value(x) for x in render_data["case_numbers"]])
     )
+    xquery.set_parameter("ncn", proc.make_string_value(render_data["ncn"]))
 
     builder = []
     for party in render_data["parties"]:

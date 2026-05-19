@@ -6,13 +6,16 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
-### Added
+### Feat
 
 - **MarklogicApiClient**: add `restore_document` method to restore a previous version of a document
+- Support NCN being specified in stub (breaking: update EUI at same time)
 
 ### Fix
 
 - Permit enriching bulk data if there's content
+
+### Feat
 
 ## v46.1.1 (2026-05-08)
 
