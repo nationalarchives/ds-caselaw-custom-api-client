@@ -653,7 +653,7 @@ class Document:
         """
         Is it possible to enrich this document?
         """
-        return self.body.has_content and not self.body.has_external_data
+        return self.body.has_content
 
     def validate_identifiers(self) -> SuccessFailureMessageTuple:
         return self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)

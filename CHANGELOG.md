@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+## Fix
+
+- Permit enriching bulk data if there's content
+
 ## v46.1.1 (2026-05-08)
 
 ### Refactor
