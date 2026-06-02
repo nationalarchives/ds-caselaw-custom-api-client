@@ -216,7 +216,6 @@ class TestDocumentForceEnrich:
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
     def test_force_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.can_enrich = False
         with pytest.raises(CannotEnrichUnenrichableDocument):
             document.force_enrich()
 
@@ -235,7 +234,6 @@ class TestDocumentEnrich:
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
     def test_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.can_enrich = False
         with pytest.raises(CannotEnrichUnenrichableDocument):
             document.enrich()
 
@@ -254,7 +252,6 @@ class TestDocumentEnrich:
         self, mock_can_enrich, mock_announce_document_event, mock_api_client
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.can_enrich = False
         document.enrich(accept_failures=True)
 
         mock_api_client.set_property.assert_called_once_with(
