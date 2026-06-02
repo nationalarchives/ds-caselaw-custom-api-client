@@ -228,6 +228,20 @@ class TestDocumentForceEnrich:
         mock_announce_document_event.assert_not_called()
 
 
+class TestDocumentCanEnrich:
+    @patch("caselawclient.models.documents.DocumentBody.has_content", new_callable=PropertyMock, return_value=True)
+    def test_can_enrich_true_when_has_content(self, mock_has_content, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.can_enrich is True
+
+    @patch("caselawclient.models.documents.DocumentBody.has_content", new_callable=PropertyMock, return_value=False)
+    def test_can_enrich_false_when_no_content(self, mock_has_content, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.can_enrich is False
+
+
 class TestDocumentEnrich:
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
