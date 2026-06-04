@@ -26,6 +26,11 @@ class MarklogicResourceNotFoundError(MarklogicAPIError):
     default_message = "No resource with that name could be found."
 
 
+class MarklogicResourceVersionInvalidError(MarklogicAPIError):
+    status_code = 404
+    default_message = "No resource with that version could be found."
+
+
 class MarklogicResourceLockedError(MarklogicAPIError):
     status_code = 409
     default_message = "The resource is locked by another user, so you cannot change it."

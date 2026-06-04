@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
-## Fix
+### Added
+
+- **MarklogicApiClient**: add `restore_document` method to restore a previous version of a document
+
+### Fix
 
 - Permit enriching bulk data if there's content
 

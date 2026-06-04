@@ -170,6 +170,13 @@ class ResolveFromIdentifierValueDict(MarkLogicAPIDict):
     published_only: Optional[int]
 
 
+# restore_version.xqy
+class RestoreVersionDict(MarkLogicAPIDict):
+    annotation: str
+    uri: MarkLogicDocumentURIString
+    version_number: int
+
+
 # set_boolean_property.xqy
 class SetBooleanPropertyDict(MarkLogicAPIDict):
     name: str
