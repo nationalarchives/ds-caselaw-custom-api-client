@@ -27,7 +27,7 @@ from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
 )
-from caselawclient.models.documents.versions import VersionAnnotation
+from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
@@ -54,6 +54,7 @@ from .errors import (
     MarklogicResourceNotCheckedOutError,
     MarklogicResourceNotFoundError,
     MarklogicResourceUnmanagedError,
+    MarklogicResourceVersionInvalidError,
     MarklogicUnauthorizedError,
     MarklogicValidationFailedError,
 )
@@ -183,6 +184,7 @@ class MarklogicApiClient:
         "XDMP-DOCNOTFOUND": MarklogicResourceNotFoundError,
         "XDMP-LOCKCONFLICT": MarklogicResourceLockedError,
         "XDMP-LOCKED": MarklogicResourceLockedError,
+        "DLS-INVALIDVERSION": MarklogicResourceVersionInvalidError,
         "DLS-UNMANAGED": MarklogicResourceUnmanagedError,
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
@@ -1040,6 +1042,57 @@ class MarklogicApiClient:
 
         content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
         return content
+
+    def restore_document(
+        self, document_uri: DocumentURIString, version_number: int, annotation: VersionAnnotation | None = None
+    ) -> requests.Response:
+        """Restore a previous document version in MarkLogic.
+
+        This creates a new version while preserving the existing version
+        history. If no annotation is supplied, a restore annotation is created
+        that records the source version and the client user agent. The
+        annotation payload always includes `restored_from_version`, even when
+        a custom annotation is provided. This uses MarkLogic's
+        document-checkout-update-checkin flow to handle the checkout and
+        checkin.
+
+        Args:
+            document_uri: The URI of the document to restore.
+            version_number: The version number to restore.
+            annotation: An optional version annotation to store on the
+                restored version. Its payload is updated to include
+                `restored_from_version`.
+
+        Returns:
+            The MarkLogic response from restoring the document.
+        """
+        # This may not restore all of the properties of the previous document,
+        # as MarkLogic only versions properties if a change to the content is
+        # also made: https://docs.marklogic.com/9.0/dls.documentAddProperties
+
+        uri = self._format_uri_for_marklogic(document_uri)
+        if annotation is None:
+            annotation = VersionAnnotation(
+                VersionType.RESTORE,
+                automated=True,
+                message=f"Restored from version {version_number}",
+            )
+
+            annotation.set_calling_function("restore_document")
+            annotation.set_calling_agent(self.user_agent)
+
+        if annotation.payload is None:
+            annotation.payload = {}
+
+        annotation.payload.update({"restored_from_version": version_number})
+
+        vars: query_dicts.RestoreVersionDict = {
+            "uri": uri,
+            "version_number": version_number,
+            "annotation": annotation.as_json,
+        }
+
+        return self._send_to_eval(vars, "restore_version.xqy")
 
     def delete_judgment(self, judgment_uri: DocumentURIString) -> requests.Response:
         uri = self._format_uri_for_marklogic(judgment_uri)
