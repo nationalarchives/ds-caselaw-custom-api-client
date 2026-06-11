@@ -36,7 +36,7 @@ from caselawclient.models.utilities.aws import (
     request_parse,
     unpublish_documents,
 )
-from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
+from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict
 
 from .body import DocumentBody
 from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
@@ -141,15 +141,7 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-        self.body: DocumentBody = DocumentBody(
-            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
-                self.uri,
-                show_unpublished=True,
-                search_query=search_query,
-            ),
-        )
-        """ `Document.body` represents the body of the document itself, without any information such as version tracking or properties. """
-
+        self._initialise_document_body(search_query=search_query)
         self._initialise_identifiers()
 
     def __repr__(self) -> str:
@@ -165,6 +157,25 @@ class Document:
     def docx_exists(self) -> bool:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
+
+    def _initialise_document_body(self, search_query: str | None = None) -> None:
+        """Load this document's body from MarkLogic.
+
+        Fetches the document body XML from MarkLogic and initializes the
+        `Document.body` property. The body represents the document itself,
+        without version tracking or property information.
+
+        Args:
+            search_query: Optional search query to pass to MarkLogic when
+                fetching the document body.
+        """
+        self.body: DocumentBody = DocumentBody(
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
+                self.uri,
+                show_unpublished=True,
+                search_query=search_query,
+            ),
+        )
 
     def _initialise_identifiers(self) -> None:
         """Load this document's identifiers from MarkLogic."""
@@ -588,6 +599,145 @@ class Document:
             delete_documents_from_private_bucket(self.uri)
         else:
             raise DocumentNotSafeForDeletion
+
+    def _get_restore_metadata_source_version(self, version_number: int) -> Optional["Document"]:
+        """Find the latest version that should source metadata during restore.
+
+        Args:
+            version_number: Version number to search back from.
+
+        Returns:
+            The latest submission/restore version at or before `version_number`,
+            or `None` when no matching version exists.
+        """
+        metadata_source_version = None
+        prior_submission_types = {VersionType.SUBMISSION.value, VersionType.RESTORE.value}
+
+        # self.versions_as_documents is pre-sorted with newest first.
+        for document in self.versions_as_documents:
+            if document.version_number > version_number:
+                continue
+
+            if document.structured_annotation and document.structured_annotation.get("type") in prior_submission_types:
+                metadata_source_version = document
+                break
+
+        return metadata_source_version
+
+    def _get_version(self, version_number: int) -> Optional["Document"]:
+        """Find a specific version from the document history.
+
+        Args:
+            version_number: Version number to retrieve.
+
+        Returns:
+            The version document matching `version_number`, or `None` if it does
+            not exist.
+        """
+        version_document = None
+
+        for document in self.versions_as_documents:
+            if document.version_number == version_number:
+                version_document = document
+                break
+
+        return version_document
+
+    def _set_tdr_metadata(self, tdr_metadata: TDRMetadataDict) -> None:
+        """Store TDR metadata values on document properties.
+
+        Args:
+            tdr_metadata: TDR metadata mapping extracted from TRE payload data.
+
+        Raises:
+            KeyError: A required TDR metadata key is missing.
+        """
+        self.api_client.set_property(
+            self.uri,
+            name="source-organisation",
+            value=tdr_metadata["Source-Organization"],
+        )
+        self.api_client.set_property(self.uri, name="source-name", value=tdr_metadata["Contact-Name"])
+        self.api_client.set_property(self.uri, name="source-email", value=tdr_metadata["Contact-Email"])
+
+        # Store TDR data
+        self.api_client.set_property(
+            self.uri,
+            name="transfer-consignment-reference",
+            value=tdr_metadata["Internal-Sender-Identifier"],
+        )
+        self.api_client.set_property(
+            self.uri,
+            name="transfer-received-at",
+            value=tdr_metadata["Consignment-Completed-Datetime"],
+        )
+
+        # These have potentially been updated so remove from cache.
+        self.__dict__.pop("source_name", None)
+        self.__dict__.pop("source_email", None)
+        self.__dict__.pop("consignment_reference", None)
+
+    def restore_version(self, version_number: int, automated: bool = True) -> None:
+        """Restore a previous version of this document.
+
+        Create a new version from a historical version while preserving version
+        history. Build the restore annotation from the target version's
+        structured annotation, remove submitter details from payload metadata,
+        and reload the document body after restore.
+
+        Args:
+            version_number: The version number to restore.
+            automated: Whether to mark the restore as automated.
+
+        Raises:
+            ValueError: If the specified version number is not found.
+        """
+
+        restore_version_document = self._get_version(version_number)
+        metadata_source_version_document = self._get_restore_metadata_source_version(version_number)
+
+        # We need a version to restore from.
+        if restore_version_document is None:
+            raise ValueError(f"Version {version_number} not found in document history")
+
+        restore_version_annotation = restore_version_document.structured_annotation
+        # Cannot rely on .get("payload", {}) because payload may actually exist with a value of None.
+        restore_version_annotation_payload = restore_version_annotation.get("payload")
+        if restore_version_annotation_payload is None:
+            restore_version_annotation_payload = {}
+        else:
+            restore_version_annotation_payload = dict(restore_version_annotation_payload)
+
+        if metadata_source_version_document:
+            metadata_source_version_annotation = metadata_source_version_document.structured_annotation
+            metadata_source_version_annotation_payload = metadata_source_version_annotation.get("payload")
+            if metadata_source_version_annotation_payload is None:
+                metadata_source_version_annotation_payload = {}
+
+            if tre_metadata := metadata_source_version_annotation_payload.get("tre_raw_metadata", {}):
+                if tdr_metadata := tre_metadata.get("parameters", {}).get("TDR", {}):
+                    self._set_tdr_metadata(tdr_metadata)
+
+                # Ensure restoring to a restored version can get required TDR metadata.
+                restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
+
+        # Remove submitter as this could be misleading (they may not be the one who restored the version).
+        restore_version_annotation_payload.pop("submitter", None)
+        annotation = VersionAnnotation(
+            VersionType.RESTORE,
+            automated=automated,
+            message=f"Restored from version {version_number}",
+            payload=restore_version_annotation_payload,
+        )
+        annotation.set_calling_function("restore_version")
+        annotation.set_calling_agent(self.api_client.user_agent)
+
+        self.api_client.restore_document(self.uri, version_number, annotation)
+
+        # These will have changed so remove from cache.
+        self.__dict__.pop("versions", None)
+        self.__dict__.pop("versions_as_documents", None)
+        self._initialise_document_body()
 
     def move(self, new_citation: NeutralCitationString) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)

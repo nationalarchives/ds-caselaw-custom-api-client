@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import TypedDict
 
 from lxml import etree
 
@@ -70,6 +71,18 @@ class DocumentIdentifierSlug(str):
 
 class DocumentIdentifierValue(str):
     pass
+
+
+TDRMetadataDict = TypedDict(
+    "TDRMetadataDict",
+    {
+        "Source-Organization": str,
+        "Contact-Name": str,
+        "Contact-Email": str,
+        "Internal-Sender-Identifier": str,
+        "Consignment-Completed-Datetime": str,
+    },
+)
 
 
 class SuccessFailureMessageTuple(tuple[bool, list[str]]):

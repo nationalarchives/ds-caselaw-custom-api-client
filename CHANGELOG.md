@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Added
+
+- **MarklogicApiClient**: add `restore_document` method to restore a previous version of a document
+
 ## v47.0.0
 
 ### Feat

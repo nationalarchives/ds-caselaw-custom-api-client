@@ -1,11 +1,12 @@
 import datetime
 import json
 import os
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import ANY, Mock, PropertyMock, call, patch
 
 import pytest
 import time_machine
 
+from caselawclient.errors import MarklogicResourceVersionInvalidError
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import (
     CannotEnrichUnenrichableDocument,
@@ -14,6 +15,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
+from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
@@ -549,3 +551,468 @@ class TestReparse:
             "last_sent_to_parser",
             "2015-10-21T16:29:00+00:00",
         )
+
+
+_MISSING_PAYLOAD = object()
+
+
+def _make_tdr_payload(
+    organisation: str,
+    contact_name: str,
+    contact_email: str,
+    sender_identifier: str,
+    completed_at: str,
+    extra_tre_raw_metadata: dict | None = None,
+):
+    payload = {
+        "tre_raw_metadata": {
+            "parameters": {
+                "TDR": {
+                    "Source-Organization": organisation,
+                    "Contact-Name": contact_name,
+                    "Contact-Email": contact_email,
+                    "Internal-Sender-Identifier": sender_identifier,
+                    "Consignment-Completed-Datetime": completed_at,
+                }
+            }
+        }
+    }
+    if extra_tre_raw_metadata:
+        payload["tre_raw_metadata"].update(extra_tre_raw_metadata)
+    return payload
+
+
+def _make_version_document(
+    version_number: int,
+    annotation_type: str = "submission",
+    payload: dict | None | object = _MISSING_PAYLOAD,
+):
+    version_document = Mock(spec=Document)
+    version_document.version_number = version_number
+    structured_annotation: dict[str, object] = {"type": annotation_type}
+    if payload is not _MISSING_PAYLOAD:
+        structured_annotation["payload"] = payload
+    version_document.structured_annotation = structured_annotation
+    return version_document
+
+
+def _assert_tdr_metadata_set(
+    mock_api_client, organisation: str, contact_name: str, contact_email: str, sender_id: str, completed_at: str
+):
+    mock_api_client.set_property.assert_has_calls(
+        [
+            call("test/1234", name="source-organisation", value=organisation),
+            call("test/1234", name="source-name", value=contact_name),
+            call("test/1234", name="source-email", value=contact_email),
+            call("test/1234", name="transfer-consignment-reference", value=sender_id),
+            call("test/1234", name="transfer-received-at", value=completed_at),
+        ]
+    )
+    assert mock_api_client.set_property.call_count == 5
+
+
+class TestDocumentRestoreVersion:
+    def test_restore_version_calls_api_client(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(
+            Document,
+            "versions_as_documents",
+            new_callable=PropertyMock,
+            return_value=[
+                _make_version_document(
+                    3,
+                    payload={"submitter": "should-be-removed@example.com", "other": "should-not-be-removed"},
+                )
+            ],
+        ):
+            document.restore_version(3, automated=False)
+
+        restore_call_args = mock_api_client.restore_document.call_args.args
+        assert restore_call_args[0] == "test/1234"
+        assert restore_call_args[1] == 3
+
+        annotation = restore_call_args[2]
+        assert isinstance(annotation, VersionAnnotation)
+        assert annotation.version_type == VersionType.RESTORE
+        assert annotation.automated is False
+        assert annotation.message == "Restored from version 3"
+        assert annotation.payload == {"other": "should-not-be-removed"}
+        assert annotation.calling_function == "restore_version"
+        assert annotation.calling_agent == "marklogic-api-client-test"
+
+    def test_restore_version_propagates_api_client_errors(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        mock_api_client.restore_document.side_effect = MarklogicResourceVersionInvalidError
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload={"test-key": "test-value"})],
+            ),
+            pytest.raises(MarklogicResourceVersionInvalidError),
+        ):
+            document.restore_version(3, automated=False)
+
+    @pytest.mark.parametrize(
+        "versions,target_version",
+        [
+            ([_make_version_document(1, payload={"test-key": "test-value"})], 99),
+            ([], 1),
+        ],
+    )
+    def test_restore_version_raises_if_version_number_not_found(self, mock_api_client, versions, target_version):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(Document, "versions_as_documents", new_callable=PropertyMock, return_value=versions),
+            pytest.raises(ValueError, match=f"Version {target_version} not found"),
+        ):
+            document.restore_version(target_version, automated=False)
+
+    @pytest.mark.parametrize(
+        "payload,expected_payload",
+        [
+            (_MISSING_PAYLOAD, {}),
+            (None, {}),
+            (
+                {
+                    "submitter": "should-be-removed@example.com",
+                    "other-key-1": "other-value-1",
+                    "other-key-2": "other-value-2",
+                },
+                {"other-key-1": "other-value-1", "other-key-2": "other-value-2"},
+            ),
+        ],
+    )
+    def test_restore_version_uses_previous_version_payload(self, mock_api_client, payload, expected_payload):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        version_document = (
+            _make_version_document(7) if payload is _MISSING_PAYLOAD else _make_version_document(7, payload=payload)
+        )
+        with patch.object(
+            Document, "versions_as_documents", new_callable=PropertyMock, return_value=[version_document]
+        ):
+            document.restore_version(7, automated=False)
+
+        annotation = mock_api_client.restore_document.call_args.args[2]
+        assert isinstance(annotation, VersionAnnotation)
+        assert annotation.payload == expected_payload
+
+    @pytest.mark.parametrize(
+        "versions,target_version,expected_tdr",
+        [
+            (
+                [
+                    _make_version_document(
+                        7,
+                        payload=_make_tdr_payload(
+                            "Example Organisation",
+                            "Example Contact",
+                            "contact@example.com",
+                            "TDR-12345",
+                            "2026-01-01T12:00:00Z",
+                        ),
+                    )
+                ],
+                7,
+                ("Example Organisation", "Example Contact", "contact@example.com", "TDR-12345", "2026-01-01T12:00:00Z"),
+            ),
+            (
+                [
+                    _make_version_document(
+                        7,
+                        "not-a-submission",
+                        _make_tdr_payload(
+                            "Wrong Organisation",
+                            "Wrong Contact",
+                            "wrong@example.com",
+                            "WRONG-12345",
+                            "2025-01-01T12:00:00Z",
+                        ),
+                    ),
+                    _make_version_document(
+                        6,
+                        payload=_make_tdr_payload(
+                            "Correct Organisation",
+                            "Correct Contact",
+                            "correct@example.com",
+                            "TDR-12345",
+                            "2026-01-01T12:00:00Z",
+                        ),
+                    ),
+                ],
+                7,
+                ("Correct Organisation", "Correct Contact", "correct@example.com", "TDR-12345", "2026-01-01T12:00:00Z"),
+            ),
+            (
+                [
+                    _make_version_document(4, "edit", payload={}),
+                    _make_version_document(
+                        3,
+                        "restore",
+                        _make_tdr_payload(
+                            "Submission A Organisation",
+                            "Submission A Contact",
+                            "a@example.com",
+                            "TDR-A",
+                            "2026-01-01T12:00:00Z",
+                        ),
+                    ),
+                    _make_version_document(
+                        2,
+                        payload=_make_tdr_payload(
+                            "Submission B Organisation",
+                            "Submission B Contact",
+                            "b@example.com",
+                            "TDR-B",
+                            "2026-02-01T12:00:00Z",
+                        ),
+                    ),
+                    _make_version_document(
+                        1,
+                        payload=_make_tdr_payload(
+                            "Submission A Organisation",
+                            "Submission A Contact",
+                            "a@example.com",
+                            "TDR-A",
+                            "2026-01-01T12:00:00Z",
+                        ),
+                    ),
+                ],
+                3,
+                ("Submission A Organisation", "Submission A Contact", "a@example.com", "TDR-A", "2026-01-01T12:00:00Z"),
+            ),
+        ],
+    )
+    def test_restore_version_sets_tdr_metadata_from_expected_source(
+        self, mock_api_client, versions, target_version, expected_tdr
+    ):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(Document, "versions_as_documents", new_callable=PropertyMock, return_value=versions),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(target_version, automated=False)
+
+        _assert_tdr_metadata_set(mock_api_client, *expected_tdr)
+
+    def test_restore_version_reloads_document_body_after_restore(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(4, payload={})],
+            ),
+            patch.object(document, "_initialise_document_body") as initialise_document_body_mock,
+        ):
+            document.restore_version(4, automated=True)
+
+        initialise_document_body_mock.assert_called_once_with()
+
+    def test_restore_version_invalidates_cached_properties_when_tdr_metadata_is_set(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        mock_api_client.get_property.side_effect = ["old-contact", "new-contact"]
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.source_name == "old-contact"
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[
+                    _make_version_document(
+                        6,
+                        payload=_make_tdr_payload(
+                            "Example Organisation",
+                            "Example Contact",
+                            "contact@example.com",
+                            "TDR-12345",
+                            "2026-01-01T12:00:00Z",
+                        ),
+                    )
+                ],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(6, automated=False)
+
+        assert document.source_name == "new-contact"
+        assert mock_api_client.get_property.call_args_list == [
+            call("test/1234", "source-name"),
+            call("test/1234", "source-name"),
+        ]
+
+    def test_restore_version_preserves_full_tre_raw_metadata_from_metadata_source(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[
+                    _make_version_document(4, "edit", payload={}),
+                    _make_version_document(
+                        3,
+                        annotation_type="restore",
+                        payload=_make_tdr_payload(
+                            "Example Organisation",
+                            "Example Contact",
+                            "contact@example.com",
+                            "TDR-12345",
+                            "2026-01-01T12:00:00Z",
+                            extra_tre_raw_metadata={
+                                "extra-tre-key-1": "extra-tre-value-1",
+                                "extra-tre-key-2": {"example": True},
+                            },
+                        ),
+                    ),
+                ],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(4, automated=False)
+
+        mock_api_client.assert_has_calls(
+            [
+                call.set_property("test/1234", name="source-organisation", value="Example Organisation"),
+                call.set_property("test/1234", name="source-name", value="Example Contact"),
+                call.set_property("test/1234", name="source-email", value="contact@example.com"),
+                call.set_property("test/1234", name="transfer-consignment-reference", value="TDR-12345"),
+                call.set_property("test/1234", name="transfer-received-at", value="2026-01-01T12:00:00Z"),
+                call.restore_document("test/1234", 4, ANY),
+            ]
+        )
+
+        annotation = mock_api_client.restore_document.call_args.args[2]
+        assert annotation.payload == {
+            "tre_raw_metadata": {
+                "parameters": {
+                    "TDR": {
+                        "Source-Organization": "Example Organisation",
+                        "Contact-Name": "Example Contact",
+                        "Contact-Email": "contact@example.com",
+                        "Internal-Sender-Identifier": "TDR-12345",
+                        "Consignment-Completed-Datetime": "2026-01-01T12:00:00Z",
+                    }
+                },
+                "extra-tre-key-1": "extra-tre-value-1",
+                "extra-tre-key-2": {"example": True},
+            }
+        }
+
+
+class TestDocumentVersionHelpers:
+    def test_get_version_returns_matching_version(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        version_4 = _make_version_document(4)
+        version_3 = _make_version_document(3)
+
+        with patch.object(
+            Document, "versions_as_documents", new_callable=PropertyMock, return_value=[version_4, version_3]
+        ):
+            assert document._get_version(3) is version_3  # noqa: SLF001
+            assert document._get_version(99) is None  # noqa: SLF001
+
+    @pytest.mark.parametrize(
+        "versions,target_version,expected_version_number",
+        [
+            (
+                [
+                    _make_version_document(7, "not-submission"),
+                    _make_version_document(6, "not-submission"),
+                    _make_version_document(5, "submission"),
+                    _make_version_document(4, "submission"),
+                ],
+                6,
+                5,
+            ),
+            (
+                [
+                    _make_version_document(4, "edit"),
+                    _make_version_document(3, "restore"),
+                    _make_version_document(2, "submission"),
+                    _make_version_document(1, "submission"),
+                ],
+                3,
+                3,
+            ),
+            (
+                [
+                    _make_version_document(3, "not-submission"),
+                    _make_version_document(2, "not-submission"),
+                ],
+                3,
+                None,
+            ),
+        ],
+    )
+    def test_get_restore_metadata_source_version(
+        self, mock_api_client, versions, target_version, expected_version_number
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(Document, "versions_as_documents", new_callable=PropertyMock, return_value=versions):
+            result = document._get_restore_metadata_source_version(target_version)  # noqa: SLF001
+
+        if expected_version_number is None:
+            assert result is None
+        else:
+            assert result is not None
+            assert result.version_number == expected_version_number
+
+    def test_set_tdr_metadata_sets_properties_and_invalidates_cached_values(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        mock_api_client.get_property.side_effect = [
+            "old-source-name",
+            "old-source-email",
+            "old-consignment-reference",
+            "new-source-name",
+            "new-source-email",
+            "new-consignment-reference",
+        ]
+
+        assert document.source_name == "old-source-name"
+        assert document.source_email == "old-source-email"
+        assert document.consignment_reference == "old-consignment-reference"
+
+        document._set_tdr_metadata(  # noqa: SLF001
+            {
+                "Source-Organization": "Example Organisation",
+                "Contact-Name": "Example Contact",
+                "Contact-Email": "contact@example.com",
+                "Internal-Sender-Identifier": "TDR-12345",
+                "Consignment-Completed-Datetime": "2026-01-01T12:00:00Z",
+            }
+        )
+
+        _assert_tdr_metadata_set(
+            mock_api_client,
+            "Example Organisation",
+            "Example Contact",
+            "contact@example.com",
+            "TDR-12345",
+            "2026-01-01T12:00:00Z",
+        )
+
+        assert document.source_name == "new-source-name"
+        assert document.source_email == "new-source-email"
+        assert document.consignment_reference == "new-consignment-reference"
