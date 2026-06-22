@@ -48,6 +48,14 @@ class DocumentBody:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
 
     @cached_property
+    def parties(self) -> list[str]:
+        return self.get_xpath_match_strings("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party/text()")
+
+    @cached_property
+    def judges(self) -> list[str]:
+        return self.get_xpath_match_strings("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:judge/text()")
+
+    @cached_property
     def jurisdiction(self) -> str:
         return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
 

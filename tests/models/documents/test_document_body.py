@@ -81,6 +81,76 @@ class TestDocumentBody:
 
         assert body.court == "Court of Testing"
 
+    def test_parties(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+            >
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:party>Test Claimant</uk:party>
+                            <uk:party>Test Defendant</uk:party>
+                        </proprietary>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """)
+
+        assert body.parties == ["Test Claimant", "Test Defendant"]
+
+    def test_no_parties(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+            >
+                <judgment>
+                    <meta>
+                        <proprietary />
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """)
+
+        assert body.parties == []
+
+    def test_judges(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+            >
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:judge>Lord Test</uk:judge>
+                            <uk:judge>Lady Example</uk:judge>
+                        </proprietary>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """)
+
+        assert body.judges == ["Lord Test", "Lady Example"]
+
+    def test_no_judges(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+            >
+                <judgment>
+                    <meta>
+                        <proprietary />
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """)
+
+        assert body.judges == []
+
     @pytest.mark.parametrize(
         "opening_tag, closing_tag",
         [
