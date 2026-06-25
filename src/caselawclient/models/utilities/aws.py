@@ -1,6 +1,8 @@
 import datetime
+import io
 import json
 import logging
+import tarfile
 import uuid
 from collections.abc import Callable
 from functools import cache
@@ -152,6 +154,8 @@ def delete_some_from_bucket(
             {"Key": obj["Key"]} for obj in response.get("Contents", [])
         ]
         objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
+        if not objects_to_delete:
+            return
         client.delete_objects(
             Bucket=bucket,
             Delete={
@@ -162,6 +166,127 @@ def delete_some_from_bucket(
 
 def delete_non_targz_from_bucket(uri: DocumentURIString, bucket: str) -> None:
     delete_some_from_bucket(uri=uri, bucket=bucket, filter=lambda x: not x["Key"].endswith(".tar.gz"))
+
+
+def _get_consignment_archive_key(keys: list[str], consignment_reference: str) -> str | None:
+    """Find the S3 key for a consignment's tarball.
+
+    Args:
+        keys: Candidate S3 object keys under the document prefix.
+        consignment_reference: The consignment reference whose
+            `{reference}.tar.gz` archive we want.
+
+    Returns:
+        The matching S3 key, or `None` if no exact match exists.
+    """
+    target_filename = f"{consignment_reference}.tar.gz"
+    for key in keys:
+        if key.rsplit("/", 1)[-1] == target_filename:
+            return key
+
+    return None
+
+
+def _restore_archive_file_to_bucket(
+    archive: tarfile.TarFile,
+    archive_entry_name: str,
+    bucket: str,
+    destination_key: str,
+    client: S3Client,
+) -> bool:
+    """Copy a single named file from an open tar archive into S3.
+
+    Args:
+        archive: The open tar archive to read from.
+        archive_entry_name: The full path of the file within the archive.
+        bucket: The destination S3 bucket.
+        destination_key: The destination S3 key.
+        client: The S3 client to use.
+
+    Returns:
+        `True` if the file was found and copied, `False` if it was not present.
+    """
+    try:
+        file_object = archive.extractfile(archive_entry_name)
+    except KeyError:
+        return False
+
+    if file_object is None:
+        return False
+
+    client.put_object(Bucket=bucket, Key=destination_key, Body=file_object.read())
+    return True
+
+
+def restore_assets_from_consignment_archive(
+    uri: DocumentURIString,
+    consignment_reference: str,
+    source_filename: Optional[str],
+    image_filenames: list[str],
+) -> None:
+    """Restore a document's S3 assets from its consignment tarball.
+
+    Deletes the document's current (non-tarball) assets in the
+    private/unpublished bucket and repopulates them from the
+    `{consignment_reference}.tar.gz` archive. Only the private bucket is
+    touched, as consignment tarballs only exist there.
+
+    Mirrors the ingester's `save_files_to_s3`: only the source document,
+    `parser.log`, and the metadata-declared images are restored. Other files in
+    the archive (e.g. the parsed XML and consignment metadata JSON) are
+    deliberately not stored as assets. Archive entries are read from the
+    `{consignment_reference}/` directory inside the tarball.
+
+    Args:
+        uri: The document URI whose assets should be restored.
+        consignment_reference: The consignment reference identifying which
+            submission's tarball to restore from.
+        source_filename: The original source document filename (docx/pdf) as
+            recorded in the consignment metadata, or `None` (e.g. for reparses)
+            in which case no source document is restored.
+        image_filenames: The image filenames declared in the consignment
+            metadata to restore.
+
+    Raises:
+        FileNotFoundError: No matching consignment archive exists for the
+            document.
+    """
+    bucket = env("PRIVATE_ASSET_BUCKET")
+    client = create_s3_client()
+    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
+    object_keys = [str(obj["Key"]) for obj in response.get("Contents", [])]
+
+    archive_key = _get_consignment_archive_key(object_keys, consignment_reference)
+    if archive_key is None:
+        raise FileNotFoundError(
+            f"No matching consignment archive found in {bucket} for {uri} and consignment {consignment_reference}"
+        )
+
+    delete_non_targz_from_bucket(uri=uri, bucket=bucket)
+    archive_object = client.get_object(Bucket=bucket, Key=archive_key)
+    archive_bytes = archive_object["Body"].read()
+
+    with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as archive:
+        # Restore the source document under its canonical key (e.g. uksc_2023_1.docx).
+        if source_filename:
+            source_extension = source_filename.rsplit(".", 1)[-1].lower()
+            source_destination_key = f"{uri}/{uri.replace('/', '_')}.{source_extension}"
+            if not _restore_archive_file_to_bucket(
+                archive, f"{consignment_reference}/{source_filename}", bucket, source_destination_key, client
+            ):
+                logger.warning("Source file %s not found in archive %s", source_filename, archive_key)
+
+        # Restore the parser log.
+        _restore_archive_file_to_bucket(
+            archive, f"{consignment_reference}/parser.log", bucket, f"{uri}/parser.log", client
+        )
+
+        # Restore each declared image under its original filename.
+        for image_filename in image_filenames:
+            if not _restore_archive_file_to_bucket(
+                archive, f"{consignment_reference}/{image_filename}", bucket, f"{uri}/{image_filename}", client
+            ):
+                logger.warning("Image %s not found in archive %s", image_filename, archive_key)
 
 
 def publish_documents(uri: DocumentURIString) -> None:

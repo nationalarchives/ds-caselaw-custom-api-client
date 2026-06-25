@@ -563,8 +563,10 @@ def _make_tdr_payload(
     sender_identifier: str,
     completed_at: str,
     extra_tre_raw_metadata: dict | None = None,
+    source_filename: str | None = None,
+    images: list[str] | None = None,
 ):
-    payload = {
+    payload: dict = {
         "tre_raw_metadata": {
             "parameters": {
                 "TDR": {
@@ -573,10 +575,17 @@ def _make_tdr_payload(
                     "Contact-Email": contact_email,
                     "Internal-Sender-Identifier": sender_identifier,
                     "Consignment-Completed-Datetime": completed_at,
-                }
+                },
             }
         }
     }
+    if source_filename is not None or images is not None:
+        payload["tre_raw_metadata"]["parameters"]["TRE"] = {
+            "payload": {
+                "filename": source_filename,
+                "images": images or [],
+            }
+        }
     if extra_tre_raw_metadata:
         payload["tre_raw_metadata"].update(extra_tre_raw_metadata)
     return payload
@@ -612,6 +621,16 @@ def _assert_tdr_metadata_set(
 
 
 class TestDocumentRestoreVersion:
+    @pytest.fixture(autouse=True)
+    def mock_restore_assets(self):
+        with patch("caselawclient.models.documents.restore_assets_from_consignment_archive") as restore_assets:
+            yield restore_assets
+
+    @pytest.fixture(autouse=True)
+    def mock_unpublish(self):
+        with patch.object(Document, "unpublish") as unpublish:
+            yield unpublish
+
     def test_restore_version_calls_api_client(self, mock_api_client):
         mock_api_client.user_agent = "marklogic-api-client-test"
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -918,8 +937,108 @@ class TestDocumentRestoreVersion:
             }
         }
 
+    def test_restore_version_restores_s3_assets_using_tdr_consignment_reference(
+        self, mock_api_client, mock_restore_assets
+    ):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
 
-class TestDocumentVersionHelpers:
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[
+                    _make_version_document(
+                        3,
+                        payload=_make_tdr_payload(
+                            "Example Organisation",
+                            "Example Contact",
+                            "contact@example.com",
+                            "TDR-12345",
+                            "2026-01-01T12:00:00Z",
+                            source_filename="source.docx",
+                            images=["image1.png"],
+                        ),
+                    ),
+                ],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(3, automated=False)
+
+        mock_restore_assets.assert_called_once_with("test/1234", "TDR-12345", "source.docx", ["image1.png"])
+
+    def test_restore_version_skips_asset_restore_without_tre_metadata(self, mock_api_client, mock_restore_assets):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload={"other": "value"})],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(3, automated=False)
+
+        mock_restore_assets.assert_not_called()
+
+    def test_restore_version_unpublishes_before_restoring(self, mock_api_client, mock_unpublish):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        mock_api_client.get_published.return_value = True
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload={"other": "value"})],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(3, automated=False)
+
+        mock_unpublish.assert_called_once_with()
+
+    def test_restore_version_does_not_unpublish_if_already_unpublished(self, mock_api_client, mock_unpublish):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        mock_api_client.get_published.return_value = False
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload={"other": "value"})],
+            ),
+            patch.object(document, "_initialise_document_body"),
+        ):
+            document.restore_version(3, automated=False)
+
+        mock_unpublish.assert_not_called()
+
+    def test_restore_version_does_not_unpublish_for_invalid_version(self, mock_api_client, mock_unpublish):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload={"other": "value"})],
+            ),
+            pytest.raises(ValueError, match="Version 99 not found"),
+        ):
+            document.restore_version(99, automated=False)
+
+        mock_unpublish.assert_not_called()
+
     def test_get_version_returns_matching_version(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         version_4 = _make_version_document(4)

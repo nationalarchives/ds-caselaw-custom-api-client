@@ -34,6 +34,7 @@ from caselawclient.models.utilities.aws import (
     generate_pdf_url,
     publish_documents,
     request_parse,
+    restore_assets_from_consignment_archive,
     unpublish_documents,
 )
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict
@@ -681,9 +682,10 @@ class Document:
         """Restore a previous version of this document.
 
         Create a new version from a historical version while preserving version
-        history. Build the restore annotation from the target version's
-        structured annotation, remove submitter details from payload metadata,
-        and reload the document body after restore.
+        history. Unpublish the document first, build the restore annotation from
+        the target version's structured annotation, remove submitter details
+        from payload metadata, restore the corresponding S3 assets, and reload
+        the document body after restore.
 
         Args:
             version_number: The version number to restore.
@@ -700,6 +702,11 @@ class Document:
         if restore_version_document is None:
             raise ValueError(f"Version {version_number} not found in document history")
 
+        # Take the document out of the published state before restoring, so the
+        # public version cannot diverge from the restored draft content.
+        if self.is_published:
+            self.unpublish()
+
         restore_version_annotation = restore_version_document.structured_annotation
         # Cannot rely on .get("payload", {}) because payload may actually exist with a value of None.
         restore_version_annotation_payload = restore_version_annotation.get("payload")
@@ -708,6 +715,9 @@ class Document:
         else:
             restore_version_annotation_payload = dict(restore_version_annotation_payload)
 
+        consignment_reference_for_assets = None
+        source_filename_for_assets = None
+        image_filenames_for_assets: list[str] = []
         if metadata_source_version_document:
             metadata_source_version_annotation = metadata_source_version_document.structured_annotation
             metadata_source_version_annotation_payload = metadata_source_version_annotation.get("payload")
@@ -717,6 +727,13 @@ class Document:
             if tre_metadata := metadata_source_version_annotation_payload.get("tre_raw_metadata", {}):
                 if tdr_metadata := tre_metadata.get("parameters", {}).get("TDR", {}):
                     self._set_tdr_metadata(tdr_metadata)
+                    consignment_reference_for_assets = tdr_metadata["Internal-Sender-Identifier"]
+
+                # Capture the source filename and images so S3 assets can be restored
+                # selectively, mirroring how the ingester stores them.
+                tre_payload = tre_metadata.get("parameters", {}).get("TRE", {}).get("payload", {})
+                source_filename_for_assets = tre_payload.get("filename")
+                image_filenames_for_assets = tre_payload.get("images") or []
 
                 # Ensure restoring to a restored version can get required TDR metadata.
                 restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
@@ -733,6 +750,15 @@ class Document:
         annotation.set_calling_agent(self.api_client.user_agent)
 
         self.api_client.restore_document(self.uri, version_number, annotation)
+        # Without the consignment reference we cannot locate the tarball or know
+        # which assets to restore, so asset restore is skipped in that case.
+        if consignment_reference_for_assets:
+            restore_assets_from_consignment_archive(
+                self.uri,
+                consignment_reference_for_assets,
+                source_filename_for_assets,
+                image_filenames_for_assets,
+            )
 
         # These will have changed so remove from cache.
         self.__dict__.pop("versions", None)
