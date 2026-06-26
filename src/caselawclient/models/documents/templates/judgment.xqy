@@ -9,6 +9,7 @@ declare variable $court_url as xs:string external;
 declare variable $court_full_name as xs:string external;
 declare variable $case_numbers as array(xs:string) external;
 declare variable $parties as array(map(xs:string, xs:string)) external;
+declare variable $ncn as xs:string external;
 
 let $court_code_lower := fn:lower-case($court_code)
 let $court_code_upper := fn:upper-case($court_code)
@@ -20,6 +21,9 @@ let $case_numbers_xml := array:for-each($case_numbers, function($case) {
 let $parties_xml := array:for-each($parties, function($party) {
   <uk:party role="{$party("role")}">{$party("name")}</uk:party>
 })
+
+let $serial_number := if ($ncn != "") then tokenize($ncn, '\s+')[matches(., '^\d')][1] else ()
+let $ncn_xml := if ($ncn != "") then (<uk:number>{$serial_number}</uk:number>,<uk:cite>{$ncn}</uk:cite>) else ()
 
 return
 <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
@@ -71,6 +75,7 @@ return
         >
         <uk:court>{$court_code_upper}</uk:court>
         <uk:year>{$year}</uk:year>
+        {$ncn_xml}
         {$case_numbers_xml}
         {$parties_xml}
         <uk:sourceFormat>application/pdf</uk:sourceFormat>

@@ -3,23 +3,24 @@ import lxml.etree
 from caselawclient.models.documents.stub import EditorStubData, render_stub_xml
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
+editor_stub_data_sample = EditorStubData(
+    decision_date="2025-01-01",
+    transform_datetime="2025-01-01T00:00:00",
+    court_code="UKftt-Grc",  # we are no longer case sensitive
+    title="Test Case",
+    year="2025",
+    case_numbers=["AB-12345", "CD-67890"],
+    parties=[{"role": "Claimant", "name": "Jerry"}, {"role": "Defendant", "name": "Tom"}],
+    ncn="",
+)
+
 
 def xpath(root, xpath):
     return lxml.etree.tostring(root.xpath(xpath, namespaces=DEFAULT_NAMESPACES)[0])
 
 
 def test_create_stub():
-    data: EditorStubData = EditorStubData(
-        decision_date="2025-01-01",
-        transform_datetime="2025-01-01T00:00:00",
-        court_code="UKftt-Grc",  # we are no longer case sensitive
-        title="Test Case",
-        year="2025",
-        case_numbers=["AB-12345", "CD-67890"],
-        parties=[{"role": "Claimant", "name": "Jerry"}, {"role": "Defendant", "name": "Tom"}],
-    )
-
-    stub = lxml.etree.tostring(lxml.etree.fromstring(render_stub_xml(data)))
+    stub = lxml.etree.tostring(lxml.etree.fromstring(render_stub_xml(editor_stub_data_sample)))
     assert b"xml" in stub
     assert (
         b'<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">'
@@ -41,3 +42,15 @@ def test_create_stub():
     assert b"<uk:caseNumber>AB-12345</uk:caseNumber>" in stub
     assert b"<uk:caseNumber>CD-67890</uk:caseNumber>" in stub
     assert b"ns0" not in stub
+    assert b"<uk:cite>" not in stub
+
+
+def test_stub_with_ncn():
+    modified_sample = EditorStubData(**editor_stub_data_sample)
+    modified_sample["ncn"] = "[1701] UKSC 1234"
+    stub = lxml.etree.tostring(lxml.etree.fromstring(render_stub_xml(modified_sample)))
+    assert b"<uk:number>1234</uk:number><uk:cite>[1701] UKSC 1234</uk:cite>" in stub
+
+    modified_sample["ncn"] = "[1701] UKSC 1234 (Ch)"
+    stub = lxml.etree.tostring(lxml.etree.fromstring(render_stub_xml(modified_sample)))
+    assert b"<uk:number>1234</uk:number><uk:cite>[1701] UKSC 1234 (Ch)</uk:cite>" in stub
