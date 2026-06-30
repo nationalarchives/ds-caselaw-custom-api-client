@@ -678,18 +678,25 @@ class Document:
         self.__dict__.pop("source_email", None)
         self.__dict__.pop("consignment_reference", None)
 
-    def restore_version(self, version_number: int, automated: bool = True) -> None:
+    def restore_version(
+        self,
+        version_number: int,
+        automated: bool = True,
+        action_requested_by: Optional[str] = None,
+    ) -> None:
         """Restore a previous version of this document.
 
         Create a new version from a historical version while preserving version
         history. Unpublish the document first, build the restore annotation from
-        the target version's structured annotation, remove submitter details
-        from payload metadata, restore the corresponding S3 assets, and reload
-        the document body after restore.
+        the target version's structured annotation, attach action requester's
+        details to payload metadata, restore the corresponding S3 assets, and
+        reload the document body after restore.
 
         Args:
             version_number: The version number to restore.
             automated: Whether to mark the restore as automated.
+            action_requested_by: Optional identifier of who requested the
+                restore.
 
         Raises:
             ValueError: If the specified version number is not found.
@@ -738,8 +745,9 @@ class Document:
                 # Ensure restoring to a restored version can get required TDR metadata.
                 restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
 
-        # Remove submitter as this could be misleading (they may not be the one who restored the version).
-        restore_version_annotation_payload.pop("submitter", None)
+        if action_requested_by is not None:
+            restore_version_annotation_payload["action_requested_by"] = action_requested_by
+
         annotation = VersionAnnotation(
             VersionType.RESTORE,
             automated=automated,

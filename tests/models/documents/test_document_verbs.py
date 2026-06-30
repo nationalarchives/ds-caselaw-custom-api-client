@@ -642,7 +642,7 @@ class TestDocumentRestoreVersion:
             return_value=[
                 _make_version_document(
                     3,
-                    payload={"submitter": "should-be-removed@example.com", "other": "should-not-be-removed"},
+                    payload={"submitter": "user@example.com", "other": "should-not-be-removed"},
                 )
             ],
         ):
@@ -657,7 +657,7 @@ class TestDocumentRestoreVersion:
         assert annotation.version_type == VersionType.RESTORE
         assert annotation.automated is False
         assert annotation.message == "Restored from version 3"
-        assert annotation.payload == {"other": "should-not-be-removed"}
+        assert annotation.payload == {"submitter": "user@example.com", "other": "should-not-be-removed"}
         assert annotation.calling_function == "restore_version"
         assert annotation.calling_agent == "marklogic-api-client-test"
 
@@ -701,11 +701,11 @@ class TestDocumentRestoreVersion:
             (None, {}),
             (
                 {
-                    "submitter": "should-be-removed@example.com",
+                    "submitter": "user@example.com",
                     "other-key-1": "other-value-1",
                     "other-key-2": "other-value-2",
                 },
-                {"other-key-1": "other-value-1", "other-key-2": "other-value-2"},
+                {"submitter": "user@example.com", "other-key-1": "other-value-1", "other-key-2": "other-value-2"},
             ),
         ],
     )
@@ -724,6 +724,42 @@ class TestDocumentRestoreVersion:
         annotation = mock_api_client.restore_document.call_args.args[2]
         assert isinstance(annotation, VersionAnnotation)
         assert annotation.payload == expected_payload
+
+    def test_restore_version_embeds_action_requested_by_in_payload(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(
+            Document,
+            "versions_as_documents",
+            new_callable=PropertyMock,
+            return_value=[_make_version_document(3, payload={"other": "should-not-be-removed"})],
+        ):
+            document.restore_version(3, automated=False, action_requested_by="user@example.com")
+
+        annotation = mock_api_client.restore_document.call_args.args[2]
+        assert isinstance(annotation, VersionAnnotation)
+        assert annotation.payload == {
+            "other": "should-not-be-removed",
+            "action_requested_by": "user@example.com",
+        }
+
+    def test_restore_version_omits_action_requested_by_when_not_provided(self, mock_api_client):
+        mock_api_client.user_agent = "marklogic-api-client-test"
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(
+            Document,
+            "versions_as_documents",
+            new_callable=PropertyMock,
+            return_value=[_make_version_document(3, payload={"other": "value"})],
+        ):
+            document.restore_version(3, automated=False)
+
+        annotation = mock_api_client.restore_document.call_args.args[2]
+        assert isinstance(annotation, VersionAnnotation)
+        assert annotation.payload is not None
+        assert "action_requested_by" not in annotation.payload
 
     @pytest.mark.parametrize(
         "versions,target_version,expected_tdr",
