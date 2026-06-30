@@ -18,10 +18,12 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
+from caselawclient.models.documents.metadata import DocumentMetadata
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
+from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
 from caselawclient.models.utilities.aws import (
@@ -186,6 +188,28 @@ class Document:
         :return: The absolute, public URI at which a copy of this document can be found
         """
         return f"https://caselaw.nationalarchives.gov.uk/{self.slug}"
+
+    @cached_property
+    def metadata(self) -> DocumentMetadata:
+        ncn = self.identifiers.preferred(NeutralCitationNumber)
+
+        return DocumentMetadata(
+            name=self.body.name,
+            ncn=str(ncn) if ncn else None,
+            court=self.body.court,
+            jurisdiction=self.body.jurisdiction,
+            categories=self.body.categories,
+            case_number=self.body.case_number,
+            date=self.body.document_date_as_string,
+            parties=self.body.parties,
+            judges=self.body.judges,
+            uri=self.uri,
+            source_name=self.source_name,
+            source_email=self.source_email,
+            consignment_reference=self.consignment_reference,
+            identifiers=self.identifiers,
+            version_annotation=self.annotation,
+        )
 
     @cached_property
     def slug(self) -> str:
