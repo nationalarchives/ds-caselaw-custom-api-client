@@ -34,12 +34,19 @@ from caselawclient.models.utilities.aws import (
     generate_pdf_url,
     publish_documents,
     request_parse,
+    restore_assets_from_consignment_archive,
     unpublish_documents,
 )
-from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple
+from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict
 
 from .body import DocumentBody
-from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import (
+    CannotEnrichUnenrichableDocument,
+    CannotPublishUnpublishableDocument,
+    CannotRestoreDocumentWithoutConsignmentReference,
+    CannotRestorePublishedDocument,
+    DocumentNotSafeForDeletion,
+)
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 logger = logging.getLogger(__name__)
@@ -141,15 +148,7 @@ class Document:
         if not self.document_exists():
             raise DocumentNotFoundError(f"Document {self.uri} does not exist")
 
-        self.body: DocumentBody = DocumentBody(
-            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
-                self.uri,
-                show_unpublished=True,
-                search_query=search_query,
-            ),
-        )
-        """ `Document.body` represents the body of the document itself, without any information such as version tracking or properties. """
-
+        self._initialise_document_body(search_query=search_query)
         self._initialise_identifiers()
 
     def __repr__(self) -> str:
@@ -165,6 +164,25 @@ class Document:
     def docx_exists(self) -> bool:
         """There is a docx in S3 private bucket for this Document"""
         return check_docx_exists(self.uri)
+
+    def _initialise_document_body(self, search_query: str | None = None) -> None:
+        """Load this document's body from MarkLogic.
+
+        Fetches the document body XML from MarkLogic and initializes the
+        `Document.body` property. The body represents the document itself,
+        without version tracking or property information.
+
+        Args:
+            search_query: Optional search query to pass to MarkLogic when
+                fetching the document body.
+        """
+        self.body: DocumentBody = DocumentBody(
+            xml_bytestring=self.api_client.get_judgment_xml_bytestring(
+                self.uri,
+                show_unpublished=True,
+                search_query=search_query,
+            ),
+        )
 
     def _initialise_identifiers(self) -> None:
         """Load this document's identifiers from MarkLogic."""
@@ -334,6 +352,32 @@ class Document:
             raise CannotPublishUnpublishableDocument(
                 f"{self.document_noun.capitalize()} {self.uri} cannot be published due to the following issues: "
                 + ", ".join(self.validation_failure_messages),
+            )
+
+    def assert_is_restorable(self, version_number: int) -> None:
+        """Assert that the given version can be restored, raising if it cannot.
+
+        Args:
+            version_number: The version number that is to be restored.
+
+        Raises:
+            CannotRestorePublishedDocument: The document is currently published
+                and so cannot have a version restored, as the public version
+                could otherwise diverge from the restored draft content.
+            CannotRestoreDocumentWithoutConsignmentReference: No TDR consignment
+                reference is available to locate the document's S3 assets, so a
+                complete restore cannot be performed.
+        """
+        if self.is_published:
+            raise CannotRestorePublishedDocument(
+                f"{self.document_noun.capitalize()} {self.uri} cannot be restored because it is currently published.",
+            )
+
+        tre_metadata = self._get_restore_tre_metadata(version_number) or {}
+        if not tre_metadata.get("parameters", {}).get("TDR"):
+            raise CannotRestoreDocumentWithoutConsignmentReference(
+                f"{self.document_noun.capitalize()} {self.uri} cannot be restored to version {version_number} "
+                "because no TDR consignment reference is available to locate its assets.",
             )
 
     @cached_property
@@ -588,6 +632,193 @@ class Document:
             delete_documents_from_private_bucket(self.uri)
         else:
             raise DocumentNotSafeForDeletion
+
+    def _get_restore_metadata_source_version(self, version_number: int) -> Optional["Document"]:
+        """Find the latest version that should source metadata during restore.
+
+        Args:
+            version_number: Version number to search back from.
+
+        Returns:
+            The latest submission/restore version at or before `version_number`,
+            or `None` when no matching version exists.
+        """
+        metadata_source_version = None
+        prior_submission_types = {VersionType.SUBMISSION.value, VersionType.RESTORE.value}
+
+        # self.versions_as_documents is pre-sorted with newest first.
+        for document in self.versions_as_documents:
+            if document.version_number > version_number:
+                continue
+
+            if document.structured_annotation and document.structured_annotation.get("type") in prior_submission_types:
+                metadata_source_version = document
+                break
+
+        return metadata_source_version
+
+    def _get_restore_tre_metadata(self, version_number: int) -> Optional[dict[str, Any]]:
+        """Get the TRE metadata associated with a previous version.
+
+        Args:
+            version_number: Version number being restored.
+
+        Returns:
+            The `tre_raw_metadata` mapping from the metadata source version, or
+            `None` when there is no metadata source version or it carries no TRE
+            metadata.
+        """
+        metadata_source_version_document = self._get_restore_metadata_source_version(version_number)
+        if metadata_source_version_document is None:
+            return None
+
+        payload = metadata_source_version_document.structured_annotation.get("payload") or {}
+        return payload.get("tre_raw_metadata") or None
+
+    def _get_version(self, version_number: int) -> Optional["Document"]:
+        """Find a specific version from the document history.
+
+        Args:
+            version_number: Version number to retrieve.
+
+        Returns:
+            The version document matching `version_number`, or `None` if it does
+            not exist.
+        """
+        version_document = None
+
+        for document in self.versions_as_documents:
+            if document.version_number == version_number:
+                version_document = document
+                break
+
+        return version_document
+
+    def _set_tdr_metadata(self, tdr_metadata: TDRMetadataDict) -> None:
+        """Store TDR metadata values on document properties.
+
+        Args:
+            tdr_metadata: TDR metadata mapping extracted from TRE payload data.
+
+        Raises:
+            KeyError: A required TDR metadata key is missing.
+        """
+        self.api_client.set_property(
+            self.uri,
+            name="source-organisation",
+            value=tdr_metadata["Source-Organization"],
+        )
+        self.api_client.set_property(self.uri, name="source-name", value=tdr_metadata["Contact-Name"])
+        self.api_client.set_property(self.uri, name="source-email", value=tdr_metadata["Contact-Email"])
+
+        # Store TDR data
+        self.api_client.set_property(
+            self.uri,
+            name="transfer-consignment-reference",
+            value=tdr_metadata["Internal-Sender-Identifier"],
+        )
+        self.api_client.set_property(
+            self.uri,
+            name="transfer-received-at",
+            value=tdr_metadata["Consignment-Completed-Datetime"],
+        )
+
+        # These have potentially been updated so remove from cache.
+        self.__dict__.pop("source_name", None)
+        self.__dict__.pop("source_email", None)
+        self.__dict__.pop("consignment_reference", None)
+
+    def restore_version(
+        self,
+        version_number: int,
+        automated: bool = True,
+        action_requested_by: Optional[str] = None,
+    ) -> None:
+        """Restore a previous version of this document.
+
+        Create a new version from a historical version while preserving version
+        history. Validate that the document is currently unpublished and the
+        required consignment metadata is available, build the restore annotation
+        from the target version's structured annotation, attach the action
+        requester's details to payload metadata, restore the corresponding S3
+        assets, and finally reload the document body and cached properties.
+
+        Args:
+            version_number: The version number to restore.
+            automated: Whether to mark the restore as automated.
+            action_requested_by: Optional identifier of who requested the
+                restore.
+
+        Raises:
+            ValueError: If the specified version number is not found.
+            CannotRestorePublishedDocument: If the document is currently
+                published.
+            CannotRestoreDocumentWithoutConsignmentReference: If no TDR
+                consignment reference is available to locate the document's S3
+                assets.
+        """
+        restore_version_document = self._get_version(version_number)
+
+        if restore_version_document is None:
+            raise ValueError(f"Version {version_number} not found in document history")
+
+        # Perform all necessary validation before updating the document:
+        self.assert_is_restorable(version_number)
+
+        # assert_is_restorable guarantees these are present.
+        tre_metadata = self._get_restore_tre_metadata(version_number) or {}
+        tdr_metadata = tre_metadata["parameters"]["TDR"]
+
+        consignment_reference_for_assets = tdr_metadata["Internal-Sender-Identifier"]
+
+        # Capture the source filename and images so S3 assets can be restored
+        # selectively, mirroring how the ingester stores them.
+        tre_payload = tre_metadata.get("parameters", {}).get("TRE", {}).get("payload", {})
+        source_filename_for_assets = tre_payload.get("filename")
+        image_filenames_for_assets: list[str] = tre_payload.get("images") or []
+
+        restore_version_annotation = restore_version_document.structured_annotation
+
+        # Cannot rely on .get("payload", {}) because payload may actually exist with a value of None.
+        restore_version_annotation_payload = restore_version_annotation.get("payload")
+        if restore_version_annotation_payload is None:
+            restore_version_annotation_payload = {}
+        else:
+            restore_version_annotation_payload = dict(restore_version_annotation_payload)
+
+        # Ensure future restores to this new restore version can get required metadata.
+        restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
+
+        if action_requested_by is not None:
+            restore_version_annotation_payload["action_requested_by"] = action_requested_by
+
+        # Update document properties:
+        self._set_tdr_metadata(tdr_metadata)
+
+        annotation = VersionAnnotation(
+            VersionType.RESTORE,
+            automated=automated,
+            message=f"Restored from version {version_number}",
+            payload=restore_version_annotation_payload,
+        )
+        annotation.set_calling_function("restore_version")
+        annotation.set_calling_agent(self.api_client.user_agent)
+
+        # Update document:
+        self.api_client.restore_document(self.uri, version_number, annotation)
+
+        # Update S3 assets:
+        restore_assets_from_consignment_archive(
+            self.uri,
+            consignment_reference_for_assets,
+            source_filename_for_assets,
+            image_filenames_for_assets,
+        )
+
+        # These will have changed so remove from cache.
+        self.__dict__.pop("versions", None)
+        self.__dict__.pop("versions_as_documents", None)
+        self._initialise_document_body()
 
     def move(self, new_citation: NeutralCitationString) -> None:
         self.api_client.update_document_uri(self.uri, new_citation)

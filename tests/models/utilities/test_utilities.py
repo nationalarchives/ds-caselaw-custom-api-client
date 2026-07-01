@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import os
+import tarfile
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib import parse
 
@@ -24,6 +25,7 @@ from caselawclient.models.utilities.aws import (
     generate_docx_url,
     generate_pdf_url,
     generate_signed_asset_url,
+    restore_assets_from_consignment_archive,
     upload_asset_to_private_bucket,
 )
 
@@ -150,6 +152,114 @@ class TestAWSUtils:
         client.return_value.delete_objects.assert_called_with(
             Bucket="fake_bucket", Delete={"Objects": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]}
         )
+
+    @staticmethod
+    def _build_consignment_archive(consignment_reference: str, files: dict[str, bytes]) -> bytes:
+        archive_buffer = io.BytesIO()
+        with tarfile.open(fileobj=archive_buffer, mode="w:gz") as archive:
+            for filename, data in files.items():
+                info = tarfile.TarInfo(name=f"{consignment_reference}/{filename}")
+                info.size = len(data)
+                archive.addfile(info, io.BytesIO(data))
+        return archive_buffer.getvalue()
+
+    def test_restore_assets_from_consignment_archive(self, fake_bucket):
+        archive_bytes = self._build_consignment_archive(
+            "TDR-12345",
+            {
+                "source.docx": b"docx-bytes",
+                "parser.log": b"log-bytes",
+                "image1.png": b"image-bytes",
+                # Non-asset files that must NOT be restored to the document prefix.
+                "TDR-12345.xml": b"xml-bytes",
+                "TRE-TDR-12345-metadata.json": b"json-bytes",
+            },
+        )
+        fake_bucket.put_object(Key="uksc/2023/1/TDR-12345.tar.gz", Body=archive_bytes)
+        fake_bucket.put_object(Key="uksc/2023/1/old-asset.png", Body=b"stale-bytes")
+
+        restore_assets_from_consignment_archive(
+            DocumentURIString("uksc/2023/1"),
+            "TDR-12345",
+            source_filename="source.docx",
+            image_filenames=["image1.png"],
+        )
+
+        keys = sorted(obj.key for obj in fake_bucket.objects.filter(Prefix="uksc/2023/1/"))
+        assert keys == [
+            "uksc/2023/1/TDR-12345.tar.gz",
+            "uksc/2023/1/image1.png",
+            "uksc/2023/1/parser.log",
+            "uksc/2023/1/uksc_2023_1.docx",
+        ]
+        assert fake_bucket.Object("uksc/2023/1/uksc_2023_1.docx").get()["Body"].read() == b"docx-bytes"
+        assert fake_bucket.Object("uksc/2023/1/parser.log").get()["Body"].read() == b"log-bytes"
+        assert fake_bucket.Object("uksc/2023/1/image1.png").get()["Body"].read() == b"image-bytes"
+
+    def test_restore_assets_from_consignment_archive_restores_pdf_source(self, fake_bucket):
+        archive_bytes = self._build_consignment_archive("TDR-12345", {"source.pdf": b"pdf-bytes"})
+        fake_bucket.put_object(Key="uksc/2023/1/TDR-12345.tar.gz", Body=archive_bytes)
+
+        restore_assets_from_consignment_archive(
+            DocumentURIString("uksc/2023/1"),
+            "TDR-12345",
+            source_filename="source.pdf",
+            image_filenames=[],
+        )
+
+        assert fake_bucket.Object("uksc/2023/1/uksc_2023_1.pdf").get()["Body"].read() == b"pdf-bytes"
+
+    def test_restore_assets_from_consignment_archive_without_source_filename(self, fake_bucket):
+        archive_bytes = self._build_consignment_archive(
+            "TDR-12345",
+            {"parser.log": b"log-bytes", "image1.png": b"image-bytes"},
+        )
+        fake_bucket.put_object(Key="uksc/2023/1/TDR-12345.tar.gz", Body=archive_bytes)
+        fake_bucket.put_object(Key="uksc/2023/1/old-asset.png", Body=b"stale-bytes")
+
+        restore_assets_from_consignment_archive(
+            DocumentURIString("uksc/2023/1"),
+            "TDR-12345",
+            source_filename=None,
+            image_filenames=["image1.png"],
+        )
+
+        keys = sorted(obj.key for obj in fake_bucket.objects.filter(Prefix="uksc/2023/1/"))
+        assert keys == [
+            "uksc/2023/1/TDR-12345.tar.gz",
+            "uksc/2023/1/image1.png",
+            "uksc/2023/1/parser.log",
+        ]
+
+    def test_restore_assets_from_consignment_archive_selects_exact_archive(self, fake_bucket):
+        fake_bucket.put_object(
+            Key="uksc/2023/1/TDR-2026-CBBR3.tar.gz",
+            Body=self._build_consignment_archive("TDR-2026-CBBR3", {"source.docx": b"wrong"}),
+        )
+        fake_bucket.put_object(
+            Key="uksc/2023/1/TDR-2026-CBBR5.tar.gz",
+            Body=self._build_consignment_archive("TDR-2026-CBBR5", {"source.docx": b"right"}),
+        )
+
+        restore_assets_from_consignment_archive(
+            DocumentURIString("uksc/2023/1"),
+            "TDR-2026-CBBR5",
+            source_filename="source.docx",
+            image_filenames=[],
+        )
+
+        assert fake_bucket.Object("uksc/2023/1/uksc_2023_1.docx").get()["Body"].read() == b"right"
+
+    def test_restore_assets_from_consignment_archive_raises_if_no_archive_found(self, fake_bucket):
+        fake_bucket.put_object(Key="uksc/2023/1/TDR-99999.tar.gz", Body=b"irrelevant")
+
+        with pytest.raises(FileNotFoundError, match="No matching consignment archive found"):
+            restore_assets_from_consignment_archive(
+                DocumentURIString("uksc/2023/1"),
+                "TDR-12345",
+                source_filename="source.docx",
+                image_filenames=[],
+            )
 
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"SNS_TOPIC": "MY_SNS_TOPIC"})
