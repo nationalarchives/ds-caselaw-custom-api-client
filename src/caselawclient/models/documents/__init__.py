@@ -40,7 +40,13 @@ from caselawclient.models.utilities.aws import (
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict
 
 from .body import DocumentBody
-from .exceptions import CannotEnrichUnenrichableDocument, CannotPublishUnpublishableDocument, DocumentNotSafeForDeletion
+from .exceptions import (
+    CannotEnrichUnenrichableDocument,
+    CannotPublishUnpublishableDocument,
+    CannotRestoreDocumentWithoutConsignmentReference,
+    CannotRestorePublishedDocument,
+    DocumentNotSafeForDeletion,
+)
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 logger = logging.getLogger(__name__)
@@ -348,6 +354,32 @@ class Document:
                 + ", ".join(self.validation_failure_messages),
             )
 
+    def assert_is_restorable(self, version_number: int) -> None:
+        """Assert that the given version can be restored, raising if it cannot.
+
+        Args:
+            version_number: The version number that is to be restored.
+
+        Raises:
+            CannotRestorePublishedDocument: The document is currently published
+                and so cannot have a version restored, as the public version
+                could otherwise diverge from the restored draft content.
+            CannotRestoreDocumentWithoutConsignmentReference: No TDR consignment
+                reference is available to locate the document's S3 assets, so a
+                complete restore cannot be performed.
+        """
+        if self.is_published:
+            raise CannotRestorePublishedDocument(
+                f"{self.document_noun.capitalize()} {self.uri} cannot be restored because it is currently published.",
+            )
+
+        tre_metadata = self._get_restore_tre_metadata(version_number) or {}
+        if not tre_metadata.get("parameters", {}).get("TDR"):
+            raise CannotRestoreDocumentWithoutConsignmentReference(
+                f"{self.document_noun.capitalize()} {self.uri} cannot be restored to version {version_number} "
+                "because no TDR consignment reference is available to locate its assets.",
+            )
+
     @cached_property
     def first_published_datetime(self) -> Optional[datetime.datetime]:
         """
@@ -625,6 +657,24 @@ class Document:
 
         return metadata_source_version
 
+    def _get_restore_tre_metadata(self, version_number: int) -> Optional[dict[str, Any]]:
+        """Get the TRE metadata associated with a previous version.
+
+        Args:
+            version_number: Version number being restored.
+
+        Returns:
+            The `tre_raw_metadata` mapping from the metadata source version, or
+            `None` when there is no metadata source version or it carries no TRE
+            metadata.
+        """
+        metadata_source_version_document = self._get_restore_metadata_source_version(version_number)
+        if metadata_source_version_document is None:
+            return None
+
+        payload = metadata_source_version_document.structured_annotation.get("payload") or {}
+        return payload.get("tre_raw_metadata") or None
+
     def _get_version(self, version_number: int) -> Optional["Document"]:
         """Find a specific version from the document history.
 
@@ -687,10 +737,11 @@ class Document:
         """Restore a previous version of this document.
 
         Create a new version from a historical version while preserving version
-        history. Unpublish the document first, build the restore annotation from
-        the target version's structured annotation, attach action requester's
-        details to payload metadata, restore the corresponding S3 assets, and
-        reload the document body after restore.
+        history. Validate that the document is currently unpublished and the
+        required consignment metadata is available, build the restore annotation
+        from the target version's structured annotation, attach the action
+        requester's details to payload metadata, restore the corresponding S3
+        assets, and finally reload the document body and cached properties.
 
         Args:
             version_number: The version number to restore.
@@ -700,21 +751,34 @@ class Document:
 
         Raises:
             ValueError: If the specified version number is not found.
+            CannotRestorePublishedDocument: If the document is currently
+                published.
+            CannotRestoreDocumentWithoutConsignmentReference: If no TDR
+                consignment reference is available to locate the document's S3
+                assets.
         """
-
         restore_version_document = self._get_version(version_number)
-        metadata_source_version_document = self._get_restore_metadata_source_version(version_number)
 
-        # We need a version to restore from.
         if restore_version_document is None:
             raise ValueError(f"Version {version_number} not found in document history")
 
-        # Take the document out of the published state before restoring, so the
-        # public version cannot diverge from the restored draft content.
-        if self.is_published:
-            self.unpublish()
+        # Perform all necessary validation before updating the document:
+        self.assert_is_restorable(version_number)
+
+        # assert_is_restorable guarantees these are present.
+        tre_metadata = self._get_restore_tre_metadata(version_number) or {}
+        tdr_metadata = tre_metadata["parameters"]["TDR"]
+
+        consignment_reference_for_assets = tdr_metadata["Internal-Sender-Identifier"]
+
+        # Capture the source filename and images so S3 assets can be restored
+        # selectively, mirroring how the ingester stores them.
+        tre_payload = tre_metadata.get("parameters", {}).get("TRE", {}).get("payload", {})
+        source_filename_for_assets = tre_payload.get("filename")
+        image_filenames_for_assets: list[str] = tre_payload.get("images") or []
 
         restore_version_annotation = restore_version_document.structured_annotation
+
         # Cannot rely on .get("payload", {}) because payload may actually exist with a value of None.
         restore_version_annotation_payload = restore_version_annotation.get("payload")
         if restore_version_annotation_payload is None:
@@ -722,31 +786,14 @@ class Document:
         else:
             restore_version_annotation_payload = dict(restore_version_annotation_payload)
 
-        consignment_reference_for_assets = None
-        source_filename_for_assets = None
-        image_filenames_for_assets: list[str] = []
-        if metadata_source_version_document:
-            metadata_source_version_annotation = metadata_source_version_document.structured_annotation
-            metadata_source_version_annotation_payload = metadata_source_version_annotation.get("payload")
-            if metadata_source_version_annotation_payload is None:
-                metadata_source_version_annotation_payload = {}
-
-            if tre_metadata := metadata_source_version_annotation_payload.get("tre_raw_metadata", {}):
-                if tdr_metadata := tre_metadata.get("parameters", {}).get("TDR", {}):
-                    self._set_tdr_metadata(tdr_metadata)
-                    consignment_reference_for_assets = tdr_metadata["Internal-Sender-Identifier"]
-
-                # Capture the source filename and images so S3 assets can be restored
-                # selectively, mirroring how the ingester stores them.
-                tre_payload = tre_metadata.get("parameters", {}).get("TRE", {}).get("payload", {})
-                source_filename_for_assets = tre_payload.get("filename")
-                image_filenames_for_assets = tre_payload.get("images") or []
-
-                # Ensure restoring to a restored version can get required TDR metadata.
-                restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
+        # Ensure future restores to this new restore version can get required metadata.
+        restore_version_annotation_payload["tre_raw_metadata"] = tre_metadata
 
         if action_requested_by is not None:
             restore_version_annotation_payload["action_requested_by"] = action_requested_by
+
+        # Update document properties:
+        self._set_tdr_metadata(tdr_metadata)
 
         annotation = VersionAnnotation(
             VersionType.RESTORE,
@@ -757,16 +804,16 @@ class Document:
         annotation.set_calling_function("restore_version")
         annotation.set_calling_agent(self.api_client.user_agent)
 
+        # Update document:
         self.api_client.restore_document(self.uri, version_number, annotation)
-        # Without the consignment reference we cannot locate the tarball or know
-        # which assets to restore, so asset restore is skipped in that case.
-        if consignment_reference_for_assets:
-            restore_assets_from_consignment_archive(
-                self.uri,
-                consignment_reference_for_assets,
-                source_filename_for_assets,
-                image_filenames_for_assets,
-            )
+
+        # Update S3 assets:
+        restore_assets_from_consignment_archive(
+            self.uri,
+            consignment_reference_for_assets,
+            source_filename_for_assets,
+            image_filenames_for_assets,
+        )
 
         # These will have changed so remove from cache.
         self.__dict__.pop("versions", None)

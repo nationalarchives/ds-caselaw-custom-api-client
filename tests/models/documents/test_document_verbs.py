@@ -11,6 +11,8 @@ from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents import (
     CannotEnrichUnenrichableDocument,
     CannotPublishUnpublishableDocument,
+    CannotRestoreDocumentWithoutConsignmentReference,
+    CannotRestorePublishedDocument,
     Document,
     DocumentNotSafeForDeletion,
     DocumentURIString,
@@ -620,6 +622,32 @@ def _assert_tdr_metadata_set(
     assert mock_api_client.set_property.call_count == 5
 
 
+# Reusable consignment metadata so restores have the consignment reference now required to proceed.
+_STANDARD_TRE_RAW_METADATA = {
+    "parameters": {
+        "TDR": {
+            "Source-Organization": "Example Organisation",
+            "Contact-Name": "Example Contact",
+            "Contact-Email": "contact@example.com",
+            "Internal-Sender-Identifier": "TDR-12345",
+            "Consignment-Completed-Datetime": "2026-01-01T12:00:00Z",
+        }
+    }
+}
+
+
+def _standard_tdr_payload(**extra: object) -> dict:
+    payload = _make_tdr_payload(
+        "Example Organisation",
+        "Example Contact",
+        "contact@example.com",
+        "TDR-12345",
+        "2026-01-01T12:00:00Z",
+    )
+    payload.update(extra)
+    return payload
+
+
 class TestDocumentRestoreVersion:
     @pytest.fixture(autouse=True)
     def mock_restore_assets(self):
@@ -627,9 +655,9 @@ class TestDocumentRestoreVersion:
             yield restore_assets
 
     @pytest.fixture(autouse=True)
-    def mock_unpublish(self):
-        with patch.object(Document, "unpublish") as unpublish:
-            yield unpublish
+    def unpublished_document(self, mock_api_client):
+        # A document can only be restored when it is not currently published.
+        mock_api_client.get_published.return_value = False
 
     def test_restore_version_calls_api_client(self, mock_api_client):
         mock_api_client.user_agent = "marklogic-api-client-test"
@@ -642,7 +670,7 @@ class TestDocumentRestoreVersion:
             return_value=[
                 _make_version_document(
                     3,
-                    payload={"submitter": "user@example.com", "other": "should-not-be-removed"},
+                    payload=_standard_tdr_payload(submitter="user@example.com", other="should-not-be-removed"),
                 )
             ],
         ):
@@ -657,7 +685,11 @@ class TestDocumentRestoreVersion:
         assert annotation.version_type == VersionType.RESTORE
         assert annotation.automated is False
         assert annotation.message == "Restored from version 3"
-        assert annotation.payload == {"submitter": "user@example.com", "other": "should-not-be-removed"}
+        assert annotation.payload == {
+            "submitter": "user@example.com",
+            "other": "should-not-be-removed",
+            "tre_raw_metadata": _STANDARD_TRE_RAW_METADATA,
+        }
         assert annotation.calling_function == "restore_version"
         assert annotation.calling_agent == "marklogic-api-client-test"
 
@@ -671,7 +703,7 @@ class TestDocumentRestoreVersion:
                 Document,
                 "versions_as_documents",
                 new_callable=PropertyMock,
-                return_value=[_make_version_document(3, payload={"test-key": "test-value"})],
+                return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
             ),
             pytest.raises(MarklogicResourceVersionInvalidError),
         ):
@@ -694,36 +726,32 @@ class TestDocumentRestoreVersion:
         ):
             document.restore_version(target_version, automated=False)
 
-    @pytest.mark.parametrize(
-        "payload,expected_payload",
-        [
-            (_MISSING_PAYLOAD, {}),
-            (None, {}),
-            (
-                {
-                    "submitter": "user@example.com",
-                    "other-key-1": "other-value-1",
-                    "other-key-2": "other-value-2",
-                },
-                {"submitter": "user@example.com", "other-key-1": "other-value-1", "other-key-2": "other-value-2"},
-            ),
-        ],
-    )
-    def test_restore_version_uses_previous_version_payload(self, mock_api_client, payload, expected_payload):
+        mock_api_client.restore_document.assert_not_called()
+
+    def test_restore_version_uses_previous_version_payload(self, mock_api_client):
         mock_api_client.user_agent = "marklogic-api-client-test"
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
-        version_document = (
-            _make_version_document(7) if payload is _MISSING_PAYLOAD else _make_version_document(7, payload=payload)
+        payload = _standard_tdr_payload(
+            submitter="user@example.com",
+            **{"other-key-1": "other-value-1", "other-key-2": "other-value-2"},
         )
         with patch.object(
-            Document, "versions_as_documents", new_callable=PropertyMock, return_value=[version_document]
+            Document,
+            "versions_as_documents",
+            new_callable=PropertyMock,
+            return_value=[_make_version_document(7, payload=payload)],
         ):
             document.restore_version(7, automated=False)
 
         annotation = mock_api_client.restore_document.call_args.args[2]
         assert isinstance(annotation, VersionAnnotation)
-        assert annotation.payload == expected_payload
+        assert annotation.payload == {
+            "submitter": "user@example.com",
+            "other-key-1": "other-value-1",
+            "other-key-2": "other-value-2",
+            "tre_raw_metadata": _STANDARD_TRE_RAW_METADATA,
+        }
 
     def test_restore_version_embeds_action_requested_by_in_payload(self, mock_api_client):
         mock_api_client.user_agent = "marklogic-api-client-test"
@@ -733,14 +761,15 @@ class TestDocumentRestoreVersion:
             Document,
             "versions_as_documents",
             new_callable=PropertyMock,
-            return_value=[_make_version_document(3, payload={"other": "should-not-be-removed"})],
+            return_value=[_make_version_document(3, payload=_standard_tdr_payload(other="value"))],
         ):
             document.restore_version(3, automated=False, action_requested_by="user@example.com")
 
         annotation = mock_api_client.restore_document.call_args.args[2]
         assert isinstance(annotation, VersionAnnotation)
         assert annotation.payload == {
-            "other": "should-not-be-removed",
+            "other": "value",
+            "tre_raw_metadata": _STANDARD_TRE_RAW_METADATA,
             "action_requested_by": "user@example.com",
         }
 
@@ -752,7 +781,7 @@ class TestDocumentRestoreVersion:
             Document,
             "versions_as_documents",
             new_callable=PropertyMock,
-            return_value=[_make_version_document(3, payload={"other": "value"})],
+            return_value=[_make_version_document(3, payload=_standard_tdr_payload(other="value"))],
         ):
             document.restore_version(3, automated=False)
 
@@ -870,7 +899,7 @@ class TestDocumentRestoreVersion:
                 Document,
                 "versions_as_documents",
                 new_callable=PropertyMock,
-                return_value=[_make_version_document(4, payload={})],
+                return_value=[_make_version_document(4, payload=_standard_tdr_payload())],
             ),
             patch.object(document, "_initialise_document_body") as initialise_document_body_mock,
         ):
@@ -1005,7 +1034,7 @@ class TestDocumentRestoreVersion:
 
         mock_restore_assets.assert_called_once_with("test/1234", "TDR-12345", "source.docx", ["image1.png"])
 
-    def test_restore_version_skips_asset_restore_without_tre_metadata(self, mock_api_client, mock_restore_assets):
+    def test_restore_version_aborts_without_consignment_reference(self, mock_api_client, mock_restore_assets):
         mock_api_client.user_agent = "marklogic-api-client-test"
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
@@ -1017,12 +1046,16 @@ class TestDocumentRestoreVersion:
                 return_value=[_make_version_document(3, payload={"other": "value"})],
             ),
             patch.object(document, "_initialise_document_body"),
+            pytest.raises(CannotRestoreDocumentWithoutConsignmentReference),
         ):
             document.restore_version(3, automated=False)
 
+        # Nothing should have been updated.
+        mock_api_client.restore_document.assert_not_called()
+        mock_api_client.set_property.assert_not_called()
         mock_restore_assets.assert_not_called()
 
-    def test_restore_version_unpublishes_before_restoring(self, mock_api_client, mock_unpublish):
+    def test_restore_version_aborts_if_published(self, mock_api_client, mock_restore_assets):
         mock_api_client.user_agent = "marklogic-api-client-test"
         mock_api_client.get_published.return_value = True
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -1032,33 +1065,19 @@ class TestDocumentRestoreVersion:
                 Document,
                 "versions_as_documents",
                 new_callable=PropertyMock,
-                return_value=[_make_version_document(3, payload={"other": "value"})],
+                return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
             ),
             patch.object(document, "_initialise_document_body"),
+            pytest.raises(CannotRestorePublishedDocument),
         ):
             document.restore_version(3, automated=False)
 
-        mock_unpublish.assert_called_once_with()
+        # Nothing should have been updated.
+        mock_api_client.restore_document.assert_not_called()
+        mock_api_client.set_property.assert_not_called()
+        mock_restore_assets.assert_not_called()
 
-    def test_restore_version_does_not_unpublish_if_already_unpublished(self, mock_api_client, mock_unpublish):
-        mock_api_client.user_agent = "marklogic-api-client-test"
-        mock_api_client.get_published.return_value = False
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-
-        with (
-            patch.object(
-                Document,
-                "versions_as_documents",
-                new_callable=PropertyMock,
-                return_value=[_make_version_document(3, payload={"other": "value"})],
-            ),
-            patch.object(document, "_initialise_document_body"),
-        ):
-            document.restore_version(3, automated=False)
-
-        mock_unpublish.assert_not_called()
-
-    def test_restore_version_does_not_unpublish_for_invalid_version(self, mock_api_client, mock_unpublish):
+    def test_restore_version_does_not_restore_for_invalid_version(self, mock_api_client, mock_restore_assets):
         mock_api_client.user_agent = "marklogic-api-client-test"
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
@@ -1067,13 +1086,14 @@ class TestDocumentRestoreVersion:
                 Document,
                 "versions_as_documents",
                 new_callable=PropertyMock,
-                return_value=[_make_version_document(3, payload={"other": "value"})],
+                return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
             ),
             pytest.raises(ValueError, match="Version 99 not found"),
         ):
             document.restore_version(99, automated=False)
 
-        mock_unpublish.assert_not_called()
+        mock_api_client.restore_document.assert_not_called()
+        mock_restore_assets.assert_not_called()
 
     def test_get_version_returns_matching_version(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -1132,6 +1152,33 @@ class TestDocumentRestoreVersion:
         else:
             assert result is not None
             assert result.version_number == expected_version_number
+
+    def test_get_restore_tre_metadata_returns_tre_raw_metadata_from_source(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        source_version = _make_version_document(3, payload=_standard_tdr_payload())
+
+        with patch.object(Document, "_get_restore_metadata_source_version", return_value=source_version):
+            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
+
+        assert result == _STANDARD_TRE_RAW_METADATA
+
+    def test_get_restore_tre_metadata_returns_none_when_no_source_version(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(Document, "_get_restore_metadata_source_version", return_value=None):
+            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
+
+        assert result is None
+
+    @pytest.mark.parametrize("payload", [{}, {"tre_raw_metadata": None}, {"tre_raw_metadata": {}}])
+    def test_get_restore_tre_metadata_returns_none_when_payload_has_no_tre_metadata(self, mock_api_client, payload):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        source_version = _make_version_document(3, payload=payload)
+
+        with patch.object(Document, "_get_restore_metadata_source_version", return_value=source_version):
+            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
+
+        assert result is None
 
     def test_set_tdr_metadata_sets_properties_and_invalidates_cached_values(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)

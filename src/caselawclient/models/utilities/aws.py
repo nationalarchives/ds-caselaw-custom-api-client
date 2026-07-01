@@ -277,9 +277,10 @@ def restore_assets_from_consignment_archive(
                 logger.warning("Source file %s not found in archive %s", source_filename, archive_key)
 
         # Restore the parser log.
-        _restore_archive_file_to_bucket(
+        if not _restore_archive_file_to_bucket(
             archive, f"{consignment_reference}/parser.log", bucket, f"{uri}/parser.log", client
-        )
+        ):
+            logger.warning("Parser log not found in archive %s", archive_key)
 
         # Restore each declared image under its original filename.
         for image_filename in image_filenames:
