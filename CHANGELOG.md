@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- populate Document.metadata from registered metadata types
+- add CategoriesMetadata delegating to document body categories
+- add CaseNumberMetadata delegating to document body case number
+- add DateMetadata delegating to document body date
+- add JurisdictionMetadata delegating to document body jurisdiction
+- add CourtMetadata delegating to document body court
+- add NameMetadata delegating to document body name
+- add Metadata base classes for document metadata layer
+- add restore_document method to MarklogicApiClient
+
+### Fix
+
+- **deps**: update dependency certifi to >=2026.6.17,<2026.7.0
+- **deps**: update dependency saxonche to v13
+- **deps**: update dependency certifi to >=2026.5.20,<2026.6.0
+
+## v46.1.1 (2026-05-08)
+
+### Fix
+
+- update typing for Element to use TypeAlias
+
+## v46.1.0 (2026-05-08)
+
+### Feat
+
+- cache aws clients
+- add more logging around document publish
+
+## v46.0.0 (2026-05-08)
+
 ## v47.0.0
 
 ### Feat
@@ -13,7 +48,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
-- Permit enriching bulk data if there's content
+- **deps**: update dependency saxonche to v13
+- **deps**: update dependency certifi to >=2026.5.20,<2026.6.0
 
 ### Feat
 
