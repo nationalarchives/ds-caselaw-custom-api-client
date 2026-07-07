@@ -49,3 +49,30 @@ class TestMetadataBase:
         assert metadata.title == "Test Multiple"
         assert metadata.description == "A test multiple metadata item."
         assert metadata.values == ["first", "second"]
+
+
+class TestNameMetadata:
+    def test_name_metadata_is_single_metadata_with_name_key(self):
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        assert issubclass(NameMetadata, SingleMetadata)
+        assert NameMetadata.key == "name"
+
+    def test_name_metadata_value_matches_document_body_name(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        metadata = NameMetadata(document)
+
+        assert metadata.value == document.body.name
+
+    def test_name_metadata_has_title_and_description(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        metadata = NameMetadata(document)
+
+        assert metadata.title
+        assert metadata.description
