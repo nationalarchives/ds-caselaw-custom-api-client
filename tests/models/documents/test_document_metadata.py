@@ -112,3 +112,12 @@ class TestCaseNumberMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
         assert CaseNumberMetadata(document).value == document.body.case_number
+
+
+class TestCategoriesMetadata:
+    def test_categories_metadata_values_match_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        assert CategoriesMetadata(document).values == document.body.categories
