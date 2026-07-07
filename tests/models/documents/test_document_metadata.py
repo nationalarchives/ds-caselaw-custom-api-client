@@ -76,3 +76,12 @@ class TestNameMetadata:
 
         assert metadata.title
         assert metadata.description
+
+
+class TestCourtMetadata:
+    def test_court_metadata_value_matches_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.court import CourtMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        assert CourtMetadata(document).value == document.body.court
