@@ -103,3 +103,12 @@ class TestDateMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
         assert DateMetadata(document).value == document.body.document_date_as_date
+
+
+class TestCaseNumberMetadata:
+    def test_case_number_metadata_value_matches_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        assert CaseNumberMetadata(document).value == document.body.case_number
