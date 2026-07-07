@@ -94,3 +94,12 @@ class TestJurisdictionMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
         assert JurisdictionMetadata(document).value == document.body.jurisdiction
+
+
+class TestDateMetadata:
+    def test_date_metadata_value_matches_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.date import DateMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        assert DateMetadata(document).value == document.body.document_date_as_date
