@@ -68,8 +68,12 @@ class TestDocument:
         assert any("There is another document with identical content" in msg for msg in messages)
 
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
+        from caselawclient.factories import build_document_body_xml
+
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            name="Document Name",
+        ).encode()
         document = Judgment(DocumentURIString("test/1234"), mock_api_client)
-        document.body.name = "Document Name"
         assert str(document) == "<judgment test/1234: Document Name>"
 
     def test_has_sensible_repr_without_name_or_subclass(self, mock_api_client):

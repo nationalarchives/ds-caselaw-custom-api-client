@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
-from ds_caselaw_utils.types import NeutralCitationString
+from ds_caselaw_utils.types import CourtCode, NeutralCitationString
 from pydantic import TypeAdapter
 from requests_toolbelt.multipart import decoder
 
@@ -169,7 +169,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.body.name or "un-named"
+        name = self.metadata["name"].value or "un-named"  # type: ignore[attr-defined]
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -352,14 +352,15 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.body.name)
+        return bool(self.metadata["name"].value)  # type: ignore[attr-defined]
 
     @cached_property
     def has_valid_court(self) -> bool:
+        court = self.metadata["court"].value  # type: ignore[attr-defined]
+        jurisdiction = self.metadata["jurisdiction"].value  # type: ignore[attr-defined]
+        court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
         try:
-            return bool(
-                courts.get_by_code(self.body.court_and_jurisdiction_identifier_string),
-            )
+            return bool(courts.get_by_code(court_code))
         except CourtNotFoundException:
             return False
 
@@ -928,7 +929,25 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
+        "name": ("name", "value"),
+        "court": ("court", "value"),
+        "jurisdiction": ("jurisdiction", "value"),
+        "document_date_as_date": ("date", "value"),
+        "document_date_as_string": ("date", "as_string"),
+        "case_number": ("case_number", "value"),
+        "categories": ("categories", "values"),
+    }
+
     def __getattr__(self, name: str) -> Any:
+        if name in self._METADATA_DEPRECATED_ATTRS:
+            metadata_key, attribute = self._METADATA_DEPRECATED_ATTRS[name]
+            warnings.warn(
+                f"{name} no longer exists on Document, using Document.metadata instead",
+                DeprecationWarning,
+            )
+            return getattr(self.metadata[metadata_key], attribute)
+
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
             return getattr(self.body, name)
