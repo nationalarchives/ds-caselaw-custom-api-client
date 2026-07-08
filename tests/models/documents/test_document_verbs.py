@@ -377,11 +377,16 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_empty(self, sns, mock_api_client):
+        from caselawclient.factories import build_document_body_xml
+
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            name="",
+            court="",
+            document_date_as_string="1001-01-01",
+        ).encode()
         document = Judgment(DocumentURIString("test/2023/123"), mock_api_client)
 
         document.consignment_reference = "TDR-12345"
-
-        document.body.document_date_as_date = datetime.date(1001, 1, 1)
 
         document.force_reparse()
 
@@ -429,14 +434,17 @@ class TestReparse:
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
     def test_force_reparse_full(self, sns, mock_api_client):
+        from caselawclient.factories import build_document_body_xml
+
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            name="Judgment v Judgement",
+            court="Court of Testing",
+            document_date_as_string="2023-02-03",
+        ).encode()
         document = Judgment(DocumentURIString("test/2023/123"), mock_api_client)
 
         document.neutral_citation = NeutralCitationString("[2023] Test 123")
         document.consignment_reference = "TDR-12345"
-
-        document.body.name = "Judgment v Judgement"
-        document.body.court = "Court of Testing"
-        document.body.document_date_as_date = datetime.date(2023, 2, 3)
 
         document.force_reparse()
 

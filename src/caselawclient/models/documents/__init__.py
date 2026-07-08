@@ -858,8 +858,9 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: Optional[str] = (
-            self.body.document_date_as_date.isoformat()
-            if self.body.document_date_as_date and self.body.document_date_as_date > datetime.date(1001, 1, 1)
+            self.metadata["date"].value.isoformat()  # type: ignore[attr-defined]
+            if self.metadata["date"].value  # type: ignore[attr-defined]
+            and self.metadata["date"].value > datetime.date(1001, 1, 1)  # type: ignore[attr-defined]
             else None
         )
 
@@ -869,9 +870,9 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.body.name or None,
+                "name": self.metadata["name"].value or None,  # type: ignore[attr-defined]
                 "cite": None,
-                "court": self.body.court or None,
+                "court": self.metadata["court"].value or None,  # type: ignore[attr-defined]
                 "date": checked_date,
                 "uri": self.uri,
             }
