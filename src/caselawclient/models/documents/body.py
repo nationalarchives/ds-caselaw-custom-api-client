@@ -1,6 +1,5 @@
 import datetime
 import os
-import warnings
 from functools import cached_property
 from typing import Optional
 
@@ -108,25 +107,15 @@ class DocumentBody:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-        )
+        from caselawclient.models.documents.metadata.types.date import read_date_as_string
+
+        return read_date_as_string(self)
 
     @cached_property
     def document_date_as_date(self) -> Optional[datetime.date]:
-        if not self.document_date_as_string:
-            return None
-        try:
-            return datetime.datetime.strptime(
-                self.document_date_as_string,
-                "%Y-%m-%d",
-            ).date()
-        except ValueError:
-            warnings.warn(
-                f"Unparsable date encountered: {self.document_date_as_string}",
-                UnparsableDate,
-            )
-            return None
+        from caselawclient.models.documents.metadata.types.date import read_date_as_date
+
+        return read_date_as_date(self)
 
     def get_manifestation_datetimes(
         self,

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- move document date extraction into DateMetadata
 - move document jurisdiction extraction into JurisdictionMetadata
 - move document court extraction into CourtMetadata
 - move document name extraction into NameMetadata
