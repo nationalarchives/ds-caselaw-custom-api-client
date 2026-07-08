@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- read document validation helpers from metadata layer
 - read force_reparse metadata from document metadata layer
 - read document comparison fields from metadata
 - move document categories extraction into CategoriesMetadata

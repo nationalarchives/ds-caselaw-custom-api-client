@@ -170,7 +170,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.body.name or "un-named"
+        name = self.metadata["name"].value or "un-named"  # type: ignore[attr-defined]
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -334,7 +334,7 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.body.name)
+        return bool(self.metadata["name"].value)  # type: ignore[attr-defined]
 
     @cached_property
     def has_valid_court(self) -> bool:
@@ -697,7 +697,25 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
+        "name": ("name", "value"),
+        "court": ("court", "value"),
+        "jurisdiction": ("jurisdiction", "value"),
+        "document_date_as_date": ("date", "value"),
+        "document_date_as_string": ("date", "as_string"),
+        "case_number": ("case_number", "value"),
+        "categories": ("categories", "values"),
+    }
+
     def __getattr__(self, name: str) -> Any:
+        if name in self._METADATA_DEPRECATED_ATTRS:
+            metadata_key, attribute = self._METADATA_DEPRECATED_ATTRS[name]
+            warnings.warn(
+                f"{name} no longer exists on Document, using Document.metadata instead",
+                DeprecationWarning,
+            )
+            return getattr(self.metadata[metadata_key], attribute)
+
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
             return getattr(self.body, name)
