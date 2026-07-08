@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- move document body metadata extraction into metadata layer
 - embed document metadata defaults in factory XML fixtures
 - populate Document.metadata from registered metadata types
 - add CategoriesMetadata delegating to document body categories

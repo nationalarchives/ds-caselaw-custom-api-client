@@ -1,5 +1,4 @@
 import datetime
-from functools import cached_property
 
 from caselawclient.models.documents.metadata.base import SingleMetadata
 
@@ -9,6 +8,10 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
     title = "Date"
     description = "The date of the document."
 
-    @cached_property
+    @property
+    def as_string(self) -> str:
+        return self.document.body.document_date_as_string
+
+    @property
     def value(self) -> datetime.date | None:
         return self.document.body.document_date_as_date

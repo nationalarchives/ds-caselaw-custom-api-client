@@ -58,6 +58,22 @@ class TestNameMetadata:
         assert issubclass(NameMetadata, SingleMetadata)
         assert NameMetadata.key == "name"
 
+    def test_name_metadata_value_reads_from_xml(self, mock_api_client):
+        from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(name="Custom Case Name"),
+        )
+        metadata = NameMetadata(document)
+
+        assert metadata.value == "Custom Case Name"
+        assert document.body.name == metadata.value
+        name_from_registry = document.metadata["name"]
+        assert isinstance(name_from_registry, NameMetadata)
+        assert name_from_registry.value == metadata.value
+
     def test_name_metadata_value_matches_document_body_name(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.name import NameMetadata
@@ -97,6 +113,35 @@ class TestJurisdictionMetadata:
 
 
 class TestDateMetadata:
+    def test_date_metadata_value_reads_from_xml(self, mock_api_client):
+        import datetime
+
+        from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+        from caselawclient.models.documents.metadata.types.date import DateMetadata
+
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(document_date_as_string="2023-02-03"),
+        )
+        metadata = DateMetadata(document)
+
+        assert metadata.value == datetime.date(2023, 2, 3)
+        assert metadata.as_string == "2023-02-03"
+        assert document.body.document_date_as_date == metadata.value
+
+    def test_date_metadata_warns_on_unparsable_date(self):
+        from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+        from caselawclient.models.documents.body import UnparsableDate
+        from caselawclient.models.documents.metadata.types.date import DateMetadata
+
+        document = DocumentFactory.build(
+            body=DocumentBodyFactory.build(document_date_as_string="kitten"),
+        )
+        metadata = DateMetadata(document)
+
+        with pytest.warns(UnparsableDate):
+            assert metadata.value is None
+
     def test_date_metadata_value_matches_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.date import DateMetadata

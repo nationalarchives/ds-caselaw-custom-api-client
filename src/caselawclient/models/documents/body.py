@@ -19,6 +19,40 @@ class UnparsableDate(Warning):
     pass
 
 
+NAME_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
+COURT_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()"
+JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()"
+CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
+CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
+DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+
+
+def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
+    categories: dict[str, DocumentCategory] = {}
+    children_map: dict[str, list[DocumentCategory]] = {}
+
+    for node in nodes:
+        name = node.text
+        if name is None or not name.strip():
+            continue
+
+        category = DocumentCategory(name=name)
+        categories[name] = category
+
+        parent = node.get("parent")
+
+        if parent:
+            children_map.setdefault(parent, []).append(category)
+
+    for parent, subcategories in children_map.items():
+        if parent in categories:
+            categories[parent].subcategories.extend(subcategories)
+
+    return [
+        categories[name] for node in nodes if node.get("parent") is None if (name := node.text) and name in categories
+    ]
+
+
 class DocumentBody:
     """
     A class for abstracting out interactions with the body of a document.
@@ -39,51 +73,19 @@ class DocumentBody:
 
     @cached_property
     def name(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
-        )
+        return self.get_xpath_match_string(NAME_XPATH)
 
     @cached_property
     def court(self) -> str:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
+        return self.get_xpath_match_string(COURT_XPATH)
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
+        return self.get_xpath_match_string(JURISDICTION_XPATH)
 
     @cached_property
     def categories(self) -> list[DocumentCategory]:
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
-        nodes = self.get_xpath_nodes(xpath)
-
-        categories: dict[str, DocumentCategory] = {}
-        children_map: dict[str, list[DocumentCategory]] = {}
-
-        for node in nodes:
-            name = node.text
-            if name is None or not name.strip():
-                continue
-
-            category = DocumentCategory(name=name)
-            categories[name] = category
-
-            parent = node.get("parent")
-
-            if parent:
-                children_map.setdefault(parent, []).append(category)
-
-        for parent, subcategories in children_map.items():
-            if parent in categories:
-                categories[parent].subcategories.extend(subcategories)
-
-        top_level_categories = [
-            categories[name]
-            for node in nodes
-            if node.get("parent") is None
-            if (name := node.text) and name in categories
-        ]
-
-        return top_level_categories
+        return categories_from_nodes(self.get_xpath_nodes(CATEGORIES_XPATH))
 
     # NOTE: Deprecated - use categories function
     @cached_property
@@ -94,7 +96,7 @@ class DocumentBody:
 
     @cached_property
     def case_number(self) -> Optional[str]:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()")
+        return self.get_xpath_match_string(CASE_NUMBER_XPATH)
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
@@ -104,22 +106,21 @@ class DocumentBody:
 
     @cached_property
     def document_date_as_string(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-        )
+        return self.get_xpath_match_string(DATE_XPATH)
 
     @cached_property
     def document_date_as_date(self) -> Optional[datetime.date]:
-        if not self.document_date_as_string:
+        date_as_string = self.document_date_as_string
+        if not date_as_string:
             return None
         try:
             return datetime.datetime.strptime(
-                self.document_date_as_string,
+                date_as_string,
                 "%Y-%m-%d",
             ).date()
         except ValueError:
             warnings.warn(
-                f"Unparsable date encountered: {self.document_date_as_string}",
+                f"Unparsable date encountered: {date_as_string}",
                 UnparsableDate,
             )
             return None

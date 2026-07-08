@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from caselawclient.models.documents.metadata.base import SingleMetadata
 
 
@@ -8,6 +6,6 @@ class CaseNumberMetadata(SingleMetadata[str | None]):
     title = "Case Number"
     description = "The case number of the document."
 
-    @cached_property
+    @property
     def value(self) -> str | None:
         return self.document.body.case_number
