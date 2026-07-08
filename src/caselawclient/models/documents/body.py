@@ -56,37 +56,9 @@ class DocumentBody:
 
     @cached_property
     def categories(self) -> list[DocumentCategory]:
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
-        nodes = self.get_xpath_nodes(xpath)
+        from caselawclient.models.documents.metadata.types.categories import read_categories
 
-        categories: dict[str, DocumentCategory] = {}
-        children_map: dict[str, list[DocumentCategory]] = {}
-
-        for node in nodes:
-            name = node.text
-            if name is None or not name.strip():
-                continue
-
-            category = DocumentCategory(name=name)
-            categories[name] = category
-
-            parent = node.get("parent")
-
-            if parent:
-                children_map.setdefault(parent, []).append(category)
-
-        for parent, subcategories in children_map.items():
-            if parent in categories:
-                categories[parent].subcategories.extend(subcategories)
-
-        top_level_categories = [
-            categories[name]
-            for node in nodes
-            if node.get("parent") is None
-            if (name := node.text) and name in categories
-        ]
-
-        return top_level_categories
+        return read_categories(self)
 
     # NOTE: Deprecated - use categories function
     @cached_property

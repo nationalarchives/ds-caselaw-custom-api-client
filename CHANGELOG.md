@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- move document categories extraction into CategoriesMetadata
 - move document case number extraction into CaseNumberMetadata
 - move document date extraction into DateMetadata
 - move document jurisdiction extraction into JurisdictionMetadata
