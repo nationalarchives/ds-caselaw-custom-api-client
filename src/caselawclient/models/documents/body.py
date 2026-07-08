@@ -45,7 +45,9 @@ class DocumentBody:
 
     @cached_property
     def court(self) -> str:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
+        from caselawclient.models.documents.metadata.types.court import read_court
+
+        return read_court(self)
 
     @cached_property
     def jurisdiction(self) -> str:
