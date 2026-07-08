@@ -39,9 +39,9 @@ class DocumentBody:
 
     @cached_property
     def name(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
-        )
+        from caselawclient.models.documents.metadata.types.name import read_name
+
+        return read_name(self)
 
     @cached_property
     def court(self) -> str:

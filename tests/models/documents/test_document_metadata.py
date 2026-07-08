@@ -58,6 +58,22 @@ class TestNameMetadata:
         assert issubclass(NameMetadata, SingleMetadata)
         assert NameMetadata.key == "name"
 
+    def test_name_metadata_value_reads_from_xml(self, mock_api_client):
+        from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(name="Custom Case Name"),
+        )
+        metadata = NameMetadata(document)
+
+        assert metadata.value == "Custom Case Name"
+        assert document.body.name == metadata.value
+        name_from_registry = document.metadata["name"]
+        assert isinstance(name_from_registry, NameMetadata)
+        assert name_from_registry.value == metadata.value
+
     def test_name_metadata_value_matches_document_body_name(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.name import NameMetadata
