@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- embed document metadata defaults in factory XML fixtures
 - populate Document.metadata from registered metadata types
 - add CategoriesMetadata delegating to document body categories
 - add CaseNumberMetadata delegating to document body case number
