@@ -124,6 +124,20 @@ class TestCategoriesMetadata:
 
 
 class TestDocumentMetadata:
+    def test_factory_built_document_metadata_reads_from_xml(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.types.court import CourtMetadata
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        name_metadata = document.metadata["name"]
+        court_metadata = document.metadata["court"]
+        assert isinstance(name_metadata, NameMetadata)
+        assert isinstance(court_metadata, CourtMetadata)
+        assert name_metadata.value == "Judgment v Judgement"
+        assert court_metadata.value == "Court of Testing"
+
     def test_metadata_is_dict_keyed_by_metadata_type(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
 

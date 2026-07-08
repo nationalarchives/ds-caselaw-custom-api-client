@@ -18,9 +18,33 @@ from caselawclient.types import DocumentURIString
 
 T = TypeVar("T")
 
-DEFAULT_DOCUMENT_BODY_XML = """<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+
+def build_document_body_xml(
+    *,
+    name: str = "Judgment v Judgement",
+    court: str = "Court of Testing",
+    jurisdiction: str = "",
+    document_date_as_string: str | None = "2023-02-03",
+    case_number: str = "",
+) -> str:
+    frbr_date_line = (
+        f'                            <FRBRdate date="{document_date_as_string}"/>\n' if document_date_as_string else ""
+    )
+    return f"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
             <judgment name="decision">
-                <meta/><header><p>Header contains text</p></header>
+                <meta>
+                    <identification>
+                        <FRBRWork>
+                            <FRBRname value="{name}"/>
+{frbr_date_line}                        </FRBRWork>
+                    </identification>
+                    <proprietary>
+                        <uk:court>{court}</uk:court>
+                        <uk:jurisdiction>{jurisdiction}</uk:jurisdiction>
+                        <uk:caseNumber>{case_number}</uk:caseNumber>
+                    </proprietary>
+                </meta>
+                <header><p>Header contains text</p></header>
                 <judgmentBody>
                 <decision>
                 <p>This is a document.</p>
@@ -31,24 +55,20 @@ DEFAULT_DOCUMENT_BODY_XML = """<akomaNtoso xmlns="http://docs.oasis-open.org/leg
 
 
 class DocumentBodyFactory:
-    # "name_of_attribute": "default value"
-    PARAMS_MAP: dict[str, Any] = {
-        "name": "Judgment v Judgement",
-        "court": "Court of Testing",
-        "document_date_as_string": "2023-02-03",
-    }
-
     @classmethod
-    def build(cls, xml_string: str = DEFAULT_DOCUMENT_BODY_XML, **kwargs: Any) -> DocumentBody:
-        document_body = DocumentBody(
+    def build(cls, xml_string: str | None = None, **kwargs: Any) -> DocumentBody:
+        if xml_string is None:
+            xml_string = build_document_body_xml(
+                name=kwargs.get("name", "Judgment v Judgement"),
+                court=kwargs.get("court", "Court of Testing"),
+                jurisdiction=kwargs.get("jurisdiction", ""),
+                document_date_as_string=kwargs.get("document_date_as_string", "2023-02-03"),
+                case_number=kwargs.get("case_number", ""),
+            )
+
+        return DocumentBody(
             xml_bytestring=xml_string.encode(encoding="utf-8"),
         )
-
-        for param_name, default_value in cls.PARAMS_MAP.items():
-            value = kwargs.get(param_name, default_value)
-            setattr(document_body, param_name, value)
-
-        return document_body
 
 
 class DocumentFactory:
@@ -82,7 +102,7 @@ class DocumentFactory:
 
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
-            api_client.get_judgment_xml_bytestring.return_value = DEFAULT_DOCUMENT_BODY_XML.encode(encoding="utf-8")
+            api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml().encode(encoding="utf-8")
             api_client.get_property_as_node.return_value = None
 
         document = cls.target_class(uri, api_client=api_client)

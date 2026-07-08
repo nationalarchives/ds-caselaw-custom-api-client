@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
+from caselawclient.factories import build_document_body_xml
 from caselawclient.models.documents import Document, DocumentURIString
 from caselawclient.models.documents.exceptions import CannotPublishUnpublishableDocument
 
@@ -25,25 +26,29 @@ class TestDocumentValidation:
         assert parked_document.is_parked is True
 
     def test_has_name(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            name="Judgment v Judgement",
+        ).encode()
         document_with_name = Document(DocumentURIString("test/1234"), mock_api_client)
-        document_with_name.body.name = "Judgment v Judgement"
 
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(name="").encode()
         document_without_name = Document(DocumentURIString("test/1234"), mock_api_client)
-        document_without_name.body.name = ""
 
         assert document_with_name.has_name is True
         assert document_without_name.has_name is False
 
     def test_has_court_is_covered_by_has_valid_court(self, mock_api_client):
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(court="UKSC").encode()
         document_with_court = Document(DocumentURIString("test/1234"), mock_api_client)
-        document_with_court.body.court = "UKSC"
 
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(court="").encode()
         document_without_court = Document(DocumentURIString("test/1234"), mock_api_client)
-        document_without_court.body.court = ""
 
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            court="UKFTT-GRC",
+            jurisdiction="InformationRights",
+        ).encode()
         document_with_court_and_jurisdiction = Document(DocumentURIString("test/1234"), mock_api_client)
-        document_with_court_and_jurisdiction.body.court = "UKFTT-GRC"
-        document_with_court_and_jurisdiction.body.jurisdiction = "InformationRights"
 
         assert document_with_court.has_valid_court is True
         assert document_with_court_and_jurisdiction.has_valid_court is True
