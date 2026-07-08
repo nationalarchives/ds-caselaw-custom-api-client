@@ -97,7 +97,9 @@ class DocumentBody:
 
     @cached_property
     def case_number(self) -> Optional[str]:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()")
+        from caselawclient.models.documents.metadata.types.case_number import read_case_number
+
+        return read_case_number(self)
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
