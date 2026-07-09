@@ -127,6 +127,7 @@ class TestDateMetadata:
 
         assert metadata.value == datetime.date(2023, 2, 3)
         assert metadata.as_string == "2023-02-03"
+        assert str(metadata) == "2023-02-03"
         assert document.body.document_date_as_date == metadata.value
 
     def test_date_metadata_warns_on_unparsable_date(self):
@@ -141,6 +142,8 @@ class TestDateMetadata:
 
         with pytest.warns(UnparsableDate):
             assert metadata.value is None
+        assert metadata.as_string == ""
+        assert str(metadata) == ""
 
     def test_date_metadata_value_matches_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory

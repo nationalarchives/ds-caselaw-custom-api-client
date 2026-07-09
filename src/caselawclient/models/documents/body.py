@@ -7,7 +7,9 @@ from typing import Optional
 import pytz
 from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
+from typing_extensions import deprecated
 
+from caselawclient.models.documents.metadata.types.date import date_as_string_from_value
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
@@ -105,12 +107,8 @@ class DocumentBody:
         return CourtCode(self.court)
 
     @cached_property
-    def document_date_as_string(self) -> str:
-        return self.get_xpath_match_string(DATE_XPATH)
-
-    @cached_property
     def document_date_as_date(self) -> Optional[datetime.date]:
-        date_as_string = self.document_date_as_string
+        date_as_string = self.get_xpath_match_string(DATE_XPATH)
         if not date_as_string:
             return None
         try:
@@ -124,6 +122,11 @@ class DocumentBody:
                 UnparsableDate,
             )
             return None
+
+    @cached_property
+    @deprecated("Use Document.metadata['date'].as_string instead")
+    def document_date_as_string(self) -> str:
+        return date_as_string_from_value(self.document_date_as_date)
 
     def get_manifestation_datetimes(
         self,
