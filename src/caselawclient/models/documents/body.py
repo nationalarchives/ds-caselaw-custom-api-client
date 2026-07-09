@@ -30,6 +30,12 @@ DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
+    """Build a tree of document categories from Akoma Ntoso category XML nodes.
+
+    Top-level categories (nodes without a ``parent`` attribute) are returned in
+    document order. Child categories are attached to their parent's
+    ``subcategories`` list.
+    """
     categories: dict[str, DocumentCategory] = {}
     children_map: dict[str, list[DocumentCategory]] = {}
 

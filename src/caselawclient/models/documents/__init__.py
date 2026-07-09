@@ -18,7 +18,7 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
-from caselawclient.models.documents.metadata.base import Metadata
+from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry, MetadataAttributeKey
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
@@ -142,14 +142,7 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
-    metadata_types: ClassVar[tuple[type[Metadata], ...]] = (
-        NameMetadata,
-        CourtMetadata,
-        JurisdictionMetadata,
-        DateMetadata,
-        CaseNumberMetadata,
-        CategoriesMetadata,
-    )
+    metadata: DocumentMetadataRegistry
 
     def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
@@ -169,7 +162,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.metadata["name"].value or "un-named"  # type: ignore[attr-defined]
+        name = self.metadata["name"].value or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -210,13 +203,14 @@ class Document:
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""
 
-        metadata: dict[str, Metadata] = {}
-        for metadata_cls in type(self).metadata_types:
-            if metadata_cls.key in metadata:
-                msg = f"Duplicate metadata key {metadata_cls.key!r} registered on {type(self).__name__}"
-                raise ValueError(msg)
-            metadata[metadata_cls.key] = metadata_cls(self)
-        self.metadata = metadata
+        self.metadata = DocumentMetadataRegistry(
+            name=NameMetadata(self),
+            court=CourtMetadata(self),
+            jurisdiction=JurisdictionMetadata(self),
+            date=DateMetadata(self),
+            case_number=CaseNumberMetadata(self),
+            categories=CategoriesMetadata(self),
+        )
 
     @property
     def best_human_identifier(self) -> Optional[Identifier]:
@@ -352,12 +346,12 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.metadata["name"].value)  # type: ignore[attr-defined]
+        return bool(self.metadata["name"].value)
 
     @cached_property
     def has_valid_court(self) -> bool:
-        court = self.metadata["court"].value  # type: ignore[attr-defined]
-        jurisdiction = self.metadata["jurisdiction"].value  # type: ignore[attr-defined]
+        court = self.metadata["court"].value
+        jurisdiction = self.metadata["jurisdiction"].value
         court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
         try:
             return bool(courts.get_by_code(court_code))
@@ -859,9 +853,8 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: Optional[str] = (
-            self.metadata["date"].value.isoformat()  # type: ignore[attr-defined]
-            if self.metadata["date"].value  # type: ignore[attr-defined]
-            and self.metadata["date"].value > datetime.date(1001, 1, 1)  # type: ignore[attr-defined]
+            self.metadata["date"].value.isoformat()
+            if self.metadata["date"].value and self.metadata["date"].value > datetime.date(1001, 1, 1)
             else None
         )
 
@@ -871,9 +864,9 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.metadata["name"].value or None,  # type: ignore[attr-defined]
+                "name": self.metadata["name"].value or None,
                 "cite": None,
-                "court": self.metadata["court"].value or None,  # type: ignore[attr-defined]
+                "court": self.metadata["court"].value or None,
                 "date": checked_date,
                 "uri": self.uri,
             }
@@ -929,7 +922,7 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
-    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[MetadataAttributeKey, str]]] = {
         "name": ("name", "value"),
         "court": ("court", "value"),
         "jurisdiction": ("jurisdiction", "value"),
@@ -951,7 +944,7 @@ class Document:
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
             return getattr(self.body, name)
-        except Exception:
+        except AttributeError:
             raise AttributeError(f"Neither 'Document' nor 'DocumentBody' objects have an attribute '{name}'")
 
     def linked_document_resolutions(self, namespaces: list[str], only_published: bool = True) -> IdentifierResolutions:

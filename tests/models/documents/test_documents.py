@@ -363,6 +363,21 @@ class TestDocumentEnrichedRecently:
             ):
                 doc.x
 
+        def test_body_property_error_is_not_masked_as_attribute_error(self, mock_api_client):
+            doc = DocumentFactory.build(
+                uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname")
+            )
+
+            def boom(_self: object) -> None:
+                raise ValueError("boom")
+
+            type(doc.body).boom = property(boom)  # type: ignore[attr-defined]
+            try:
+                with pytest.raises(ValueError, match="boom"):
+                    doc.boom
+            finally:
+                del type(doc.body).boom  # type: ignore[attr-defined]
+
 
 class TestDocumentURIString:
     def test_accepts_two_element_uri(self):
