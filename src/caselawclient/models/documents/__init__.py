@@ -3,7 +3,7 @@ import logging
 import os
 import warnings
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
@@ -18,6 +18,13 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
+from caselawclient.models.documents.metadata.base import Metadata
+from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
+from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
+from caselawclient.models.documents.metadata.types.court import CourtMetadata
+from caselawclient.models.documents.metadata.types.date import DateMetadata
+from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
+from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -135,6 +142,15 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
+    metadata_types: ClassVar[tuple[type[Metadata], ...]] = (
+        NameMetadata,
+        CourtMetadata,
+        JurisdictionMetadata,
+        DateMetadata,
+        CaseNumberMetadata,
+        CategoriesMetadata,
+    )
+
     def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
         :param uri: The URI of the document to retrieve from MarkLogic.
@@ -150,6 +166,7 @@ class Document:
 
         self._initialise_document_body(search_query=search_query)
         self._initialise_identifiers()
+        self._initialise_metadata()
 
     def __repr__(self) -> str:
         name = self.body.name or "un-named"
@@ -189,6 +206,17 @@ class Document:
 
         identifiers_element_as_etree = self.api_client.get_property_as_node(self.uri, "identifiers")
         self.identifiers = unpack_all_identifiers_from_etree(identifiers_element_as_etree)
+
+    def _initialise_metadata(self) -> None:
+        """Initialise all this document's metadata values."""
+
+        metadata: dict[str, Metadata] = {}
+        for metadata_cls in type(self).metadata_types:
+            if metadata_cls.key in metadata:
+                msg = f"Duplicate metadata key {metadata_cls.key!r} registered on {type(self).__name__}"
+                raise ValueError(msg)
+            metadata[metadata_cls.key] = metadata_cls(self)
+        self.metadata = metadata
 
     @property
     def best_human_identifier(self) -> Optional[Identifier]:

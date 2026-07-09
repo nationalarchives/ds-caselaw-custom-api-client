@@ -32,7 +32,7 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260518
-          - boto3-stubs[s3,sns]==1.43.36
+          - boto3-stubs[s3,sns]==1.43.41
           - types-python-dateutil==2.9.0.20260518
           - types-pytz==2026.2.0.20260518
           - types-lxml==2026.2.16
@@ -49,7 +49,7 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260518
-          - boto3-stubs[s3,sns]==1.43.36
+          - boto3-stubs[s3,sns]==1.43.41
           - types-python-dateutil==2.9.0.20260518
           - types-pytz==2026.2.0.20260518
           - types-lxml==2026.2.16
@@ -81,7 +81,7 @@ repos:
     rev: v4.16.4
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.222.0
+    rev: 43.253.2
     hooks:
       - id: renovate-config-validator
         args: [--strict]
