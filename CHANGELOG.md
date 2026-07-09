@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - add CourtMetadata delegating to document body court
 - add NameMetadata delegating to document body name
 - add Metadata base classes for document metadata layer
-- add restore_document method to MarklogicApiClient
+- add restore_version method to document model
 
 ### Fix
 

@@ -26,6 +26,7 @@ from caselawclient.models.documents import (
     Document,
     DocumentURIString,
 )
+from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.judgments import Judgment
 from caselawclient.types import InvalidDocumentURIException
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
@@ -291,6 +292,21 @@ class TestDocument:
         mock_api_client.get_judgment_xml_bytestring.assert_called_with(
             document.uri, show_unpublished=True, search_query="test search query"
         )
+
+    def test_initialise_document_body(self, mock_api_client):
+        test_uri = DocumentURIString("test/1234")
+        test_xml = b"<test>mock xml content</test>"
+        mock_api_client.get_judgment_xml_bytestring.return_value = test_xml
+        document = Document(test_uri, mock_api_client)
+        search_query = "test query"
+
+        document._initialise_document_body(search_query=search_query)  # noqa: SLF001
+
+        mock_api_client.get_judgment_xml_bytestring.assert_called_with(
+            test_uri, show_unpublished=True, search_query=search_query
+        )
+        assert isinstance(document.body, DocumentBody)
+        assert test_xml.decode() in document.body._xml.xml_as_string  # noqa: SLF001
 
 
 class TestDocumentEnrichedRecently:
