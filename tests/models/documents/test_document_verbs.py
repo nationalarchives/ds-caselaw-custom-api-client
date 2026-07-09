@@ -648,6 +648,54 @@ def _standard_tdr_payload(**extra: object) -> dict:
     return payload
 
 
+class TestAssertIsRestorable:
+    @pytest.fixture(autouse=True)
+    def unpublished_document(self, mock_api_client):
+        mock_api_client.get_published.return_value = False
+
+    def test_raises_if_published(self, mock_api_client):
+        mock_api_client.get_published.return_value = True
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with pytest.raises(CannotRestorePublishedDocument):
+            document.assert_is_restorable(3)
+
+    def test_raises_without_consignment_reference_when_no_metadata_source_version(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(Document, "versions_as_documents", new_callable=PropertyMock, return_value=[]),
+            pytest.raises(CannotRestoreDocumentWithoutConsignmentReference),
+        ):
+            document.assert_is_restorable(3)
+
+    @pytest.mark.parametrize("payload", [{}, {"tre_raw_metadata": None}, {"tre_raw_metadata": {}}])
+    def test_raises_without_consignment_reference_when_metadata_lacks_tdr(self, mock_api_client, payload):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload=payload)],
+            ),
+            pytest.raises(CannotRestoreDocumentWithoutConsignmentReference),
+        ):
+            document.assert_is_restorable(3)
+
+    def test_passes_for_unpublished_document_with_consignment_reference(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with patch.object(
+            Document,
+            "versions_as_documents",
+            new_callable=PropertyMock,
+            return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
+        ):
+            assert document.assert_is_restorable(3) is None
+
+
 class TestDocumentRestoreVersion:
     @pytest.fixture(autouse=True)
     def mock_restore_assets(self):
@@ -1152,33 +1200,6 @@ class TestDocumentRestoreVersion:
         else:
             assert result is not None
             assert result.version_number == expected_version_number
-
-    def test_get_restore_tre_metadata_returns_tre_raw_metadata_from_source(self, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        source_version = _make_version_document(3, payload=_standard_tdr_payload())
-
-        with patch.object(Document, "_get_restore_metadata_source_version", return_value=source_version):
-            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
-
-        assert result == _STANDARD_TRE_RAW_METADATA
-
-    def test_get_restore_tre_metadata_returns_none_when_no_source_version(self, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-
-        with patch.object(Document, "_get_restore_metadata_source_version", return_value=None):
-            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
-
-        assert result is None
-
-    @pytest.mark.parametrize("payload", [{}, {"tre_raw_metadata": None}, {"tre_raw_metadata": {}}])
-    def test_get_restore_tre_metadata_returns_none_when_payload_has_no_tre_metadata(self, mock_api_client, payload):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        source_version = _make_version_document(3, payload=payload)
-
-        with patch.object(Document, "_get_restore_metadata_source_version", return_value=source_version):
-            result = document._get_restore_tre_metadata(3)  # noqa: SLF001
-
-        assert result is None
 
     def test_set_tdr_metadata_sets_properties_and_invalidates_cached_values(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
