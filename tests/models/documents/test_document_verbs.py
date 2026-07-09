@@ -693,7 +693,8 @@ class TestAssertIsRestorable:
             new_callable=PropertyMock,
             return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
         ):
-            assert document.assert_is_restorable(3) is None
+            # Should not raise:
+            document.assert_is_restorable(3)
 
 
 class TestDocumentRestoreVersion:
