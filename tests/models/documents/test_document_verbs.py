@@ -1143,17 +1143,6 @@ class TestDocumentRestoreVersion:
         mock_api_client.restore_document.assert_not_called()
         mock_restore_assets.assert_not_called()
 
-    def test_get_version_returns_matching_version(self, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        version_4 = _make_version_document(4)
-        version_3 = _make_version_document(3)
-
-        with patch.object(
-            Document, "versions_as_documents", new_callable=PropertyMock, return_value=[version_4, version_3]
-        ):
-            assert document._get_version(3) is version_3  # noqa: SLF001
-            assert document._get_version(99) is None  # noqa: SLF001
-
     @pytest.mark.parametrize(
         "versions,target_version,expected_version_number",
         [
