@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v47.1.0
 
 ### Feat
 
@@ -24,6 +24,13 @@ The format is based on [Keep a Changelog 1.0.0].
 - **deps**: update dependency saxonche to v13
 - **deps**: update dependency certifi to >=2026.5.20,<2026.6.0
 
+## v47.0.0
+
+### Feat
+
+- **MarklogicApiClient**: add `restore_document` method to restore a previous version of a document
+- Support NCN being specified in stub (breaking: update EUI at same time)
+
 ## v46.1.1 (2026-05-08)
 
 ### Fix
@@ -38,13 +45,6 @@ The format is based on [Keep a Changelog 1.0.0].
 - add more logging around document publish
 
 ## v46.0.0 (2026-05-08)
-
-## v47.0.0
-
-### Feat
-
-- **MarklogicApiClient**: add `restore_document` method to restore a previous version of a document
-- Support NCN being specified in stub (breaking: update EUI at same time)
 
 ### Fix
 
