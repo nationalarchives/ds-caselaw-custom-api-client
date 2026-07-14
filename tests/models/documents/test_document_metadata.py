@@ -194,20 +194,6 @@ class TestDocumentMetadata:
 
         assert isinstance(document.metadata, DocumentMetadataRegistry)
 
-    def test_metadata_keys_match_registered_types(self, mock_api_client):
-        from caselawclient.factories import DocumentFactory
-
-        document = DocumentFactory.build(api_client=mock_api_client)
-
-        assert document.metadata.keys() == {
-            "name",
-            "court",
-            "jurisdiction",
-            "date",
-            "case_number",
-            "categories",
-        }
-
     def test_metadata_entries_are_expected_types(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
@@ -243,20 +229,6 @@ class TestDocumentMetadata:
         categories_metadata = document.metadata.categories
         assert isinstance(categories_metadata, CategoriesMetadata)
         assert categories_metadata.values == document.body.categories
-
-    def test_metadata_get_returns_none_for_unknown_key(self, mock_api_client):
-        from caselawclient.factories import DocumentFactory
-
-        document = DocumentFactory.build(api_client=mock_api_client)
-
-        assert document.metadata.get("nonexistent") is None
-
-    def test_metadata_values_yields_all_registered_instances(self, mock_api_client):
-        from caselawclient.factories import DocumentFactory
-
-        document = DocumentFactory.build(api_client=mock_api_client)
-
-        assert len(document.metadata.values()) == 6
 
     def test_metadata_registry_is_built_from_metadata_types_tuple(self, mock_api_client):
         from caselawclient.factories import DocumentFactory

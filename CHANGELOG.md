@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
-- `Document.metadata` is now an instance of `DocumentMetadataRegistry`, not a dict. Metadata items must be accessed with dot notation.
+- `Document.metadata` is now an instance of `DocumentMetadataRegistry`, not a dict. Metadata items must be accessed with dot notation (`document.metadata.name`), with no mapping-style API.
 
 ### Feat
 
