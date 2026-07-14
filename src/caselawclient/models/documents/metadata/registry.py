@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, Literal, get_type_hints
+from typing import TYPE_CHECKING, Literal
 
-from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
@@ -15,11 +14,7 @@ MetadataAttributeKey = Literal["name", "court", "jurisdiction", "date", "case_nu
 
 
 class DocumentMetadataRegistry:
-    """Typed registry of metadata objects for a document.
-
-    Annotated attributes are the single source of registered metadata types;
-    instances are built by iterating those annotations.
-    """
+    """Typed registry of metadata objects for a document."""
 
     name: NameMetadata
     court: CourtMetadata
@@ -29,14 +24,9 @@ class DocumentMetadataRegistry:
     categories: CategoriesMetadata
 
     def __init__(self, document: "Document") -> None:
-        for key, metadata_cls in type(self).metadata_types().items():
-            setattr(self, key, metadata_cls(document))
-
-    @classmethod
-    def metadata_types(cls) -> dict[str, type[Metadata]]:
-        """Return attribute name → metadata class for registered fields."""
-        return {
-            key: metadata_cls
-            for key, metadata_cls in get_type_hints(cls).items()
-            if isinstance(metadata_cls, type) and issubclass(metadata_cls, Metadata)
-        }
+        self.name = NameMetadata(document)
+        self.court = CourtMetadata(document)
+        self.jurisdiction = JurisdictionMetadata(document)
+        self.date = DateMetadata(document)
+        self.case_number = CaseNumberMetadata(document)
+        self.categories = CategoriesMetadata(document)

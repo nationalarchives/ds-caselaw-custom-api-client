@@ -230,13 +230,20 @@ class TestDocumentMetadata:
         assert isinstance(categories_metadata, CategoriesMetadata)
         assert categories_metadata.values == document.body.categories
 
-    def test_metadata_registry_is_built_from_annotated_fields(self, mock_api_client):
+    def test_metadata_registry_exposes_all_registered_fields(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
-        from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry
+        from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
+        from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
+        from caselawclient.models.documents.metadata.types.court import CourtMetadata
+        from caselawclient.models.documents.metadata.types.date import DateMetadata
+        from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
+        from caselawclient.models.documents.metadata.types.name import NameMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        metadata_types = DocumentMetadataRegistry.metadata_types()
-        assert len(metadata_types) == 6
-        for key, metadata_cls in metadata_types.items():
-            assert isinstance(getattr(document.metadata, key), metadata_cls)
+        assert isinstance(document.metadata.name, NameMetadata)
+        assert isinstance(document.metadata.court, CourtMetadata)
+        assert isinstance(document.metadata.jurisdiction, JurisdictionMetadata)
+        assert isinstance(document.metadata.date, DateMetadata)
+        assert isinstance(document.metadata.case_number, CaseNumberMetadata)
+        assert isinstance(document.metadata.categories, CategoriesMetadata)
