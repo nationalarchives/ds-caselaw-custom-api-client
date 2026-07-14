@@ -7,7 +7,9 @@ from typing import Optional
 import pytz
 from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
+from typing_extensions import deprecated
 
+from caselawclient.models.documents.metadata.types.date import date_as_string_from_value
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
@@ -17,6 +19,46 @@ from .xml import XML
 
 class UnparsableDate(Warning):
     pass
+
+
+NAME_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
+COURT_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()"
+JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()"
+CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
+CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
+DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+
+
+def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
+    """Build a tree of document categories from Akoma Ntoso category XML nodes.
+
+    Top-level categories (nodes without a ``parent`` attribute) are returned in
+    document order. Child categories are attached to their parent's
+    ``subcategories`` list.
+    """
+    categories: dict[str, DocumentCategory] = {}
+    children_map: dict[str, list[DocumentCategory]] = {}
+
+    for node in nodes:
+        name = node.text
+        if name is None or not name.strip():
+            continue
+
+        category = DocumentCategory(name=name)
+        categories[name] = category
+
+        parent = node.get("parent")
+
+        if parent:
+            children_map.setdefault(parent, []).append(category)
+
+    for parent, subcategories in children_map.items():
+        if parent in categories:
+            categories[parent].subcategories.extend(subcategories)
+
+    return [
+        categories[name] for node in nodes if node.get("parent") is None if (name := node.text) and name in categories
+    ]
 
 
 class DocumentBody:
@@ -39,51 +81,19 @@ class DocumentBody:
 
     @cached_property
     def name(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
-        )
+        return self.get_xpath_match_string(NAME_XPATH)
 
     @cached_property
     def court(self) -> str:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()")
+        return self.get_xpath_match_string(COURT_XPATH)
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()")
+        return self.get_xpath_match_string(JURISDICTION_XPATH)
 
     @cached_property
     def categories(self) -> list[DocumentCategory]:
-        xpath = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
-        nodes = self.get_xpath_nodes(xpath)
-
-        categories: dict[str, DocumentCategory] = {}
-        children_map: dict[str, list[DocumentCategory]] = {}
-
-        for node in nodes:
-            name = node.text
-            if name is None or not name.strip():
-                continue
-
-            category = DocumentCategory(name=name)
-            categories[name] = category
-
-            parent = node.get("parent")
-
-            if parent:
-                children_map.setdefault(parent, []).append(category)
-
-        for parent, subcategories in children_map.items():
-            if parent in categories:
-                categories[parent].subcategories.extend(subcategories)
-
-        top_level_categories = [
-            categories[name]
-            for node in nodes
-            if node.get("parent") is None
-            if (name := node.text) and name in categories
-        ]
-
-        return top_level_categories
+        return categories_from_nodes(self.get_xpath_nodes(CATEGORIES_XPATH))
 
     # NOTE: Deprecated - use categories function
     @cached_property
@@ -94,7 +104,7 @@ class DocumentBody:
 
     @cached_property
     def case_number(self) -> Optional[str]:
-        return self.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()")
+        return self.get_xpath_match_string(CASE_NUMBER_XPATH)
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
@@ -103,26 +113,26 @@ class DocumentBody:
         return CourtCode(self.court)
 
     @cached_property
-    def document_date_as_string(self) -> str:
-        return self.get_xpath_match_string(
-            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date",
-        )
-
-    @cached_property
     def document_date_as_date(self) -> Optional[datetime.date]:
-        if not self.document_date_as_string:
+        date_as_string = self.get_xpath_match_string(DATE_XPATH)
+        if not date_as_string:
             return None
         try:
             return datetime.datetime.strptime(
-                self.document_date_as_string,
+                date_as_string,
                 "%Y-%m-%d",
             ).date()
         except ValueError:
             warnings.warn(
-                f"Unparsable date encountered: {self.document_date_as_string}",
+                f"Unparsable date encountered: {date_as_string}",
                 UnparsableDate,
             )
             return None
+
+    @cached_property
+    @deprecated("Use Document.metadata['date'].as_string instead")
+    def document_date_as_string(self) -> str:
+        return date_as_string_from_value(self.document_date_as_date)
 
     def get_manifestation_datetimes(
         self,

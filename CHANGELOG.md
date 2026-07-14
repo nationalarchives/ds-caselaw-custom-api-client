@@ -8,7 +8,12 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- populate Document.metadata from registered metadata types
+- read document validation helpers from metadata layer
+- read force_reparse metadata from document metadata layer
+- read document comparison fields from metadata
+- move document body metadata extraction into metadata layer
+- embed document metadata defaults in factory XML fixtures
+- populate Document.metadata from DocumentMetadataRegistry
 - add CategoriesMetadata delegating to document body categories
 - add CaseNumberMetadata delegating to document body case number
 - add DateMetadata delegating to document body date

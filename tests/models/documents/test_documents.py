@@ -68,8 +68,12 @@ class TestDocument:
         assert any("There is another document with identical content" in msg for msg in messages)
 
     def test_has_sensible_repr_with_name_and_judgment(self, mock_api_client):
+        from caselawclient.factories import build_document_body_xml
+
+        mock_api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml(
+            name="Document Name",
+        ).encode()
         document = Judgment(DocumentURIString("test/1234"), mock_api_client)
-        document.body.name = "Document Name"
         assert str(document) == "<judgment test/1234: Document Name>"
 
     def test_has_sensible_repr_without_name_or_subclass(self, mock_api_client):
@@ -358,6 +362,21 @@ class TestDocumentEnrichedRecently:
                 AttributeError, match="Neither 'Document' nor 'DocumentBody' objects have an attribute 'x'"
             ):
                 doc.x
+
+        def test_body_property_error_is_not_masked_as_attribute_error(self, mock_api_client):
+            doc = DocumentFactory.build(
+                uri=DocumentURIString("test/1234"), body=DocumentBodyFactory.build(name="docname")
+            )
+
+            def boom(_self: object) -> None:
+                raise ValueError("boom")
+
+            type(doc.body).boom = property(boom)  # type: ignore[attr-defined]
+            try:
+                with pytest.raises(ValueError, match="boom"):
+                    doc.boom
+            finally:
+                del type(doc.body).boom  # type: ignore[attr-defined]
 
 
 class TestDocumentURIString:

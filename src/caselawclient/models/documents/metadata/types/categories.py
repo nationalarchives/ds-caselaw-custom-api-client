@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from caselawclient.models.documents.metadata.base import MultipleMetadata
 from caselawclient.types import DocumentCategory
 
@@ -9,6 +7,6 @@ class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
     title = "Categories"
     description = "The categories assigned to the document."
 
-    @cached_property
+    @property
     def values(self) -> list[DocumentCategory]:
         return self.document.body.categories

@@ -301,9 +301,10 @@ class TestDocumentBody:
         """.encode()
         )
 
-        assert body.document_date_as_string == "kitten"
         with pytest.warns(UnparsableDate):
             assert body.document_date_as_date is None
+        with pytest.warns(DeprecationWarning):
+            assert body.document_date_as_string == ""
 
     def test_absent_date_as_string(self):
         body = DocumentBody(b"""

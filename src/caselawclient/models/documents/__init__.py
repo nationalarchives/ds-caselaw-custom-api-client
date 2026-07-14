@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
-from ds_caselaw_utils.types import NeutralCitationString
+from ds_caselaw_utils.types import CourtCode, NeutralCitationString
 from pydantic import TypeAdapter
 from requests_toolbelt.multipart import decoder
 
@@ -18,7 +18,7 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
-from caselawclient.models.documents.metadata.base import Metadata
+from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry, MetadataAttributeKey
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
@@ -142,14 +142,7 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
-    metadata_types: ClassVar[tuple[type[Metadata], ...]] = (
-        NameMetadata,
-        CourtMetadata,
-        JurisdictionMetadata,
-        DateMetadata,
-        CaseNumberMetadata,
-        CategoriesMetadata,
-    )
+    metadata: DocumentMetadataRegistry
 
     def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
@@ -169,7 +162,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.body.name or "un-named"
+        name = self.metadata["name"].value or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -210,13 +203,14 @@ class Document:
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""
 
-        metadata: dict[str, Metadata] = {}
-        for metadata_cls in type(self).metadata_types:
-            if metadata_cls.key in metadata:
-                msg = f"Duplicate metadata key {metadata_cls.key!r} registered on {type(self).__name__}"
-                raise ValueError(msg)
-            metadata[metadata_cls.key] = metadata_cls(self)
-        self.metadata = metadata
+        self.metadata = DocumentMetadataRegistry(
+            name=NameMetadata(self),
+            court=CourtMetadata(self),
+            jurisdiction=JurisdictionMetadata(self),
+            date=DateMetadata(self),
+            case_number=CaseNumberMetadata(self),
+            categories=CategoriesMetadata(self),
+        )
 
     @property
     def best_human_identifier(self) -> Optional[Identifier]:
@@ -352,14 +346,15 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.body.name)
+        return bool(self.metadata["name"].value)
 
     @cached_property
     def has_valid_court(self) -> bool:
+        court = self.metadata["court"].value
+        jurisdiction = self.metadata["jurisdiction"].value
+        court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
         try:
-            return bool(
-                courts.get_by_code(self.body.court_and_jurisdiction_identifier_string),
-            )
+            return bool(courts.get_by_code(court_code))
         except CourtNotFoundException:
             return False
 
@@ -858,8 +853,8 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: Optional[str] = (
-            self.body.document_date_as_date.isoformat()
-            if self.body.document_date_as_date and self.body.document_date_as_date > datetime.date(1001, 1, 1)
+            self.metadata["date"].value.isoformat()
+            if self.metadata["date"].value and self.metadata["date"].value > datetime.date(1001, 1, 1)
             else None
         )
 
@@ -869,9 +864,9 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.body.name or None,
+                "name": self.metadata["name"].value or None,
                 "cite": None,
-                "court": self.body.court or None,
+                "court": self.metadata["court"].value or None,
                 "date": checked_date,
                 "uri": self.uri,
             }
@@ -927,11 +922,29 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[MetadataAttributeKey, str]]] = {
+        "name": ("name", "value"),
+        "court": ("court", "value"),
+        "jurisdiction": ("jurisdiction", "value"),
+        "document_date_as_date": ("date", "value"),
+        "document_date_as_string": ("date", "as_string"),
+        "case_number": ("case_number", "value"),
+        "categories": ("categories", "values"),
+    }
+
     def __getattr__(self, name: str) -> Any:
+        if name in self._METADATA_DEPRECATED_ATTRS:
+            metadata_key, attribute = self._METADATA_DEPRECATED_ATTRS[name]
+            warnings.warn(
+                f"{name} no longer exists on Document, using Document.metadata instead",
+                DeprecationWarning,
+            )
+            return getattr(self.metadata[metadata_key], attribute)
+
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
             return getattr(self.body, name)
-        except Exception:
+        except AttributeError:
             raise AttributeError(f"Neither 'Document' nor 'DocumentBody' objects have an attribute '{name}'")
 
     def linked_document_resolutions(self, namespaces: list[str], only_published: bool = True) -> IdentifierResolutions:
