@@ -19,12 +19,6 @@ from caselawclient.errors import (
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry, MetadataAttributeKey
-from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
-from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
-from caselawclient.models.documents.metadata.types.court import CourtMetadata
-from caselawclient.models.documents.metadata.types.date import DateMetadata
-from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
-from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -162,7 +156,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.metadata["name"].value or "un-named"
+        name = self.metadata.name.value or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -203,14 +197,7 @@ class Document:
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""
 
-        self.metadata = DocumentMetadataRegistry(
-            name=NameMetadata(self),
-            court=CourtMetadata(self),
-            jurisdiction=JurisdictionMetadata(self),
-            date=DateMetadata(self),
-            case_number=CaseNumberMetadata(self),
-            categories=CategoriesMetadata(self),
-        )
+        self.metadata = DocumentMetadataRegistry(self)
 
     @property
     def best_human_identifier(self) -> Optional[Identifier]:
@@ -346,12 +333,12 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.metadata["name"].value)
+        return bool(self.metadata.name.value)
 
     @cached_property
     def has_valid_court(self) -> bool:
-        court = self.metadata["court"].value
-        jurisdiction = self.metadata["jurisdiction"].value
+        court = self.metadata.court.value
+        jurisdiction = self.metadata.jurisdiction.value
         court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
         try:
             return bool(courts.get_by_code(court_code))
@@ -853,8 +840,8 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: Optional[str] = (
-            self.metadata["date"].value.isoformat()
-            if self.metadata["date"].value and self.metadata["date"].value > datetime.date(1001, 1, 1)
+            self.metadata.date.value.isoformat()
+            if self.metadata.date.value and self.metadata.date.value > datetime.date(1001, 1, 1)
             else None
         )
 
@@ -864,9 +851,9 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.metadata["name"].value or None,
+                "name": self.metadata.name.value or None,
                 "cite": None,
-                "court": self.metadata["court"].value or None,
+                "court": self.metadata.court.value or None,
                 "date": checked_date,
                 "uri": self.uri,
             }
@@ -939,7 +926,7 @@ class Document:
                 f"{name} no longer exists on Document, using Document.metadata instead",
                 DeprecationWarning,
             )
-            return getattr(self.metadata[metadata_key], attribute)
+            return getattr(getattr(self.metadata, metadata_key), attribute)
 
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:

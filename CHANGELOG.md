@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- `Document.metadata` is now an instance of `DocumentMetadataRegistry`, not a dict. Metadata items must be accessed with dot notation.
+
+### Feat
+
+- **Document**: convert document.metadata to a richer class
+- derive DateMetadata string representation from parsed value
+- read document validation helpers from metadata layer
+- read force_reparse metadata from document metadata layer
+- read document comparison fields from metadata
+- move document body metadata extraction into metadata layer
+- embed document metadata defaults in factory XML fixtures
+
+### Fix
+
+- address PR review feedback on metadata typing
+
 ## v47.1.0
 
 ### Feat

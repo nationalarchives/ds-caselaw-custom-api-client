@@ -130,7 +130,7 @@ class DocumentBody:
             return None
 
     @cached_property
-    @deprecated("Use Document.metadata['date'].as_string instead")
+    @deprecated("Use Document.metadata.date.as_string instead")
     def document_date_as_string(self) -> str:
         return date_as_string_from_value(self.document_date_as_date)
 
