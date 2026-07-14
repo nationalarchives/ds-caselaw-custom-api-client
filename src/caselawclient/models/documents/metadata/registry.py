@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
@@ -9,8 +9,6 @@ from caselawclient.models.documents.metadata.types.name import NameMetadata
 
 if TYPE_CHECKING:
     from caselawclient.models.documents import Document
-
-MetadataAttributeKey = Literal["name", "court", "jurisdiction", "date", "case_number", "categories"]
 
 
 class DocumentMetadataRegistry:

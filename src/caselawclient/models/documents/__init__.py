@@ -18,7 +18,7 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
-from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry, MetadataAttributeKey
+from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -909,7 +909,7 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
-    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[MetadataAttributeKey, str]]] = {
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
         "name": ("name", "value"),
         "court": ("court", "value"),
         "jurisdiction": ("jurisdiction", "value"),
