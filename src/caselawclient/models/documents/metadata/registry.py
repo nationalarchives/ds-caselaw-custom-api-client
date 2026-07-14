@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, Literal, get_type_hints
 
 from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
@@ -15,16 +15,11 @@ MetadataAttributeKey = Literal["name", "court", "jurisdiction", "date", "case_nu
 
 
 class DocumentMetadataRegistry:
-    """Typed registry of metadata objects for a document."""
+    """Typed registry of metadata objects for a document.
 
-    METADATA_TYPES: ClassVar[tuple[type[Metadata], ...]] = (
-        NameMetadata,
-        CourtMetadata,
-        JurisdictionMetadata,
-        DateMetadata,
-        CaseNumberMetadata,
-        CategoriesMetadata,
-    )
+    Annotated attributes are the single source of registered metadata types;
+    instances are built by iterating those annotations.
+    """
 
     name: NameMetadata
     court: CourtMetadata
@@ -34,11 +29,14 @@ class DocumentMetadataRegistry:
     categories: CategoriesMetadata
 
     def __init__(self, document: "Document") -> None:
-        seen_keys: set[str] = set()
-        for metadata_cls in type(self).METADATA_TYPES:
-            key = metadata_cls.key
-            if key in seen_keys:
-                msg = f"Duplicate metadata key {key!r} registered on {type(self).__name__}"
-                raise ValueError(msg)
-            seen_keys.add(key)
+        for key, metadata_cls in type(self).metadata_types().items():
             setattr(self, key, metadata_cls(document))
+
+    @classmethod
+    def metadata_types(cls) -> dict[str, type[Metadata]]:
+        """Return attribute name → metadata class for registered fields."""
+        return {
+            key: metadata_cls
+            for key, metadata_cls in get_type_hints(cls).items()
+            if isinstance(metadata_cls, type) and issubclass(metadata_cls, Metadata)
+        }

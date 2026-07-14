@@ -230,12 +230,13 @@ class TestDocumentMetadata:
         assert isinstance(categories_metadata, CategoriesMetadata)
         assert categories_metadata.values == document.body.categories
 
-    def test_metadata_registry_is_built_from_metadata_types_tuple(self, mock_api_client):
+    def test_metadata_registry_is_built_from_annotated_fields(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        assert len(DocumentMetadataRegistry.METADATA_TYPES) == 6
-        for metadata_cls in DocumentMetadataRegistry.METADATA_TYPES:
-            assert isinstance(getattr(document.metadata, metadata_cls.key), metadata_cls)
+        metadata_types = DocumentMetadataRegistry.metadata_types()
+        assert len(metadata_types) == 6
+        for key, metadata_cls in metadata_types.items():
+            assert isinstance(getattr(document.metadata, key), metadata_cls)
