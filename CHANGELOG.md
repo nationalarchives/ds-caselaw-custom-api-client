@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v47.2.0 (2026-07-15)
+
+### Feat
+
+- derive DateMetadata string representation from parsed value
+- read document validation helpers from metadata layer
+- read force_reparse metadata from document metadata layer
+- read document comparison fields from metadata
+- move document body metadata extraction into metadata layer
+- embed document metadata defaults in factory XML fixtures
+
+### Fix
+
+- address PR review feedback on metadata typing
+
 ## v47.1.0
 
 ### Feat
