@@ -185,11 +185,25 @@ class DocumentBody:
 
     @cached_property
     def has_content(self) -> bool:
-        """If we do not have a word document, the XML will not contain
-        the contents of the judgment, but will have content in the header if a judgment.
-        All press summaries (which have <doc> not <judgment> tags) are assumed to have content"""
+        """Does this XML contain rendered document content?
+
+        There are two main judgment shapes we need to handle.
+
+        PDF-only documents may have visible text only in the header and no usable
+        judgment body content.
+
+        DOCX-backed documents usually have visible text in both the header and the
+        judgment body, but parser edge cases can leave the header empty even when
+        the judgment body still contains the rendered judgment text.
+
+        Press summaries are represented as top-level ``doc`` nodes and
+        are assumed to have content.
+        """
         return bool(
             self._xml.xml_as_tree.xpath("//akn:header[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES)
+            or self._xml.xml_as_tree.xpath(
+                "//akn:judgmentBody[normalize-space(string(.))]", namespaces=DEFAULT_NAMESPACES
+            )
             or self._xml.xml_as_tree.xpath("//akn:doc", namespaces=DEFAULT_NAMESPACES)
         )
 
