@@ -400,6 +400,21 @@ class TestDocumentBody:
             </akomaNtoso>""")
         assert body.has_content
 
+    def test_actual_content_judgment_body(self):
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+            <judgment name="decision">
+                <meta/>
+                <header/>
+                <judgmentBody>
+                <decision>
+                    <p><span>a</span></p>
+                </decision>
+                </judgmentBody>
+            </judgment>
+            </akomaNtoso>""")
+        assert body.has_content
+
         def test_actual_content_preface(self):
             body = DocumentBodyFactory.build("""
                 <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
