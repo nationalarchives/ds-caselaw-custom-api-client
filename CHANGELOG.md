@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v47.2.2 (2026-07-21)
+
+### Fix
+
+- Various renovate updates. Needed to create new release due to PyPi publishing issue with last immutable release.
+
 ## v47.2.1 (2026-07-17)
 
 ### Fix
