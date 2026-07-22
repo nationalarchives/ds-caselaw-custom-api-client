@@ -1220,6 +1220,16 @@ class MarklogicApiClient:
 
         return results
 
+    def get_courts_with_document_count(self) -> dict[str, int]:
+        """Retrieve the number of published documents for each court."""
+        results: dict[str, int] = json.loads(
+            get_single_string_from_marklogic_response(
+                self._send_to_eval({}, "get_courts_with_document_count.xqy"),
+            ),
+        )
+
+        return results
+
     def get_highest_enrichment_version(self) -> tuple[int, int]:
         """This gets the highest enrichment version in the database,
         so if nothing has been enriched with the most recent version of enrichment,
