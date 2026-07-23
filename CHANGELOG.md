@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Metadata**: add editable flag to metadata fields
+
 ## v47.2.2 (2026-07-21)
 
 ### Fix

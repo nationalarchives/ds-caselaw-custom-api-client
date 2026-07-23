@@ -40,6 +40,7 @@ class TestMetadataBase:
         assert metadata.key == "test_single"
         assert metadata.title == "Test Single"
         assert metadata.description == "A test single metadata item."
+        assert metadata.editable is False
         assert metadata.value == "single value"
 
     def test_concrete_multiple_metadata_exposes_values(self):
@@ -48,7 +49,16 @@ class TestMetadataBase:
         assert metadata.key == "test_multiple"
         assert metadata.title == "Test Multiple"
         assert metadata.description == "A test multiple metadata item."
+        assert metadata.editable is False
         assert metadata.values == ["first", "second"]
+
+    def test_editable_can_be_overridden_on_subclass(self):
+        class _EditableMetadata(_TestSingleMetadata):
+            editable = True
+
+        metadata = _EditableMetadata(Mock())
+
+        assert metadata.editable is True
 
 
 class TestNameMetadata:
