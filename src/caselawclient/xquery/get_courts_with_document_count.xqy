@@ -8,7 +8,7 @@ declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn";
 let $query := cts:and-query((
   dls:documents-query(),
   cts:properties-fragment-query(
-    cts:element-value-query(fn:QName("", "published"), "true")
+    cts:element-value-query(fn:QName("published"), "true")
   )
 ))
 let $court-ref := cts:path-reference(
