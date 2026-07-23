@@ -18,7 +18,13 @@ from caselawclient.errors import (
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
-from caselawclient.models.documents.metadata.registry import DocumentMetadataRegistry, MetadataAttributeKey
+from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
+from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
+from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
+from caselawclient.models.documents.metadata.registry import (
+    DocumentMetadata,
+    MetadataAttributeKey,
+)
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
@@ -142,7 +148,8 @@ class Document:
     Individual document classes should extend this list where necessary to validate document type-specific attributes.
     """
 
-    metadata: DocumentMetadataRegistry
+    metadata: DocumentMetadata
+    metadata_fields: MetadataFieldsCollection
 
     def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
         """
@@ -159,10 +166,11 @@ class Document:
 
         self._initialise_document_body(search_query=search_query)
         self._initialise_identifiers()
+        self._initialise_metadata_fields()
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.metadata["name"].value or "un-named"
+        name = self.metadata["title"].value or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -200,16 +208,22 @@ class Document:
         identifiers_element_as_etree = self.api_client.get_property_as_node(self.uri, "identifiers")
         self.identifiers = unpack_all_identifiers_from_etree(identifiers_element_as_etree)
 
+    def _initialise_metadata_fields(self) -> None:
+        """Load this document's metadata_fields property from MarkLogic."""
+
+        metadata_fields_element = self.api_client.get_property_as_node(self.uri, "metadata_fields")
+        self.metadata_fields = unpack_all_metadata_fields_from_etree(metadata_fields_element)
+
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""
 
-        self.metadata = DocumentMetadataRegistry(
-            name=NameMetadata(self),
+        self.metadata = DocumentMetadata(
+            title=NameMetadata(self),
             court=CourtMetadata(self),
             jurisdiction=JurisdictionMetadata(self),
             date=DateMetadata(self),
             case_number=CaseNumberMetadata(self),
-            categories=CategoriesMetadata(self),
+            category=CategoriesMetadata(self),
         )
 
     @property
@@ -346,7 +360,7 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.metadata["name"].value)
+        return bool(self.metadata["title"].value)
 
     @cached_property
     def has_valid_court(self) -> bool:
@@ -864,7 +878,7 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.metadata["name"].value or None,
+                "name": self.metadata["title"].value or None,
                 "cite": None,
                 "court": self.metadata["court"].value or None,
                 "date": checked_date,
@@ -922,14 +936,27 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
+    def validate_metadata_fields(self) -> SuccessFailureMessageTuple:
+        return self.metadata_fields.validate_ids_match_keys()
+
+    def save_metadata_fields(self) -> None:
+        """Validate metadata fields, and if validation passes save them to MarkLogic."""
+        validations = self.validate_metadata_fields()
+        if validations.success is True:
+            self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
+        else:
+            raise MetadataFieldValidationException(
+                "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
+            )
+
     _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[MetadataAttributeKey, str]]] = {
-        "name": ("name", "value"),
+        "name": ("title", "value"),
         "court": ("court", "value"),
         "jurisdiction": ("jurisdiction", "value"),
         "document_date_as_date": ("date", "value"),
         "document_date_as_string": ("date", "as_string"),
         "case_number": ("case_number", "value"),
-        "categories": ("categories", "values"),
+        "categories": ("category", "values"),
     }
 
     def __getattr__(self, name: str) -> Any:
