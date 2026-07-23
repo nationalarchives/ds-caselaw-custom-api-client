@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Feat
 
 - **Metadata**: add editable flag to metadata fields
+- Add method to fetch a list of all courts and their document counts
 
 ## v47.2.2 (2026-07-21)
 
