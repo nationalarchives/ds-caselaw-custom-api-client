@@ -8,4 +8,11 @@ class CaseNumberMetadata(SingleMetadata[str | None]):
 
     @property
     def value(self) -> str | None:
-        return self.document.body.case_number
+        resolved = self._resolve_claims()
+        if not resolved.has_any_claims:
+            return self.document.body.case_number
+        if resolved.value is None:
+            return None
+        if not isinstance(resolved.value, str):
+            raise TypeError(f"Expected string metadata value for '{self.key}', got {type(resolved.value).__name__}")
+        return resolved.value

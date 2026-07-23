@@ -32,9 +32,9 @@ class Comparison(dict[str, AttributeComparison]):
         )
         self["name"] = AttributeComparison(
             label="name",
-            this_value=this_doc.metadata["name"].value,
-            that_value=that_doc.metadata["name"].value,
-            match=this_doc.metadata["name"].value == that_doc.metadata["name"].value,
+            this_value=this_doc.metadata["title"].value,
+            that_value=that_doc.metadata["title"].value,
+            match=this_doc.metadata["title"].value == that_doc.metadata["title"].value,
         )
 
     def match(self) -> bool:
