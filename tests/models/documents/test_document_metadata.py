@@ -62,11 +62,11 @@ class TestMetadataBase:
 
 
 class TestNameMetadata:
-    def test_name_metadata_is_single_metadata_with_name_key(self):
+    def test_name_metadata_is_single_metadata_with_title_key(self):
         from caselawclient.models.documents.metadata.types.name import NameMetadata
 
         assert issubclass(NameMetadata, SingleMetadata)
-        assert NameMetadata.key == "name"
+        assert NameMetadata.key == "title"
 
     def test_name_metadata_value_reads_from_xml(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory, DocumentFactory
@@ -80,9 +80,9 @@ class TestNameMetadata:
 
         assert metadata.value == "Custom Case Name"
         assert document.body.name == metadata.value
-        name_from_registry = document.metadata["name"]
-        assert isinstance(name_from_registry, NameMetadata)
-        assert name_from_registry.value == metadata.value
+        title_from_registry = document.metadata["title"]
+        assert isinstance(title_from_registry, NameMetadata)
+        assert title_from_registry.value == metadata.value
 
     def test_name_metadata_value_matches_document_body_name(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -173,6 +173,11 @@ class TestCaseNumberMetadata:
 
 
 class TestCategoriesMetadata:
+    def test_categories_metadata_uses_category_key(self):
+        from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
+
+        assert CategoriesMetadata.key == "category"
+
     def test_categories_metadata_values_match_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
@@ -189,19 +194,20 @@ class TestDocumentMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        name_metadata = document.metadata["name"]
+        title_metadata = document.metadata["title"]
         court_metadata = document.metadata["court"]
-        assert isinstance(name_metadata, NameMetadata)
+        assert isinstance(title_metadata, NameMetadata)
         assert isinstance(court_metadata, CourtMetadata)
-        assert name_metadata.value == "Judgment v Judgement"
+        assert title_metadata.value == "Judgment v Judgement"
         assert court_metadata.value == "Court of Testing"
 
     def test_metadata_is_dict_keyed_by_metadata_type(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.registry import DocumentMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        assert isinstance(document.metadata, dict)
+        assert isinstance(document.metadata, DocumentMetadata)
         assert document.metadata
 
     def test_metadata_keys_match_registered_types(self, mock_api_client):
@@ -210,12 +216,12 @@ class TestDocumentMetadata:
         document = DocumentFactory.build(api_client=mock_api_client)
 
         assert set(document.metadata.keys()) == {
-            "name",
+            "title",
             "court",
             "jurisdiction",
             "date",
             "case_number",
-            "categories",
+            "category",
         }
 
     def test_metadata_entries_are_expected_types(self, mock_api_client):
@@ -229,30 +235,46 @@ class TestDocumentMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        assert isinstance(document.metadata["name"], NameMetadata)
+        assert isinstance(document.metadata["title"], NameMetadata)
         assert isinstance(document.metadata["court"], CourtMetadata)
         assert isinstance(document.metadata["jurisdiction"], JurisdictionMetadata)
         assert isinstance(document.metadata["date"], DateMetadata)
         assert isinstance(document.metadata["case_number"], CaseNumberMetadata)
-        assert isinstance(document.metadata["categories"], CategoriesMetadata)
+        assert isinstance(document.metadata["category"], CategoriesMetadata)
+
+    def test_legacy_name_and_categories_keys_proxy_to_schema_keys(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        with pytest.warns(DeprecationWarning, match=r'metadata\["name"\] is deprecated'):
+            assert document.metadata["name"] is document.metadata["title"]
+        with pytest.warns(DeprecationWarning, match=r'metadata\["categories"\] is deprecated'):
+            assert document.metadata["categories"] is document.metadata["category"]
+        assert "name" in document.metadata
+        assert "categories" in document.metadata
+        with pytest.warns(DeprecationWarning, match=r'metadata\["name"\] is deprecated'):
+            assert document.metadata.get("name") is document.metadata["title"]
+        with pytest.warns(DeprecationWarning, match=r'metadata\["categories"\] is deprecated'):
+            assert document.metadata.get("categories") is document.metadata["category"]
 
     def test_metadata_name_value_matches_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.name import NameMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
-        name_metadata = document.metadata["name"]
-        assert isinstance(name_metadata, NameMetadata)
-        assert name_metadata.value == document.body.name
+        title_metadata = document.metadata["title"]
+        assert isinstance(title_metadata, NameMetadata)
+        assert title_metadata.value == document.body.name
 
     def test_metadata_categories_values_match_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
-        categories_metadata = document.metadata["categories"]
-        assert isinstance(categories_metadata, CategoriesMetadata)
-        assert categories_metadata.values == document.body.categories
+        category_metadata = document.metadata["category"]
+        assert isinstance(category_metadata, CategoriesMetadata)
+        assert category_metadata.values == document.body.categories
 
     def test_metadata_get_returns_none_for_unknown_key(self, mock_api_client):
         from caselawclient.factories import DocumentFactory

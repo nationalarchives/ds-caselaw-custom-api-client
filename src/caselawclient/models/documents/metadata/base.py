@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 if TYPE_CHECKING:
     from caselawclient.models.documents import Document
+    from caselawclient.models.documents.metadata.fields.resolution import ResolvedMetadataField
 
 T = TypeVar("T")
 
@@ -17,6 +18,9 @@ class Metadata(ABC):
 
     def __init__(self, document: "Document") -> None:
         self.document = document
+
+    def _resolve_claims(self) -> "ResolvedMetadataField":
+        return self.document.metadata_fields.resolve(self.key)
 
 
 class SingleMetadata(Metadata, Generic[T]):
