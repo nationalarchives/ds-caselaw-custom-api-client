@@ -4,17 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v47.4.0 (2026-07-23)
 
 ### Feat
 
 - resolve document.metadata from metadata_fields with body fallback
 - load and save metadata_fields on Document
 - add metadata_fields storage model with pack/unpack and resolution
-
-### Fix
-
-- Put param back into query that was required
 
 ## v47.3.0 (2026-07-23)
 
