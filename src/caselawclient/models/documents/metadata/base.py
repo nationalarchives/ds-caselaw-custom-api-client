@@ -12,6 +12,9 @@ class Metadata(ABC):
     title: ClassVar[str]
     description: ClassVar[str]
 
+    editable: ClassVar[bool] = False
+    """Should editors be allowed to manually edit this metadata field?"""
+
     def __init__(self, document: "Document") -> None:
         self.document = document
 
