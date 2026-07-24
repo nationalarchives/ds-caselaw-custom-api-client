@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- Add court param logic to query for getting court document counts
+
 ## v47.4.0 (2026-07-23)
 
 ### Feat
