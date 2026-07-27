@@ -35,8 +35,8 @@ def document_categories_from_field_values(values: list[MetadataFieldValue]) -> l
 
 
 class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
-    key = "category"
-    title = "Category"
+    key = "categories"
+    title = "Categories"
     description = "The categories assigned to the document."
 
     @property

@@ -161,7 +161,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="From document"),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
@@ -170,7 +170,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="From external"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -179,7 +179,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Rejected"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -188,7 +188,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert [category.name for category in document.metadata["category"].values] == [
+        assert [category.name for category in document.metadata["categories"].values] == [
             "From document",
             "From external",
         ]
@@ -197,7 +197,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Shared", parent=None),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
@@ -206,7 +206,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Shared", parent=None),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -214,7 +214,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        categories = document.metadata["category"].values
+        categories = document.metadata["categories"].values
         assert len(categories) == 1
         assert categories[0].name == "Shared"
 
@@ -222,7 +222,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Parent", parent=None),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -231,7 +231,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Child", parent="Parent"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -239,7 +239,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        categories = document.metadata["category"].values
+        categories = document.metadata["categories"].values
         assert len(categories) == 1
         assert categories[0].name == "Parent"
         assert [child.name for child in categories[0].subcategories] == ["Child"]
@@ -476,7 +476,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Orphan", parent="Missing Parent"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
@@ -484,7 +484,21 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["category"].values == []
+        assert document.metadata["categories"].values == []
+
+    def test_categories_accept_legacy_category_claim_name(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata_fields.add(
+            MetadataField(
+                name="category",
+                value=MetadataCategoryValue(name="Legacy claim"),
+                source=MetadataSource.EXTERNAL,
+                id=_id(),
+                timestamp=TIMESTAMP,
+            )
+        )
+
+        assert [category.name for category in document.metadata["categories"].values] == ["Legacy claim"]
 
     def test_metadata_contains_rejects_non_string_keys(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)

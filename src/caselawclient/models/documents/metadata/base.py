@@ -20,7 +20,11 @@ class Metadata(ABC):
         self.document = document
 
     def _resolve_claims(self) -> "ResolvedMetadataField":
-        return self.document.metadata_fields.resolve(self.key)
+        # Lazy import avoids a cycle with the metadata registry module.
+        from caselawclient.models.documents.metadata.registry import METADATA_KEY_ALIASES
+
+        alternate_names = frozenset(alias for alias, canonical in METADATA_KEY_ALIASES.items() if canonical == self.key)
+        return self.document.metadata_fields.resolve(self.key, alternate_names=alternate_names)
 
 
 class SingleMetadata(Metadata, Generic[T]):

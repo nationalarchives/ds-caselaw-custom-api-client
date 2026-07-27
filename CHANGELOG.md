@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Changed
+
+- **Metadata**: make `categories` the canonical metadata key (`category` remains a deprecated alias); claim resolution still accepts legacy `name="category"` claims
+
 ## v47.4.0 (2026-07-23)
 
 ### Feat

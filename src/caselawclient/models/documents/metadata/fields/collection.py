@@ -19,8 +19,13 @@ class MetadataFieldsCollection(dict[str, MetadataField]):
     def by_name(self, name: str) -> list[MetadataField]:
         return [field for field in self.values() if field.name == name]
 
-    def resolve(self, name: str) -> ResolvedMetadataField:
-        return ResolvedMetadataField(name=name, claims=self.by_name(name))
+    def resolve(self, name: str, *, alternate_names: frozenset[str] | None = None) -> ResolvedMetadataField:
+        """Resolve claims for ``name``, optionally including deprecated claim names."""
+        names = {name}
+        if alternate_names:
+            names |= set(alternate_names)
+        claims = [field for field in self.values() if field.name in names]
+        return ResolvedMetadataField(name=name, claims=claims)
 
     def reject(self, field_id: str) -> None:
         """Soft-delete a claim by id."""
