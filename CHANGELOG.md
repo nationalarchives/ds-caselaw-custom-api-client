@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Feat
+
+- **Document**: documents can now retrieve and will set latest_published_datetime on publish
+
 ## v47.4.0 (2026-07-23)
 
 ### Feat
