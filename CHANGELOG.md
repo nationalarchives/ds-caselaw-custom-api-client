@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- **Metadata**: `Document.metadata` and metadata claims use canonical key `categories` (was `category`); the `categories`/`category` facade alias is removed
+
 ### Feat
 
 - **Document**: documents can now retrieve and will set latest_published_datetime

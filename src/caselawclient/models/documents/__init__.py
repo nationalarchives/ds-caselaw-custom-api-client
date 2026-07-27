@@ -223,7 +223,7 @@ class Document:
             jurisdiction=JurisdictionMetadata(self),
             date=DateMetadata(self),
             case_number=CaseNumberMetadata(self),
-            category=CategoriesMetadata(self),
+            categories=CategoriesMetadata(self),
         )
 
     @property
@@ -967,7 +967,7 @@ class Document:
         "document_date_as_date": ("date", "value"),
         "document_date_as_string": ("date", "as_string"),
         "case_number": ("case_number", "value"),
-        "categories": ("category", "values"),
+        "categories": ("categories", "values"),
     }
 
     def __getattr__(self, name: str) -> Any:

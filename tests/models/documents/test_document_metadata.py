@@ -173,10 +173,10 @@ class TestCaseNumberMetadata:
 
 
 class TestCategoriesMetadata:
-    def test_categories_metadata_uses_category_key(self):
+    def test_categories_metadata_uses_categories_key(self):
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 
-        assert CategoriesMetadata.key == "category"
+        assert CategoriesMetadata.key == "categories"
 
     def test_categories_metadata_values_match_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -221,7 +221,7 @@ class TestDocumentMetadata:
             "jurisdiction",
             "date",
             "case_number",
-            "category",
+            "categories",
         }
 
     def test_metadata_entries_are_expected_types(self, mock_api_client):
@@ -240,23 +240,18 @@ class TestDocumentMetadata:
         assert isinstance(document.metadata["jurisdiction"], JurisdictionMetadata)
         assert isinstance(document.metadata["date"], DateMetadata)
         assert isinstance(document.metadata["case_number"], CaseNumberMetadata)
-        assert isinstance(document.metadata["category"], CategoriesMetadata)
+        assert isinstance(document.metadata["categories"], CategoriesMetadata)
 
-    def test_legacy_name_and_categories_keys_proxy_to_schema_keys(self, mock_api_client):
+    def test_legacy_name_key_proxies_to_title(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
         with pytest.warns(DeprecationWarning, match=r'metadata\["name"\] is deprecated'):
             assert document.metadata["name"] is document.metadata["title"]
-        with pytest.warns(DeprecationWarning, match=r'metadata\["categories"\] is deprecated'):
-            assert document.metadata["categories"] is document.metadata["category"]
         assert "name" in document.metadata
-        assert "categories" in document.metadata
         with pytest.warns(DeprecationWarning, match=r'metadata\["name"\] is deprecated'):
             assert document.metadata.get("name") is document.metadata["title"]
-        with pytest.warns(DeprecationWarning, match=r'metadata\["categories"\] is deprecated'):
-            assert document.metadata.get("categories") is document.metadata["category"]
 
     def test_metadata_name_value_matches_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -272,7 +267,7 @@ class TestDocumentMetadata:
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
-        category_metadata = document.metadata["category"]
+        category_metadata = document.metadata["categories"]
         assert isinstance(category_metadata, CategoriesMetadata)
         assert category_metadata.values == document.body.categories
 
