@@ -186,6 +186,31 @@ class TestCategoriesMetadata:
         assert CategoriesMetadata(document).values == document.body.categories
 
 
+class TestJudgesMetadata:
+    def test_judges_metadata_uses_judges_key(self):
+        from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
+
+        assert JudgesMetadata.key == "judges"
+        assert JudgesMetadata.title == "Judges"
+
+    def test_judges_metadata_values_match_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+        from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
+
+        body = DocumentBodyFactory.build(
+            """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Judge A</judge> and <judge>Judge B</judge></p></header>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=body)
+        assert JudgesMetadata(document).values == ["Judge A", "Judge B"]
+        assert document.metadata["judges"].values == document.body.judges
+
+
 class TestDocumentMetadata:
     def test_factory_built_document_metadata_reads_from_xml(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -222,6 +247,7 @@ class TestDocumentMetadata:
             "date",
             "case_number",
             "categories",
+            "judges",
         }
 
     def test_metadata_entries_are_expected_types(self, mock_api_client):
@@ -230,6 +256,7 @@ class TestDocumentMetadata:
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
         from caselawclient.models.documents.metadata.types.court import CourtMetadata
         from caselawclient.models.documents.metadata.types.date import DateMetadata
+        from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
         from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
         from caselawclient.models.documents.metadata.types.name import NameMetadata
 
@@ -241,6 +268,7 @@ class TestDocumentMetadata:
         assert isinstance(document.metadata["date"], DateMetadata)
         assert isinstance(document.metadata["case_number"], CaseNumberMetadata)
         assert isinstance(document.metadata["categories"], CategoriesMetadata)
+        assert isinstance(document.metadata["judges"], JudgesMetadata)
 
     def test_legacy_name_key_proxies_to_title(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -252,6 +280,17 @@ class TestDocumentMetadata:
         assert "name" in document.metadata
         with pytest.warns(DeprecationWarning, match=r'metadata\["name"\] is deprecated'):
             assert document.metadata.get("name") is document.metadata["title"]
+
+    def test_legacy_judge_key_proxies_to_judges(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        with pytest.warns(DeprecationWarning, match=r'metadata\["judge"\] is deprecated'):
+            assert document.metadata["judge"] is document.metadata["judges"]
+        assert "judge" in document.metadata
+        with pytest.warns(DeprecationWarning, match=r'metadata\["judge"\] is deprecated'):
+            assert document.metadata.get("judge") is document.metadata["judges"]
 
     def test_metadata_name_value_matches_document_body(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -283,4 +322,4 @@ class TestDocumentMetadata:
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        assert len(list(document.metadata.values())) == 6
+        assert len(list(document.metadata.values())) == 7

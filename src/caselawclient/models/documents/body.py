@@ -26,6 +26,7 @@ JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdic
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+JUDGES_XPATH = "//akn:judge"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -58,6 +59,25 @@ def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
     return [
         categories[name] for node in nodes if node.get("parent") is None if (name := node.text) and name in categories
     ]
+
+
+def judges_from_nodes(nodes: list[Element]) -> list[str]:
+    """Extract unique judge display names from Akoma Ntoso ``judge`` nodes.
+
+    Names are returned in first-seen document order. Empty or whitespace-only
+    text is skipped; duplicate names are de-duplicated.
+    """
+    judges: list[str] = []
+    seen: set[str] = set()
+
+    for node in nodes:
+        name = (node.text or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        judges.append(name)
+
+    return judges
 
 
 class DocumentBody:
@@ -104,6 +124,10 @@ class DocumentBody:
     @cached_property
     def case_number(self) -> Optional[str]:
         return self.get_xpath_match_string(CASE_NUMBER_XPATH)
+
+    @cached_property
+    def judges(self) -> list[str]:
+        return judges_from_nodes(self.get_xpath_nodes(JUDGES_XPATH))
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
