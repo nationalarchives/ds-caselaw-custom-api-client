@@ -32,11 +32,11 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260712
-          - boto3-stubs[s3,sns]==1.43.53
+          - boto3-stubs[s3,sns]==1.43.56
           - types-python-dateutil==2.9.0.20260716
           - types-pytz==2026.2.0.20260518
           - types-lxml==2026.2.16
-          - ds-caselaw-utils==4.7.0
+          - ds-caselaw-utils==4.8.0
           - pydantic==2.13.4
         args:
           - --strict
@@ -49,12 +49,12 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260712
-          - boto3-stubs[s3,sns]==1.43.53
+          - boto3-stubs[s3,sns]==1.43.56
           - types-python-dateutil==2.9.0.20260716
           - types-pytz==2026.2.0.20260518
           - types-lxml==2026.2.16
           - types-defusedxml==0.7.0.20260504
-          - ds-caselaw-utils==4.7.0
+          - ds-caselaw-utils==4.8.0
           - pydantic==2.13.4
         exclude: ^smoketest/
         id: mypy
@@ -81,7 +81,7 @@ repos:
     rev: v4.16.5
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.277.0
+    rev: 43.281.1
     hooks:
       - id: renovate-config-validator
         args: [--strict]
