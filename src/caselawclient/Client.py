@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import warnings
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 
@@ -31,6 +31,7 @@ from caselawclient.models.documents.versions import VersionAnnotation, VersionTy
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
 from caselawclient.models.utilities import move
+from caselawclient.models.utilities.dates import require_aware_utc
 from caselawclient.search_parameters import SearchParameters
 from caselawclient.types import DocumentIdentifierSlug, DocumentIdentifierValue, DocumentLock, DocumentURIString
 from caselawclient.xml_helpers import Element
@@ -998,6 +999,7 @@ class MarklogicApiClient:
         value: datetime,
     ) -> requests.Response:
         """Set a property within MarkLogic which is specifically a datetime."""
+        value = require_aware_utc(value, name="value")
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.SetDatetimePropertyDict = {
             "uri": uri,
@@ -1015,7 +1017,7 @@ class MarklogicApiClient:
         content = self.get_property(judgment_uri, name)
 
         if content:
-            return isoparse(content)
+            return require_aware_utc(isoparse(content), name=name)
 
         return None
 
@@ -1167,10 +1169,11 @@ class MarklogicApiClient:
         Get timedelta until end of day on the datetime passed, or current time.
         https://stackoverflow.com/questions/45986035/seconds-until-end-of-day-in-python
         """
-        if not now:
-            now = datetime.now()
-        tomorrow = now + timedelta(days=1)
-        difference = datetime.combine(tomorrow, time.min) - now
+        if now is None:
+            now = datetime.now(UTC)
+        now = require_aware_utc(now, name="now")
+        tomorrow = now.date() + timedelta(days=1)
+        difference = datetime.combine(tomorrow, time.min, tzinfo=UTC) - now
 
         return difference.seconds
 

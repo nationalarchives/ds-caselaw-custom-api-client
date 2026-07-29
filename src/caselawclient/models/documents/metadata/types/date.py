@@ -16,7 +16,7 @@ def date_from_metadata_field_value(value: object) -> datetime.date | None:
     if not isinstance(value, str) or not value:
         return None
     try:
-        return datetime.datetime.strptime(value, "%Y-%m-%d").date()
+        return datetime.date.fromisoformat(value)
     except ValueError:
         # Import locally to avoid a circular dependency with DocumentBody.
         from caselawclient.models.documents.body import UnparsableDate

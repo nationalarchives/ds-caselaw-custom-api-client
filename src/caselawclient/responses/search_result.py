@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, Optional
@@ -116,10 +116,10 @@ class SearchResultMetadata:
         :return: The submission datetime
         """
         if tdr_time := self._get_xpath_match_string("//transfer-received-at/text()"):
-            return datetime.strptime(tdr_time, "%Y-%m-%dT%H:%M:%SZ")
+            return datetime.fromisoformat(tdr_time.replace("Z", "+00:00")).astimezone(UTC)
         if email_time := self._get_xpath_match_string("//email-received-at/text()"):
-            return datetime.strptime(email_time, "%Y-%m-%dT%H:%M:%SZ")
-        return datetime.min
+            return datetime.fromisoformat(email_time.replace("Z", "+00:00")).astimezone(UTC)
+        return datetime.min.replace(tzinfo=UTC)
 
     @property
     def editor_status(

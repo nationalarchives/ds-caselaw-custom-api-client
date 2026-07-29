@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from caselawclient.managers.merge import checks
 from caselawclient.models.documents import Document, DocumentURIString
@@ -144,8 +144,8 @@ class TestCheckSourceDocumentIsNewerThanTarget:
         source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
         target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
 
-        source_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56)
-        target_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56)
+        source_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56, tzinfo=UTC)
+        target_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56, tzinfo=UTC)
 
         check_result = checks.check_source_document_is_newer_than_target(source_document, target_document)
 
@@ -156,8 +156,8 @@ class TestCheckSourceDocumentIsNewerThanTarget:
         source_document = Judgment(DocumentURIString("test/1234"), mock_api_client)
         target_document = Judgment(DocumentURIString("test/5678"), mock_api_client)
 
-        source_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56)
-        target_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56)
+        source_document.version_created_datetime = datetime(2025, 1, 1, 12, 34, 56, tzinfo=UTC)
+        target_document.version_created_datetime = datetime(2025, 2, 1, 12, 34, 56, tzinfo=UTC)
 
         check_result = checks.check_source_document_is_newer_than_target(source_document, target_document)
 

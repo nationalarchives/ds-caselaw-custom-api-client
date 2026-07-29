@@ -7,6 +7,7 @@ from caselawclient.models.documents.metadata.fields.exceptions import (
 )
 from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
+from caselawclient.models.utilities.dates import require_aware_utc
 from caselawclient.xml_helpers import Element
 
 
@@ -56,7 +57,7 @@ def unpack_a_metadata_field_from_etree(metadata_xml: Element) -> MetadataField:
         ) from exc
 
     try:
-        timestamp = datetime.fromisoformat(timestamp_value)
+        timestamp = require_aware_utc(datetime.fromisoformat(timestamp_value), name="timestamp")
     except ValueError as exc:
         raise InvalidMetadataFieldXMLRepresentationException(
             f"Metadata field XML representation is not valid: unparsable timestamp '{timestamp_value}'"

@@ -117,10 +117,7 @@ class DocumentBody:
         if not date_as_string:
             return None
         try:
-            return datetime.datetime.strptime(
-                date_as_string,
-                "%Y-%m-%d",
-            ).date()
+            return datetime.date.fromisoformat(date_as_string)
         except ValueError:
             warnings.warn(
                 f"Unparsable date encountered: {date_as_string}",

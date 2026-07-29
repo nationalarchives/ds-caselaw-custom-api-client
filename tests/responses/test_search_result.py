@@ -47,7 +47,7 @@ class TestSearchResult:
             assert search_result.uri == "a/c/2015/20"
             assert search_result.neutral_citation == "[2015] UKSC 123"
             assert search_result.name == "Another made up case name"
-            assert search_result.date == datetime.datetime(2017, 8, 8, 0, 0)
+            assert search_result.date and search_result.date.isoformat() == "2017-08-08T00:00:00"
             assert search_result.court is None
             assert search_result.matches == (
                 "<p data-path=\"fn:doc('/a/c/2015/20.xml')/*:akomaNtoso\">"
@@ -297,7 +297,7 @@ class TestSearchResultMeta:
         assert meta.consignment_reference == "test_consignment_reference"
         assert meta.editor_hold == "false"
         assert meta.editor_priority == "30"
-        assert meta.submission_datetime == datetime.datetime(2023, 1, 26, 14, 17, 2)
+        assert meta.submission_datetime == datetime.datetime(2023, 1, 26, 14, 17, 2, tzinfo=datetime.UTC)
         assert meta.last_modified == "test_last_modified"
         assert meta.is_published is True
 
@@ -318,7 +318,7 @@ class TestSearchResultMeta:
         assert meta.consignment_reference == ""
         assert meta.editor_hold == ""
         assert meta.editor_priority == EditorPriority.MEDIUM.value
-        assert meta.submission_datetime == datetime.datetime.min
+        assert meta.submission_datetime == datetime.datetime.min.replace(tzinfo=datetime.UTC)
         assert meta.last_modified == "test_last_modified"
         assert meta.is_published is False
 
@@ -376,7 +376,7 @@ class TestSearchResultMeta:
         )
         meta = SearchResultMetadata(node, last_modified="foo")
 
-        assert meta.submission_datetime == datetime.datetime.min
+        assert meta.submission_datetime == datetime.datetime.min.replace(tzinfo=datetime.UTC)
 
 
 class TestSearchResultMetadataSubmissionDatetime:
@@ -394,7 +394,7 @@ class TestSearchResultMetadataSubmissionDatetime:
             "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
-        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11)
+        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11, tzinfo=datetime.UTC)
 
     def test_submission_datetime_both(self):
         """
@@ -411,7 +411,7 @@ class TestSearchResultMetadataSubmissionDatetime:
             "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
-        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11)
+        assert meta.submission_datetime == datetime.datetime(1111, 11, 11, 11, 11, 11, tzinfo=datetime.UTC)
 
     def test_submission_datetime_email(self):
         """
@@ -427,7 +427,7 @@ class TestSearchResultMetadataSubmissionDatetime:
             "</property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
-        assert meta.submission_datetime == datetime.datetime(2222, 2, 22, 22, 22, 22)
+        assert meta.submission_datetime == datetime.datetime(2222, 2, 22, 22, 22, 22, tzinfo=datetime.UTC)
 
     def test_submission_datetime_neither(self):
         """
@@ -439,4 +439,4 @@ class TestSearchResultMetadataSubmissionDatetime:
             "<property-results><property-result></property-result></property-results>",
         )
         meta = SearchResultMetadata(node, last_modified="test_last_modified")
-        assert meta.submission_datetime == datetime.datetime(1, 1, 1, 0, 0, 0)
+        assert meta.submission_datetime == datetime.datetime.min.replace(tzinfo=datetime.UTC)
