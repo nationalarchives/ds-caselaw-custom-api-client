@@ -8,7 +8,15 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- **Document**: documents can now retrieve and will set latest_published_datetime on publish
+- **Document**: documents can now retrieve and will set latest_published_datetime
+
+### Fix
+
+- **deps**: update dependency certifi to >=2026.7.22,<2026.8.0
+
+### Refactor
+
+- remove pytz dependency
 
 ## v47.4.0 (2026-07-23)
 

@@ -1,12 +1,11 @@
 from datetime import datetime
-
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 
-TOKYO = timezone("Asia/Tokyo")
-PLUS_4 = timezone("Etc/GMT+4")
-LONDON = timezone("Europe/London")
+TOKYO = ZoneInfo("Asia/Tokyo")
+PLUS_4 = ZoneInfo("Etc/GMT+4")
+LONDON = ZoneInfo("Europe/London")
 
 
 def test_parse_string_date():
