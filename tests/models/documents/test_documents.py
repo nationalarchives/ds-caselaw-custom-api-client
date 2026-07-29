@@ -233,6 +233,18 @@ class TestDocument:
         assert document.first_published_datetime_display is None
         mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
 
+    def test_document_latest_published_datetime(self, mock_api_client):
+        mock_api_client.get_datetime_property.return_value = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        assert document.latest_published_datetime == datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "latest_published_datetime")
+
     @pytest.mark.parametrize(
         "is_published, first_published_datetime, expected_outcome",
         [

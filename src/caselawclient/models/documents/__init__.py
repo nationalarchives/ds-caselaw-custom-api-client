@@ -442,6 +442,15 @@ class Document:
         return self.first_published_datetime
 
     @cached_property
+    def latest_published_datetime(self) -> Optional[datetime.datetime]:
+        """
+        Return the database value for the date and time this document was most recently published.
+
+        :return: The datetime value in the database for "latest published".
+        """
+        return self.api_client.get_datetime_property(self.uri, "latest_published_datetime")
+
+    @cached_property
     def has_ever_been_published(self) -> bool:
         """
         Do we consider this document to have ever been published?
@@ -618,10 +627,12 @@ class Document:
         self.api_client.set_published(self.uri, True)
 
         ## If necessary, set the first published date
+        now = datetime.datetime.now(datetime.timezone.utc)
         if not self.first_published_datetime:
-            self.api_client.set_datetime_property(
-                self.uri, "first_published_datetime", datetime.datetime.now(datetime.timezone.utc)
-            )
+            self.api_client.set_datetime_property(self.uri, "first_published_datetime", now)
+
+        ## Always update the latest published date
+        self.api_client.set_datetime_property(self.uri, "latest_published_datetime", now)
 
         ## Announce the publication on the event bus
         announce_document_event(

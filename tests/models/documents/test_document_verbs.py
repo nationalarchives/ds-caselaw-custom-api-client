@@ -151,10 +151,12 @@ class TestDocumentPublish:
         document.first_published_datetime = None
         document.publish()
 
-        mock_api_client.set_datetime_property.assert_called_once_with(
-            "test/1234", "first_published_datetime", datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc)
-        )
+        expected_now = datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc)
+        mock_api_client.set_datetime_property.assert_any_call("test/1234", "first_published_datetime", expected_now)
+        mock_api_client.set_datetime_property.assert_any_call("test/1234", "latest_published_datetime", expected_now)
+        assert mock_api_client.set_datetime_property.call_count == 2
 
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
@@ -172,7 +174,38 @@ class TestDocumentPublish:
         )
         document.publish()
 
-        mock_api_client.set_datetime_property.assert_not_called()
+        mock_api_client.set_datetime_property.assert_called_once_with(
+            "test/1234",
+            "latest_published_datetime",
+            datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
+        )
+
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @patch("caselawclient.models.documents.announce_document_event")
+    @patch("caselawclient.models.documents.publish_documents")
+    @patch("caselawclient.models.documents.Document.enrich")
+    def test_publish_always_sets_latest_published_date(
+        self,
+        mock_enrich,
+        mock_publish_documents,
+        mock_announce_document_event,
+        mock_api_client,
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.is_publishable = True
+        document.first_published_datetime = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        document.latest_published_datetime = datetime.datetime(
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+        )
+        document.publish()
+
+        mock_api_client.set_datetime_property.assert_called_once_with(
+            "test/1234",
+            "latest_published_datetime",
+            datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
+        )
 
 
 class TestDocumentUnpublish:
