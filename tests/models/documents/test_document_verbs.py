@@ -156,7 +156,7 @@ class TestDocumentPublish:
         mock_api_client.set_datetime_property.assert_any_call("test/1234", "latest_published_datetime", expected_now)
         assert mock_api_client.set_datetime_property.call_count == 2
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
@@ -180,7 +180,7 @@ class TestDocumentPublish:
             datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
         )
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
