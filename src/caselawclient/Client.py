@@ -6,7 +6,7 @@ import re
 import warnings
 from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Optional, Type, Union
+from typing import Any
 
 import environ
 import requests
@@ -174,14 +174,14 @@ class MarklogicApiClient:
     The base class for interacting with a MarkLogic instance.
     """
 
-    http_error_classes: dict[int, Type[MarklogicAPIError]] = {
+    http_error_classes: dict[int, type[MarklogicAPIError]] = {
         400: MarklogicBadRequestError,
         401: MarklogicUnauthorizedError,
         403: MarklogicNotPermittedError,
         404: MarklogicResourceNotFoundError,
         504: GatewayTimeoutError,
     }
-    error_code_classes: dict[str, Type[MarklogicAPIError]] = {
+    error_code_classes: dict[str, type[MarklogicAPIError]] = {
         "XDMP-DOCNOTFOUND": MarklogicResourceNotFoundError,
         "XDMP-LOCKCONFLICT": MarklogicResourceLockedError,
         "XDMP-LOCKED": MarklogicResourceLockedError,
@@ -240,12 +240,12 @@ class MarklogicApiClient:
     def get_document_by_uri(
         self,
         uri: DocumentURIString,
-        search_query: Optional[str] = None,
+        search_query: str | None = None,
     ) -> Document:
         document_type_class = self.get_document_type_from_uri(uri)
         return document_type_class(uri, self, search_query=search_query)
 
-    def get_document_type_from_uri(self, uri: DocumentURIString) -> Type[Document]:
+    def get_document_type_from_uri(self, uri: DocumentURIString) -> type[Document]:
         vars: query_dicts.DocumentCollectionsDict = {
             "uri": self._format_uri_for_marklogic(uri),
         }
@@ -258,7 +258,7 @@ class MarklogicApiClient:
             return PressSummary
         return Document
 
-    def _get_error_code_class(self, error_code: str) -> Type[MarklogicAPIError]:
+    def _get_error_code_class(self, error_code: str) -> type[MarklogicAPIError]:
         """
         Get the exception type for a MarkLogic error code, or the first part of one
         """
@@ -272,7 +272,7 @@ class MarklogicApiClient:
         return f"{self.base_url}/{path.lstrip('/')}"
 
     @classmethod
-    def _get_error_code(cls, content_as_xml: Optional[str]) -> str:
+    def _get_error_code(cls, content_as_xml: str | None) -> str:
         logger.warning(
             "XMLTools is deprecated and will be removed in later versions. "
             "Use methods from MarklogicApiClient.Client instead.",
@@ -369,8 +369,8 @@ class MarklogicApiClient:
         self,
         method: str,
         path: str,
-        body: Optional[str] = None,
-        data: Optional[dict[str, Any]] = None,
+        body: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         kwargs = dict(url=self._path_to_request_url(path))
         if data is not None:
@@ -387,9 +387,9 @@ class MarklogicApiClient:
         self,
         method: str,
         path: str,
-        headers: CaseInsensitiveDict[Union[str, Any]],
-        body: Optional[str] = None,
-        data: Optional[dict[str, Any]] = None,
+        headers: CaseInsensitiveDict[str | Any],
+        body: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> requests.Response:
         kwargs = self.prepare_request_kwargs(method, path, body, data)
         kwargs["headers"] = headers
@@ -427,9 +427,9 @@ class MarklogicApiClient:
     def get_judgment_xml_bytestring(
         self,
         judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
+        version_uri: DocumentURIString | None = None,
         show_unpublished: bool = False,
-        search_query: Optional[str] = None,
+        search_query: str | None = None,
     ) -> bytes:
         marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
         marklogic_document_version_uri = (
@@ -459,9 +459,9 @@ class MarklogicApiClient:
     def get_judgment_xml(
         self,
         judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
+        version_uri: DocumentURIString | None = None,
         show_unpublished: bool = False,
-        search_query: Optional[str] = None,
+        search_query: str | None = None,
     ) -> str:
         return self.get_judgment_xml_bytestring(
             judgment_uri,
@@ -701,7 +701,7 @@ class MarklogicApiClient:
     def get_judgment_checkout_status_message(
         self,
         judgment_uri: DocumentURIString,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Return the annotation of the lock or `None` if there is no lock."""
         response = self.get_judgment_checkout_status(judgment_uri)
         if not response.content:
@@ -841,10 +841,10 @@ class MarklogicApiClient:
     def eval_xslt(
         self,
         judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
+        version_uri: DocumentURIString | None = None,
         show_unpublished: bool = False,
         xsl_filename: str = DEFAULT_XSL_TRANSFORM,
-        query: Optional[str] = None,
+        query: str | None = None,
     ) -> requests.Response:
         marklogic_document_uri = self._format_uri_for_marklogic(judgment_uri)
         marklogic_document_version_uri = (
@@ -873,7 +873,7 @@ class MarklogicApiClient:
     def accessible_judgment_transformation(
         self,
         judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
+        version_uri: DocumentURIString | None = None,
         show_unpublished: bool = False,
     ) -> requests.Response:
         return self.eval_xslt(
@@ -886,7 +886,7 @@ class MarklogicApiClient:
     def original_judgment_transformation(
         self,
         judgment_uri: DocumentURIString,
-        version_uri: Optional[DocumentURIString] = None,
+        version_uri: DocumentURIString | None = None,
         show_unpublished: bool = False,
     ) -> requests.Response:
         return self.eval_xslt(
@@ -904,7 +904,7 @@ class MarklogicApiClient:
         }
         return self._eval_and_decode(vars, "get_property.xqy")
 
-    def get_property_as_node(self, judgment_uri: DocumentURIString, name: str) -> Optional[Element]:
+    def get_property_as_node(self, judgment_uri: DocumentURIString, name: str) -> Element | None:
         uri = self._format_uri_for_marklogic(judgment_uri)
         vars: query_dicts.GetPropertyAsNodeDict = {
             "uri": uri,
@@ -1008,7 +1008,7 @@ class MarklogicApiClient:
         }
         return self._send_to_eval(vars, "set_datetime_property.xqy")
 
-    def get_datetime_property(self, judgment_uri: DocumentURIString, name: str) -> Optional[datetime]:
+    def get_datetime_property(self, judgment_uri: DocumentURIString, name: str) -> datetime | None:
         """
         Get a property from MarkLogic which is specifically a datetime.
 
@@ -1164,7 +1164,7 @@ class MarklogicApiClient:
         result = str(multipart_data.parts[0].text)
         return result.lower() == "true"
 
-    def calculate_seconds_until_midnight(self, now: Optional[datetime] = None) -> int:
+    def calculate_seconds_until_midnight(self, now: datetime | None = None) -> int:
         """
         Get timedelta until end of day on the datetime passed, or current time.
         https://stackoverflow.com/questions/45986035/seconds-until-end-of-day-in-python

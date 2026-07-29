@@ -32,7 +32,7 @@ def test_decoded_identifier():
     assert res.identifier_namespace == "ukncn"
     assert res.identifier_type == NeutralCitationNumber
     assert res.identifier_value == "[2003] EWCA 54721 (Civ)"
-    assert res.document_published == False  # noqa: E712
+    assert res.document_published == False
 
 
 def test_published():

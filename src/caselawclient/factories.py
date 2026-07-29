@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any, Generic, Optional, Type, TypeAlias, TypeVar, cast
+from typing import Any, Generic, TypeAlias, TypeVar, cast
 from unittest.mock import Mock
 from xml.sax.saxutils import escape
 
@@ -104,8 +104,8 @@ class DocumentFactory:
     def build(
         cls,
         uri: DocumentURIString = DocumentURIString("test/2023/123"),
-        api_client: Optional[MarklogicApiClient] = None,
-        identifiers: Optional[list[Identifier]] = None,
+        api_client: MarklogicApiClient | None = None,
+        identifiers: list[Identifier] | None = None,
         **kwargs: Any,
     ) -> target_class:
         def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
@@ -125,7 +125,7 @@ class DocumentFactory:
             for identifier in identifiers:
                 document.identifiers.add(identifier)
 
-        setattr(document, "linked_documents", _fake_linked_documents)
+        setattr(document, "linked_documents", _fake_linked_documents)  # noqa: B010
 
         for param_name, default_value in cls.PARAMS_MAP.items():
             value = kwargs.get(param_name, default_value)
@@ -149,7 +149,7 @@ class PressSummaryFactory(DocumentFactory):
 
 
 class SimpleFactory(Generic[T]):
-    target_class: Type[T]
+    target_class: type[T]
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any]
 
@@ -182,12 +182,12 @@ class IdentifierResolutionFactory:
     @classmethod
     def build(
         self,
-        resolution_uuid: Optional[str] = None,
-        document_uri: Optional[str] = None,
-        identifier_slug: Optional[str] = None,
-        published: Optional[bool] = True,
-        namespace: Optional[str] = None,
-        value: Optional[str] = None,
+        resolution_uuid: str | None = None,
+        document_uri: str | None = None,
+        identifier_slug: str | None = None,
+        published: bool | None = True,
+        namespace: str | None = None,
+        value: str | None = None,
     ) -> IdentifierResolution:
         raw_resolution = {
             "documents.compiled_url_slugs.identifier_uuid": resolution_uuid or "24b9a384-8bcf-4f20-996a-5c318f8dc657",
@@ -202,7 +202,7 @@ class IdentifierResolutionFactory:
 
 class IdentifierResolutionsFactory:
     @classmethod
-    def build(self, resolutions: Optional[list[IdentifierResolution]] = None) -> IdentifierResolutions:
+    def build(self, resolutions: list[IdentifierResolution] | None = None) -> IdentifierResolutions:
         if resolutions is None:
             resolutions = [IdentifierResolutionFactory.build()]
         return IdentifierResolutions(resolutions)

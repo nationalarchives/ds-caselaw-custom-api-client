@@ -1,5 +1,3 @@
-from typing import List
-
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.responses.search_result import SearchResult
 from caselawclient.xml_helpers import Element
@@ -34,7 +32,7 @@ class SearchResponse:
         )
 
     @property
-    def results(self) -> List[SearchResult]:
+    def results(self) -> list[SearchResult]:
         """
         Converts the SearchResponse to a list of SearchResult objects.
 

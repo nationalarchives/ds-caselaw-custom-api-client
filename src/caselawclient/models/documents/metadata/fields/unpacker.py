@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.exceptions import (
@@ -12,7 +11,7 @@ from caselawclient.xml_helpers import Element
 
 
 def unpack_all_metadata_fields_from_etree(
-    metadata_fields_etree: Optional[Element],
+    metadata_fields_etree: Element | None,
 ) -> MetadataFieldsCollection:
     """Unpack a ``<metadata_fields>`` property element into a collection."""
     collection = MetadataFieldsCollection()

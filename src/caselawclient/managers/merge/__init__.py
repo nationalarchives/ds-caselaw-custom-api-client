@@ -1,4 +1,4 @@
-import caselawclient.managers.merge.checks as checks
+from caselawclient.managers.merge import checks
 from caselawclient.models.documents import Document
 from caselawclient.types import SuccessFailureMessageTuple
 

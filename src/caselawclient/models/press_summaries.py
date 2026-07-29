@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from ds_caselaw_utils.types import NeutralCitationString
 
@@ -31,7 +31,7 @@ class PressSummary(NeutralCitationMixin, Document):
         super().__init__(self.document_noun, uri, *args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> Optional[NeutralCitationString]:
+    def neutral_citation(self) -> NeutralCitationString | None:
         value_in_xml = self.body.get_xpath_match_string(
             "/akn:akomaNtoso/akn:doc/akn:preface/akn:p/akn:neutralCitation/text()"
         )
@@ -40,7 +40,7 @@ class PressSummary(NeutralCitationMixin, Document):
         return None
 
     @cached_property
-    def linked_document(self) -> Optional[Judgment]:
+    def linked_document(self) -> Judgment | None:
         """
         Attempt to fetch a linked judgement, and return it, if it exists
         """
@@ -52,5 +52,5 @@ class PressSummary(NeutralCitationMixin, Document):
         except DocumentNotFoundError:
             return None
 
-    def linked_judgments(self, only_published: bool = True) -> "IdentifierResolutions":
+    def linked_judgments(self, only_published: bool = True) -> IdentifierResolutions:
         return self.linked_document_resolutions(["ukncn"], only_published)

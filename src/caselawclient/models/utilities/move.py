@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import ds_caselaw_utils as caselawutils
 from ds_caselaw_utils.types import NeutralCitationString
@@ -32,7 +32,7 @@ def update_document_uri(
     :return: The URL associated with the `target_citation`
     """
     new_ncn_based_uri = caselawutils.neutral_url(target_citation)
-    new_uri: Optional[DocumentURIString] = DocumentURIString(new_ncn_based_uri) if new_ncn_based_uri else None
+    new_uri: DocumentURIString | None = DocumentURIString(new_ncn_based_uri) if new_ncn_based_uri else None
     if new_uri is None:
         raise NeutralCitationToUriError(
             f"Unable to form new URI for {source_uri} from neutral citation: {target_citation}",

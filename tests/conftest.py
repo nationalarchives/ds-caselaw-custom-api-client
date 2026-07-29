@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest
@@ -81,7 +81,7 @@ def generate_search_response_xml_fixture() -> Callable:
             f"{response_content}"
             f"{facets}"
             "</search:response>"
-        ).encode("utf-8")
+        ).encode()
 
     return _generate_search_response_xml
 

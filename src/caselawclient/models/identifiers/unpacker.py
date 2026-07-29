@@ -1,4 +1,3 @@
-from typing import Optional
 from warnings import warn
 
 from caselawclient.xml_helpers import Element
@@ -12,7 +11,7 @@ IDENTIFIER_NAMESPACE_MAP: dict[str, type[Identifier]] = {
 }
 
 
-def unpack_all_identifiers_from_etree(identifiers_etree: Optional[Element]) -> IdentifiersCollection:
+def unpack_all_identifiers_from_etree(identifiers_etree: Element | None) -> IdentifiersCollection:
     """This expects the entire <identifiers> tag, and unpacks all Identifiers inside it"""
     identifiers = IdentifiersCollection()
     if identifiers_etree is None:
@@ -24,7 +23,7 @@ def unpack_all_identifiers_from_etree(identifiers_etree: Optional[Element]) -> I
     return identifiers
 
 
-def unpack_an_identifier_from_etree(identifier_xml: Element) -> Optional[Identifier]:
+def unpack_an_identifier_from_etree(identifier_xml: Element) -> Identifier | None:
     """Given an etree representation of a single identifier, unpack it into an appropriate instance of an Identifier if the type is known (otherwise return `None`)."""
 
     namespace_element = identifier_xml.find("namespace")

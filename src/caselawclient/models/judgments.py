@@ -30,7 +30,7 @@ class Judgment(NeutralCitationMixin, Document):
         super().__init__(self.document_noun, uri, *args, **kwargs)
 
     @cached_property
-    def neutral_citation(self) -> Optional[NeutralCitationString]:
+    def neutral_citation(self) -> NeutralCitationString | None:
         value_in_xml = self.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:cite/text()")
         if value_in_xml:
             return NeutralCitationString(value_in_xml)
