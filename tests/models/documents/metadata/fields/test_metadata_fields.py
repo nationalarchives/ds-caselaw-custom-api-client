@@ -46,7 +46,7 @@ class TestMetadataFieldPacking:
 
     def test_pack_category_value(self):
         field = MetadataField(
-            name="category",
+            name="categories",
             value=MetadataCategoryValue(name="Subcategory", parent="Category"),
             source=MetadataSource.EXTERNAL,
             id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67",
@@ -59,7 +59,7 @@ class TestMetadataFieldPacking:
 
     def test_pack_category_with_null_parent(self):
         field = MetadataField(
-            name="category",
+            name="categories",
             value=MetadataCategoryValue(name="Category One", parent=None),
             source=MetadataSource.EXTERNAL,
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -98,7 +98,7 @@ class TestMetadataFieldUnpacking:
 
     def test_unpack_category(self):
         xml = etree.fromstring(
-            '<metadata id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67" name="category" source="external" '
+            '<metadata id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67" name="categories" source="external" '
             f'timestamp="{EARLY_TIMESTAMP.isoformat()}">'
             "<name>Subcategory</name><parent>Category</parent></metadata>"
         )
@@ -110,7 +110,7 @@ class TestMetadataFieldUnpacking:
 
     def test_unpack_category_empty_parent(self):
         xml = etree.fromstring(
-            '<metadata id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" name="category" source="external" '
+            '<metadata id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" name="categories" source="external" '
             f'timestamp="{EARLY_TIMESTAMP.isoformat()}">'
             "<name>Category One</name><parent/></metadata>"
         )
@@ -174,7 +174,7 @@ class TestMetadataFieldUnpacking:
 
     def test_unpack_empty_category_name_raises(self):
         xml = etree.fromstring(
-            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="category" source="external" '
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="categories" source="external" '
             f'timestamp="{EARLY_TIMESTAMP.isoformat()}"><name/><parent/></metadata>'
         )
         with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="category name"):
@@ -196,7 +196,7 @@ class TestMetadataFieldUnpacking:
         )
         original.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Cat", parent=None),
                 source=MetadataSource.EXTERNAL,
                 id="1e2f3a4b-5c6d-7e8f-9012-3456789abcde",
@@ -282,7 +282,7 @@ class TestMetadataFieldsResolution:
         collection = MetadataFieldsCollection()
         collection.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="A"),
                 source=MetadataSource.DOCUMENT,
                 id="d3a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -291,7 +291,7 @@ class TestMetadataFieldsResolution:
         )
         collection.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="B"),
                 source=MetadataSource.EXTERNAL,
                 id="e3a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -300,7 +300,7 @@ class TestMetadataFieldsResolution:
         )
         collection.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="C"),
                 source=MetadataSource.EDITOR,
                 id="f3a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -309,7 +309,7 @@ class TestMetadataFieldsResolution:
         )
         collection.add(
             MetadataField(
-                name="category",
+                name="categories",
                 value=MetadataCategoryValue(name="Rejected"),
                 source=MetadataSource.EXTERNAL,
                 id="04a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -318,7 +318,7 @@ class TestMetadataFieldsResolution:
             )
         )
 
-        values = collection.resolve("category").values
+        values = collection.resolve("categories").values
         assert [value.name for value in values if isinstance(value, MetadataCategoryValue)] == ["A", "B", "C"]
 
     def test_suppressed_only_is_empty(self):
@@ -344,7 +344,7 @@ class TestMetadataFieldsMutation:
     def test_reject_soft_deletes(self):
         collection = MetadataFieldsCollection()
         field = MetadataField(
-            name="category",
+            name="categories",
             value=MetadataCategoryValue(name="Bad"),
             source=MetadataSource.EXTERNAL,
             id="14a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -356,12 +356,12 @@ class TestMetadataFieldsMutation:
 
         assert field.rejected is True
         assert field.id in collection
-        assert collection.resolve("category").values == []
+        assert collection.resolve("categories").values == []
 
     def test_remove_editor_claim(self):
         collection = MetadataFieldsCollection()
         field = MetadataField(
-            name="category",
+            name="categories",
             value=MetadataCategoryValue(name="Editor cat"),
             source=MetadataSource.EDITOR,
             id="24a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
@@ -376,7 +376,7 @@ class TestMetadataFieldsMutation:
     def test_remove_external_claim_raises(self):
         collection = MetadataFieldsCollection()
         field = MetadataField(
-            name="category",
+            name="categories",
             value=MetadataCategoryValue(name="External cat"),
             source=MetadataSource.EXTERNAL,
             id="34a7b8c9-d0e1-4f2a-3b4c-5d6e7f8091a2",
