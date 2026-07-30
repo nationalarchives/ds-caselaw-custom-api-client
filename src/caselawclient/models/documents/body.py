@@ -26,7 +26,7 @@ JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdic
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
-JUDGES_XPATH = "//akn:judge"
+JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -65,13 +65,14 @@ def judges_from_nodes(nodes: list[Element]) -> list[str]:
     """Extract unique judge display names from Akoma Ntoso ``judge`` nodes.
 
     Names are returned in first-seen document order. Empty or whitespace-only
-    text is skipped; duplicate names are de-duplicated.
+    text is skipped; duplicate names are de-duplicated. Nested inline markup
+    inside a ``judge`` node is flattened via ``itertext``.
     """
     judges: list[str] = []
     seen: set[str] = set()
 
     for node in nodes:
-        name = (node.text or "").strip()
+        name = "".join(node.itertext()).strip()
         if not name or name in seen:
             continue
         seen.add(name)
