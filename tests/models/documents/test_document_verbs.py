@@ -114,7 +114,9 @@ class TestDocumentPublish:
         document.publish()
 
         assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
-        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "z27xcnhr"
+        assert (
+            next(identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)) == "z27xcnhr"
+        )
 
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
@@ -133,7 +135,9 @@ class TestDocumentPublish:
         document.publish()
 
         assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
-        assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "tn4t35ts"
+        assert (
+            next(identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)) == "tn4t35ts"
+        )
 
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
