@@ -372,7 +372,7 @@ class MarklogicApiClient:
         body: str | None = None,
         data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        kwargs = dict(url=self._path_to_request_url(path))
+        kwargs = {"url": self._path_to_request_url(path)}
         if data is not None:
             data = {k: v for k, v in data.items() if v is not None}
             if method == "GET":
