@@ -4,25 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v48.0.0 (2026-07-30)
 
 ### BREAKING CHANGE
 
+- datetimes throughout the API client will now require timezone awareness
 - **Metadata**: `Document.metadata` and metadata claims use canonical key `categories` (was `category`); the `categories`/`category` facade alias is removed
 
 ### Feat
 
+- add judges as structured document metadata
 - **Document**: documents can now retrieve and will set latest_published_datetime
-- **Metadata**: add judges as structured document metadata with body fallback and claim editing
 
 ### Fix
 
+- make remaining time_machine travels UTC-aware
 - enforce UTC-aware datetime handling
+- scope judge extraction to header and flatten nested markup
 - **deps**: update dependency certifi to >=2026.7.22,<2026.8.0
-- Add court param logic to query for getting court document counts
 
 ### Refactor
 
+- drop seen-set when deduping judge names
+- use categories as the only metadata key
 - remove pytz dependency
 
 ## v47.4.0 (2026-07-23)
