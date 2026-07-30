@@ -4,7 +4,6 @@ import warnings
 from functools import cached_property
 from typing import Optional
 
-import pytz
 from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
@@ -143,7 +142,7 @@ class DocumentBody:
             f"/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRManifestation/akn:FRBRdate{name_filter}/@date",
         )
 
-        return [parse_string_date_as_utc(event, pytz.UTC) for event in iso_datetimes]
+        return [parse_string_date_as_utc(event, datetime.UTC) for event in iso_datetimes]
 
     def get_latest_manifestation_datetime(
         self,
