@@ -7,16 +7,18 @@ from caselawclient.models.documents.metadata.types.case_number import CaseNumber
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
 from caselawclient.models.documents.metadata.types.date import DateMetadata
+from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
 from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
 from caselawclient.models.documents.metadata.types.name import NameMetadata
 
 if TYPE_CHECKING:
     from caselawclient.models.documents.metadata.base import Metadata
 
-MetadataAttributeKey = Literal["title", "court", "jurisdiction", "date", "case_number", "categories"]
+MetadataAttributeKey = Literal["title", "court", "jurisdiction", "date", "case_number", "categories", "judges"]
 
 METADATA_KEY_ALIASES: dict[str, MetadataAttributeKey] = {
     "name": "title",
+    "judge": "judges",
 }
 
 
@@ -27,12 +29,14 @@ class DocumentMetadataRegistry(TypedDict):
     date: DateMetadata
     case_number: CaseNumberMetadata
     categories: CategoriesMetadata
+    judges: JudgesMetadata
 
 
 class DocumentMetadata(dict[str, "Metadata"]):
     """Document metadata keyed by schema-aligned claim names.
 
-    Legacy facade key ``name`` is proxied to ``title``.
+    Legacy facade keys ``name`` and ``judge`` are proxied to ``title`` and
+    ``judges`` respectively.
     """
 
     def _canonical_key(self, key: str) -> str:
@@ -63,6 +67,9 @@ class DocumentMetadata(dict[str, "Metadata"]):
 
     @overload
     def __getitem__(self, key: Literal["categories"]) -> CategoriesMetadata: ...
+
+    @overload
+    def __getitem__(self, key: Literal["judges", "judge"]) -> JudgesMetadata: ...
 
     @overload
     def __getitem__(self, key: str) -> Metadata: ...

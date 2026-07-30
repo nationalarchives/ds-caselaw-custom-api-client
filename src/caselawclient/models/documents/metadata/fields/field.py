@@ -47,6 +47,10 @@ class MetadataField:
         """Soft-delete this claim; retained for provenance but excluded from resolution."""
         self.rejected = True
 
+    def restore(self) -> None:
+        """Undo a soft-delete so this claim can participate in resolution again."""
+        self.rejected = False
+
     @property
     def as_etree(self) -> Element:
         """Pack this claim into a ``<metadata>`` element for MarkLogic storage."""

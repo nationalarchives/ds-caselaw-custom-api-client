@@ -486,6 +486,31 @@ class TestDocumentMetadataFacadePrefersFields:
 
         assert document.metadata["categories"].values == []
 
+    def test_judges_prefers_claims_over_body(self, mock_api_client):
+        from caselawclient.factories import DocumentBodyFactory
+
+        body = DocumentBodyFactory.build(
+            """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Body Judge</judge></p></header>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="judges",
+                value="Claim Judge",
+                source=MetadataSource.EDITOR,
+                id=_id(),
+                timestamp=TIMESTAMP,
+            )
+        )
+
+        assert document.metadata["judges"].values == ["Claim Judge"]
+
     def test_metadata_contains_rejects_non_string_keys(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
 

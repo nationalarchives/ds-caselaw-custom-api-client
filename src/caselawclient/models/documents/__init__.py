@@ -29,6 +29,7 @@ from caselawclient.models.documents.metadata.types.case_number import CaseNumber
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
 from caselawclient.models.documents.metadata.types.date import DateMetadata
+from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
 from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
 from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
@@ -224,6 +225,7 @@ class Document:
             date=DateMetadata(self),
             case_number=CaseNumberMetadata(self),
             categories=CategoriesMetadata(self),
+            judges=JudgesMetadata(self),
         )
 
     @property

@@ -146,6 +146,81 @@ class TestDocumentBody:
             ('doc name="pressSummary"', "doc"),
         ],
     )
+    def test_judges(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <header>
+                        <p><judge refersTo="#judge-one">Judge One</judge></p>
+                        <p><judge refersTo="#judge-two">Judge Two</judge></p>
+                        <p><judge refersTo="#judge-one">Judge One</judge></p>
+                        <p><judge>   </judge></p>
+                    </header>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.judges == ["Judge One", "Judge Two"]
+
+    def test_judges_empty_when_absent(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p>No judges here</p></header>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.judges == []
+
+    def test_judges_ignores_judges_outside_header(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header>
+                        <p><judge>Header Judge</judge></p>
+                    </header>
+                    <judgmentBody>
+                        <decision>
+                            <p>As <judge>Body Judge</judge> noted earlier...</p>
+                        </decision>
+                    </judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.judges == ["Header Judge"]
+
+    def test_judges_flattens_nested_inline_markup(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header>
+                        <p><judge>Lord <span>Justice</span> Smith</judge></p>
+                        <p><judge>Mrs Justice <i>Jones</i> &amp; Co</judge></p>
+                    </header>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.judges == ["Lord Justice Smith", "Mrs Justice Jones & Co"]
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
     def test_category(self, opening_tag, closing_tag):
         body = DocumentBody(
             f"""

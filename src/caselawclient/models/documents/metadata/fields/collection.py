@@ -26,6 +26,10 @@ class MetadataFieldsCollection(dict[str, MetadataField]):
         """Soft-delete a claim by id."""
         self[field_id].reject()
 
+    def restore(self, field_id: str) -> None:
+        """Undo soft-delete for a claim by id."""
+        self[field_id].restore()
+
     def remove(self, field_id: str) -> None:
         """Hard-remove a claim. Only allowed for editor-sourced claims.
 
