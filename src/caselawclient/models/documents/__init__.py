@@ -368,7 +368,7 @@ class Document:
     def has_valid_court(self) -> bool:
         court = self.metadata["court"].value
         jurisdiction = self.metadata["jurisdiction"].value
-        court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
+        court_code = CourtCode(f"{court}/{jurisdiction}") if jurisdiction != "" else CourtCode(court)
         try:
             return bool(courts.get_by_code(court_code))
         except CourtNotFoundException:

@@ -130,7 +130,7 @@ class DocumentBody:
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
         if self.jurisdiction != "":
-            return CourtCode("/".join((self.court, self.jurisdiction)))
+            return CourtCode(f"{self.court}/{self.jurisdiction}")
         return CourtCode(self.court)
 
     @cached_property
