@@ -9,4 +9,4 @@ class TestParserLogValidation:
         """
 
         parser_log = ParserLog(DocumentURIString("test/1234"), mock_api_client)
-        parser_log.type_collection_name == "parser-log"
+        assert parser_log.type_collection_name == "parser-log"
