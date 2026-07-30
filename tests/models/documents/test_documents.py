@@ -154,7 +154,7 @@ class TestDocument:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         assert document.docx_url == "https://example.com/mock.docx"
-        mock_url_generator.assert_called_once
+        mock_url_generator.assert_called_once()
 
     @patch("caselawclient.models.documents.generate_pdf_url")
     def test_judgment_pdf_url(self, mock_url_generator, mock_api_client):
@@ -163,7 +163,7 @@ class TestDocument:
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         assert document.pdf_url == "https://example.com/mock.pdf"
-        mock_url_generator.assert_called_once
+        mock_url_generator.assert_called_once()
 
     def test_judgment_assigned_to(self, mock_api_client):
         mock_api_client.get_property.return_value = "testuser"

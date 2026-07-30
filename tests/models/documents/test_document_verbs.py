@@ -66,7 +66,7 @@ class TestDocumentSaveIdentifiers:
             document.identifiers.perform_all_validations.assert_called_once_with(
                 document_type=Document, api_client=mock_api_client
             )
-            mock_api_client.set_property_as_node.assert_not_called
+            mock_api_client.set_property_as_node.assert_not_called()
 
 
 class TestDocumentPublish:
