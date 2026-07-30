@@ -2,6 +2,7 @@ import datetime
 import json
 from typing import Any, Generic, Optional, Type, TypeAlias, TypeVar, cast
 from unittest.mock import Mock
+from xml.sax.saxutils import escape
 
 from caselawclient.Client import MarklogicApiClient
 from caselawclient.identifier_resolution import IdentifierResolution, IdentifierResolutions
@@ -18,6 +19,13 @@ from caselawclient.types import DocumentURIString
 
 T = TypeVar("T")
 
+_ATTR_ESCAPES = {'"': "&quot;", "'": "&apos;"}
+
+
+def _escape_xml_attr(value: str) -> str:
+    """Escape a value for inclusion in a double-quoted XML attribute."""
+    return escape(value, _ATTR_ESCAPES)
+
 
 def build_document_body_xml(
     *,
@@ -28,20 +36,22 @@ def build_document_body_xml(
     case_number: str = "",
 ) -> str:
     frbr_date_line = (
-        f'                            <FRBRdate date="{document_date_as_string}"/>\n' if document_date_as_string else ""
+        f'                            <FRBRdate date="{_escape_xml_attr(document_date_as_string)}"/>\n'
+        if document_date_as_string
+        else ""
     )
     return f"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
             <judgment name="decision">
                 <meta>
                     <identification>
                         <FRBRWork>
-                            <FRBRname value="{name}"/>
+                            <FRBRname value="{_escape_xml_attr(name)}"/>
 {frbr_date_line}                        </FRBRWork>
                     </identification>
                     <proprietary>
-                        <uk:court>{court}</uk:court>
-                        <uk:jurisdiction>{jurisdiction}</uk:jurisdiction>
-                        <uk:caseNumber>{case_number}</uk:caseNumber>
+                        <uk:court>{escape(court)}</uk:court>
+                        <uk:jurisdiction>{escape(jurisdiction)}</uk:jurisdiction>
+                        <uk:caseNumber>{escape(case_number)}</uk:caseNumber>
                     </proprietary>
                 </meta>
                 <header><p>Header contains text</p></header>
