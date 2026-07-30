@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- enforce UTC-aware datetime handling
 - **deps**: update dependency certifi to >=2026.7.22,<2026.8.0
 - Add court param logic to query for getting court document counts
 

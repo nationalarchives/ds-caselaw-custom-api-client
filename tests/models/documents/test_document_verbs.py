@@ -135,7 +135,7 @@ class TestDocumentPublish:
         assert len(document.identifiers.of_type(FindCaseLawIdentifier)) == 1
         assert [identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)][0] == "tn4t35ts"
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
@@ -156,7 +156,7 @@ class TestDocumentPublish:
         mock_api_client.set_datetime_property.assert_any_call("test/1234", "latest_published_datetime", expected_now)
         assert mock_api_client.set_datetime_property.call_count == 2
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
@@ -180,7 +180,7 @@ class TestDocumentPublish:
             datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
         )
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
@@ -229,7 +229,7 @@ class TestDocumentUnpublish:
 
 
 class TestDocumentForceEnrich:
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=True)
     def test_force_enrich(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
@@ -248,7 +248,7 @@ class TestDocumentForceEnrich:
             enrich=True,
         )
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
     def test_force_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
@@ -280,7 +280,7 @@ class TestDocumentCanEnrich:
 
 
 class TestDocumentEnrich:
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
     def test_enrich_but_not_enrichable(self, mock_can_enrich, mock_announce_document_event, mock_api_client):
@@ -296,7 +296,7 @@ class TestDocumentEnrich:
 
         mock_announce_document_event.assert_not_called()
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.Document.can_enrich", new_callable=PropertyMock, return_value=False)
     def test_enrich_of_unenrichable_but_exception_ignored(
@@ -405,7 +405,7 @@ class TestDocumentDelete:
 
 
 class TestReparse:
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
@@ -462,7 +462,7 @@ class TestReparse:
             },
         }
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
@@ -520,7 +520,7 @@ class TestReparse:
             },
         }
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6))
+    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     @patch.dict(os.environ, {"REPARSE_SNS_TOPIC": "MY_TOPIC"})
@@ -568,7 +568,7 @@ class TestReparse:
             },
         }
 
-    @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
+    @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_no_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
         document.can_reparse = False
@@ -579,7 +579,7 @@ class TestReparse:
             "2015-10-21T16:29:00+00:00",
         )
 
-    @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29))
+    @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
         document.can_reparse = True

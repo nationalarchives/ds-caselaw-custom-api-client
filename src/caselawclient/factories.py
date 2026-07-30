@@ -163,7 +163,7 @@ class SearchResultMetadataFactory(SimpleFactory[SearchResultMetadata]):
         "author": "Fake Name",
         "author_email": "fake.email@gov.invalid",
         "consignment_reference": "TDR-2023-ABC",
-        "submission_datetime": datetime.datetime(2023, 2, 3, 9, 12, 34),
+        "submission_datetime": datetime.datetime(2023, 2, 3, 9, 12, 34, tzinfo=datetime.UTC),
         "editor_status": "New",
     }
 
@@ -205,8 +205,8 @@ class SearchResultFactory(SimpleFactory[SearchResult]):
         "name": "Judgment v Judgement",
         "neutral_citation": "[2025] UKSC 123",
         "court": "Court of Testing",
-        "date": datetime.datetime(2023, 2, 3),
-        "transformation_date": str(datetime.datetime(2023, 2, 3, 12, 34)),
+        "date": datetime.datetime(2023, 2, 3, tzinfo=datetime.UTC),
+        "transformation_date": "2023-02-03 12:34:00+00:00",
         "metadata": SearchResultMetadataFactory.build(),
         "is_failure": False,
         "matches": None,

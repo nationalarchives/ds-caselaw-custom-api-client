@@ -3,6 +3,8 @@ import os
 from datetime import UTC, datetime
 from unittest.mock import ANY, patch
 
+import pytest
+
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
 
@@ -172,3 +174,19 @@ class TestGetSetDatetimeDocumentProperties:
             result = self.client.get_datetime_property(DocumentURIString("judgment/uri"), "my-property")
 
             assert result is None
+
+    def test_set_datetime_property_rejects_naive_datetime(self):
+        naive_datetime = datetime.fromisoformat("2025-08-19T08:00:00")
+        with pytest.raises(ValueError, match="value must be timezone-aware"):
+            self.client.set_datetime_property(
+                DocumentURIString("judgment/uri"),
+                name="my-property",
+                value=naive_datetime,
+            )
+
+    def test_get_datetime_property_rejects_naive_datetime(self):
+        with (
+            patch.object(self.client, "get_property", return_value="2025-08-19T12:05:53.398214"),
+            pytest.raises(ValueError, match="my-property must be timezone-aware"),
+        ):
+            self.client.get_datetime_property(DocumentURIString("judgment/uri"), "my-property")

@@ -1,8 +1,10 @@
 import json
 import os
 import unittest
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import ANY, patch
+
+import pytest
 
 from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 from caselawclient.models.documents import DocumentURIString
@@ -169,13 +171,15 @@ class TestGetCheckoutStatus(unittest.TestCase):
             assert result is None
 
     def test_calculate_seconds_until_midnight(self):
-        dt = datetime.strptime(
-            "2020-01-01 23:00",
-            "%Y-%m-%d %H:%M",
-        )  # 1 hour until midnight
+        dt = datetime(2020, 1, 1, 23, 0, tzinfo=UTC)  # 1 hour until midnight
         result = self.client.calculate_seconds_until_midnight(dt)
         expected_result = 3600  # 1 hour in seconds
         assert result == expected_result
+
+    def test_calculate_seconds_until_midnight_rejects_naive_datetime(self):
+        naive_datetime = datetime.fromisoformat("2020-01-01T23:00:00")
+        with pytest.raises(ValueError, match="now must be timezone-aware"):
+            self.client.calculate_seconds_until_midnight(naive_datetime)
 
     def test_break_judgment_checkout(self):
         client = MarklogicApiClient("", "", "", False)

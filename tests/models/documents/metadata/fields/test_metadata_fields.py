@@ -164,6 +164,14 @@ class TestMetadataFieldUnpacking:
         with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="unparsable timestamp"):
             unpack_a_metadata_field_from_etree(xml)
 
+    def test_unpack_naive_timestamp_raises(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="title" source="document" '
+            'timestamp="2025-08-19T08:00:00">X</metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="unparsable timestamp"):
+            unpack_a_metadata_field_from_etree(xml)
+
     def test_unpack_unknown_source_raises(self):
         xml = etree.fromstring(
             '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="title" source="mystery" '
