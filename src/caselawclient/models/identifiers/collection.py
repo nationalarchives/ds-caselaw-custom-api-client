@@ -83,7 +83,7 @@ class IdentifiersCollection(dict[str, Identifier]):
         success = True
         messages: list[str] = []
 
-        for _, identifier in self.items():
+        for identifier in self.values():
             validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
             if validations.success is False:
                 success = False
