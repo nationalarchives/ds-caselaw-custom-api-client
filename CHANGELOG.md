@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v48.0.0 (2026-07-30)
 
 ### BREAKING CHANGE
 
+- datetimes throughout the API client will now require timezone awareness
 - **Metadata**: `Document.metadata` and metadata claims use canonical key `categories` (was `category`); the `categories`/`category` facade alias is removed
 
 ### Feat
