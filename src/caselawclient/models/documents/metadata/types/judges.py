@@ -11,15 +11,13 @@ def judge_names_from_field_values(values: list[MetadataFieldValue]) -> list[str]
     first-seen order winning.
     """
     judges: list[str] = []
-    seen: set[str] = set()
 
     for value in values:
         if not isinstance(value, str):
             continue
         name = value.strip()
-        if not name or name in seen:
+        if not name or name in judges:
             continue
-        seen.add(name)
         judges.append(name)
 
     return judges

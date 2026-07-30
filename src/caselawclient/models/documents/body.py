@@ -69,13 +69,11 @@ def judges_from_nodes(nodes: list[Element]) -> list[str]:
     inside a ``judge`` node is flattened via ``itertext``.
     """
     judges: list[str] = []
-    seen: set[str] = set()
 
     for node in nodes:
         name = "".join(node.itertext()).strip()
-        if not name or name in seen:
+        if not name or name in judges:
             continue
-        seen.add(name)
         judges.append(name)
 
     return judges
