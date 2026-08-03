@@ -542,9 +542,9 @@ class Document:
 
         try:
             self.force_enrich()
-        except CannotEnrichUnenrichableDocument as e:
+        except CannotEnrichUnenrichableDocument:
             if not accept_failures:
-                raise e
+                raise
             logger.warning("Enrichment failed for %s but proceeding anyway", self.uri, exc_info=True)
             return False
 
