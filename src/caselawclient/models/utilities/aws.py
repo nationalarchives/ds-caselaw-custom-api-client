@@ -6,7 +6,7 @@ import tarfile
 import uuid
 from collections.abc import Callable
 from functools import cache
-from typing import Any, Literal, TypedDict, overload
+from typing import Any, Literal, Self, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class S3PrefixString(str):
-    def __new__(cls, content: str) -> "S3PrefixString":
+    def __new__(cls, content: str) -> Self:
         if content[-1] != "/":
             raise RuntimeError("S3 Prefixes must end in / so they behave like directories")
         return str.__new__(cls, content)
