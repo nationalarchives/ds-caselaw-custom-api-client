@@ -32,7 +32,7 @@ class TestVersionAnnotation:
         annotation.set_calling_agent("marklogic-api-client-test")
 
         with pytest.raises(AttributeError) as e:
-            annotation.structured_annotation_dict
+            _ = annotation.structured_annotation_dict
 
         assert str(e.value) == "The name of the calling function has not been set; use set_calling_function()"
 
@@ -45,6 +45,6 @@ class TestVersionAnnotation:
         annotation.set_calling_function("update_xml")
 
         with pytest.raises(AttributeError) as e:
-            annotation.structured_annotation_dict
+            _ = annotation.structured_annotation_dict
 
         assert str(e.value) == "The name of the calling agent has not been set; use set_calling_agent()"

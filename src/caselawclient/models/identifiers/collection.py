@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from lxml import etree
 
@@ -83,7 +83,7 @@ class IdentifiersCollection(dict[str, Identifier]):
         success = True
         messages: list[str] = []
 
-        for _, identifier in self.items():
+        for identifier in self.values():
             validations = identifier.perform_all_validations(document_type=document_type, api_client=api_client)
             if validations.success is False:
                 success = False
@@ -124,7 +124,7 @@ class IdentifiersCollection(dict[str, Identifier]):
             and (not t.schema.document_types or document_type.__name__ in t.schema.document_types)
         ]
 
-    def __delitem__(self, key: Union[Identifier, str]) -> None:
+    def __delitem__(self, key: Identifier | str) -> None:
         if isinstance(key, Identifier):
             super().__delitem__(key.uuid)
         else:
@@ -153,7 +153,7 @@ class IdentifiersCollection(dict[str, Identifier]):
 
         return identifiers_root
 
-    def by_score(self, type: Optional[type[Identifier]] = None) -> list[Identifier]:
+    def by_score(self, type: type[Identifier] | None = None) -> list[Identifier]:
         """
         :param type: Optionally, an identifier type to constrain this list to.
 
@@ -162,7 +162,7 @@ class IdentifiersCollection(dict[str, Identifier]):
         identifiers = self.of_type(type) if type else list(self.values())
         return sorted(identifiers, key=lambda v: v.score, reverse=True)
 
-    def preferred(self, type: Optional[type[Identifier]] = None) -> Optional[Identifier]:
+    def preferred(self, type: type[Identifier] | None = None) -> Identifier | None:
         """
         :param type: Optionally, an identifier type to constrain the results to.
 

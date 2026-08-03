@@ -19,11 +19,11 @@ class IdentifierResolutions(list["IdentifierResolution"]):
 
     @staticmethod
     def from_marklogic_output(table: list[str]) -> "IdentifierResolutions":
-        return IdentifierResolutions(list(IdentifierResolution.from_marklogic_output(row) for row in table))
+        return IdentifierResolutions([IdentifierResolution.from_marklogic_output(row) for row in table])
 
     def published(self) -> "IdentifierResolutions":
         "Filter the list so that only published documents are returned"
-        return IdentifierResolutions(list(x for x in self if x.document_published))
+        return IdentifierResolutions([x for x in self if x.document_published])
 
 
 class IdentifierResolution(NamedTuple):

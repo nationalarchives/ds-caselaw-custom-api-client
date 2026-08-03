@@ -1,5 +1,3 @@
-from typing import Optional
-
 from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataFieldValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 
@@ -36,7 +34,7 @@ class ResolvedMetadataField:
         return [claim for claim in self._claims if not claim.rejected]
 
     @property
-    def value(self) -> Optional[MetadataFieldValue]:
+    def value(self) -> MetadataFieldValue | None:
         """Highest-precedence active claim value, or ``None`` if none are active.
 
         When multiple active claims share the winning source, the latest
@@ -54,7 +52,7 @@ class ResolvedMetadataField:
         return [claim.value for claim in self.claims]
 
     @property
-    def winning_source(self) -> Optional[MetadataSource]:
+    def winning_source(self) -> MetadataSource | None:
         """Source of the highest-precedence active claim, if any."""
         active = self.claims
         if not active:

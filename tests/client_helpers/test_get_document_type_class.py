@@ -27,7 +27,7 @@ class TestGetDocumentTypeClass:
 
     def test_ingested_document_parser_log(self):
         """Check that parser logs with root tags of `<error>` are detected as `ParserLog`s."""
-        client_helpers.get_document_type_class(b"<error/>") == ParserLog
+        assert client_helpers.get_document_type_class(b"<error/>") == ParserLog
 
     def test_ingested_document_type_doc_without_press_summary_name(self):
         """ "Check that documents with a main tag of `<doc>` but no `name="pressSummary"` raise an exception."""

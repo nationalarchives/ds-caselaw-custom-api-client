@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from lxml import etree
@@ -52,7 +52,7 @@ class IdentifierSchema(ABC):
     allow_multiple: bool = False
     """ May documents have more than one non-deprecated identifier of this type? """
 
-    document_types: Optional[list[str]] = None
+    document_types: list[str] | None = None
     """
     If present, a list of the names of document classes which can have this identifier.
 
@@ -77,13 +77,11 @@ class IdentifierSchema(ABC):
     @abstractmethod
     def validate_identifier_value(cls, value: str) -> bool:
         """Check that any given identifier value is valid for this schema."""
-        pass
 
     @classmethod
     @abstractmethod
     def compile_identifier_url_slug(cls, value: str) -> DocumentIdentifierSlug:
         """Convert an identifier into a precompiled URL slug."""
-        pass
 
 
 class Identifier(ABC):
@@ -114,7 +112,7 @@ class Identifier(ABC):
     def __str__(self) -> str:
         return self.value
 
-    def __init__(self, value: str, uuid: Optional[str] = None, deprecated: bool = False) -> None:
+    def __init__(self, value: str, uuid: str | None = None, deprecated: bool = False) -> None:
         if not self.schema.validate_identifier_value(value=value):
             raise IdentifierValidationException(
                 f'Identifier value "{value}" is not valid according to the {self.schema.name} schema.'

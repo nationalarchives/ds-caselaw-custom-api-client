@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TypeAlias
+from typing import TypeAlias
 
 from lxml import etree
 
@@ -14,7 +14,7 @@ Element: TypeAlias = etree._Element  # noqa: SLF001
 def get_xpath_nodes(
     node: Element,
     path: str,
-    namespaces: Optional[Dict[str, str]] = None,
+    namespaces: dict[str, str] | None = None,
 ) -> list[Element]:
     result = node.xpath(path, namespaces=namespaces)
 
@@ -27,7 +27,7 @@ def get_xpath_nodes(
 def get_xpath_match_string(
     node: Element,
     path: str,
-    namespaces: Optional[Dict[str, str]] = None,
+    namespaces: dict[str, str] | None = None,
     fallback: str = "",
 ) -> str:
     return str((node.xpath(path, namespaces=namespaces) or [fallback])[0])
@@ -36,6 +36,6 @@ def get_xpath_match_string(
 def get_xpath_match_strings(
     node: Element,
     path: str,
-    namespaces: Optional[Dict[str, str]] = None,
+    namespaces: dict[str, str] | None = None,
 ) -> list[str]:
     return [str(x) for x in node.xpath(path, namespaces=namespaces)]

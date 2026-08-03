@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any, Generic, Optional, Type, TypeAlias, TypeVar, cast
+from typing import Any, Generic, TypeAlias, TypeVar, cast
 from unittest.mock import Mock
 from xml.sax.saxutils import escape
 
@@ -98,25 +98,28 @@ class DocumentFactory:
         "versions": [],
     }
 
-    target_class: TypeAlias = Document
+    TargetClass: TypeAlias = Document
 
     @classmethod
     def build(
         cls,
-        uri: DocumentURIString = DocumentURIString("test/2023/123"),
-        api_client: Optional[MarklogicApiClient] = None,
-        identifiers: Optional[list[Identifier]] = None,
+        uri: DocumentURIString | None = None,
+        api_client: MarklogicApiClient | None = None,
+        identifiers: list[Identifier] | None = None,
         **kwargs: Any,
-    ) -> target_class:
+    ) -> TargetClass:
         def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
             return [document]
+
+        if uri is None:
+            uri = DocumentURIString("test/2023/123")
 
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
             api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml().encode(encoding="utf-8")
             api_client.get_property_as_node.return_value = None
 
-        document = cls.target_class(uri, api_client=api_client)
+        document = cls.TargetClass(uri, api_client=api_client)
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         if identifiers is None:
@@ -125,7 +128,7 @@ class DocumentFactory:
             for identifier in identifiers:
                 document.identifiers.add(identifier)
 
-        setattr(document, "linked_documents", _fake_linked_documents)
+        setattr(document, "linked_documents", _fake_linked_documents)  # noqa: B010
 
         for param_name, default_value in cls.PARAMS_MAP.items():
             value = kwargs.get(param_name, default_value)
@@ -135,27 +138,27 @@ class DocumentFactory:
 
 
 class JudgmentFactory(DocumentFactory):
-    target_class: TypeAlias = Judgment
+    TargetClass: TypeAlias = Judgment
     PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
         "neutral_citation": "[2023] Test 123",
     }
 
 
 class PressSummaryFactory(DocumentFactory):
-    target_class: TypeAlias = PressSummary
+    TargetClass: TypeAlias = PressSummary
     PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
         "neutral_citation": "[2023] Test 123",
     }
 
 
 class SimpleFactory(Generic[T]):
-    target_class: Type[T]
+    TargetClass: type[T]
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any]
 
     @classmethod
     def build(cls, **kwargs: Any) -> T:
-        mock_object = Mock(spec=cls.target_class, autospec=True)
+        mock_object = Mock(spec=cls.TargetClass, autospec=True)
 
         for param, default in cls.PARAMS_MAP.items():
             if param in kwargs:
@@ -167,7 +170,7 @@ class SimpleFactory(Generic[T]):
 
 
 class SearchResultMetadataFactory(SimpleFactory[SearchResultMetadata]):
-    target_class = SearchResultMetadata
+    TargetClass = SearchResultMetadata
     # "name_of_attribute": "default value"
     PARAMS_MAP = {
         "author": "Fake Name",
@@ -182,12 +185,12 @@ class IdentifierResolutionFactory:
     @classmethod
     def build(
         self,
-        resolution_uuid: Optional[str] = None,
-        document_uri: Optional[str] = None,
-        identifier_slug: Optional[str] = None,
-        published: Optional[bool] = True,
-        namespace: Optional[str] = None,
-        value: Optional[str] = None,
+        resolution_uuid: str | None = None,
+        document_uri: str | None = None,
+        identifier_slug: str | None = None,
+        published: bool | None = True,
+        namespace: str | None = None,
+        value: str | None = None,
     ) -> IdentifierResolution:
         raw_resolution = {
             "documents.compiled_url_slugs.identifier_uuid": resolution_uuid or "24b9a384-8bcf-4f20-996a-5c318f8dc657",
@@ -202,14 +205,14 @@ class IdentifierResolutionFactory:
 
 class IdentifierResolutionsFactory:
     @classmethod
-    def build(self, resolutions: Optional[list[IdentifierResolution]] = None) -> IdentifierResolutions:
+    def build(self, resolutions: list[IdentifierResolution] | None = None) -> IdentifierResolutions:
         if resolutions is None:
             resolutions = [IdentifierResolutionFactory.build()]
         return IdentifierResolutions(resolutions)
 
 
 class SearchResultFactory(SimpleFactory[SearchResult]):
-    target_class = SearchResult
+    TargetClass = SearchResult
     PARAMS_MAP = {
         "uri": "d-a1b2c3",
         "name": "Judgment v Judgement",

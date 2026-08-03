@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TypedDict
+from typing import Self, TypedDict
 
 from lxml import etree
 
@@ -20,7 +20,7 @@ class InvalidMarkLogicDocumentURIException(Exception):
 
 
 class MarkLogicDocumentURIString(str):
-    def __new__(cls, content: str) -> "MarkLogicDocumentURIString":
+    def __new__(cls, content: str) -> Self:
         # Check that the URI begins with a slash
         if content[0] != "/":
             raise InvalidMarkLogicDocumentURIException(
@@ -45,7 +45,7 @@ class DocumentURIString(str):
     This class checks that the string is actually a valid Document URI on creation. It does _not_ manipulate the string.
     """
 
-    def __new__(cls, content: str) -> "DocumentURIString":
+    def __new__(cls, content: str) -> Self:
         # Check that the URI doesn't begin or end with a slash
         if content[0] == "/" or content[-1] == "/":
             raise InvalidDocumentURIException(
@@ -93,7 +93,7 @@ class SuccessFailureMessageTuple(tuple[bool, list[str]]):
     Use only where a failure is a routine event (such as during validation).
     """
 
-    def __new__(cls, success: bool, messages: list[str]) -> "SuccessFailureMessageTuple":
+    def __new__(cls, success: bool, messages: list[str]) -> Self:
         return super().__new__(cls, [success, messages])
 
     @property

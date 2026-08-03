@@ -6,7 +6,7 @@ import tarfile
 import uuid
 from collections.abc import Callable
 from functools import cache
-from typing import Any, Literal, Optional, TypedDict, overload
+from typing import Any, Literal, Self, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -25,35 +25,33 @@ logger = logging.getLogger(__name__)
 
 
 class S3PrefixString(str):
-    def __new__(cls, content: str) -> "S3PrefixString":
+    def __new__(cls, content: str) -> Self:
         if content[-1] != "/":
             raise RuntimeError("S3 Prefixes must end in / so they behave like directories")
         return str.__new__(cls, content)
 
 
 class ParserInstructionsMetadataDict(TypedDict):
-    name: Optional[str]
-    cite: Optional[str]
-    court: Optional[str]
-    date: Optional[str]
-    uri: Optional[str]
+    name: str | None
+    cite: str | None
+    court: str | None
+    date: str | None
+    uri: str | None
 
 
 class ParserInstructionsDict(TypedDict):
-    documentType: NotRequired[Optional[str]]
+    documentType: NotRequired[str | None]
     metadata: NotRequired[ParserInstructionsMetadataDict]
 
 
 @overload
 def create_aws_client(service: Literal["s3"]) -> S3Client:
     """Creates a new s3 client on first call, then returns the cached client on subsequent calls"""
-    ...
 
 
 @overload
 def create_aws_client(service: Literal["sns"]) -> SNSClient:
     """Creates a new sns client on first call, then returns the cached client on subsequent calls"""
-    ...
 
 
 @cache
@@ -221,7 +219,7 @@ def _restore_archive_file_to_bucket(
 def restore_assets_from_consignment_archive(
     uri: DocumentURIString,
     consignment_reference: str,
-    source_filename: Optional[str],
+    source_filename: str | None,
     image_filenames: list[str],
 ) -> None:
     """Restore a document's S3 assets from its consignment tarball.
@@ -415,7 +413,7 @@ def build_new_key(old_key: str, new_uri: DocumentURIString) -> str:
     as we get the name of the new S3 path"""
     old_filename = old_key.rsplit("/", 1)[-1]
 
-    if old_filename.endswith(".docx") or old_filename.endswith(".pdf"):
+    if old_filename.endswith((".docx", ".pdf")):
         new_filename = new_uri.replace("/", "_")
         return f"{new_uri}/{new_filename}.{old_filename.split('.')[-1]}"
     return f"{new_uri}/{old_filename}"
@@ -423,8 +421,8 @@ def build_new_key(old_key: str, new_uri: DocumentURIString) -> str:
 
 def request_parse(
     uri: DocumentURIString,
-    reference: Optional[str],
-    parser_instructions: Optional[ParserInstructionsDict] = None,
+    reference: str | None,
+    parser_instructions: ParserInstructionsDict | None = None,
 ) -> None:
     client = create_sns_client()
 

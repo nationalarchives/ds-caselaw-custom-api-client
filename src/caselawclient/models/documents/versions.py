@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -37,8 +37,8 @@ class VersionAnnotation:
         self,
         version_type: VersionType,
         automated: bool,
-        message: Optional[str] = None,
-        payload: Optional[dict[str, Any]] = None,
+        message: str | None = None,
+        payload: dict[str, Any] | None = None,
     ):
         """
         :param version_type: The type of version being created
@@ -53,8 +53,8 @@ class VersionAnnotation:
         self.message = message
         self.payload = payload
 
-        self.calling_function: Optional[str] = None
-        self.calling_agent: Optional[str] = None
+        self.calling_function: str | None = None
+        self.calling_agent: str | None = None
 
     def set_calling_function(self, calling_function: str) -> None:
         """

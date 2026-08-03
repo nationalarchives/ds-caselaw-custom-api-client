@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Optional, Union
+from typing import Union
 from uuid import uuid4
 
 from lxml import etree
@@ -32,8 +32,8 @@ class MetadataField:
         value: MetadataFieldValue,
         source: MetadataSource,
         *,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
         rejected: bool = False,
     ) -> None:
         self.id = id or str(uuid4())

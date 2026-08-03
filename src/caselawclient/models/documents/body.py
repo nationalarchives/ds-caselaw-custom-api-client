@@ -2,7 +2,6 @@ import datetime
 import os
 import warnings
 from functools import cached_property
-from typing import Optional
 
 from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
@@ -115,13 +114,13 @@ class DocumentBody:
 
     # NOTE: Deprecated - use categories function
     @cached_property
-    def category(self) -> Optional[str]:
+    def category(self) -> str | None:
         return self.get_xpath_match_string(
             "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category[not(@parent)][1]/text()"
         )
 
     @cached_property
-    def case_number(self) -> Optional[str]:
+    def case_number(self) -> str | None:
         return self.get_xpath_match_string(CASE_NUMBER_XPATH)
 
     @cached_property
@@ -131,11 +130,11 @@ class DocumentBody:
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
         if self.jurisdiction != "":
-            return CourtCode("/".join((self.court, self.jurisdiction)))
+            return CourtCode(f"{self.court}/{self.jurisdiction}")
         return CourtCode(self.court)
 
     @cached_property
-    def document_date_as_date(self) -> Optional[datetime.date]:
+    def document_date_as_date(self) -> datetime.date | None:
         date_as_string = self.get_xpath_match_string(DATE_XPATH)
         if not date_as_string:
             return None
@@ -155,7 +154,7 @@ class DocumentBody:
 
     def get_manifestation_datetimes(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> list[datetime.datetime]:
         name_filter = f"[@name='{name}']" if name else ""
         iso_datetimes = self.get_xpath_match_strings(
@@ -166,14 +165,14 @@ class DocumentBody:
 
     def get_latest_manifestation_datetime(
         self,
-        name: Optional[str] = None,
-    ) -> Optional[datetime.datetime]:
+        name: str | None = None,
+    ) -> datetime.datetime | None:
         events = self.get_manifestation_datetimes(name)
         if not events:
             return None
         return max(events)
 
-    def get_latest_manifestation_type(self) -> Optional[str]:
+    def get_latest_manifestation_type(self) -> str | None:
         return max(
             (
                 (type, time)
@@ -184,12 +183,12 @@ class DocumentBody:
         )[0]
 
     @cached_property
-    def transformation_datetime(self) -> Optional[datetime.datetime]:
+    def transformation_datetime(self) -> datetime.datetime | None:
         """When was this document successfully parsed or reparsed (date from XML)"""
         return self.get_latest_manifestation_datetime("transform")
 
     @cached_property
-    def enrichment_datetime(self) -> Optional[datetime.datetime]:
+    def enrichment_datetime(self) -> datetime.datetime | None:
         """When was this document successfully enriched (date from XML)"""
         return self.get_latest_manifestation_datetime("tna-enriched")
 
@@ -233,7 +232,7 @@ class DocumentBody:
         "is there a uk:party tag" is intended as a stopgap whilst we're not importing that data."""
         return bool(self._xml.xml_as_tree.xpath("//uk:party", namespaces=DEFAULT_NAMESPACES))
 
-    def content_html(self, image_prefix: str) -> Optional[str]:
+    def content_html(self, image_prefix: str) -> str | None:
         """Convert the XML representation of the Document into HTML for rendering."""
         """This used to be called content_as_html but we have changed the parameter passed to it from the
         domain of the assets to the path in which the assets are stored (from assets to assets/d-a1b2c3)

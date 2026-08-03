@@ -3,7 +3,7 @@ import os
 from datetime import UTC, datetime
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, Optional
+from typing import Any
 
 from dateutil import parser as dateparser
 from dateutil.parser import ParserError
@@ -146,7 +146,7 @@ class SearchResult:
     Represents a search result obtained from XML data.
     """
 
-    NAMESPACES: Dict[str, str] = {
+    NAMESPACES: dict[str, str] = {
         "search": "http://marklogic.com/appservices/search",
         "uk": "https://caselaw.nationalarchives.gov.uk/akn",
         "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
@@ -196,7 +196,7 @@ class SearchResult:
         return str(preferred.url_slug)
 
     @property
-    def neutral_citation(self) -> Optional[str]:
+    def neutral_citation(self) -> str | None:
         """
         :return: If present, the value of preferred neutral citation of the document.
         """
@@ -220,11 +220,11 @@ class SearchResult:
     @property
     def court(
         self,
-    ) -> Optional[Court]:
+    ) -> Court | None:
         """
         :return: The court of the search result
         """
-        court: Optional[Court] = None
+        court: Court | None = None
         court_code = self._get_xpath_match_string("search:extracted/uk:court/text()")
         jurisdiction_code = self._get_xpath_match_string(
             "search:extracted/uk:jurisdiction/text()",
@@ -254,7 +254,7 @@ class SearchResult:
         return court
 
     @property
-    def date(self) -> Optional[datetime]:
+    def date(self) -> datetime | None:
         """
         :return: The date of the search result
         """

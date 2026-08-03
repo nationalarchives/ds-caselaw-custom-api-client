@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 RESULTS_PER_PAGE = 10
 QUOTED_PHRASE_REGEX = '"([^"]*)"'
@@ -10,25 +10,25 @@ QUOTED_PHRASE_REGEX = '"([^"]*)"'
 class SearchParameters:
     """Represents search parameters for a case law search."""
 
-    query: Optional[str] = None
-    court: Optional[str] = None
-    judge: Optional[str] = None
-    party: Optional[str] = None
-    neutral_citation: Optional[str] = None
-    document_name: Optional[str] = None
-    consignment_number: Optional[str] = None
-    specific_keyword: Optional[str] = None
-    order: Optional[str] = None
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
+    query: str | None = None
+    court: str | None = None
+    judge: str | None = None
+    party: str | None = None
+    neutral_citation: str | None = None
+    document_name: str | None = None
+    consignment_number: str | None = None
+    specific_keyword: str | None = None
+    order: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
     page: int = 1
     page_size: int = RESULTS_PER_PAGE
     show_unpublished: bool = False
     only_unpublished: bool = False
     only_with_html_representation: bool = False
-    collections: Optional[List[str]] = None
+    collections: list[str] | None = None
 
-    def as_marklogic_payload(self) -> Dict[str, Any]:
+    def as_marklogic_payload(self) -> dict[str, Any]:
         """
         Converts the search parameters to a dictionary payload suitable
         fo MarkLogic.
@@ -59,7 +59,7 @@ class SearchParameters:
         return ",".join(self.collections or []).replace(" ", "").replace(",,", ",")
 
     @property
-    def _marklogic_courts(self) -> Optional[List[str]]:
+    def _marklogic_courts(self) -> list[str] | None:
         court_text = self._join_court_text(self.court or "")
         if not (court_text).strip():
             return None
@@ -68,7 +68,7 @@ class SearchParameters:
         return list(courts | alternative_court_names)
 
     @property
-    def _quoted_phrases(self) -> List[str]:
+    def _quoted_phrases(self) -> list[str]:
         if self.query is None:
             return []
         return re.findall(QUOTED_PHRASE_REGEX, self.query)
@@ -78,11 +78,11 @@ class SearchParameters:
         return ",".join(court_text) if isinstance(court_text, list) else court_text
 
     @staticmethod
-    def _court_list_splitter(court_text: str) -> Set[str]:
+    def _court_list_splitter(court_text: str) -> set[str]:
         return set(court_text.lower().replace(" ", "").split(","))
 
     @staticmethod
-    def _get_alternative_court_names(courts: Set[str]) -> Set[str]:
+    def _get_alternative_court_names(courts: set[str]) -> set[str]:
         ALTERNATIVE_COURT_NAMES_MAP = {
             "ewhc/qb": "ewhc/kb",
             "ewhc/kb": "ewhc/qb",

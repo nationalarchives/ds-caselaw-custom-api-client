@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 from ds_caselaw_utils import neutral_url
 from ds_caselaw_utils.types import NeutralCitationString
@@ -30,12 +30,12 @@ class NeutralCitationMixin(ABC):
             ),
         ]
 
-        super(NeutralCitationMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @cached_property
     @abstractmethod
     @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")
-    def neutral_citation(self) -> Optional[NeutralCitationString]: ...
+    def neutral_citation(self) -> NeutralCitationString | None: ...
 
     @cached_property
     @deprecated("Legacy usage of NCNs is deprecated; you should be moving to the Identifiers framework")

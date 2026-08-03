@@ -77,4 +77,4 @@ class TestGetDocumentTypeFromUri(TestCase):
     ):
         mock_get_marklogic_response.return_value = []
 
-        self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234")) == Document
+        assert self.client.get_document_type_from_uri(uri=DocumentURIString("test/1234")) == Document

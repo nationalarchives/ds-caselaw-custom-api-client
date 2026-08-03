@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- **Factories**: `DocumentFactory`, `JudgmentFactory`, `PressSummaryFactory`, and `SimpleFactory` subclasses now use `TargetClass` instead of `target_class`
+
 ### Fix
 
 - escape special characters in document body factory XML

@@ -222,7 +222,7 @@ class TestSearchResultIdentifierHandling:
         assert isinstance(identifiers, IdentifiersCollection)
         assert not identifiers
         with pytest.raises(RuntimeError):
-            search_result.slug
+            _ = search_result.slug
         assert str(search_result) == "<SearchResult a/c/2015/20 **NO SLUG** **NO NAME** None>"
 
     @patch("caselawclient.responses.search_result.logger.warning")

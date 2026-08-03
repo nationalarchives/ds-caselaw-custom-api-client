@@ -11,13 +11,13 @@ from ds_caselaw_utils.types import CourtCode, NeutralCitationString
 from pydantic import TypeAdapter
 from requests_toolbelt.multipart import decoder
 
-import caselawclient.models.documents.comparison as comparison
 from caselawclient.errors import (
     DocumentNotFoundError,
     NotSupportedOnVersion,
     OnlySupportedOnVersion,
 )
 from caselawclient.identifier_resolution import IdentifierResolutions
+from caselawclient.models.documents import comparison
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
@@ -91,7 +91,7 @@ class Document:
     document_noun_plural = "documents"
     """ The noun for a plural of this document type. """
 
-    _default_reparse_document_type: Optional[str] = None
+    _default_reparse_document_type: str | None = None
     """ The default noun to pass to the parser when reparsing given the document type if known. This is used to determine how the document should be parsed and processed."""
 
     type_collection_name: str
@@ -152,7 +152,7 @@ class Document:
     metadata: DocumentMetadata
     metadata_fields: MetadataFieldsCollection
 
-    def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: Optional[str] = None):
+    def __init__(self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: str | None = None):
         """
         :param uri: The URI of the document to retrieve from MarkLogic.
         :param api_client: An instance of the API client object to handle communication with the MarkLogic server.
@@ -229,7 +229,7 @@ class Document:
         )
 
     @property
-    def best_human_identifier(self) -> Optional[Identifier]:
+    def best_human_identifier(self) -> Identifier | None:
         """Return the preferred identifier for the document, providing that it is considered human readable."""
         preferred_identifier = self.identifiers.preferred()
         if preferred_identifier and preferred_identifier.schema.human_readable:
@@ -268,7 +268,7 @@ class Document:
         return self.checkout_message is not None
 
     @cached_property
-    def checkout_message(self) -> Optional[str]:
+    def checkout_message(self) -> str | None:
         return self.api_client.get_judgment_checkout_status_message(self.uri)
 
     @cached_property
@@ -368,7 +368,7 @@ class Document:
     def has_valid_court(self) -> bool:
         court = self.metadata["court"].value
         jurisdiction = self.metadata["jurisdiction"].value
-        court_code = CourtCode("/".join((court, jurisdiction))) if jurisdiction != "" else CourtCode(court)
+        court_code = CourtCode(f"{court}/{jurisdiction}") if jurisdiction != "" else CourtCode(court)
         try:
             return bool(courts.get_by_code(court_code))
         except CourtNotFoundException:
@@ -420,7 +420,7 @@ class Document:
             )
 
     @cached_property
-    def first_published_datetime(self) -> Optional[datetime.datetime]:
+    def first_published_datetime(self) -> datetime.datetime | None:
         """
         Return the database value for the date and time this document was first published.
 
@@ -429,7 +429,7 @@ class Document:
         return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
 
     @cached_property
-    def first_published_datetime_display(self) -> Optional[datetime.datetime]:
+    def first_published_datetime_display(self) -> datetime.datetime | None:
         """
         Return the display value for the date and time this document was first published.
 
@@ -444,7 +444,7 @@ class Document:
         return self.first_published_datetime
 
     @cached_property
-    def latest_published_datetime(self) -> Optional[datetime.datetime]:
+    def latest_published_datetime(self) -> datetime.datetime | None:
         """
         Return the database value for the date and time this document was most recently published.
 
@@ -542,13 +542,13 @@ class Document:
 
         try:
             self.force_enrich()
-        except CannotEnrichUnenrichableDocument as e:
+        except CannotEnrichUnenrichableDocument:
             if not accept_failures:
-                raise e
+                raise
             logger.warning("Enrichment failed for %s but proceeding anyway", self.uri, exc_info=True)
             return False
 
-        logger.info("Enrichment completed for %s", self.uri, exc_info=True)
+        logger.info("Enrichment completed for %s", self.uri)
         return True
 
     @cached_property
@@ -572,7 +572,7 @@ class Document:
         """
         return self.api_client.validate_document(self.uri)
 
-    def assign_fclid_if_missing(self) -> Optional[FindCaseLawIdentifier]:
+    def assign_fclid_if_missing(self) -> FindCaseLawIdentifier | None:
         """If the document does not have an FCLID already, mint a new one and save it."""
         if len(self.identifiers.of_type(FindCaseLawIdentifier)) == 0:
             logger.info("Document has no FCLID, minting a new one")
@@ -707,7 +707,7 @@ class Document:
 
         return metadata_source_version
 
-    def _get_restore_tre_metadata(self, version_number: int) -> Optional[dict[str, Any]]:
+    def _get_restore_tre_metadata(self, version_number: int) -> dict[str, Any] | None:
         """Get the TRE metadata associated with a previous version.
 
         Args:
@@ -782,7 +782,7 @@ class Document:
         self,
         version_number: int,
         automated: bool = True,
-        action_requested_by: Optional[str] = None,
+        action_requested_by: str | None = None,
     ) -> None:
         """Restore a previous version of this document.
 
@@ -879,7 +879,7 @@ class Document:
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
-        checked_date: Optional[str] = (
+        checked_date: str | None = (
             self.metadata["date"].value.isoformat()
             if self.metadata["date"].value and self.metadata["date"].value > datetime.date(1001, 1, 1)
             else None
