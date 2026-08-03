@@ -8,11 +8,15 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
-- **Factories**: `DocumentFactory`, `JudgmentFactory`, `PressSummaryFactory`, and `SimpleFactory` subclasses now use `TargetClass` instead of `target_class`
+- DocumentFactory, JudgmentFactory, PressSummaryFactory, and SimpleFactory subclasses now use `TargetClass` instead of `target_class`. Update any subclasses or callers that referenced the old attribute name.
 
 ### Fix
 
 - escape special characters in document body factory XML
+
+### Refactor
+
+- rename factory target_class to TargetClass
 
 ## v48.0.0 (2026-07-30)
 
