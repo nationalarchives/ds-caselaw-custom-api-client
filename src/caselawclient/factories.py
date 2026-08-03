@@ -98,7 +98,7 @@ class DocumentFactory:
         "versions": [],
     }
 
-    target_class: TypeAlias = Document
+    TargetClass: TypeAlias = Document
 
     @classmethod
     def build(
@@ -107,7 +107,7 @@ class DocumentFactory:
         api_client: MarklogicApiClient | None = None,
         identifiers: list[Identifier] | None = None,
         **kwargs: Any,
-    ) -> target_class:
+    ) -> TargetClass:
         def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
             return [document]
 
@@ -116,7 +116,7 @@ class DocumentFactory:
             api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml().encode(encoding="utf-8")
             api_client.get_property_as_node.return_value = None
 
-        document = cls.target_class(uri, api_client=api_client)
+        document = cls.TargetClass(uri, api_client=api_client)
         document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
 
         if identifiers is None:
@@ -135,27 +135,27 @@ class DocumentFactory:
 
 
 class JudgmentFactory(DocumentFactory):
-    target_class: TypeAlias = Judgment
+    TargetClass: TypeAlias = Judgment
     PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
         "neutral_citation": "[2023] Test 123",
     }
 
 
 class PressSummaryFactory(DocumentFactory):
-    target_class: TypeAlias = PressSummary
+    TargetClass: TypeAlias = PressSummary
     PARAMS_MAP = DocumentFactory.PARAMS_MAP | {
         "neutral_citation": "[2023] Test 123",
     }
 
 
 class SimpleFactory(Generic[T]):
-    target_class: type[T]
+    TargetClass: type[T]
     # "name_of_attribute": "default value"
     PARAMS_MAP: dict[str, Any]
 
     @classmethod
     def build(cls, **kwargs: Any) -> T:
-        mock_object = Mock(spec=cls.target_class, autospec=True)
+        mock_object = Mock(spec=cls.TargetClass, autospec=True)
 
         for param, default in cls.PARAMS_MAP.items():
             if param in kwargs:
@@ -167,7 +167,7 @@ class SimpleFactory(Generic[T]):
 
 
 class SearchResultMetadataFactory(SimpleFactory[SearchResultMetadata]):
-    target_class = SearchResultMetadata
+    TargetClass = SearchResultMetadata
     # "name_of_attribute": "default value"
     PARAMS_MAP = {
         "author": "Fake Name",
@@ -209,7 +209,7 @@ class IdentifierResolutionsFactory:
 
 
 class SearchResultFactory(SimpleFactory[SearchResult]):
-    target_class = SearchResult
+    TargetClass = SearchResult
     PARAMS_MAP = {
         "uri": "d-a1b2c3",
         "name": "Judgment v Judgement",
