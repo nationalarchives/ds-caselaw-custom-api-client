@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- escape special characters in document body factory XML
+
 ## v48.0.0 (2026-07-30)
 
 ### BREAKING CHANGE
