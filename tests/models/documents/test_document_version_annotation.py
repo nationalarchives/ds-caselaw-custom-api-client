@@ -23,7 +23,7 @@ class TestAnnotations:
         document.annotation = "Test simple annotation string"
 
         with pytest.raises(ValueError, match="Test simple annotation string"):
-            document.structured_annotation
+            _ = document.structured_annotation
 
     def test_structured_annotation_with_invalid_json(self, mock_api_client):
         """Check that if you try to pull structured annotation on a document with an incorrect JSON structure you get an exception."""
@@ -32,7 +32,7 @@ class TestAnnotations:
         document.annotation = '{"value":"Unexpected JSON structure"}'
 
         with pytest.raises(ValueError, match="{'value': 'Unexpected JSON structure'}"):
-            document.structured_annotation
+            _ = document.structured_annotation
 
     def test_structured_annotation_with_valid_json(self, mock_api_client):
         """Check that if you try to pull structured annotation on a document with correct JSON you get the values as expected."""

@@ -28,7 +28,7 @@ class TestDocumentNCNBehaviour:
     def test_ncn_doc(self):
         doc = DocumentFactory.build(neutral_citation="not the default")
         with pytest.raises(AttributeError):
-            doc.neutral_citation
+            _ = doc.neutral_citation
 
 
 class TestDocumentBodyXmlEscaping:

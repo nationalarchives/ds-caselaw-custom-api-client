@@ -272,7 +272,7 @@ class TestDocument:
     def test_document_version_of_a_version_fails(self, mock_api_client):
         version_document = Document(DocumentURIString("test/1234_xml_versions/9-1234"), mock_api_client)
         with pytest.raises(NotSupportedOnVersion):
-            version_document.versions_as_documents
+            _ = version_document.versions_as_documents
 
     def test_document_versions_happy_case(self, mock_api_client):
         version_document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -285,7 +285,7 @@ class TestDocument:
     def test_document_version_number_when_not_version(self, mock_api_client):
         base_document = Document(DocumentURIString("test/1234"), mock_api_client)
         with pytest.raises(OnlySupportedOnVersion):
-            base_document.version_number
+            _ = base_document.version_number
         assert not base_document.is_version
 
     def test_document_version_number_when_is_version(self, mock_api_client):
@@ -373,7 +373,7 @@ class TestDocumentEnrichedRecently:
             with pytest.raises(
                 AttributeError, match="Neither 'Document' nor 'DocumentBody' objects have an attribute 'x'"
             ):
-                doc.x
+                _ = doc.x
 
         def test_body_property_error_is_not_masked_as_attribute_error(self, mock_api_client):
             doc = DocumentFactory.build(
@@ -386,7 +386,7 @@ class TestDocumentEnrichedRecently:
             type(doc.body).boom = property(boom)  # type: ignore[attr-defined]
             try:
                 with pytest.raises(ValueError, match="boom"):
-                    doc.boom
+                    _ = doc.boom
             finally:
                 del type(doc.body).boom  # type: ignore[attr-defined]
 
