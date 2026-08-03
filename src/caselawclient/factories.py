@@ -103,13 +103,16 @@ class DocumentFactory:
     @classmethod
     def build(
         cls,
-        uri: DocumentURIString = DocumentURIString("test/2023/123"),
+        uri: DocumentURIString | None = None,
         api_client: MarklogicApiClient | None = None,
         identifiers: list[Identifier] | None = None,
         **kwargs: Any,
     ) -> TargetClass:
         def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
             return [document]
+
+        if uri is None:
+            uri = DocumentURIString("test/2023/123")
 
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
