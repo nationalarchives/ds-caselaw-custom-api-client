@@ -548,7 +548,7 @@ class Document:
             logger.warning("Enrichment failed for %s but proceeding anyway", self.uri, exc_info=True)
             return False
 
-        logger.info("Enrichment completed for %s", self.uri, exc_info=True)
+        logger.info("Enrichment completed for %s", self.uri)
         return True
 
     @cached_property
