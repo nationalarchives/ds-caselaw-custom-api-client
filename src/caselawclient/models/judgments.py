@@ -49,6 +49,5 @@ class Judgment(NeutralCitationMixin, Document):
         except DocumentNotFoundError:
             return None
 
-    @cached_property
     def linked_press_summaries(self, only_published: bool = True) -> "IdentifierResolutions":
         return self.linked_document_resolutions(["uksummaryofncn"], only_published)
