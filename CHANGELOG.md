@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v49.0.0 (2026-08-03)
 
 ### BREAKING CHANGE
 
-- **Factories**: `DocumentFactory`, `JudgmentFactory`, `PressSummaryFactory`, and `SimpleFactory` subclasses now use `TargetClass` instead of `target_class`
+- DocumentFactory, JudgmentFactory, PressSummaryFactory,
+  and SimpleFactory subclasses now use `TargetClass` instead of
+  `target_class`. Update any subclasses or callers that referenced the old
+  attribute name.
 
 ### Fix
 
 - escape special characters in document body factory XML
+
+### Refactor
+
+- rename factory target_class to TargetClass
 
 ## v48.0.0 (2026-07-30)
 
