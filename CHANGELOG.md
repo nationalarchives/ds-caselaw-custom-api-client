@@ -4,11 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v49.0.0 (2026-08-03)
 
 ### BREAKING CHANGE
 
-- DocumentFactory, JudgmentFactory, PressSummaryFactory, and SimpleFactory subclasses now use `TargetClass` instead of `target_class`. Update any subclasses or callers that referenced the old attribute name.
+- DocumentFactory, JudgmentFactory, PressSummaryFactory,
+  and SimpleFactory subclasses now use `TargetClass` instead of
+  `target_class`. Update any subclasses or callers that referenced the old
+  attribute name.
 
 ### Fix
 
