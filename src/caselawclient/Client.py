@@ -77,7 +77,7 @@ except importlib.metadata.PackageNotFoundError:
     VERSION = "0"
 DEFAULT_USER_AGENT = f"ds-caselaw-marklogic-api-client/{VERSION}"
 
-DEBUG: bool = bool(os.getenv("DEBUG", default=False))
+DEBUG: bool = bool(os.getenv("DEBUG", default=None))
 
 logger = logging.getLogger(__name__)
 
