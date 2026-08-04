@@ -1,7 +1,8 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from caselawclient.Client import MarklogicApiClient
+from caselawclient.Client import ROOT_DIR, MarklogicApiClient
 
 
 class TestStats(unittest.TestCase):
@@ -42,3 +43,16 @@ class TestStats(unittest.TestCase):
             result = self.client.get_courts_with_document_count()
 
             assert result == {"uksc": 12, "ukip": 42}
+
+    def test_get_courts_with_document_count_uses_court_metadata(self):
+        xquery_path = Path(ROOT_DIR) / "xquery" / "get_courts_with_document_count.xqy"
+        xquery = xquery_path.read_text(encoding="utf-8")
+
+        assert 'declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn"' in xquery
+        assert 'cts:element-values(xs:QName("uk:court")' in xquery
+        assert "cts:uris" not in xquery
+
+    def test_get_courts_with_document_count_normalises_hyphenated_compound_court_metadata(self):
+        xquery_path = Path(ROOT_DIR) / "xquery" / "get_courts_with_document_count.xqy"
+
+        assert 'fn:replace($court-param, "^(ewca|ewhc|ukut|ukftt|ftt)-", "$1/")' in xquery_path.read_text()

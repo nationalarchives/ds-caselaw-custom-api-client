@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- Update courts and documents count query to query against court params in properties in normalized format
+
 ## v49.0.0 (2026-08-03)
 
 ### BREAKING CHANGE
