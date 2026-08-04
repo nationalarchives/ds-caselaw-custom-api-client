@@ -2,6 +2,8 @@ xquery version "1.0-ml";
 
 import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls.xqy";
 
+declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn"
+
 declare function local:canonical-court-param($court-param as xs:string) as xs:string {
   let $court-param := fn:replace($court-param, "^(ewca|ewhc|ukut|ukftt|ftt)-", "$1/")
   return

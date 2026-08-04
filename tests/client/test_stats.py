@@ -46,8 +46,9 @@ class TestStats(unittest.TestCase):
 
     def test_get_courts_with_document_count_uses_court_metadata(self):
         xquery_path = Path(ROOT_DIR) / "xquery" / "get_courts_with_document_count.xqy"
-        xquery = xquery_path.read_text()
+        xquery = xquery_path.read_text(encoding="utf-8")
 
+        assert 'declare namespace uk = "https://caselaw.nationalarchives.gov.uk/akn"' in xquery
         assert 'cts:element-values(xs:QName("uk:court")' in xquery
         assert "cts:uris" not in xquery
 
