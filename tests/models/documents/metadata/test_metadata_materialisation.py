@@ -42,8 +42,11 @@ class TestValueResolves:
     def test_empty_category_name_does_not_resolve(self):
         assert Metadata._value_resolves(MetadataCategoryValue(name="")) is False  # noqa: SLF001
 
+    def test_whitespace_only_string_does_not_resolve(self):
+        assert Metadata._value_resolves("   ") is False  # noqa: SLF001
+
     def test_unexpected_value_type_does_not_resolve(self):
-        assert Metadata._value_resolves(123) is False  # noqa: SLF001
+        assert Metadata._value_resolves(123) is False  # type: ignore[arg-type]  # noqa: SLF001
 
 
 class TestMaterialiseBodyClaims:
@@ -104,6 +107,19 @@ class TestMaterialiseBodyClaims:
 
         assert document.metadata_fields.by_name("jurisdiction") == []
         assert document.metadata_fields.by_name("case_number") == []
+
+    def test_strips_whitespace_when_materialising(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata["title"]._materialise_document_values(["  Body Title  "])  # noqa: SLF001
+
+        claims = document.metadata_fields.by_name("title")
+        assert len(claims) == 1
+        assert claims[0].value == "Body Title"
+
+    def test_skips_whitespace_only_string(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata["title"]._materialise_document_values(["   "])  # noqa: SLF001
+        assert document.metadata_fields.by_name("title") == []
 
     def test_skips_none_case_number(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -184,7 +200,10 @@ class TestMaterialiseBodyClaims:
         document = DocumentFactory.build(api_client=mock_api_client, body=categories_xml)
         document.metadata["categories"].materialise_body_claims()
 
-        values = {(claim.value.name, claim.value.parent) for claim in document.metadata_fields.by_name("categories")}
+        values = {
+            (claim.value.name, claim.value.parent)  # type: ignore[union-attr]
+            for claim in document.metadata_fields.by_name("categories")
+        }
         assert values == {("Parent", None), ("Child", "Parent")}
 
     def test_empty_category_name_is_not_materialised(self, mock_api_client):
