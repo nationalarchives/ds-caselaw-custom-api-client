@@ -44,5 +44,11 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
     def as_string(self) -> str:
         return date_as_string_from_value(self.value)
 
+    def materialise_body_claims(self) -> None:
+        document_date = self.document.body.document_date_as_date
+        if document_date is None:
+            return
+        self._materialise_document_values([document_date.isoformat()])
+
     def __str__(self) -> str:
         return self.as_string

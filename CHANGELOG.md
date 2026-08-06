@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Feat
+
+- materialise body-derived DOCUMENT metadata claims with per-field `LOGIC_VERSION` tracking
+- stamp `latest_metadata_materialisation_version` when materialising; `Document.save()` triggers materialisation
+
 ### Refactor
 
 - Remove courts and documents count query

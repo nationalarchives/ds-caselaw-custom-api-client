@@ -37,23 +37,12 @@ class JudgesMetadata(MultipleMetadata[str]):
         return judge_names_from_field_values(resolved.values)
 
     def materialise_body_claims(self) -> None:
-        """Yank body judge names into DOCUMENT claims when no claims exist yet.
+        """Yank body judge names into DOCUMENT claims (additive, idempotent).
 
-        After this, resolution is claim-based and soft-delete can suppress names
-        without the body fallback resurrecting them.
+        Existing DOCUMENT claims with the same value are left alone (including
+        rejected ones). EDITOR/EXTERNAL claims do not block materialisation.
         """
-        resolved = self._resolve_claims()
-        if resolved.has_any_claims:
-            return
-
-        for name in self.document.body.judges:
-            self.document.metadata_fields.add(
-                MetadataField(
-                    name=self.key,
-                    value=name,
-                    source=MetadataSource.DOCUMENT,
-                )
-            )
+        self._materialise_document_values(self.document.body.judges)
 
     def add_editor_judge(self, name: str) -> None:
         """Add an EDITOR claim for a judge name, yanking body first if needed."""
