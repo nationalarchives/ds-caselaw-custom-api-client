@@ -1,8 +1,11 @@
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
+import pytest
+
 from caselawclient.factories import DocumentBodyFactory, DocumentFactory
-from caselawclient.models.documents.metadata.fields.field import MetadataField
+from caselawclient.models.documents.metadata.base import Metadata
+from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
@@ -33,6 +36,14 @@ class TestMetadataMaterialisationVersion:
         assert document_needs_metadata_materialisation("") is True
         assert document_needs_metadata_materialisation("stale") is True
         assert document_needs_metadata_materialisation(CURRENT_METADATA_MATERIALISATION_VERSION) is False
+
+
+class TestValueResolves:
+    def test_empty_category_name_does_not_resolve(self):
+        assert Metadata._value_resolves(MetadataCategoryValue(name="")) is False  # noqa: SLF001
+
+    def test_unexpected_value_type_does_not_resolve(self):
+        assert Metadata._value_resolves(123) is False  # noqa: SLF001
 
 
 class TestMaterialiseBodyClaims:
@@ -94,6 +105,12 @@ class TestMaterialiseBodyClaims:
         assert document.metadata_fields.by_name("jurisdiction") == []
         assert document.metadata_fields.by_name("case_number") == []
 
+    def test_skips_none_case_number(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.body.__dict__["case_number"] = None
+        document.metadata["case_number"].materialise_body_claims()
+        assert document.metadata_fields.by_name("case_number") == []
+
     def test_date_materialises_isoformat(self, mock_api_client):
         document = DocumentFactory.build(
             api_client=mock_api_client,
@@ -106,6 +123,19 @@ class TestMaterialiseBodyClaims:
         assert claims[0].value == "2023-02-03"
         assert isinstance(claims[0].value, str)
         assert date.fromisoformat(claims[0].value) == date(2023, 2, 3)
+
+    def test_skips_missing_document_date(self, mock_api_client):
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(document_date_as_string=None),
+        )
+        document.metadata["date"].materialise_body_claims()
+        assert document.metadata_fields.by_name("date") == []
+
+    def test_base_materialise_body_claims_raises(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        with pytest.raises(NotImplementedError, match="does not implement materialise_body_claims"):
+            Metadata.materialise_body_claims(document.metadata["title"])
 
     def test_does_not_resurrect_rejected_document_claim(self, mock_api_client):
         document = DocumentFactory.build(
@@ -154,11 +184,15 @@ class TestMaterialiseBodyClaims:
         document = DocumentFactory.build(api_client=mock_api_client, body=categories_xml)
         document.metadata["categories"].materialise_body_claims()
 
-        values = {
-            (claim.value.name, claim.value.parent)  # type: ignore[union-attr]
-            for claim in document.metadata_fields.by_name("categories")
-        }
+        values = {(claim.value.name, claim.value.parent) for claim in document.metadata_fields.by_name("categories")}
         assert values == {("Parent", None), ("Child", "Parent")}
+
+    def test_empty_category_name_is_not_materialised(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata["categories"]._materialise_document_values(  # noqa: SLF001
+            [MetadataCategoryValue(name="", parent=None)]
+        )
+        assert document.metadata_fields.by_name("categories") == []
 
 
 class TestDocumentMaterialiseMetadataClaims:
