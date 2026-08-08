@@ -16,3 +16,6 @@ class NameMetadata(SingleMetadata[str]):
         if not isinstance(resolved.value, str):
             raise TypeError(f"Expected string metadata value for '{self.key}', got {type(resolved.value).__name__}")
         return resolved.value
+
+    def materialise_body_claims(self) -> None:
+        self._materialise_document_values([self.document.body.name])

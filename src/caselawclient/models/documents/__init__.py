@@ -21,6 +21,11 @@ from caselawclient.models.documents import comparison
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
+from caselawclient.models.documents.metadata.materialisation import (
+    CURRENT_METADATA_MATERIALISATION_VERSION,
+    LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
+    document_needs_metadata_materialisation,
+)
 from caselawclient.models.documents.metadata.registry import (
     DocumentMetadata,
     MetadataAttributeKey,
@@ -591,6 +596,7 @@ class Document:
         Save the document's XML representation back to MarkLogic as a new version.
 
         Creates a new version with type EDIT, recording the changes made to the document.
+        Also materialises body-derived DOCUMENT metadata claims and persists them.
 
         :param message: Human-readable message describing the changes made.
         """
@@ -606,6 +612,28 @@ class Document:
             self.uri,
             self.body.content_as_xml_tree,
             annotation,
+        )
+        self.materialise_metadata_claims()
+
+    @property
+    def needs_metadata_materialisation(self) -> bool:
+        """True if this document's stored materialisation version is missing or outdated."""
+        stored = self.api_client.get_property(self.uri, LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY)
+        return document_needs_metadata_materialisation(stored or None)
+
+    def materialise_metadata_claims(self) -> None:
+        """Materialise body-derived DOCUMENT claims, persist metadata_fields, and stamp version.
+
+        Idempotent: existing DOCUMENT claims with the same value are not overwritten.
+        Safe to call from maintenance backfills as well as from ``save()``.
+        """
+        for field in self.metadata.values():
+            field.materialise_body_claims()
+        self.save_metadata_fields()
+        self.api_client.set_property(
+            self.uri,
+            LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
+            CURRENT_METADATA_MATERIALISATION_VERSION,
         )
 
     def publish(self) -> None:

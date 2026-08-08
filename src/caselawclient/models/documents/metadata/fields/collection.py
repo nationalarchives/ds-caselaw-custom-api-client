@@ -3,7 +3,7 @@ from lxml import etree
 from caselawclient.models.documents.metadata.fields.exceptions import (
     MetadataFieldRemovalNotAllowedException,
 )
-from caselawclient.models.documents.metadata.fields.field import MetadataField
+from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataFieldValue
 from caselawclient.models.documents.metadata.fields.resolution import ResolvedMetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.types import SuccessFailureMessageTuple
@@ -18,6 +18,10 @@ class MetadataFieldsCollection(dict[str, MetadataField]):
 
     def by_name(self, name: str) -> list[MetadataField]:
         return [field for field in self.values() if field.name == name]
+
+    def has_claim(self, name: str, value: MetadataFieldValue, source: MetadataSource) -> bool:
+        """True if any claim (including rejected) matches name, value, and source."""
+        return any(field.value == value and field.source is source for field in self.by_name(name))
 
     def resolve(self, name: str) -> ResolvedMetadataField:
         return ResolvedMetadataField(name=name, claims=self.by_name(name))
