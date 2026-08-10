@@ -34,6 +34,18 @@ def document_categories_from_field_values(values: list[MetadataFieldValue]) -> l
     return [categories[name] for name in top_level_order]
 
 
+def category_claim_values_from_document_categories(
+    categories: list[DocumentCategory],
+    parent: str | None = None,
+) -> list[MetadataCategoryValue]:
+    """Flatten a category tree into claim values suitable for DOCUMENT materialisation."""
+    values: list[MetadataCategoryValue] = []
+    for category in categories:
+        values.append(MetadataCategoryValue(name=category.name, parent=parent))
+        values.extend(category_claim_values_from_document_categories(category.subcategories, parent=category.name))
+    return values
+
+
 class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
     key = "categories"
     title = "Categories"
@@ -45,3 +57,6 @@ class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
         if not resolved.has_any_claims:
             return self.document.body.categories
         return document_categories_from_field_values(resolved.values)
+
+    def materialise_body_claims(self) -> None:
+        self._materialise_document_values(category_claim_values_from_document_categories(self.document.body.categories))

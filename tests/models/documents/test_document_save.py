@@ -4,6 +4,10 @@ from unittest.mock import patch
 
 from caselawclient.factories import DocumentFactory
 from caselawclient.models.documents import DocumentURIString
+from caselawclient.models.documents.metadata.materialisation import (
+    CURRENT_METADATA_MATERIALISATION_VERSION,
+    LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
+)
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 
 
@@ -15,17 +19,24 @@ class TestDocumentSave:
         uri = DocumentURIString("test/2023/101")
         document = DocumentFactory.build(uri=uri)
 
-        with patch.object(document.api_client, "update_document_xml") as mock_update:
+        with (
+            patch.object(document.api_client, "update_document_xml") as mock_update,
+            patch.object(document, "materialise_metadata_claims") as mock_materialise,
+        ):
             document.save(message="Changed document")
 
             mock_update.assert_called_once()
+            mock_materialise.assert_called_once()
 
     def test_save_creates_edit_annotation(self):
         """Test that save() creates an EDIT annotation with automated=False."""
         uri = DocumentURIString("test/2023/123")
         document = DocumentFactory.build(uri=uri)
 
-        with patch.object(document.api_client, "update_document_xml") as mock_update:
+        with (
+            patch.object(document.api_client, "update_document_xml") as mock_update,
+            patch.object(document, "materialise_metadata_claims"),
+        ):
             document.save(message="Changed document")
 
             # Verify the annotation was created correctly
@@ -41,7 +52,10 @@ class TestDocumentSave:
         document = DocumentFactory.build(uri=uri)
         expected_xml = document.body.content_as_xml_tree
 
-        with patch.object(document.api_client, "update_document_xml") as mock_update:
+        with (
+            patch.object(document.api_client, "update_document_xml") as mock_update,
+            patch.object(document, "materialise_metadata_claims"),
+        ):
             document.save(message="Changed document")
 
             # Verify the correct URI and XML are passed
@@ -55,9 +69,44 @@ class TestDocumentSave:
         document = DocumentFactory.build(uri=uri)
         test_message = "Fixed typo in court name"
 
-        with patch.object(document.api_client, "update_document_xml") as mock_update:
+        with (
+            patch.object(document.api_client, "update_document_xml") as mock_update,
+            patch.object(document, "materialise_metadata_claims"),
+        ):
             document.save(message=test_message)
 
             call_args = mock_update.call_args
             annotation = call_args[0][2]
             assert annotation.message == test_message
+
+    def test_save_calls_materialise_after_xml_update(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        call_order: list[str] = []
+
+        def track_xml(*_args, **_kwargs):
+            call_order.append("xml")
+
+        def track_materialise():
+            call_order.append("materialise")
+
+        with (
+            patch.object(document.api_client, "update_document_xml", side_effect=track_xml),
+            patch.object(document, "materialise_metadata_claims", side_effect=track_materialise) as mock_materialise,
+        ):
+            document.save(message="Changed document")
+
+        assert call_order == ["xml", "materialise"]
+        mock_materialise.assert_called_once()
+
+    def test_save_materialise_persists_version(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        with patch.object(document.api_client, "update_document_xml"):
+            document.save(message="Changed document")
+
+        mock_api_client.set_property_as_node.assert_called()
+        mock_api_client.set_property.assert_any_call(
+            document.uri,
+            LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
+            CURRENT_METADATA_MATERIALISATION_VERSION,
+        )

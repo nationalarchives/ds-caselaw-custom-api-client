@@ -16,3 +16,9 @@ class CaseNumberMetadata(SingleMetadata[str | None]):
         if not isinstance(resolved.value, str):
             raise TypeError(f"Expected string metadata value for '{self.key}', got {type(resolved.value).__name__}")
         return resolved.value
+
+    def materialise_body_claims(self) -> None:
+        case_number = self.document.body.case_number
+        if case_number is None:
+            return
+        self._materialise_document_values([case_number])

@@ -42,7 +42,7 @@ class TestJudgesMetadataEditing:
         assert all(claim.source is MetadataSource.DOCUMENT for claim in document.metadata_fields.by_name("judges"))
         assert judges.values == ["Judge A", "Judge B"]
 
-    def test_materialise_body_claims_is_noop_when_claims_exist(self, mock_api_client):
+    def test_materialise_body_claims_adds_alongside_existing_external(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Body Judge"))
         document.metadata_fields.add(
             MetadataField(
@@ -54,7 +54,11 @@ class TestJudgesMetadataEditing:
             )
         )
         document.metadata["judges"].materialise_body_claims()
-        assert [claim.value for claim in document.metadata_fields.by_name("judges")] == ["Claim Judge"]
+        claims = document.metadata_fields.by_name("judges")
+        assert {(claim.source, claim.value) for claim in claims} == {
+            (MetadataSource.EXTERNAL, "Claim Judge"),
+            (MetadataSource.DOCUMENT, "Body Judge"),
+        }
 
     def test_add_editor_judge_yanks_then_adds(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Body Judge"))
