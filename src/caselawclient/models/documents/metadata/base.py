@@ -49,10 +49,6 @@ class Metadata(ABC):
             return MetadataCategoryValue(name=cleaned_name, parent=parent)
         return None
 
-    @staticmethod
-    def _value_resolves(value: MetadataFieldValue) -> bool:
-        return Metadata._normalise_for_materialisation(value) is not None
-
     def _materialise_document_values(self, values: Iterable[MetadataFieldValue]) -> None:
         """Add DOCUMENT claims for each resolving value that is not already present."""
         for value in values:

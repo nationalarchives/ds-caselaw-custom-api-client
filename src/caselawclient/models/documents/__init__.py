@@ -27,16 +27,9 @@ from caselawclient.models.documents.metadata.materialisation import (
     document_needs_metadata_materialisation,
 )
 from caselawclient.models.documents.metadata.registry import (
+    METADATA_FIELD_CLASSES,
     DocumentMetadata,
-    MetadataAttributeKey,
 )
-from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
-from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
-from caselawclient.models.documents.metadata.types.court import CourtMetadata
-from caselawclient.models.documents.metadata.types.date import DateMetadata
-from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
-from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
-from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -224,13 +217,7 @@ class Document:
         """Initialise all this document's metadata values."""
 
         self.metadata = DocumentMetadata(
-            title=NameMetadata(self),
-            court=CourtMetadata(self),
-            jurisdiction=JurisdictionMetadata(self),
-            date=DateMetadata(self),
-            case_number=CaseNumberMetadata(self),
-            categories=CategoriesMetadata(self),
-            judges=JudgesMetadata(self),
+            **{cls.key: cls(self) for cls in METADATA_FIELD_CLASSES}  # type: ignore[arg-type]
         )
 
     @property
@@ -990,7 +977,7 @@ class Document:
                 "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
             )
 
-    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[MetadataAttributeKey, str]]] = {
+    _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
         "name": ("title", "value"),
         "court": ("court", "value"),
         "jurisdiction": ("jurisdiction", "value"),
