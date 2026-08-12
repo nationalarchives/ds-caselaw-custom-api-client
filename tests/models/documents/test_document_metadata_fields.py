@@ -111,7 +111,7 @@ class TestDocumentMetadataFacadePrefersFields:
             body=DocumentBodyFactory.build(name="Body Name"),
         )
 
-        assert document.metadata["title"].value == "Body Name"
+        assert document.metadata.title.value == "Body Name"
 
     def test_name_prefers_metadata_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -130,7 +130,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["title"].value == "Fields Name"
+        assert document.metadata.title.value == "Fields Name"
 
     def test_name_suppressed_only_is_empty(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -150,7 +150,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["title"].value == ""
+        assert document.metadata.title.value == ""
 
     def test_categories_prefers_all_non_suppressed_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -188,7 +188,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert [category.name for category in document.metadata["categories"].values] == [
+        assert [category.name for category in document.metadata.categories.values] == [
             "From document",
             "From external",
         ]
@@ -214,7 +214,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        categories = document.metadata["categories"].values
+        categories = document.metadata.categories.values
         assert len(categories) == 1
         assert categories[0].name == "Shared"
 
@@ -239,7 +239,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        categories = document.metadata["categories"].values
+        categories = document.metadata.categories.values
         assert len(categories) == 1
         assert categories[0].name == "Parent"
         assert [child.name for child in categories[0].subcategories] == ["Child"]
@@ -256,7 +256,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["date"].as_string == "2024-06-15"
+        assert document.metadata.date.as_string == "2024-06-15"
 
     def test_date_suppressed_only_is_none(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -271,8 +271,8 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["date"].value is None
-        assert document.metadata["date"].as_string == ""
+        assert document.metadata.date.value is None
+        assert document.metadata.date.as_string == ""
 
     def test_date_unparsable_field_value_is_none(self, mock_api_client):
         from caselawclient.models.documents.body import UnparsableDate
@@ -289,7 +289,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
 
         with pytest.warns(UnparsableDate, match="Unparsable date"):
-            assert document.metadata["date"].value is None
+            assert document.metadata.date.value is None
 
     def test_date_empty_string_field_value_is_none(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -303,7 +303,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["date"].value is None
+        assert document.metadata.date.value is None
 
     def test_case_number_prefers_metadata_fields(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -317,7 +317,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["case_number"].value == "ABC-123"
+        assert document.metadata.case_number.value == "ABC-123"
 
     def test_case_number_suppressed_only_is_none(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -332,7 +332,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["case_number"].value is None
+        assert document.metadata.case_number.value is None
 
     def test_case_number_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -347,7 +347,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
 
         with pytest.raises(TypeError, match="Expected string metadata value for 'case_number'"):
-            _ = document.metadata["case_number"].value
+            _ = document.metadata.case_number.value
 
     def test_court_prefers_metadata_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -366,7 +366,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["court"].value == "Fields Court"
+        assert document.metadata.court.value == "Fields Court"
 
     def test_court_suppressed_only_is_empty(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -386,7 +386,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["court"].value == ""
+        assert document.metadata.court.value == ""
 
     def test_court_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -401,7 +401,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
 
         with pytest.raises(TypeError, match="Expected string metadata value for 'court'"):
-            _ = document.metadata["court"].value
+            _ = document.metadata.court.value
 
     def test_jurisdiction_prefers_metadata_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -420,7 +420,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["jurisdiction"].value == "Fields Jurisdiction"
+        assert document.metadata.jurisdiction.value == "Fields Jurisdiction"
 
     def test_jurisdiction_suppressed_only_is_empty(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -440,7 +440,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["jurisdiction"].value == ""
+        assert document.metadata.jurisdiction.value == ""
 
     def test_jurisdiction_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -455,7 +455,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
 
         with pytest.raises(TypeError, match="Expected string metadata value for 'jurisdiction'"):
-            _ = document.metadata["jurisdiction"].value
+            _ = document.metadata.jurisdiction.value
 
     def test_title_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -470,7 +470,7 @@ class TestDocumentMetadataFacadePrefersFields:
         )
 
         with pytest.raises(TypeError, match="Expected string metadata value for 'title'"):
-            _ = document.metadata["title"].value
+            _ = document.metadata.title.value
 
     def test_categories_orphan_child_without_parent_claim_is_omitted(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -484,7 +484,7 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["categories"].values == []
+        assert document.metadata.categories.values == []
 
     def test_judges_prefers_claims_over_body(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -509,9 +509,4 @@ class TestDocumentMetadataFacadePrefersFields:
             )
         )
 
-        assert document.metadata["judges"].values == ["Claim Judge"]
-
-    def test_metadata_contains_rejects_non_string_keys(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-
-        assert 123 not in document.metadata
+        assert document.metadata.judges.values == ["Claim Judge"]
