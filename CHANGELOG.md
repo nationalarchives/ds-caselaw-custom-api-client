@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 
+### Refactor
+
+- **Metadata**: drop MetadataAttributeKey from the registry
+- **Metadata**: centralise METADATA_FIELD_CLASSES in the registry
+
 ## v49.1.1 (2026-08-13)
 
 ### Fix
