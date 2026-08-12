@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- Use document.metadata.title / .judges (etc), not
+  metadata["title"]. DocumentMetadata is not a dict and has no get/keys/
+  values/in. Legacy name/judge keys are gone.
+
+### Feat
+
+- **Metadata**: expose DocumentMetadata as typed attribute facades
+
 ## v49.1.1 (2026-08-13)
 
 ### Fix
