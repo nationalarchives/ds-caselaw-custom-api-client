@@ -458,6 +458,34 @@ class TestDocumentBody:
 
         assert prettified_transformed_html == prettified_target_html
 
+    def test_content_html_omits_non_web_image_formats(self):
+        """WMF/EMF cannot be rendered by browsers or by Pillow on Linux (WeasyPrint)."""
+        body = DocumentBodyFactory.build("""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment name="decision">
+                    <meta/>
+                    <header>
+                        <p><img src="crest.png" style="width:10pt;height:10pt"/></p>
+                        <p><img src="photo.avif"/></p>
+                        <p><img src="diagram.wmf" style="width:10pt;height:10pt"/></p>
+                        <p><img src="chart.EMF"/></p>
+                        <p>Visible text</p>
+                    </header>
+                    <judgmentBody>
+                        <decision><p/></decision>
+                    </judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """)
+
+        html = body.content_html("https://assets.example/d-a1b2c3")
+        assert html
+        assert "crest.png" in html
+        assert "photo.avif" in html
+        assert ".wmf" not in html.lower()
+        assert ".emf" not in html.lower()
+
     def test_actual_content_header(self):
         body = DocumentBodyFactory.build("""
             <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">

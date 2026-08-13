@@ -734,10 +734,14 @@
 </xsl:template>
 
 <xsl:template match="img">
-	<img loading="lazy">
-		<xsl:apply-templates select="@*" />
-		<xsl:apply-templates />
-	</img>
+	<!-- Only emit MDN common web image formats (omit WMF/EMF etc.).
+	     https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types#common_image_file_types -->
+	<xsl:if test="matches(@src, '\.(apng|avif|gif|jpe?g|jfif|pjpeg|pjp|png|svg|webp)$', 'i')">
+		<img loading="lazy">
+			<xsl:apply-templates select="@*" />
+			<xsl:apply-templates />
+		</img>
+	</xsl:if>
 </xsl:template>
 <xsl:template match="img/@src">
 	<xsl:attribute name="src">
