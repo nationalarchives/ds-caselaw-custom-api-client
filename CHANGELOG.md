@@ -14,12 +14,19 @@ The format is based on [Keep a Changelog 1.0.0].
 - Date metadata claim values are `datetime.date`, not `str`.
 - Claim payloads are structured `MetadataStringValue` /
   `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
+- `metadata_fields.add` / `__setitem__` are idempotent: matching
+  name/value/source is a noop (including rejected); id collision with a
+  different payload raises; empty values raise. `add` returns whether the
+  claim was added or already present. Duplicate claims are also deduped on
+  unpack. Key/id mismatch raises. `validate_metadata_fields` /
+  key-id validation on save is removed.
 
 ### Feat
 
 - **Metadata**: wrap all claim values in structured Metadata\*Value types
 - **Metadata**: per-type pack/unpack with date claims as date
 - **Metadata**: expose DocumentMetadata as typed attribute facades
+- **Metadata**: idempotent MetadataFieldsCollection.add
 
 ### Fix
 
