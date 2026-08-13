@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v49.1.1 (2026-08-13)
 
 ### Fix
 
-- omit non-web image formats (WMF/EMF etc.) from HTML transforms so WeasyPrint/Pillow do not crash on Linux; allow MDN common web image types
+- **HTML**: omit non-web image formats from judgment transforms
 
 ## v49.1.0 (2026-08-10)
 
