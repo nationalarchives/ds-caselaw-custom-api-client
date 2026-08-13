@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog 1.0.0].
 - Use document.metadata.title / .judges (etc), not
   metadata["title"]. DocumentMetadata is not a dict and has no get/keys/
   values/in. Legacy name/judge keys are gone.
+- Date metadata claim values are `datetime.date`, not `str`.
+- Claim payloads are structured `MetadataStringValue` /
+  `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
 
 ### Feat
 
@@ -22,12 +25,15 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Document**: reject `from_xml()` for URIs that already exist in MarkLogic (`DocumentAlreadyExistsError`)
 - **Document**: validate identifier and metadata field IDs before upserting document XML during `save()`
 - **Document**: persist identifiers and structured metadata properties after upserting document XML during `save()`
+- **Metadata**: wrap all claim values in structured Metadata\*Value types
+- **Metadata**: per-type pack/unpack with date claims as date
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 
 ### Fix
 
 - Fix `Judgment` and `PressSummary` constructors to pass `api_client` explicitly through `NeutralCitationMixin`
 - Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
+- **Metadata**: harden claim unpack (strip text, validate pack_version)
 
 ### Refactor
 
