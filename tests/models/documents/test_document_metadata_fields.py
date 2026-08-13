@@ -5,7 +5,6 @@ import pytest
 from lxml import etree
 
 from caselawclient.factories import DocumentFactory
-from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
 from caselawclient.models.documents.metadata.fields.field import (
     MetadataCategoryValue,
     MetadataDateValue,
@@ -14,7 +13,6 @@ from caselawclient.models.documents.metadata.fields.field import (
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
-from caselawclient.types import SuccessFailureMessageTuple
 
 TIMESTAMP = datetime(2025, 12, 17, 18, 0, 0, tzinfo=UTC)
 
@@ -71,40 +69,6 @@ class TestDocumentMetadataFieldsLoadSave:
         assert uri == document.uri
         assert property_name == "metadata_fields"
         assert unpack_all_metadata_fields_from_etree(tree).resolve("title").value == MetadataStringValue("Saved title")
-
-    def test_validate_metadata_fields_returns_success_failure_tuple(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-        field = MetadataField(
-            name="title",
-            value=MetadataStringValue("Saved title"),
-            source=MetadataSource.EDITOR,
-            id=_id(),
-            timestamp=TIMESTAMP,
-        )
-        document.metadata_fields["wrong-key"] = field
-
-        result = document.validate_metadata_fields()
-
-        assert result == SuccessFailureMessageTuple(
-            False,
-            [f"Key of {field} in MetadataFieldsCollection is wrong-key not {field.id}"],
-        )
-
-    def test_save_metadata_fields_rejects_mismatched_keys(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-        field = MetadataField(
-            name="title",
-            value=MetadataStringValue("Saved title"),
-            source=MetadataSource.EDITOR,
-            id=_id(),
-            timestamp=TIMESTAMP,
-        )
-        document.metadata_fields["wrong-key"] = field
-
-        with pytest.raises(MetadataFieldValidationException, match="wrong-key"):
-            document.save_metadata_fields()
-
-        mock_api_client.set_property_as_node.assert_not_called()
 
 
 class TestDocumentMetadataFacadePrefersFields:

@@ -19,7 +19,6 @@ from caselawclient.errors import (
 from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.documents import comparison
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
-from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
 from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
@@ -716,11 +715,8 @@ class Document:
             field.materialise_body_claims()
 
     def _validate_metadata_for_save(self) -> None:
-        validations = self.metadata_fields.validate_ids_match_keys()
-        if validations.success is not True:
-            raise MetadataFieldValidationException(
-                "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
-            )
+        """Hook for save(); claim invariants are enforced by ``add`` / ``__setitem__``."""
+        return
 
     def _validate_identifiers_for_save(self) -> None:
         validations = self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
@@ -1089,14 +1085,9 @@ class Document:
     def _save_identifiers_to_marklogic(self) -> None:
         self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
 
-    def validate_metadata_fields(self) -> SuccessFailureMessageTuple:
-        self._require_persisted()
-        return self.metadata_fields.validate_ids_match_keys()
-
     def save_metadata_fields(self) -> None:
-        """Validate metadata fields, and if validation passes save them to MarkLogic."""
+        """Save metadata claims to MarkLogic."""
         self._require_persisted()
-        self._validate_metadata_for_save()
         self._save_metadata_fields()
 
     def _save_metadata_fields(self) -> None:
