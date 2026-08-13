@@ -6,7 +6,12 @@ import pytest
 
 from caselawclient.factories import DocumentBodyFactory, DocumentFactory
 from caselawclient.models.documents.metadata.base import Metadata
-from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
+from caselawclient.models.documents.metadata.fields.field import (
+    MetadataCategoryValue,
+    MetadataDateValue,
+    MetadataField,
+    MetadataStringValue,
+)
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
@@ -50,7 +55,7 @@ class TestMaterialiseBodyClaims:
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
-        assert claims[0].value == "Body Title"
+        assert claims[0].value == MetadataStringValue("Body Title")
         assert claims[0].source is MetadataSource.DOCUMENT
 
     def test_materialise_is_idempotent_for_same_document_value(self, mock_api_client):
@@ -74,7 +79,7 @@ class TestMaterialiseBodyClaims:
         document.metadata_fields.add(
             MetadataField(
                 name="title",
-                value="Editor Title",
+                value=MetadataStringValue("Editor Title"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -84,8 +89,8 @@ class TestMaterialiseBodyClaims:
 
         claims = document.metadata_fields.by_name("title")
         assert {(c.source, c.value) for c in claims} == {
-            (MetadataSource.EDITOR, "Editor Title"),
-            (MetadataSource.DOCUMENT, "Body Title"),
+            (MetadataSource.EDITOR, MetadataStringValue("Editor Title")),
+            (MetadataSource.DOCUMENT, MetadataStringValue("Body Title")),
         }
 
     def test_skips_empty_body_values(self, mock_api_client):
@@ -108,7 +113,7 @@ class TestMaterialiseBodyClaims:
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
-        assert claims[0].value == "Body Title"
+        assert claims[0].value == MetadataStringValue("Body Title")
 
     def test_skips_whitespace_only_string(self, mock_api_client):
         document = DocumentFactory.build(
@@ -124,7 +129,7 @@ class TestMaterialiseBodyClaims:
         document.metadata.case_number.materialise_body_claims()
         assert document.metadata_fields.by_name("case_number") == []
 
-    def test_date_materialises_isoformat(self, mock_api_client):
+    def test_date_materialises_as_date(self, mock_api_client):
         document = DocumentFactory.build(
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(document_date_as_string="2023-02-03"),
@@ -133,9 +138,9 @@ class TestMaterialiseBodyClaims:
 
         claims = document.metadata_fields.by_name("date")
         assert len(claims) == 1
-        assert claims[0].value == "2023-02-03"
-        assert isinstance(claims[0].value, str)
-        assert date.fromisoformat(claims[0].value) == date(2023, 2, 3)
+        assert claims[0].value == MetadataDateValue(date(2023, 2, 3))
+        assert isinstance(claims[0].value, MetadataDateValue)
+        assert claims[0].value.value == date(2023, 2, 3)
 
     def test_skips_missing_document_date(self, mock_api_client):
         document = DocumentFactory.build(
@@ -157,7 +162,7 @@ class TestMaterialiseBodyClaims:
         )
         rejected = MetadataField(
             name="title",
-            value="Body Title",
+            value=MetadataStringValue("Body Title"),
             source=MetadataSource.DOCUMENT,
             id=_id(),
             timestamp=TIMESTAMP,
@@ -257,8 +262,8 @@ class TestDocumentMaterialiseMetadataClaims:
             LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
             CURRENT_METADATA_MATERIALISATION_VERSION,
         )
-        assert document.metadata_fields.resolve("title").value == "Saved Title"
-        assert document.metadata_fields.resolve("court").value == "Saved Court"
+        assert document.metadata_fields.resolve("title").value == MetadataStringValue("Saved Title")
+        assert document.metadata_fields.resolve("court").value == MetadataStringValue("Saved Court")
 
     def test_needs_metadata_materialisation(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)

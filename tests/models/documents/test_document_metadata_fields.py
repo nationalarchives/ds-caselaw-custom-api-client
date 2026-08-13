@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 import pytest
@@ -6,7 +6,12 @@ from lxml import etree
 
 from caselawclient.factories import DocumentFactory
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
-from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
+from caselawclient.models.documents.metadata.fields.field import (
+    MetadataCategoryValue,
+    MetadataDateValue,
+    MetadataField,
+    MetadataStringValue,
+)
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
 from caselawclient.types import SuccessFailureMessageTuple
@@ -45,14 +50,14 @@ class TestDocumentMetadataFieldsLoadSave:
         mock_api_client.get_property_as_node.side_effect = get_property_as_node
         document = DocumentFactory.build(api_client=mock_api_client)
 
-        assert document.metadata_fields.resolve("title").value == "From fields"
+        assert document.metadata_fields.resolve("title").value == MetadataStringValue("From fields")
 
     def test_save_metadata_fields_writes_property(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
                 name="title",
-                value="Saved title",
+                value=MetadataStringValue("Saved title"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -65,13 +70,13 @@ class TestDocumentMetadataFieldsLoadSave:
         uri, property_name, tree = mock_api_client.set_property_as_node.call_args.args
         assert uri == document.uri
         assert property_name == "metadata_fields"
-        assert unpack_all_metadata_fields_from_etree(tree).resolve("title").value == "Saved title"
+        assert unpack_all_metadata_fields_from_etree(tree).resolve("title").value == MetadataStringValue("Saved title")
 
     def test_validate_metadata_fields_returns_success_failure_tuple(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         field = MetadataField(
             name="title",
-            value="Saved title",
+            value=MetadataStringValue("Saved title"),
             source=MetadataSource.EDITOR,
             id=_id(),
             timestamp=TIMESTAMP,
@@ -89,7 +94,7 @@ class TestDocumentMetadataFieldsLoadSave:
         document = DocumentFactory.build(api_client=mock_api_client)
         field = MetadataField(
             name="title",
-            value="Saved title",
+            value=MetadataStringValue("Saved title"),
             source=MetadataSource.EDITOR,
             id=_id(),
             timestamp=TIMESTAMP,
@@ -123,7 +128,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="title",
-                value="Fields Name",
+                value=MetadataStringValue("Fields Name"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -142,7 +147,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="title",
-                value="Rejected Name",
+                value=MetadataStringValue("Rejected Name"),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -249,7 +254,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="date",
-                value="2024-06-15",
+                value=MetadataDateValue(date(2024, 6, 15)),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -263,7 +268,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="date",
-                value="2024-06-15",
+                value=MetadataDateValue(date(2024, 6, 15)),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -274,43 +279,48 @@ class TestDocumentMetadataFacadePrefersFields:
         assert document.metadata.date.value is None
         assert document.metadata.date.as_string == ""
 
-    def test_date_unparsable_field_value_is_none(self, mock_api_client):
-        from caselawclient.models.documents.body import UnparsableDate
-
+    def test_date_facade_rejects_non_date_claim_value(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
                 name="date",
-                value="not-a-date",
+                value=MetadataStringValue("2024-06-15"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
                 timestamp=TIMESTAMP,
             )
         )
+        with pytest.raises(TypeError, match="Expected MetadataDateValue for 'date'"):
+            _ = document.metadata.date.value
 
-        with pytest.warns(UnparsableDate, match="Unparsable date"):
-            assert document.metadata.date.value is None
-
-    def test_date_empty_string_field_value_is_none(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="date",
-                value="",
-                source=MetadataSource.EXTERNAL,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
+    def test_date_rejects_string_value_on_pack(self, mock_api_client):
+        field = MetadataField(
+            name="date",
+            value=MetadataStringValue("2024-06-15"),
+            source=MetadataSource.EXTERNAL,
+            id=_id(),
+            timestamp=TIMESTAMP,
         )
+        with pytest.raises(TypeError, match="Expected MetadataDateValue for 'date'"):
+            _ = field.as_etree
 
-        assert document.metadata.date.value is None
+    def test_date_rejects_empty_string_on_pack(self, mock_api_client):
+        field = MetadataField(
+            name="date",
+            value=MetadataStringValue(""),
+            source=MetadataSource.EXTERNAL,
+            id=_id(),
+            timestamp=TIMESTAMP,
+        )
+        with pytest.raises(TypeError, match="Expected MetadataDateValue for 'date'"):
+            _ = field.as_etree
 
     def test_case_number_prefers_metadata_fields(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         document.metadata_fields.add(
             MetadataField(
                 name="case_number",
-                value="ABC-123",
+                value=MetadataStringValue("ABC-123"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -324,7 +334,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="case_number",
-                value="ABC-123",
+                value=MetadataStringValue("ABC-123"),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -336,17 +346,17 @@ class TestDocumentMetadataFacadePrefersFields:
 
     def test_case_number_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="case_number",
-                value=MetadataCategoryValue(name="not-a-case-number"),
-                source=MetadataSource.EDITOR,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
+        field = MetadataField(
+            name="case_number",
+            value=MetadataCategoryValue(name="not-a-case-number"),
+            source=MetadataSource.EDITOR,
+            id=_id(),
+            timestamp=TIMESTAMP,
         )
-
-        with pytest.raises(TypeError, match="Expected string metadata value for 'case_number'"):
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'case_number'"):
+            _ = field.as_etree
+        document.metadata_fields.add(field)
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'case_number'"):
             _ = document.metadata.case_number.value
 
     def test_court_prefers_metadata_fields(self, mock_api_client):
@@ -359,7 +369,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="court",
-                value="Fields Court",
+                value=MetadataStringValue("Fields Court"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -378,7 +388,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="court",
-                value="Rejected Court",
+                value=MetadataStringValue("Rejected Court"),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -390,17 +400,17 @@ class TestDocumentMetadataFacadePrefersFields:
 
     def test_court_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="court",
-                value=MetadataCategoryValue(name="not-a-court"),
-                source=MetadataSource.EDITOR,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
+        field = MetadataField(
+            name="court",
+            value=MetadataCategoryValue(name="not-a-court"),
+            source=MetadataSource.EDITOR,
+            id=_id(),
+            timestamp=TIMESTAMP,
         )
-
-        with pytest.raises(TypeError, match="Expected string metadata value for 'court'"):
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'court'"):
+            _ = field.as_etree
+        document.metadata_fields.add(field)
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'court'"):
             _ = document.metadata.court.value
 
     def test_jurisdiction_prefers_metadata_fields(self, mock_api_client):
@@ -413,7 +423,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="jurisdiction",
-                value="Fields Jurisdiction",
+                value=MetadataStringValue("Fields Jurisdiction"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -432,7 +442,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="jurisdiction",
-                value="Rejected",
+                value=MetadataStringValue("Rejected"),
                 source=MetadataSource.DOCUMENT,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -444,32 +454,32 @@ class TestDocumentMetadataFacadePrefersFields:
 
     def test_jurisdiction_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="jurisdiction",
-                value=MetadataCategoryValue(name="not-a-jurisdiction"),
-                source=MetadataSource.EDITOR,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
+        field = MetadataField(
+            name="jurisdiction",
+            value=MetadataCategoryValue(name="not-a-jurisdiction"),
+            source=MetadataSource.EDITOR,
+            id=_id(),
+            timestamp=TIMESTAMP,
         )
-
-        with pytest.raises(TypeError, match="Expected string metadata value for 'jurisdiction'"):
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'jurisdiction'"):
+            _ = field.as_etree
+        document.metadata_fields.add(field)
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'jurisdiction'"):
             _ = document.metadata.jurisdiction.value
 
     def test_title_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataCategoryValue(name="not-a-title"),
-                source=MetadataSource.EDITOR,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
+        field = MetadataField(
+            name="title",
+            value=MetadataCategoryValue(name="not-a-title"),
+            source=MetadataSource.EDITOR,
+            id=_id(),
+            timestamp=TIMESTAMP,
         )
-
-        with pytest.raises(TypeError, match="Expected string metadata value for 'title'"):
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'title'"):
+            _ = field.as_etree
+        document.metadata_fields.add(field)
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'title'"):
             _ = document.metadata.title.value
 
     def test_categories_orphan_child_without_parent_claim_is_omitted(self, mock_api_client):
@@ -502,7 +512,7 @@ class TestDocumentMetadataFacadePrefersFields:
         document.metadata_fields.add(
             MetadataField(
                 name="judges",
-                value="Claim Judge",
+                value=MetadataStringValue("Claim Judge"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,

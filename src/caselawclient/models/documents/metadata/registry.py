@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, fields
+from functools import lru_cache
 
 from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
@@ -21,6 +22,16 @@ METADATA_FIELD_CLASSES: tuple[type[Metadata], ...] = (
     JurisdictionMetadata,
     NameMetadata,
 )
+
+
+@lru_cache(maxsize=1)
+def metadata_classes_by_key() -> dict[str, type[Metadata]]:
+    return {cls.key: cls for cls in METADATA_FIELD_CLASSES}
+
+
+def metadata_class_for_key(key: str) -> type[Metadata] | None:
+    """Return the metadata type class for a claim ``name``, if registered."""
+    return metadata_classes_by_key().get(key)
 
 
 @dataclass(slots=True)
