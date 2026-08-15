@@ -32,7 +32,7 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260712
-          - boto3-stubs[s3,sns]==1.43.70
+          - boto3-stubs[s3,sns]==1.43.71
           - types-python-dateutil==2.9.0.20260807
           - types-lxml==2026.2.16
           - ds-caselaw-utils==4.9.0
@@ -48,7 +48,7 @@ repos:
       - language: python
         additional_dependencies:
           - types-requests==2.33.0.20260712
-          - boto3-stubs[s3,sns]==1.43.70
+          - boto3-stubs[s3,sns]==1.43.71
           - types-python-dateutil==2.9.0.20260807
           - types-lxml==2026.2.16
           - types-defusedxml==0.7.0.20260504
