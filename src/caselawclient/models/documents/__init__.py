@@ -19,7 +19,6 @@ from caselawclient.errors import (
 from caselawclient.identifier_resolution import IdentifierResolutions
 from caselawclient.models.documents import comparison
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
-from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
 from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
@@ -964,18 +963,9 @@ class Document:
                 "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
             )
 
-    def validate_metadata_fields(self) -> SuccessFailureMessageTuple:
-        return self.metadata_fields.validate_ids_match_keys()
-
     def save_metadata_fields(self) -> None:
-        """Validate metadata fields, and if validation passes save them to MarkLogic."""
-        validations = self.validate_metadata_fields()
-        if validations.success is True:
-            self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
-        else:
-            raise MetadataFieldValidationException(
-                "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
-            )
+        """Save metadata claims to MarkLogic."""
+        self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
 
     _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
         "name": ("title", "value"),

@@ -4,9 +4,16 @@ import pytest
 from lxml import etree
 
 from caselawclient.models.documents.metadata.base import Metadata
-from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
+from caselawclient.models.documents.metadata.fields.collection import (
+    MetadataFieldAddResult,
+    MetadataFieldsCollection,
+)
 from caselawclient.models.documents.metadata.fields.exceptions import (
     InvalidMetadataFieldXMLRepresentationException,
+    MetadataFieldEmptyValueException,
+    MetadataFieldException,
+    MetadataFieldIdCollisionException,
+    MetadataFieldKeyMismatchException,
     MetadataFieldRemovalNotAllowedException,
 )
 from caselawclient.models.documents.metadata.fields.field import (
@@ -613,3 +620,257 @@ class TestMetadataFieldsMutation:
             collection.remove(field.id)
 
         assert field.id in collection
+
+
+class TestMetadataFieldsIdempotentAdd:
+    def test_add_same_payload_different_ids_is_noop(self):
+        collection = MetadataFieldsCollection()
+        first = MetadataField(
+            name="title",
+            value=MetadataStringValue("Same"),
+            source=MetadataSource.EXTERNAL,
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        second = MetadataField(
+            name="title",
+            value=MetadataStringValue("Same"),
+            source=MetadataSource.EXTERNAL,
+            id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            timestamp=LATE_TIMESTAMP,
+        )
+        assert collection.add(first) is MetadataFieldAddResult.ADDED
+        assert collection.add(second) is MetadataFieldAddResult.ALREADY_PRESENT
+
+        assert list(collection.keys()) == [first.id]
+        assert collection[first.id].timestamp == EARLY_TIMESTAMP
+
+    def test_add_same_id_same_payload_is_noop(self):
+        collection = MetadataFieldsCollection()
+        field = MetadataField(
+            name="title",
+            value=MetadataStringValue("Same"),
+            source=MetadataSource.EXTERNAL,
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        assert collection.add(field) is MetadataFieldAddResult.ADDED
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Same"),
+                    source=MetadataSource.EXTERNAL,
+                    id=field.id,
+                    timestamp=LATE_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ALREADY_PRESENT
+        )
+
+        assert collection[field.id].timestamp == EARLY_TIMESTAMP
+
+    def test_add_same_id_different_payload_raises(self):
+        collection = MetadataFieldsCollection()
+        collection.add(
+            MetadataField(
+                name="title",
+                value=MetadataStringValue("One"),
+                source=MetadataSource.EXTERNAL,
+                id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                timestamp=EARLY_TIMESTAMP,
+            )
+        )
+        with pytest.raises(MetadataFieldIdCollisionException, match="already exists"):
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Two"),
+                    source=MetadataSource.EXTERNAL,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=LATE_TIMESTAMP,
+                )
+            )
+
+    def test_add_matching_rejected_claim_is_noop(self):
+        collection = MetadataFieldsCollection()
+        rejected = MetadataField(
+            name="title",
+            value=MetadataStringValue("Kept"),
+            source=MetadataSource.DOCUMENT,
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            timestamp=EARLY_TIMESTAMP,
+            rejected=True,
+        )
+        collection.add(rejected)
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Kept"),
+                    source=MetadataSource.DOCUMENT,
+                    id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    timestamp=LATE_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ALREADY_PRESENT
+        )
+
+        assert list(collection.keys()) == [rejected.id]
+        assert collection[rejected.id].rejected is True
+
+    def test_add_same_id_does_not_flip_rejected(self):
+        collection = MetadataFieldsCollection()
+        field_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        collection.add(
+            MetadataField(
+                name="title",
+                value=MetadataStringValue("Kept"),
+                source=MetadataSource.DOCUMENT,
+                id=field_id,
+                timestamp=EARLY_TIMESTAMP,
+                rejected=True,
+            )
+        )
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Kept"),
+                    source=MetadataSource.DOCUMENT,
+                    id=field_id,
+                    timestamp=LATE_TIMESTAMP,
+                    rejected=False,
+                )
+            )
+            is MetadataFieldAddResult.ALREADY_PRESENT
+        )
+
+        assert collection[field_id].rejected is True
+
+    def test_add_equivalent_string_value_is_noop(self):
+        collection = MetadataFieldsCollection()
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Title"),
+                    source=MetadataSource.EXTERNAL,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=EARLY_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ADDED
+        )
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("  Title  "),
+                    source=MetadataSource.EXTERNAL,
+                    id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    timestamp=LATE_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ALREADY_PRESENT
+        )
+
+        assert list(collection.keys()) == ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+
+    def test_add_empty_string_value_raises(self):
+        collection = MetadataFieldsCollection()
+        with pytest.raises(MetadataFieldEmptyValueException, match="empty"):
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("   "),
+                    source=MetadataSource.EXTERNAL,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=EARLY_TIMESTAMP,
+                )
+            )
+
+    def test_different_sources_same_value_are_both_kept(self):
+        collection = MetadataFieldsCollection()
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Shared"),
+                    source=MetadataSource.DOCUMENT,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=EARLY_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ADDED
+        )
+        assert (
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataStringValue("Shared"),
+                    source=MetadataSource.EXTERNAL,
+                    id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    timestamp=LATE_TIMESTAMP,
+                )
+            )
+            is MetadataFieldAddResult.ADDED
+        )
+
+        assert set(collection.keys()) == {
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        }
+        assert collection.resolve("title").value == MetadataStringValue("Shared")
+        assert collection.resolve("title").winning_source is MetadataSource.EXTERNAL
+
+    def test_setitem_routes_through_add(self):
+        collection = MetadataFieldsCollection()
+        field = MetadataField(
+            name="title",
+            value=MetadataStringValue("Via setitem"),
+            source=MetadataSource.EXTERNAL,
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        collection[field.id] = field
+        assert collection[field.id].value == MetadataStringValue("Via setitem")
+
+    def test_setitem_key_mismatch_raises(self):
+        collection = MetadataFieldsCollection()
+        field = MetadataField(
+            name="title",
+            value=MetadataStringValue("X"),
+            source=MetadataSource.EXTERNAL,
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        with pytest.raises(MetadataFieldKeyMismatchException, match="does not match claim id"):
+            collection["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"] = field
+
+    def test_setitem_colliding_different_payload_raises(self):
+        collection = MetadataFieldsCollection()
+        field_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        collection.add(
+            MetadataField(
+                name="title",
+                value=MetadataStringValue("One"),
+                source=MetadataSource.EXTERNAL,
+                id=field_id,
+                timestamp=EARLY_TIMESTAMP,
+            )
+        )
+        with pytest.raises(MetadataFieldIdCollisionException):
+            collection[field_id] = MetadataField(
+                name="title",
+                value=MetadataStringValue("Two"),
+                source=MetadataSource.EXTERNAL,
+                id=field_id,
+                timestamp=LATE_TIMESTAMP,
+            )
+
+    def test_add_exceptions_share_base_type(self):
+        assert issubclass(MetadataFieldEmptyValueException, MetadataFieldException)
+        assert issubclass(MetadataFieldIdCollisionException, MetadataFieldException)
+        assert issubclass(MetadataFieldKeyMismatchException, MetadataFieldException)
+        assert issubclass(MetadataFieldRemovalNotAllowedException, MetadataFieldException)
