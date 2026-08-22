@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime
+from unittest.mock import PropertyMock, patch
 from uuid import uuid4
 
 import pytest
@@ -14,6 +15,7 @@ from caselawclient.models.documents.metadata.materialisation import (
     document_needs_metadata_materialisation,
     metadata_logic_versions,
 )
+from caselawclient.types import DocumentCategory
 
 TIMESTAMP = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
 
@@ -36,17 +38,6 @@ class TestMetadataMaterialisationVersion:
         assert document_needs_metadata_materialisation("") is True
         assert document_needs_metadata_materialisation("stale") is True
         assert document_needs_metadata_materialisation(CURRENT_METADATA_MATERIALISATION_VERSION) is False
-
-
-class TestValueResolves:
-    def test_empty_category_name_does_not_resolve(self):
-        assert Metadata._value_resolves(MetadataCategoryValue(name="")) is False  # noqa: SLF001
-
-    def test_whitespace_only_string_does_not_resolve(self):
-        assert Metadata._value_resolves("   ") is False  # noqa: SLF001
-
-    def test_unexpected_value_type_does_not_resolve(self):
-        assert Metadata._value_resolves(123) is False  # type: ignore[arg-type]  # noqa: SLF001
 
 
 class TestMaterialiseBodyClaims:
@@ -109,16 +100,22 @@ class TestMaterialiseBodyClaims:
         assert document.metadata_fields.by_name("case_number") == []
 
     def test_strips_whitespace_when_materialising(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata.title._materialise_document_values(["  Body Title  "])  # noqa: SLF001
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(name="  Body Title  "),
+        )
+        document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
         assert claims[0].value == "Body Title"
 
     def test_skips_whitespace_only_string(self, mock_api_client):
-        document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata.title._materialise_document_values(["   "])  # noqa: SLF001
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(name="   "),
+        )
+        document.metadata.title.materialise_body_claims()
         assert document.metadata_fields.by_name("title") == []
 
     def test_skips_none_case_number(self, mock_api_client):
@@ -201,17 +198,45 @@ class TestMaterialiseBodyClaims:
         document.metadata.categories.materialise_body_claims()
 
         values = {
-            (claim.value.name, claim.value.parent)  # type: ignore[union-attr]
+            (claim.value.name, claim.value.parent)
             for claim in document.metadata_fields.by_name("categories")
+            if isinstance(claim.value, MetadataCategoryValue)
         }
         assert values == {("Parent", None), ("Child", "Parent")}
 
-    def test_empty_category_name_is_not_materialised(self, mock_api_client):
+    def test_skips_empty_category_names_from_body(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata.categories._materialise_document_values(  # noqa: SLF001
-            [MetadataCategoryValue(name="", parent=None)]
-        )
+        with patch.object(
+            type(document.body),
+            "categories",
+            new_callable=PropertyMock,
+            return_value=[DocumentCategory(name="")],
+        ):
+            document.metadata.categories.materialise_body_claims()
+
         assert document.metadata_fields.by_name("categories") == []
+
+    def test_strips_whitespace_only_category_parent(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        with patch.object(
+            type(document.body),
+            "categories",
+            new_callable=PropertyMock,
+            return_value=[
+                DocumentCategory(
+                    name="   ",
+                    subcategories=[DocumentCategory(name="Child")],
+                )
+            ],
+        ):
+            document.metadata.categories.materialise_body_claims()
+
+        values = {
+            (claim.value.name, claim.value.parent)
+            for claim in document.metadata_fields.by_name("categories")
+            if isinstance(claim.value, MetadataCategoryValue)
+        }
+        assert values == {("Child", None)}
 
 
 class TestDocumentMaterialiseMetadataClaims:

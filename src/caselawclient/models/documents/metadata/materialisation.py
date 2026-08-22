@@ -4,28 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import TYPE_CHECKING
 
-from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
-from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
-from caselawclient.models.documents.metadata.types.court import CourtMetadata
-from caselawclient.models.documents.metadata.types.date import DateMetadata
-from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
-from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
-from caselawclient.models.documents.metadata.types.name import NameMetadata
-
-if TYPE_CHECKING:
-    from caselawclient.models.documents.metadata.base import Metadata
-
-METADATA_FIELD_CLASSES: tuple[type[Metadata], ...] = (
-    CaseNumberMetadata,
-    CategoriesMetadata,
-    CourtMetadata,
-    DateMetadata,
-    JudgesMetadata,
-    JurisdictionMetadata,
-    NameMetadata,
-)
+from caselawclient.models.documents.metadata.registry import METADATA_FIELD_CLASSES
 
 LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY = "latest_metadata_materialisation_version"
 

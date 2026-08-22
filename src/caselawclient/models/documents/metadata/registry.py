@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, fields
-from typing import Literal
 
 from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
@@ -13,7 +12,15 @@ from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
 from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
 from caselawclient.models.documents.metadata.types.name import NameMetadata
 
-MetadataAttributeKey = Literal["title", "court", "jurisdiction", "date", "case_number", "categories", "judges"]
+METADATA_FIELD_CLASSES: tuple[type[Metadata], ...] = (
+    CaseNumberMetadata,
+    CategoriesMetadata,
+    CourtMetadata,
+    DateMetadata,
+    JudgesMetadata,
+    JurisdictionMetadata,
+    NameMetadata,
+)
 
 
 @dataclass(slots=True)
