@@ -1,19 +1,28 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from lxml import etree
 
+from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.exceptions import (
     InvalidMetadataFieldXMLRepresentationException,
     MetadataFieldRemovalNotAllowedException,
 )
-from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
+from caselawclient.models.documents.metadata.fields.field import (
+    MetadataCategoryValue,
+    MetadataDateValue,
+    MetadataField,
+    MetadataFieldValue,
+    MetadataStringValue,
+)
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.fields.unpacker import (
     unpack_a_metadata_field_from_etree,
     unpack_all_metadata_fields_from_etree,
 )
+from caselawclient.models.documents.metadata.registry import METADATA_FIELD_CLASSES
+from caselawclient.xml_helpers import Element
 
 EARLY_TIMESTAMP = datetime(2025, 12, 17, 18, 0, 0, tzinfo=UTC)
 LATE_TIMESTAMP = datetime(2025, 12, 18, 12, 0, 0, tzinfo=UTC)
@@ -25,11 +34,44 @@ class TestMetadataSource:
         assert MetadataSource.EXTERNAL.precedence < MetadataSource.EDITOR.precedence
 
 
+class TestMetadataFieldValues:
+    def test_string_value_strips_and_normalises_empty_to_none(self):
+        assert MetadataStringValue("  Title  ").value == "Title"
+        assert MetadataStringValue("   ").normalised() is None
+
+    def test_category_value_strips_whitespace_parent_and_rejects_empty_name(self):
+        assert MetadataCategoryValue(name=" Child ", parent="  ").parent is None
+        with pytest.raises(ValueError, match="non-empty"):
+            MetadataCategoryValue(name="")
+
+    def test_pack_unknown_name_raises(self):
+        field = MetadataField(
+            name="not_a_real_field",
+            value=MetadataStringValue("X"),
+            source=MetadataSource.EXTERNAL,
+            id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="unknown name"):
+            _ = field.as_etree
+
+    def test_pack_categories_rejects_string_value(self):
+        field = MetadataField(
+            name="categories",
+            value=MetadataStringValue("not-a-category"),
+            source=MetadataSource.EXTERNAL,
+            id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        with pytest.raises(TypeError, match="Expected MetadataCategoryValue"):
+            _ = field.as_etree
+
+
 class TestMetadataFieldPacking:
     def test_pack_scalar_value(self):
         field = MetadataField(
             name="title",
-            value="A Judgment",
+            value=MetadataStringValue("A Judgment"),
             source=MetadataSource.DOCUMENT,
             id="2d80bf1d-e3ea-452f-965c-041f4399f2dd",
             timestamp=EARLY_TIMESTAMP,
@@ -42,6 +84,7 @@ class TestMetadataFieldPacking:
         assert element.get("source") == "document"
         assert element.get("timestamp") == EARLY_TIMESTAMP.isoformat()
         assert element.get("rejected") == "false"
+        assert element.get("pack_version") == "1"
         assert element.text == "A Judgment"
 
     def test_pack_category_value(self):
@@ -72,7 +115,7 @@ class TestMetadataFieldPacking:
     def test_pack_rejected(self):
         field = MetadataField(
             name="title",
-            value="Wrong",
+            value=MetadataStringValue("Wrong"),
             source=MetadataSource.DOCUMENT,
             id="f47ac10b-58cc-4372-a567-0e02b2c3d479",
             timestamp=EARLY_TIMESTAMP,
@@ -88,11 +131,12 @@ class TestMetadataFieldUnpacking:
             f'timestamp="{EARLY_TIMESTAMP.isoformat()}" rejected="false">A Judgment</metadata>'
         )
         field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
 
         assert field.id == "2d80bf1d-e3ea-452f-965c-041f4399f2dd"
         assert field.name == "title"
         assert field.source is MetadataSource.DOCUMENT
-        assert field.value == "A Judgment"
+        assert field.value == MetadataStringValue("A Judgment")
         assert field.timestamp == EARLY_TIMESTAMP
         assert field.rejected is False
 
@@ -103,6 +147,7 @@ class TestMetadataFieldUnpacking:
             "<name>Subcategory</name><parent>Category</parent></metadata>"
         )
         field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
 
         assert isinstance(field.value, MetadataCategoryValue)
         assert field.value.name == "Subcategory"
@@ -115,6 +160,7 @@ class TestMetadataFieldUnpacking:
             "<name>Category One</name><parent/></metadata>"
         )
         field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
 
         assert isinstance(field.value, MetadataCategoryValue)
         assert field.value.parent is None
@@ -124,7 +170,9 @@ class TestMetadataFieldUnpacking:
             '<metadata id="f47ac10b-58cc-4372-a567-0e02b2c3d479" name="title" source="document" '
             f'timestamp="{EARLY_TIMESTAMP.isoformat()}" rejected="true">Wrong</metadata>'
         )
-        assert unpack_a_metadata_field_from_etree(xml).rejected is True
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.rejected is True
 
     def test_unpack_missing_id_raises(self):
         xml = etree.fromstring(
@@ -188,6 +236,128 @@ class TestMetadataFieldUnpacking:
         with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="category name"):
             unpack_a_metadata_field_from_etree(xml)
 
+    def test_unpack_missing_category_name_element_raises(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="categories" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}"></metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="category name element"):
+            unpack_a_metadata_field_from_etree(xml)
+
+    def test_unpack_legacy_date_yyyy_mm_dd(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="date" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">2023-02-03</metadata>'
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataDateValue(date(2023, 2, 3))
+
+    def test_unpack_empty_date_raises(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="date" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}"></metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="date value"):
+            unpack_a_metadata_field_from_etree(xml)
+
+    def test_unpack_unparsable_date_raises(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="date" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">not-a-date</metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="unparsable date"):
+            unpack_a_metadata_field_from_etree(xml)
+
+    def test_unpack_missing_pack_version_defaults_to_v1(self):
+        xml = etree.fromstring(
+            '<metadata id="2d80bf1d-e3ea-452f-965c-041f4399f2dd" name="title" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">A Judgment</metadata>'
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataStringValue("A Judgment")
+
+    def test_unpack_date_strips_whitespace(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="date" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">\n  2023-02-03\n</metadata>'
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataDateValue(date(2023, 2, 3))
+
+    def test_unpack_category_strips_name_and_parent(self):
+        xml = etree.fromstring(
+            '<metadata id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67" name="categories" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">'
+            "<name>  Subcategory  </name><parent>  Category  </parent></metadata>"
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataCategoryValue(name="Subcategory", parent="Category")
+
+    def test_unpack_whitespace_only_category_name_raises_invalid_xml(self):
+        xml = etree.fromstring(
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="categories" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}"><name>   </name><parent/></metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="category name"):
+            unpack_a_metadata_field_from_etree(xml)
+
+    @pytest.mark.parametrize("pack_version", ["not-an-int", "0", "-1"])
+    def test_unpack_invalid_pack_version_raises(self, pack_version: str):
+        xml = etree.fromstring(
+            '<metadata id="2d80bf1d-e3ea-452f-965c-041f4399f2dd" name="title" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}" pack_version="{pack_version}">A Judgment</metadata>'
+        )
+        with pytest.raises(InvalidMetadataFieldXMLRepresentationException, match="pack_version"):
+            unpack_a_metadata_field_from_etree(xml)
+
+    def test_unpack_unknown_name_warns_and_skips(self):
+        xml = etree.fromstring(
+            "<metadata_fields>"
+            '<metadata id="2d80bf1d-e3ea-452f-965c-041f4399f2dd" name="title" source="document" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">Keep me</metadata>'
+            '<metadata id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34" name="not_a_real_field" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">Skip me</metadata>'
+            "</metadata_fields>"
+        )
+        with pytest.warns(UserWarning, match="unknown name 'not_a_real_field'"):
+            collection = unpack_all_metadata_fields_from_etree(xml)
+        assert list(collection.keys()) == ["2d80bf1d-e3ea-452f-965c-041f4399f2dd"]
+        assert collection["2d80bf1d-e3ea-452f-965c-041f4399f2dd"].value == MetadataStringValue("Keep me")
+
+    def test_pack_date_emits_iso_text(self):
+        field = MetadataField(
+            name="date",
+            value=MetadataDateValue(date(2023, 2, 3)),
+            source=MetadataSource.DOCUMENT,
+            id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        element = field.as_etree
+        assert element.get("pack_version") == "1"
+        assert element.text == "2023-02-03"
+
+    def test_pack_date_rejects_datetime(self):
+        with pytest.raises(TypeError, match="datetime"):
+            MetadataDateValue(datetime(2023, 2, 3, 12, 0, tzinfo=UTC))
+
+    def test_date_roundtrip(self):
+        original = MetadataFieldsCollection()
+        original.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(date(2023, 2, 3)),
+                source=MetadataSource.DOCUMENT,
+                id="9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34",
+                timestamp=EARLY_TIMESTAMP,
+            )
+        )
+        unpacked = unpack_all_metadata_fields_from_etree(original.as_etree)
+        assert unpacked["9b2c8e4f-1a3d-4c5e-8f7a-6b0d9e2c1a34"].value == MetadataDateValue(date(2023, 2, 3))
+
     def test_unpack_none_returns_empty_collection(self):
         assert unpack_all_metadata_fields_from_etree(None) == MetadataFieldsCollection()
 
@@ -196,7 +366,7 @@ class TestMetadataFieldUnpacking:
         original.add(
             MetadataField(
                 name="title",
-                value="Judgment",
+                value=MetadataStringValue("Judgment"),
                 source=MetadataSource.DOCUMENT,
                 id="c0ffee00-dead-beef-cafe-0123456789ab",
                 timestamp=EARLY_TIMESTAMP,
@@ -216,7 +386,7 @@ class TestMetadataFieldUnpacking:
         unpacked = unpack_all_metadata_fields_from_etree(original.as_etree)
 
         assert set(unpacked.keys()) == set(original.keys())
-        assert unpacked["c0ffee00-dead-beef-cafe-0123456789ab"].value == "Judgment"
+        assert unpacked["c0ffee00-dead-beef-cafe-0123456789ab"].value == MetadataStringValue("Judgment")
         assert unpacked["c0ffee00-dead-beef-cafe-0123456789ab"].timestamp == EARLY_TIMESTAMP
         assert unpacked["1e2f3a4b-5c6d-7e8f-9012-3456789abcde"].rejected is True
         category = unpacked["1e2f3a4b-5c6d-7e8f-9012-3456789abcde"].value
@@ -225,13 +395,60 @@ class TestMetadataFieldUnpacking:
         assert category.parent is None
 
 
+class TestMetadataUnpackContract:
+    """Registry-wide guardrails for strip + exception contract on unpack."""
+
+    @staticmethod
+    def _sample_value(metadata_cls: type[Metadata]) -> MetadataFieldValue:
+        if metadata_cls.key == "date":
+            return MetadataDateValue(date(2023, 2, 3))
+        if metadata_cls.key == "categories":
+            return MetadataCategoryValue(name="Child", parent="Parent")
+        return MetadataStringValue("Sample")
+
+    @staticmethod
+    def _pad_value_text(element: Element) -> None:
+        if element.text and element.text.strip():
+            element.text = f"\n  {element.text}\n"
+        for child in element:
+            if child.text and child.text.strip():
+                child.text = f"  {child.text}  "
+
+    @pytest.mark.parametrize("metadata_cls", METADATA_FIELD_CLASSES, ids=lambda cls: cls.key)
+    def test_whitespace_padded_payload_roundtrips(self, metadata_cls):
+        field = MetadataField(
+            name=metadata_cls.key,
+            value=self._sample_value(metadata_cls),
+            source=MetadataSource.EXTERNAL,
+            id="2d80bf1d-e3ea-452f-965c-041f4399f2dd",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        packed = field.as_etree
+        expected = field.value
+        self._pad_value_text(packed)
+
+        unpacked = unpack_a_metadata_field_from_etree(packed)
+        assert unpacked is not None
+        assert unpacked.value == expected
+
+    @pytest.mark.parametrize("metadata_cls", METADATA_FIELD_CLASSES, ids=lambda cls: cls.key)
+    def test_empty_payload_does_not_leak_valueerror(self, metadata_cls):
+        element = etree.Element("metadata")
+        try:
+            metadata_cls.unpack_value(element, 1)
+        except InvalidMetadataFieldXMLRepresentationException:
+            return
+        except ValueError as exc:
+            pytest.fail(f"{metadata_cls.key} leaked ValueError from unpack_value: {exc}")
+
+
 class TestMetadataFieldsResolution:
     def test_single_value_uses_highest_precedence(self):
         collection = MetadataFieldsCollection()
         collection.add(
             MetadataField(
                 name="title",
-                value="From document",
+                value=MetadataStringValue("From document"),
                 source=MetadataSource.DOCUMENT,
                 id="10d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
                 timestamp=EARLY_TIMESTAMP,
@@ -240,7 +457,7 @@ class TestMetadataFieldsResolution:
         collection.add(
             MetadataField(
                 name="title",
-                value="From editor",
+                value=MetadataStringValue("From editor"),
                 source=MetadataSource.EDITOR,
                 id="71e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80",
                 timestamp=EARLY_TIMESTAMP,
@@ -249,7 +466,7 @@ class TestMetadataFieldsResolution:
         collection.add(
             MetadataField(
                 name="title",
-                value="From external",
+                value=MetadataStringValue("From external"),
                 source=MetadataSource.EXTERNAL,
                 id="45b8c9d0-e1f2-4a3b-4c5d-6e7f8091a2b3",
                 timestamp=EARLY_TIMESTAMP,
@@ -257,7 +474,7 @@ class TestMetadataFieldsResolution:
         )
 
         resolved = collection.resolve("title")
-        assert resolved.value == "From editor"
+        assert resolved.value == MetadataStringValue("From editor")
         assert resolved.winning_source is MetadataSource.EDITOR
 
     def test_same_source_prefers_latest_timestamp(self):
@@ -265,7 +482,7 @@ class TestMetadataFieldsResolution:
         collection.add(
             MetadataField(
                 name="title",
-                value="Older editor title",
+                value=MetadataStringValue("Older editor title"),
                 source=MetadataSource.EDITOR,
                 id="71e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80",
                 timestamp=EARLY_TIMESTAMP,
@@ -274,14 +491,14 @@ class TestMetadataFieldsResolution:
         collection.add(
             MetadataField(
                 name="title",
-                value="Newer editor title",
+                value=MetadataStringValue("Newer editor title"),
                 source=MetadataSource.EDITOR,
                 id="81e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80",
                 timestamp=LATE_TIMESTAMP,
             )
         )
 
-        assert collection.resolve("title").value == "Newer editor title"
+        assert collection.resolve("title").value == MetadataStringValue("Newer editor title")
 
     def test_winning_source_is_none_when_empty(self):
         assert MetadataFieldsCollection().resolve("title").winning_source is None
@@ -334,7 +551,7 @@ class TestMetadataFieldsResolution:
         collection.add(
             MetadataField(
                 name="title",
-                value="Wrong",
+                value=MetadataStringValue("Wrong"),
                 source=MetadataSource.DOCUMENT,
                 id="60d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
                 timestamp=EARLY_TIMESTAMP,

@@ -1,11 +1,13 @@
+import warnings
 from datetime import datetime
 
 from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.exceptions import (
     InvalidMetadataFieldXMLRepresentationException,
 )
-from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
+from caselawclient.models.documents.metadata.fields.field import MetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
+from caselawclient.models.documents.metadata.fields.unpack_helpers import parse_pack_version
 from caselawclient.models.utilities.dates import require_aware_utc
 from caselawclient.xml_helpers import Element
 
@@ -19,13 +21,22 @@ def unpack_all_metadata_fields_from_etree(
         return collection
 
     for metadata_element in metadata_fields_etree.findall("metadata"):
-        collection.add(unpack_a_metadata_field_from_etree(metadata_element))
+        field = unpack_a_metadata_field_from_etree(metadata_element)
+        if field is not None:
+            collection.add(field)
 
     return collection
 
 
-def unpack_a_metadata_field_from_etree(metadata_xml: Element) -> MetadataField:
-    """Unpack a single ``<metadata>`` element into a ``MetadataField``."""
+def unpack_a_metadata_field_from_etree(metadata_xml: Element) -> MetadataField | None:
+    """Unpack a single ``<metadata>`` element into a ``MetadataField``.
+
+    Unknown claim ``name`` values warn and return ``None`` so the rest of the
+    collection can still load.
+    """
+    # Lazy import avoids a cycle: unpacker → registry → types → base → field → …
+    from caselawclient.models.documents.metadata.registry import metadata_class_for_key
+
     field_id = metadata_xml.get("id")
     name = metadata_xml.get("name")
     source_value = metadata_xml.get("source")
@@ -48,6 +59,14 @@ def unpack_a_metadata_field_from_etree(metadata_xml: Element) -> MetadataField:
             "Metadata field XML representation is not valid: timestamp not present or empty"
         )
 
+    metadata_cls = metadata_class_for_key(name)
+    if metadata_cls is None:
+        warnings.warn(
+            f"Skipping metadata field with unknown name '{name}'",
+            stacklevel=2,
+        )
+        return None
+
     try:
         source = MetadataSource(source_value)
     except ValueError as exc:
@@ -65,22 +84,18 @@ def unpack_a_metadata_field_from_etree(metadata_xml: Element) -> MetadataField:
     rejected_attr = metadata_xml.get("rejected")
     rejected = rejected_attr is not None and rejected_attr.lower() == "true"
 
-    name_child = metadata_xml.find("name")
-    if name_child is not None:
-        category_name = name_child.text
-        if not category_name:
-            raise InvalidMetadataFieldXMLRepresentationException(
-                "Metadata field XML representation is not valid: category name not present or empty"
-            )
-        parent_child = metadata_xml.find("parent")
-        parent: str | None
-        if parent_child is None or parent_child.text is None or parent_child.text == "":
-            parent = None
-        else:
-            parent = parent_child.text
-        value: MetadataCategoryValue | str = MetadataCategoryValue(name=category_name, parent=parent)
-    else:
-        value = metadata_xml.text or ""
+    pack_version = parse_pack_version(metadata_xml.get("pack_version"))
+
+    try:
+        value = metadata_cls.unpack_value(metadata_xml, pack_version)
+    except InvalidMetadataFieldXMLRepresentationException:
+        raise
+    except ValueError as exc:
+        # Safety net: value constructors / parsers should already raise
+        # InvalidMetadataFieldXMLRepresentationException, but wrap leaks.
+        raise InvalidMetadataFieldXMLRepresentationException(
+            f"Metadata field XML representation is not valid: {exc}"
+        ) from exc
 
     return MetadataField(
         name=name,

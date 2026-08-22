@@ -1,4 +1,5 @@
 from caselawclient.models.documents.metadata.base import SingleMetadata
+from caselawclient.models.documents.metadata.fields.field import MetadataStringValue
 
 
 class CaseNumberMetadata(SingleMetadata[str | None]):
@@ -8,17 +9,10 @@ class CaseNumberMetadata(SingleMetadata[str | None]):
 
     @property
     def value(self) -> str | None:
-        resolved = self._resolve_claims()
-        if not resolved.has_any_claims:
-            return self.document.body.case_number
-        if resolved.value is None:
-            return None
-        if not isinstance(resolved.value, str):
-            raise TypeError(f"Expected string metadata value for '{self.key}', got {type(resolved.value).__name__}")
-        return resolved.value
+        return self._optional_string_value(self.document.body.case_number)
 
     def materialise_body_claims(self) -> None:
         case_number = self.document.body.case_number
         if case_number is None:
             return
-        self._materialise_document_values([case_number])
+        self._materialise_document_values([MetadataStringValue(case_number)])
