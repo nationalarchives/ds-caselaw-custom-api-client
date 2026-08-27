@@ -39,7 +39,7 @@ pytest-cov = "7.1.0"
 beautifulsoup4 = "4.15.0"
 responses = "0.26.2"
 python-dotenv = "1.2.3"
-time-machine = "3.4.0"
+time-machine = "3.5.0"
 moto = {version = "5.2.3", extras = ["all"]}
 
 [tool.poetry.group.docs]
