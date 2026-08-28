@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Fix
+
+- Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
+
 ## v49.1.1 (2026-08-13)
 
 ### Fix
