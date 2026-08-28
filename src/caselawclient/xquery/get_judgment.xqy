@@ -49,8 +49,8 @@ let $transformed := if($search_query) then
         $delete_meta_marks_xslt,
         cts:highlight(
           $raw_xml,
-          helper:make-q-query($search_query),
-          <uk:mark>{$cts:text}</uk:mark>
+          helper:make-highlight-query($search_query),
+          if ($cts:text ne "") then <uk:mark>{$cts:text}</uk:mark> else ()
         )
       )
     else
