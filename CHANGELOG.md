@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### BREAKING CHANGE
+
+- Use document.metadata.title / .judges (etc), not
+  metadata["title"]. DocumentMetadata is not a dict and has no get/keys/
+  values/in. Legacy name/judge keys are gone.
+
+### Feat
+
+- **Metadata**: expose DocumentMetadata as typed attribute facades
+
 ### Fix
 
 - Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
