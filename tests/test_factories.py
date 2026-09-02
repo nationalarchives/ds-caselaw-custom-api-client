@@ -57,4 +57,4 @@ class TestDocumentBodyXmlEscaping:
         )
 
         assert judgment.body.name == "R v G & B"
-        assert judgment.metadata["title"].value == "R v G & B"
+        assert judgment.metadata.title.value == "R v G & B"

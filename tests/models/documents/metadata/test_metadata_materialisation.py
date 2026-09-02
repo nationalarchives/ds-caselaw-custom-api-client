@@ -55,7 +55,7 @@ class TestMaterialiseBodyClaims:
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(name="Body Title"),
         )
-        document.metadata["title"].materialise_body_claims()
+        document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
@@ -67,9 +67,9 @@ class TestMaterialiseBodyClaims:
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(name="Body Title"),
         )
-        document.metadata["title"].materialise_body_claims()
+        document.metadata.title.materialise_body_claims()
         first_id = document.metadata_fields.by_name("title")[0].id
-        document.metadata["title"].materialise_body_claims()
+        document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
@@ -89,7 +89,7 @@ class TestMaterialiseBodyClaims:
                 timestamp=TIMESTAMP,
             )
         )
-        document.metadata["title"].materialise_body_claims()
+        document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
         assert {(c.source, c.value) for c in claims} == {
@@ -102,15 +102,15 @@ class TestMaterialiseBodyClaims:
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(jurisdiction="", case_number=""),
         )
-        document.metadata["jurisdiction"].materialise_body_claims()
-        document.metadata["case_number"].materialise_body_claims()
+        document.metadata.jurisdiction.materialise_body_claims()
+        document.metadata.case_number.materialise_body_claims()
 
         assert document.metadata_fields.by_name("jurisdiction") == []
         assert document.metadata_fields.by_name("case_number") == []
 
     def test_strips_whitespace_when_materialising(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata["title"]._materialise_document_values(["  Body Title  "])  # noqa: SLF001
+        document.metadata.title._materialise_document_values(["  Body Title  "])  # noqa: SLF001
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
@@ -118,13 +118,13 @@ class TestMaterialiseBodyClaims:
 
     def test_skips_whitespace_only_string(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata["title"]._materialise_document_values(["   "])  # noqa: SLF001
+        document.metadata.title._materialise_document_values(["   "])  # noqa: SLF001
         assert document.metadata_fields.by_name("title") == []
 
     def test_skips_none_case_number(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         document.body.__dict__["case_number"] = None
-        document.metadata["case_number"].materialise_body_claims()
+        document.metadata.case_number.materialise_body_claims()
         assert document.metadata_fields.by_name("case_number") == []
 
     def test_date_materialises_isoformat(self, mock_api_client):
@@ -132,7 +132,7 @@ class TestMaterialiseBodyClaims:
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(document_date_as_string="2023-02-03"),
         )
-        document.metadata["date"].materialise_body_claims()
+        document.metadata.date.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("date")
         assert len(claims) == 1
@@ -145,13 +145,13 @@ class TestMaterialiseBodyClaims:
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(document_date_as_string=None),
         )
-        document.metadata["date"].materialise_body_claims()
+        document.metadata.date.materialise_body_claims()
         assert document.metadata_fields.by_name("date") == []
 
     def test_base_materialise_body_claims_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
         with pytest.raises(NotImplementedError, match="does not implement materialise_body_claims"):
-            Metadata.materialise_body_claims(document.metadata["title"])
+            Metadata.materialise_body_claims(document.metadata.title)
 
     def test_does_not_resurrect_rejected_document_claim(self, mock_api_client):
         document = DocumentFactory.build(
@@ -167,7 +167,7 @@ class TestMaterialiseBodyClaims:
             rejected=True,
         )
         document.metadata_fields.add(rejected)
-        document.metadata["title"].materialise_body_claims()
+        document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
         assert len(claims) == 1
@@ -198,7 +198,7 @@ class TestMaterialiseBodyClaims:
             """
         )
         document = DocumentFactory.build(api_client=mock_api_client, body=categories_xml)
-        document.metadata["categories"].materialise_body_claims()
+        document.metadata.categories.materialise_body_claims()
 
         values = {
             (claim.value.name, claim.value.parent)  # type: ignore[union-attr]
@@ -208,7 +208,7 @@ class TestMaterialiseBodyClaims:
 
     def test_empty_category_name_is_not_materialised(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata["categories"]._materialise_document_values(  # noqa: SLF001
+        document.metadata.categories._materialise_document_values(  # noqa: SLF001
             [MetadataCategoryValue(name="", parent=None)]
         )
         assert document.metadata_fields.by_name("categories") == []

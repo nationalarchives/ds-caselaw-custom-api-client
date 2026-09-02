@@ -176,7 +176,7 @@ class Document:
         self._initialise_metadata()
 
     def __repr__(self) -> str:
-        name = self.metadata["title"].value or "un-named"
+        name = self.metadata.title.value or "un-named"
         return f"<{self.document_noun} {self.uri}: {name}>"
 
     def document_exists(self) -> bool:
@@ -367,12 +367,12 @@ class Document:
 
     @cached_property
     def has_name(self) -> bool:
-        return bool(self.metadata["title"].value)
+        return bool(self.metadata.title.value)
 
     @cached_property
     def has_valid_court(self) -> bool:
-        court = self.metadata["court"].value
-        jurisdiction = self.metadata["jurisdiction"].value
+        court = self.metadata.court.value
+        jurisdiction = self.metadata.jurisdiction.value
         court_code = CourtCode(f"{court}/{jurisdiction}") if jurisdiction != "" else CourtCode(court)
         try:
             return bool(courts.get_by_code(court_code))
@@ -627,7 +627,7 @@ class Document:
         Idempotent: existing DOCUMENT claims with the same value are not overwritten.
         Safe to call from maintenance backfills as well as from ``save()``.
         """
-        for field in self.metadata.values():
+        for field in self.metadata:
             field.materialise_body_claims()
         self.save_metadata_fields()
         self.api_client.set_property(
@@ -908,8 +908,8 @@ class Document:
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: str | None = (
-            self.metadata["date"].value.isoformat()
-            if self.metadata["date"].value and self.metadata["date"].value > datetime.date(1001, 1, 1)
+            self.metadata.date.value.isoformat()
+            if self.metadata.date.value and self.metadata.date.value > datetime.date(1001, 1, 1)
             else None
         )
 
@@ -919,9 +919,9 @@ class Document:
 
         parser_instructions: ParserInstructionsDict = {
             "metadata": {
-                "name": self.metadata["title"].value or None,
+                "name": self.metadata.title.value or None,
                 "cite": None,
-                "court": self.metadata["court"].value or None,
+                "court": self.metadata.court.value or None,
                 "date": checked_date,
                 "uri": self.uri,
             }
@@ -1007,7 +1007,7 @@ class Document:
                 f"{name} no longer exists on Document, using Document.metadata instead",
                 DeprecationWarning,
             )
-            return getattr(self.metadata[metadata_key], attribute)
+            return getattr(getattr(self.metadata, metadata_key), attribute)
 
         warnings.warn(f"{name} no longer exists on Document, using Document.body instead", DeprecationWarning)
         try:
