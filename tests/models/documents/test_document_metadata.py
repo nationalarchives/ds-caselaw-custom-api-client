@@ -236,6 +236,15 @@ class TestDocumentMetadata:
         assert document.metadata.title.value == "Judgment v Judgement"
         assert document.metadata.court.value == "Court of Testing"
 
+    def test_metadata_facades_match_field_class_registry(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.registry import METADATA_FIELD_CLASSES
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        for cls in METADATA_FIELD_CLASSES:
+            assert isinstance(getattr(document.metadata, cls.key), cls)
+
     def test_metadata_rejects_mapping_apis(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
 

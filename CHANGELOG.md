@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
 
+### Refactor
+
+- **Metadata**: drop MetadataAttributeKey from the registry
+- **Metadata**: centralise METADATA_FIELD_CLASSES in the registry
+
 ## v49.1.1 (2026-08-13)
 
 ### Fix
