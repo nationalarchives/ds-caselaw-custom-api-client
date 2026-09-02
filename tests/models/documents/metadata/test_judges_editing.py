@@ -31,7 +31,7 @@ class TestJudgesMetadataEditing:
             api_client=mock_api_client,
             body=_body_with_judges("Judge A", "Judge B"),
         )
-        judges = document.metadata["judges"]
+        judges = document.metadata.judges
 
         judges.materialise_body_claims()
 
@@ -53,7 +53,7 @@ class TestJudgesMetadataEditing:
                 timestamp=TIMESTAMP,
             )
         )
-        document.metadata["judges"].materialise_body_claims()
+        document.metadata.judges.materialise_body_claims()
         claims = document.metadata_fields.by_name("judges")
         assert {(claim.source, claim.value) for claim in claims} == {
             (MetadataSource.EXTERNAL, "Claim Judge"),
@@ -62,7 +62,7 @@ class TestJudgesMetadataEditing:
 
     def test_add_editor_judge_yanks_then_adds(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Body Judge"))
-        document.metadata["judges"].add_editor_judge("Editor Judge")
+        document.metadata.judges.add_editor_judge("Editor Judge")
 
         claims = document.metadata_fields.by_name("judges")
         assert len(claims) == 2
@@ -70,11 +70,11 @@ class TestJudgesMetadataEditing:
         assert claims[0].value == "Body Judge"
         assert claims[1].source is MetadataSource.EDITOR
         assert claims[1].value == "Editor Judge"
-        assert document.metadata["judges"].values == ["Body Judge", "Editor Judge"]
+        assert document.metadata.judges.values == ["Body Judge", "Editor Judge"]
 
     def test_suppress_document_claim_rejects(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Judge A", "Judge B"))
-        judges = document.metadata["judges"]
+        judges = document.metadata.judges
         judges.materialise_body_claims()
         claim_a = next(claim for claim in document.metadata_fields.by_name("judges") if claim.value == "Judge A")
 
@@ -97,12 +97,12 @@ class TestJudgesMetadataEditing:
             )
         )
         claim_id = next(iter(document.metadata_fields.by_name("judges"))).id
-        document.metadata["judges"].suppress_claim(claim_id)
+        document.metadata.judges.suppress_claim(claim_id)
         assert document.metadata_fields.by_name("judges") == []
 
     def test_restore_rejected_document_claim(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Judge A"))
-        judges = document.metadata["judges"]
+        judges = document.metadata.judges
         judges.materialise_body_claims()
         claim = document.metadata_fields.by_name("judges")[0]
         judges.suppress_claim(claim.id)
