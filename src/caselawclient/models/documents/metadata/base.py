@@ -68,8 +68,7 @@ class Metadata(ABC):
             normalised = value.normalised()
             if normalised is None:
                 continue
-            if self.document.metadata_fields.has_claim(self.key, normalised, MetadataSource.DOCUMENT):
-                continue
+            # Idempotent ``add`` noops when an equivalent DOCUMENT claim exists.
             self.document.metadata_fields.add(
                 MetadataField(
                     name=self.key,
