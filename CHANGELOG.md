@@ -11,14 +11,20 @@ The format is based on [Keep a Changelog 1.0.0].
 - Use document.metadata.title / .judges (etc), not
   metadata["title"]. DocumentMetadata is not a dict and has no get/keys/
   values/in. Legacy name/judge keys are gone.
+- Date metadata claim values are `datetime.date`, not `str`.
+- Claim payloads are structured `MetadataStringValue` /
+  `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
 
 ### Feat
 
+- **Metadata**: wrap all claim values in structured Metadata\*Value types
+- **Metadata**: per-type pack/unpack with date claims as date
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 
 ### Fix
 
 - Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
+- **Metadata**: harden claim unpack (strip text, validate pack_version)
 
 ### Refactor
 

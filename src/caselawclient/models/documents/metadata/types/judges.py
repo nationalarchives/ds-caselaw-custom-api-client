@@ -1,6 +1,6 @@
 from caselawclient.models.documents.metadata.base import MultipleMetadata
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldRemovalNotAllowedException
-from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataFieldValue
+from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataFieldValue, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 
 
@@ -13,9 +13,9 @@ def judge_names_from_field_values(values: list[MetadataFieldValue]) -> list[str]
     judges: list[str] = []
 
     for value in values:
-        if not isinstance(value, str):
+        if not isinstance(value, MetadataStringValue):
             continue
-        name = value.strip()
+        name = value.value
         if not name or name in judges:
             continue
         judges.append(name)
@@ -42,12 +42,12 @@ class JudgesMetadata(MultipleMetadata[str]):
         Existing DOCUMENT claims with the same value are left alone (including
         rejected ones). EDITOR/EXTERNAL claims do not block materialisation.
         """
-        self._materialise_document_values(self.document.body.judges)
+        self._materialise_document_values([MetadataStringValue(name) for name in self.document.body.judges])
 
     def add_editor_judge(self, name: str) -> None:
         """Add an EDITOR claim for a judge name, yanking body first if needed."""
-        cleaned = name.strip()
-        if not cleaned:
+        cleaned = MetadataStringValue(name).normalised()
+        if cleaned is None:
             return
 
         self.materialise_body_claims()
@@ -84,8 +84,8 @@ class JudgesMetadata(MultipleMetadata[str]):
 
     def suppress_body_value(self, name: str) -> None:
         """Yank body claims if needed, then reject the DOCUMENT claim matching ``name``."""
-        cleaned = name.strip()
-        if not cleaned:
+        cleaned = MetadataStringValue(name).normalised()
+        if cleaned is None:
             return
 
         self.materialise_body_claims()
