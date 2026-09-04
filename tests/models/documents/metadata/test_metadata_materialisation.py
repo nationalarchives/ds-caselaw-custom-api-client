@@ -1,10 +1,10 @@
 from datetime import UTC, date, datetime
-from unittest.mock import PropertyMock, patch
+from unittest.mock import ANY, PropertyMock, patch
 from uuid import uuid4
 
 import pytest
 
-from caselawclient.factories import DocumentBodyFactory, DocumentFactory
+from caselawclient.factories import DocumentBodyFactory, DocumentFactory, JudgmentFactory
 from caselawclient.models.documents.metadata.base import Metadata
 from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue, MetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
@@ -239,19 +239,20 @@ class TestMaterialiseBodyClaims:
         assert values == {("Child", None)}
 
 
-class TestDocumentMaterialiseMetadataClaims:
-    def test_materialise_persists_fields_and_version(self, mock_api_client):
-        document = DocumentFactory.build(
+class TestDocumentSaveStructuredMetadataToMarklogic:
+    def test_save_persists_structured_metadata_fields_and_version(self, mock_api_client):
+        document = JudgmentFactory.build(
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(name="Saved Title", court="Saved Court"),
         )
 
-        document.materialise_metadata_claims()
+        with (
+            patch.object(document.api_client, "document_exists", return_value=True),
+            patch.object(document.api_client, "update_document_xml"),
+        ):
+            document.save(message="Persist metadata")
 
-        mock_api_client.set_property_as_node.assert_called_once()
-        uri, property_name, _tree = mock_api_client.set_property_as_node.call_args.args
-        assert uri == document.uri
-        assert property_name == "metadata_fields"
+        mock_api_client.set_property_as_node.assert_any_call(document.uri, "metadata_fields", ANY)
         mock_api_client.set_property.assert_any_call(
             document.uri,
             LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
