@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Self, TypedDict
+from uuid import uuid4
 
 from lxml import etree
 
@@ -63,6 +64,10 @@ class DocumentURIString(str):
 
     def as_marklogic(self) -> MarkLogicDocumentURIString:
         return MarkLogicDocumentURIString(f"/{self}.xml")
+
+
+def mint_document_uri() -> DocumentURIString:
+    return DocumentURIString(f"d-{uuid4()}")
 
 
 class DocumentIdentifierSlug(str):
