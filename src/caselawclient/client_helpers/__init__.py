@@ -1,11 +1,18 @@
+from typing import TYPE_CHECKING, cast
+
 from lxml import etree
 
+from caselawclient.models.documents.body import DocumentBody
+from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
 from ..models.documents import Document
 from ..models.judgments import Judgment
 from ..models.parser_logs import ParserLog
 from ..models.press_summaries import PressSummary
+
+if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
 
 
 class CannotDetermineDocumentType(Exception):
@@ -33,3 +40,13 @@ def get_document_type_class(xml: bytes) -> type[Document]:
     raise CannotDetermineDocumentType(
         "Unable to determine the Document type by its XML",
     )
+
+
+def document_from_xml(
+    body: DocumentBody,
+    api_client: "MarklogicApiClient",
+    uri: DocumentURIString | None = None,
+) -> Judgment | PressSummary | ParserLog:
+    """Construct a concrete document from XML, detecting the document type automatically."""
+    cls = get_document_type_class(body.content_as_xml.encode("utf-8"))
+    return cast("Judgment | PressSummary | ParserLog", cls.from_xml(body, api_client, uri=uri))
