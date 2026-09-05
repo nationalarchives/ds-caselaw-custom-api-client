@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from ds_caselaw_utils.types import NeutralCitationString
 
@@ -14,6 +14,7 @@ from caselawclient.types import DocumentURIString
 from .documents import Document
 
 if TYPE_CHECKING:
+    from caselawclient.Client import MarklogicApiClient
     from caselawclient.models.judgments import Judgment
 
 
@@ -27,8 +28,8 @@ class PressSummary(NeutralCitationMixin, Document):
     type_collection_name = "press-summary"
     _default_reparse_document_type = "pressSummary"
 
-    def __init__(self, uri: DocumentURIString, *args: Any, **kwargs: Any) -> None:
-        super().__init__(self.document_noun, uri, *args, **kwargs)
+    def __init__(self, uri: DocumentURIString, api_client: MarklogicApiClient, search_query: str | None = None) -> None:
+        super().__init__(self.document_noun, uri, api_client, search_query=search_query)
 
     @cached_property
     def neutral_citation(self) -> NeutralCitationString | None:
@@ -44,6 +45,7 @@ class PressSummary(NeutralCitationMixin, Document):
         """
         Attempt to fetch a linked judgement, and return it, if it exists
         """
+        self._require_persisted()
         try:
             uri = DocumentURIString(self.uri.removesuffix("/press-summary/1"))
             if not TYPE_CHECKING:  # This isn't nice, but will be cleaned up when we refactor how related documents work

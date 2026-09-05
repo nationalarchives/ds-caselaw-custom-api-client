@@ -598,6 +598,10 @@ class MarklogicApiClient:
         """
         Insert a new XML document into MarkLogic.
 
+        .. deprecated::
+            Prefer ``Document.from_xml(...).save(...)`` for document lifecycle workflows.
+            This method remains available for internal use by ``Document.save()``.
+
         :param document_uri: The URI to insert the document at
         :param document_xml: The XML of the document to insert
         :param document_type: The type class of the document
@@ -631,6 +635,10 @@ class MarklogicApiClient:
         Updates an existing XML document in MarkLogic with a new version.
 
         This uses `dls:document-checkout-update-checkin` to perform this in a single operation.
+
+        .. deprecated::
+            Prefer ``Document.save(...)`` for document lifecycle workflows.
+            This method remains available for internal use by ``Document.save()``.
 
         :param document_uri: The URI of the document to update
         :param document_xml: The new XML content of the document

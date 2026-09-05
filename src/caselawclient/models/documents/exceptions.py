@@ -20,3 +20,11 @@ class CannotEnrichUnenrichableDocument(Exception):
 
 class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
+
+
+class DocumentNotPersistedError(Exception):
+    """A document constructed with from_xml must be saved before MarkLogic-backed operations are available."""
+
+
+class DocumentAlreadyExistsError(Exception):
+    """A document URI passed to from_xml already exists in MarkLogic."""

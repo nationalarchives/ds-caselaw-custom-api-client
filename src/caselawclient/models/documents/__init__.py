@@ -3,7 +3,7 @@ import logging
 import os
 import warnings
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, Self
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
@@ -32,9 +32,11 @@ from caselawclient.models.documents.metadata.registry import (
 )
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
+from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier, FindCaseLawIdentifierSchema
 from caselawclient.models.identifiers.unpacker import unpack_all_identifiers_from_etree
+from caselawclient.models.neutral_citation_mixin import NeutralCitationMixin
 from caselawclient.models.utilities import VersionsDict, extract_version, render_versions
 from caselawclient.models.utilities.aws import (
     ParserInstructionsDict,
@@ -49,7 +51,7 @@ from caselawclient.models.utilities.aws import (
     restore_assets_from_consignment_archive,
     unpublish_documents,
 )
-from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict
+from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict, mint_document_uri
 
 from .body import DocumentBody
 from .exceptions import (
@@ -57,6 +59,8 @@ from .exceptions import (
     CannotPublishUnpublishableDocument,
     CannotRestoreDocumentWithoutConsignmentReference,
     CannotRestorePublishedDocument,
+    DocumentAlreadyExistsError,
+    DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
 )
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
@@ -167,6 +171,52 @@ class Document:
         self._initialise_identifiers()
         self._initialise_metadata_fields()
         self._initialise_metadata()
+        self._persisted = True
+
+    @property
+    def is_persisted(self) -> bool:
+        return self._persisted
+
+    def _require_persisted(self) -> None:
+        if not self._persisted:
+            raise DocumentNotPersistedError(
+                f"Document {self.uri} is not persisted in MarkLogic; call save() before using MarkLogic-backed APIs."
+            )
+
+    @classmethod
+    def _assemble_from_body(
+        cls,
+        body: DocumentBody,
+        api_client: "MarklogicApiClient",
+        uri: DocumentURIString | None = None,
+    ) -> Self:
+        doc = cls.__new__(cls)
+        doc.uri = uri if uri is not None else mint_document_uri()
+        doc.api_client = api_client
+        doc.body = body
+        doc.identifiers = IdentifiersCollection()
+        doc.metadata_fields = MetadataFieldsCollection()
+        doc._initialise_metadata()  # noqa: SLF001
+        doc._persisted = False  # noqa: SLF001
+        if isinstance(doc, NeutralCitationMixin):
+            doc._initialise_neutral_citation_validation(cls.document_noun)  # noqa: SLF001
+        return doc
+
+    @classmethod
+    def from_xml(
+        cls,
+        body: DocumentBody,
+        api_client: "MarklogicApiClient",
+        uri: DocumentURIString | None = None,
+    ) -> Self:
+        if cls is Document:
+            raise TypeError("Use Judgment.from_xml, PressSummary.from_xml, ParserLog.from_xml, or document_from_xml().")
+        resolved_uri = uri if uri is not None else mint_document_uri()
+        if api_client.document_exists(resolved_uri):
+            raise DocumentAlreadyExistsError(
+                f"Document {resolved_uri} already exists; load it with {cls.__name__}(uri, api_client) instead."
+            )
+        return cls._assemble_from_body(body, api_client, uri=resolved_uri)
 
     def __repr__(self) -> str:
         name = self.metadata.title.value or "un-named"
@@ -180,6 +230,7 @@ class Document:
 
     def docx_exists(self) -> bool:
         """There is a docx in S3 private bucket for this Document"""
+        self._require_persisted()
         return check_docx_exists(self.uri)
 
     def _initialise_document_body(self, search_query: str | None = None) -> None:
@@ -249,10 +300,12 @@ class Document:
 
     @cached_property
     def is_published(self) -> bool:
+        self._require_persisted()
         return self.api_client.get_published(self.uri)
 
     @cached_property
     def is_held(self) -> bool:
+        self._require_persisted()
         return self.api_client.get_property(self.uri, "editor-hold") == "true"
 
     @cached_property
@@ -261,18 +314,22 @@ class Document:
 
     @cached_property
     def checkout_message(self) -> str | None:
+        self._require_persisted()
         return self.api_client.get_judgment_checkout_status_message(self.uri)
 
     @cached_property
     def source_name(self) -> str:
+        self._require_persisted()
         return self.api_client.get_property(self.uri, "source-name")
 
     @cached_property
     def source_email(self) -> str:
+        self._require_persisted()
         return self.api_client.get_property(self.uri, "source-email")
 
     @cached_property
     def consignment_reference(self) -> str:
+        self._require_persisted()
         return self.api_client.get_property(self.uri, "transfer-consignment-reference")
 
     @property
@@ -287,10 +344,12 @@ class Document:
 
     @cached_property
     def assigned_to(self) -> str:
+        self._require_persisted()
         return self.api_client.get_property(self.uri, "assigned-to")
 
     @cached_property
     def versions(self) -> list[VersionsDict]:
+        self._require_persisted()
         versions_response = self.api_client.list_judgment_versions(self.uri)
 
         try:
@@ -309,6 +368,7 @@ class Document:
         Note that this is only valid on the managed document -- a `DLS-DOCUMENTVERSION` error will occur if the document
         this is called on is itself a version.
         """
+        self._require_persisted()
         if self.is_version:
             raise NotSupportedOnVersion(
                 f"Cannot get versions of a version for {self.uri}",
@@ -379,6 +439,7 @@ class Document:
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
+        self._require_persisted()
         if not self.is_publishable:
             raise CannotPublishUnpublishableDocument(
                 f"{self.document_noun.capitalize()} {self.uri} cannot be published due to the following issues: "
@@ -399,6 +460,7 @@ class Document:
                 reference is available to locate the document's S3 assets, so a
                 complete restore cannot be performed.
         """
+        self._require_persisted()
         if self.is_published:
             raise CannotRestorePublishedDocument(
                 f"{self.document_noun.capitalize()} {self.uri} cannot be restored because it is currently published.",
@@ -418,6 +480,7 @@ class Document:
 
         :return: The datetime value in the database for "first published".
         """
+        self._require_persisted()
         return self.api_client.get_datetime_property(self.uri, "first_published_datetime")
 
     @cached_property
@@ -429,6 +492,7 @@ class Document:
 
         :return: The datetime value to be displayed to end users for "first published".
         """
+        self._require_persisted()
 
         if self.first_published_datetime == datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc):
             return None
@@ -442,6 +506,7 @@ class Document:
 
         :return: The datetime value in the database for "latest published".
         """
+        self._require_persisted()
         return self.api_client.get_datetime_property(self.uri, "latest_published_datetime")
 
     @cached_property
@@ -453,6 +518,7 @@ class Document:
 
         :return: A boolean indicating if the document has ever been published.
         """
+        self._require_persisted()
         return self.is_published or self.first_published_datetime is not None
 
     @cached_property
@@ -465,10 +531,12 @@ class Document:
 
     @cached_property
     def annotation(self) -> str:
+        self._require_persisted()
         return self.api_client.get_version_annotation(self.uri)
 
     @cached_property
     def structured_annotation(self) -> AnnotationDataDict:
+        self._require_persisted()
         annotation_data_dict_loader = TypeAdapter(AnnotationDataDict)
 
         return annotation_data_dict_loader.validate_json(self.annotation)
@@ -476,6 +544,7 @@ class Document:
     @cached_property
     def has_unique_content_hash(self) -> bool:
         """Check if the content hash of this document is unique compared to all other documents in MarkLogic."""
+        self._require_persisted()
         return self.api_client.has_unique_content_hash(self.uri)
 
     @cached_property
@@ -486,10 +555,12 @@ class Document:
 
     @cached_property
     def version_created_datetime(self) -> datetime.datetime:
+        self._require_persisted()
         return self.api_client.get_version_created_datetime(self.uri)
 
     @property
     def status(self) -> str:
+        self._require_persisted()
         if self.is_published:
             return DOCUMENT_STATUS_PUBLISHED
 
@@ -505,6 +576,7 @@ class Document:
         """
         Request enrichment of the document, but do no checks
         """
+        self._require_persisted()
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(
             self.uri,
@@ -526,6 +598,7 @@ class Document:
         """
         Request enrichment of a document, if it's sensible to do so.
         """
+        self._require_persisted()
         if not (even_if_recent) and self.enriched_recently:
             logger.info("Enrichment not requested as document was enriched recently")
             return False
@@ -562,10 +635,12 @@ class Document:
         """
         Does the document validate against the most recent schema?
         """
+        self._require_persisted()
         return self.api_client.validate_document(self.uri)
 
     def assign_fclid_if_missing(self) -> FindCaseLawIdentifier | None:
         """If the document does not have an FCLID already, mint a new one and save it."""
+        self._require_persisted()
         if len(self.identifiers.of_type(FindCaseLawIdentifier)) == 0:
             logger.info("Document has no FCLID, minting a new one")
             document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
@@ -578,45 +653,84 @@ class Document:
         logger.info("Document already has an FCLID")
         return None
 
-    def save(self, message: str) -> None:
+    def save(
+        self,
+        message: str,
+        *,
+        version_type: VersionType = VersionType.EDIT,
+        automated: bool = False,
+    ) -> None:
         """
         Save the document's XML representation back to MarkLogic as a new version.
 
-        Creates a new version with type EDIT, recording the changes made to the document.
-        Also materialises body-derived DOCUMENT metadata claims and persists them.
+        Inserts when this object is not yet persisted; otherwise updates the existing MarkLogic document.
+        Validates identifiers and metadata, converts body claims to structured metadata, upserts the
+        document XML, then saves identifier and metadata properties to MarkLogic.
 
         :param message: Human-readable message describing the changes made.
         """
-        # Create annotation for this version
+        if type(self) is Document:
+            raise TypeError("Use a concrete document class such as Judgment, PressSummary, or ParserLog to save.")
+
         annotation = VersionAnnotation(
-            version_type=VersionType.EDIT,
-            automated=False,
+            version_type=version_type,
+            automated=automated,
             message=message,
         )
 
-        # Update the document XML in MarkLogic
-        self.api_client.update_document_xml(
-            self.uri,
-            self.body.content_as_xml_tree,
-            annotation,
-        )
-        self.materialise_metadata_claims()
+        self._convert_body_claims_to_structured_metadata()
+        self._validate_metadata_for_save()
+        self._validate_identifiers_for_save()
+
+        if not self._persisted:
+            if self.document_exists():
+                raise DocumentAlreadyExistsError(
+                    f"Document {self.uri} already exists; load it with {type(self).__name__}(uri, api_client) instead."
+                )
+            self.api_client.insert_document_xml(
+                self.uri,
+                self.body.content_as_xml_tree,
+                type(self),
+                annotation,
+            )
+            self._persisted = True
+        else:
+            self.api_client.update_document_xml(
+                self.uri,
+                self.body.content_as_xml_tree,
+                annotation,
+            )
+
+        self._save_identifiers_to_marklogic()
+        self._save_structured_metadata_to_marklogic()
 
     @property
     def needs_metadata_materialisation(self) -> bool:
         """True if this document's stored materialisation version is missing or outdated."""
+        self._require_persisted()
         stored = self.api_client.get_property(self.uri, LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY)
         return document_needs_metadata_materialisation(stored or None)
 
-    def materialise_metadata_claims(self) -> None:
-        """Materialise body-derived DOCUMENT claims, persist metadata_fields, and stamp version.
-
-        Idempotent: existing DOCUMENT claims with the same value are not overwritten.
-        Safe to call from maintenance backfills as well as from ``save()``.
-        """
+    def _convert_body_claims_to_structured_metadata(self) -> None:
         for field in self.metadata:
             field.materialise_body_claims()
-        self.save_metadata_fields()
+
+    def _validate_metadata_for_save(self) -> None:
+        validations = self.metadata_fields.validate_ids_match_keys()
+        if validations.success is not True:
+            raise MetadataFieldValidationException(
+                "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
+            )
+
+    def _validate_identifiers_for_save(self) -> None:
+        validations = self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
+        if validations.success is not True:
+            raise IdentifierValidationException(
+                "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
+            )
+
+    def _save_structured_metadata_to_marklogic(self) -> None:
+        self._save_metadata_fields()
         self.api_client.set_property(
             self.uri,
             LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
@@ -630,6 +744,7 @@ class Document:
         :raises CannotPublishUnpublishableDocument: This document has not passed the checks in `is_publishable`, and as
         such cannot be published.
         """
+        self._require_persisted()
         logger.debug("Assert that document is publishable")
         self.assert_is_publishable()
 
@@ -663,6 +778,7 @@ class Document:
         logger.info("Document publication complete")
 
     def unpublish(self) -> None:
+        self._require_persisted()
         self.api_client.break_checkout(self.uri)
         unpublish_documents(self.uri)
         self.api_client.set_published(self.uri, False)
@@ -672,9 +788,11 @@ class Document:
         )
 
     def hold(self) -> None:
+        self._require_persisted()
         self.api_client.set_property(self.uri, "editor-hold", "true")
 
     def unhold(self) -> None:
+        self._require_persisted()
         self.api_client.set_property(self.uri, "editor-hold", "false")
 
     @cached_property
@@ -684,6 +802,7 @@ class Document:
 
         :return: If the document is safe to be deleted
         """
+        self._require_persisted()
 
         return not self.is_published
 
@@ -691,6 +810,7 @@ class Document:
         """
         Deletes this document from MarkLogic and any resources from AWS.
         """
+        self._require_persisted()
 
         if self.safe_to_delete:
             self.api_client.delete_judgment(self.uri)
@@ -822,6 +942,7 @@ class Document:
                 consignment reference is available to locate the document's S3
                 assets.
         """
+        self._require_persisted()
         restore_version_document = self._get_version(version_number)
 
         if restore_version_document is None:
@@ -886,10 +1007,12 @@ class Document:
         self._initialise_document_body()
 
     def move(self, new_citation: NeutralCitationString) -> None:
+        self._require_persisted()
         self.api_client.update_document_uri(self.uri, new_citation)
 
     def force_reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
+        self._require_persisted()
 
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
@@ -928,6 +1051,7 @@ class Document:
         )
 
     def reparse(self) -> bool:
+        self._require_persisted()
         # note that we set 'last_sent_to_parser' even if we can't send it to the parser
         # it means 'last tried to reparse' much more consistently.
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -942,6 +1066,7 @@ class Document:
         """
         Is it sensible to reparse this document?
         """
+        self._require_persisted()
         return self.docx_exists() and not self.body.has_external_data
 
     @cached_property
@@ -952,30 +1077,30 @@ class Document:
         return self.body.has_content
 
     def validate_identifiers(self) -> SuccessFailureMessageTuple:
+        self._require_persisted()
         return self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
 
     def save_identifiers(self) -> None:
         """Validate the identifiers, and if the validation passes save them to MarkLogic"""
-        validations = self.validate_identifiers()
-        if validations.success is True:
-            self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
-        else:
-            raise IdentifierValidationException(
-                "Unable to save identifiers; validation constraints not met: " + ", ".join(validations.messages)
-            )
+        self._require_persisted()
+        self._validate_identifiers_for_save()
+        self._save_identifiers_to_marklogic()
+
+    def _save_identifiers_to_marklogic(self) -> None:
+        self.api_client.set_property_as_node(self.uri, "identifiers", self.identifiers.as_etree)
 
     def validate_metadata_fields(self) -> SuccessFailureMessageTuple:
+        self._require_persisted()
         return self.metadata_fields.validate_ids_match_keys()
 
     def save_metadata_fields(self) -> None:
         """Validate metadata fields, and if validation passes save them to MarkLogic."""
-        validations = self.validate_metadata_fields()
-        if validations.success is True:
-            self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
-        else:
-            raise MetadataFieldValidationException(
-                "Unable to save metadata fields; validation constraints not met: " + ", ".join(validations.messages)
-            )
+        self._require_persisted()
+        self._validate_metadata_for_save()
+        self._save_metadata_fields()
+
+    def _save_metadata_fields(self) -> None:
+        self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
 
     _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
         "name": ("title", "value"),
@@ -1004,6 +1129,7 @@ class Document:
 
     def linked_document_resolutions(self, namespaces: list[str], only_published: bool = True) -> IdentifierResolutions:
         """Get document resolutions which share the same neutral citation as this document."""
+        self._require_persisted()
         if not hasattr(self, "neutral_citation") or not self.neutral_citation:
             return IdentifierResolutions([])
 
@@ -1021,6 +1147,7 @@ class Document:
         )
 
     def linked_documents(self, namespaces: list[str], only_published: bool = True) -> list["Document"]:
+        self._require_persisted()
         resolutions = self.linked_document_resolutions(namespaces=namespaces, only_published=only_published)
         return [
             Document(resolution.document_uri.as_document_uri(), api_client=self.api_client)

@@ -8,16 +8,25 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### BREAKING CHANGE
 
+- `Document.save()` on a URI that does not yet exist in MarkLogic now inserts the document instead of failing on update
 - Use document.metadata.title / .judges (etc), not
   metadata["title"]. DocumentMetadata is not a dict and has no get/keys/
   values/in. Legacy name/judge keys are gone.
 
 ### Feat
 
+- **Document**: add `Document.from_xml()` for in-memory construction from parser XML without MarkLogic
+- **Document**: upsert `save()` with `version_type` and `automated` parameters
+- **Document**: add `document_from_xml()` helper and `mint_document_uri()`
+- **Document**: guard MarkLogic-backed APIs until `save()` completes (`DocumentNotPersistedError`)
+- **Document**: reject `from_xml()` for URIs that already exist in MarkLogic (`DocumentAlreadyExistsError`)
+- **Document**: validate identifier and metadata field IDs before upserting document XML during `save()`
+- **Document**: persist identifiers and structured metadata properties after upserting document XML during `save()`
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 
 ### Fix
 
+- Fix `Judgment` and `PressSummary` constructors to pass `api_client` explicitly through `NeutralCitationMixin`
 - Wrap query text with multiple words in a single <mark> tag, rather than each individual text in it's own mark tag
 
 ### Refactor
