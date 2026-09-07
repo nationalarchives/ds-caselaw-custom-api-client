@@ -22,6 +22,10 @@ class NeutralCitationMixin(ABC):
     """
 
     def __init__(self, document_noun: str, *args: Any, **kwargs: Any) -> None:
+        self._initialise_neutral_citation_validation(document_noun)
+        super().__init__(*args, **kwargs)
+
+    def _initialise_neutral_citation_validation(self, document_noun: str) -> None:
         self.attributes_to_validate: list[tuple[str, bool, str]] = self.attributes_to_validate + [
             (
                 "has_valid_ncn",
@@ -29,8 +33,6 @@ class NeutralCitationMixin(ABC):
                 f"The neutral citation number of this {document_noun} is not valid",
             ),
         ]
-
-        super().__init__(*args, **kwargs)
 
     @cached_property
     @abstractmethod

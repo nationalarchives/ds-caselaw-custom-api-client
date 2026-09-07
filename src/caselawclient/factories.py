@@ -116,15 +116,18 @@ class DocumentFactory:
 
         if not api_client:
             api_client = Mock(spec=MarklogicApiClient)
-            api_client.get_judgment_xml_bytestring.return_value = build_document_body_xml().encode(encoding="utf-8")
             api_client.get_property_as_node.return_value = None
 
-        document = cls.TargetClass(uri, api_client=api_client)
-        document.body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
+        body = kwargs.pop("body") if "body" in kwargs else DocumentBodyFactory.build()
+        document = cls.TargetClass._assemble_from_body(body, api_client, uri=uri)  # noqa: SLF001
+        document._initialise_metadata_fields()  # noqa: SLF001
+        document._persisted = True  # noqa: SLF001
 
         if identifiers is None:
+            document.identifiers = IdentifiersCollection()
             document.identifiers.add(FindCaseLawIdentifier(value="tn4t35ts"))
         else:
+            document.identifiers = IdentifiersCollection()
             for identifier in identifiers:
                 document.identifiers.add(identifier)
 

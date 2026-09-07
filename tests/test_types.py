@@ -7,6 +7,7 @@ from caselawclient.types import (
     InvalidMarkLogicDocumentURIException,
     MarkLogicDocumentURIString,
     SuccessTuple,
+    mint_document_uri,
 )
 
 
@@ -63,6 +64,13 @@ class TestDocumentURIString:
 
         assert marklogic_uri == "/test/2025/123.xml"
         assert type(marklogic_uri) is MarkLogicDocumentURIString
+
+
+class TestMintDocumentUri:
+    def test_minted_uri_begins_with_d_prefix(self):
+        uri = mint_document_uri()
+        assert str(uri).startswith("d-")
+        assert type(uri) is DocumentURIString
 
 
 class TestSuccessFailureMessageTuple:
