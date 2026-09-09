@@ -22,6 +22,8 @@ from caselawclient.models.documents.metadata.fields.unpacker import (
     unpack_all_metadata_fields_from_etree,
 )
 from caselawclient.models.documents.metadata.registry import METADATA_FIELD_CLASSES
+from caselawclient.models.documents.metadata.types.date import DateMetadata
+from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.xml_helpers import Element
 
 EARLY_TIMESTAMP = datetime(2025, 12, 17, 18, 0, 0, tzinfo=UTC)
@@ -84,7 +86,7 @@ class TestMetadataFieldPacking:
         assert element.get("source") == "document"
         assert element.get("timestamp") == EARLY_TIMESTAMP.isoformat()
         assert element.get("rejected") == "false"
-        assert element.get("pack_version") == "1"
+        assert element.get("pack_version") == str(NameMetadata.PACK_VERSION)
         assert element.text == "A Judgment"
 
     def test_pack_category_value(self):
@@ -337,7 +339,7 @@ class TestMetadataFieldUnpacking:
             timestamp=EARLY_TIMESTAMP,
         )
         element = field.as_etree
-        assert element.get("pack_version") == "1"
+        assert element.get("pack_version") == str(DateMetadata.PACK_VERSION)
         assert element.text == "2023-02-03"
 
     def test_pack_date_rejects_datetime(self):

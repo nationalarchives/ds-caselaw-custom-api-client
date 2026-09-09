@@ -30,7 +30,7 @@ class Metadata(ABC):
     """Bump when this field's body-extraction / materialisation rules change."""
 
     PACK_VERSION: ClassVar[int] = 1
-    """Bump when this field's packed XML value shape changes."""
+    """Bump when pack_value / unpack_value for this type change the XML shape."""
 
     def __init__(self, document: "Document") -> None:
         self.document = document
