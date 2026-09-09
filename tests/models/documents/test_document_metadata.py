@@ -9,6 +9,7 @@ class _TestSingleMetadata(SingleMetadata[str]):
     key = "test_single"
     title = "Test Single"
     description = "A test single metadata item."
+    LOGIC_VERSION = 1
 
     @property
     def value(self) -> str:
@@ -19,6 +20,7 @@ class _TestMultipleMetadata(MultipleMetadata[str]):
     key = "test_multiple"
     title = "Test Multiple"
     description = "A test multiple metadata item."
+    LOGIC_VERSION = 1
 
     @property
     def values(self) -> list[str]:
@@ -59,6 +61,18 @@ class TestMetadataBase:
         metadata = _EditableMetadata(Mock())
 
         assert metadata.editable is True
+
+    def test_concrete_metadata_must_define_logic_version(self):
+        with pytest.raises(TypeError, match="must define LOGIC_VERSION"):
+
+            class _MissingLogicVersion(SingleMetadata[str]):
+                key = "missing_logic"
+                title = "Missing"
+                description = "Should fail."
+
+                @property
+                def value(self) -> str:
+                    return "x"
 
 
 class TestNameMetadata:

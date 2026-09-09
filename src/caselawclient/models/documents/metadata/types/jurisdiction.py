@@ -6,6 +6,7 @@ class JurisdictionMetadata(SingleMetadata[str]):
     key = "jurisdiction"
     title = "Jurisdiction"
     description = "The jurisdiction of the document."
+    LOGIC_VERSION = 2
 
     @property
     def value(self) -> str:

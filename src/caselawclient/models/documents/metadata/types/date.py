@@ -20,6 +20,7 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
     key = "date"
     title = "Date"
     description = "The date of the document."
+    LOGIC_VERSION = 2
 
     @property
     def value(self) -> datetime.date | None:

@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Refactor
 
+- **Metadata**: require each metadata type to declare its own LOGIC_VERSION
 - **Metadata**: drop MetadataAttributeKey from the registry
 - **Metadata**: centralise METADATA_FIELD_CLASSES in the registry
 

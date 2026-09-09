@@ -64,6 +64,7 @@ class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
     key = "categories"
     title = "Categories"
     description = "The categories assigned to the document."
+    LOGIC_VERSION = 2
 
     @property
     def values(self) -> list[DocumentCategory]:
