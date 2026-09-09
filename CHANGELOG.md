@@ -17,10 +17,11 @@ The format is based on [Keep a Changelog 1.0.0].
   `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
 - `metadata_fields.add` / `__setitem__` are idempotent: matching
   name/value/source is a noop (including rejected); id collision with a
-  different payload raises; empty values raise. `add` returns whether the
-  claim was added or already present. Duplicate claims are also deduped on
-  unpack. Key/id mismatch raises. `validate_metadata_fields` /
-  key-id validation on save is removed.
+  different payload raises; unknown claim names and wrong value types
+  raise; empty values raise. `add` returns whether the claim was added
+  or already present. Duplicate claims are also deduped on unpack.
+  Key/id mismatch raises. `validate_metadata_fields` / key-id validation
+  on save is removed.
 
 ### Feat
 

@@ -11,6 +11,7 @@ from caselawclient.models.documents.metadata.fields.exceptions import (
 from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataFieldValue
 from caselawclient.models.documents.metadata.fields.resolution import ResolvedMetadataField
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
+from caselawclient.models.documents.metadata.registry import metadata_class_for_key
 from caselawclient.xml_helpers import Element
 
 
@@ -28,13 +29,19 @@ class MetadataFieldsCollection(dict[str, MetadataField]):
         """Insert ``field``, or noop if an equivalent claim already exists.
 
         Equivalence is ``name`` + ``value`` + ``source`` (``rejected`` is ignored,
-        so matching a rejected claim does not revive it). Empty values raise.
+        so matching a rejected claim does not revive it). Unknown claim names and
+        wrong value types raise ``TypeError``. Empty values raise.
         A reused id with a different payload raises
         ``MetadataFieldIdCollisionException``.
 
         Loading via unpack also goes through ``add``, so duplicate stored claims
         with the same equivalence key are deduped on load.
         """
+        metadata_cls = metadata_class_for_key(field.name)
+        if metadata_cls is None:
+            raise TypeError(f"Unknown metadata claim name '{field.name}'")
+        metadata_cls.validate_value(field.value)
+
         if field.value.normalised() is None:
             raise MetadataFieldEmptyValueException(f"Cannot add metadata claim '{field.name}': value is empty")
 

@@ -245,17 +245,16 @@ class TestDocumentMetadataFacadePrefersFields:
 
     def test_date_facade_rejects_non_date_claim_value(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
-        document.metadata_fields.add(
-            MetadataField(
-                name="date",
-                value=MetadataStringValue("2024-06-15"),
-                source=MetadataSource.EXTERNAL,
-                id=_id(),
-                timestamp=TIMESTAMP,
-            )
-        )
         with pytest.raises(TypeError, match="Expected MetadataDateValue for 'date'"):
-            _ = document.metadata.date.value
+            document.metadata_fields.add(
+                MetadataField(
+                    name="date",
+                    value=MetadataStringValue("2024-06-15"),
+                    source=MetadataSource.EXTERNAL,
+                    id=_id(),
+                    timestamp=TIMESTAMP,
+                )
+            )
 
     def test_date_rejects_string_value_on_pack(self, mock_api_client):
         field = MetadataField(
@@ -319,9 +318,8 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'case_number'"):
             _ = field.as_etree
-        document.metadata_fields.add(field)
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'case_number'"):
-            _ = document.metadata.case_number.value
+            document.metadata_fields.add(field)
 
     def test_court_prefers_metadata_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -373,9 +371,8 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'court'"):
             _ = field.as_etree
-        document.metadata_fields.add(field)
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'court'"):
-            _ = document.metadata.court.value
+            document.metadata_fields.add(field)
 
     def test_jurisdiction_prefers_metadata_fields(self, mock_api_client):
         from caselawclient.factories import DocumentBodyFactory
@@ -427,9 +424,8 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'jurisdiction'"):
             _ = field.as_etree
-        document.metadata_fields.add(field)
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'jurisdiction'"):
-            _ = document.metadata.jurisdiction.value
+            document.metadata_fields.add(field)
 
     def test_title_non_string_value_raises(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)
@@ -442,9 +438,8 @@ class TestDocumentMetadataFacadePrefersFields:
         )
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'title'"):
             _ = field.as_etree
-        document.metadata_fields.add(field)
         with pytest.raises(TypeError, match="Expected MetadataStringValue for 'title'"):
-            _ = document.metadata.title.value
+            document.metadata_fields.add(field)
 
     def test_categories_orphan_child_without_parent_claim_is_omitted(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client)

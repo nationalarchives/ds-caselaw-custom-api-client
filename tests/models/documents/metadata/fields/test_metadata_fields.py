@@ -792,6 +792,32 @@ class TestMetadataFieldsIdempotentAdd:
                 )
             )
 
+    def test_add_wrong_value_type_raises(self):
+        collection = MetadataFieldsCollection()
+        with pytest.raises(TypeError, match="Expected MetadataStringValue for 'title'"):
+            collection.add(
+                MetadataField(
+                    name="title",
+                    value=MetadataCategoryValue(name="Not a title"),
+                    source=MetadataSource.EXTERNAL,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=EARLY_TIMESTAMP,
+                )
+            )
+
+    def test_add_unknown_claim_name_raises(self):
+        collection = MetadataFieldsCollection()
+        with pytest.raises(TypeError, match="Unknown metadata claim name"):
+            collection.add(
+                MetadataField(
+                    name="not_a_real_field",
+                    value=MetadataStringValue("X"),
+                    source=MetadataSource.EXTERNAL,
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    timestamp=EARLY_TIMESTAMP,
+                )
+            )
+
     def test_different_sources_same_value_are_both_kept(self):
         collection = MetadataFieldsCollection()
         assert (
