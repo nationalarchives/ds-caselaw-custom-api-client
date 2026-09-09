@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from caselawclient.factories import DocumentBodyFactory, DocumentFactory
-from caselawclient.models.documents.metadata.fields.field import MetadataField
+from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 
 TIMESTAMP = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
@@ -36,8 +36,8 @@ class TestJudgesMetadataEditing:
         judges.materialise_body_claims()
 
         assert [claim.value for claim in document.metadata_fields.by_name("judges")] == [
-            "Judge A",
-            "Judge B",
+            MetadataStringValue("Judge A"),
+            MetadataStringValue("Judge B"),
         ]
         assert all(claim.source is MetadataSource.DOCUMENT for claim in document.metadata_fields.by_name("judges"))
         assert judges.values == ["Judge A", "Judge B"]
@@ -47,7 +47,7 @@ class TestJudgesMetadataEditing:
         document.metadata_fields.add(
             MetadataField(
                 name="judges",
-                value="Claim Judge",
+                value=MetadataStringValue("Claim Judge"),
                 source=MetadataSource.EXTERNAL,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -56,8 +56,8 @@ class TestJudgesMetadataEditing:
         document.metadata.judges.materialise_body_claims()
         claims = document.metadata_fields.by_name("judges")
         assert {(claim.source, claim.value) for claim in claims} == {
-            (MetadataSource.EXTERNAL, "Claim Judge"),
-            (MetadataSource.DOCUMENT, "Body Judge"),
+            (MetadataSource.EXTERNAL, MetadataStringValue("Claim Judge")),
+            (MetadataSource.DOCUMENT, MetadataStringValue("Body Judge")),
         }
 
     def test_add_editor_judge_yanks_then_adds(self, mock_api_client):
@@ -67,16 +67,20 @@ class TestJudgesMetadataEditing:
         claims = document.metadata_fields.by_name("judges")
         assert len(claims) == 2
         assert claims[0].source is MetadataSource.DOCUMENT
-        assert claims[0].value == "Body Judge"
+        assert claims[0].value == MetadataStringValue("Body Judge")
         assert claims[1].source is MetadataSource.EDITOR
-        assert claims[1].value == "Editor Judge"
+        assert claims[1].value == MetadataStringValue("Editor Judge")
         assert document.metadata.judges.values == ["Body Judge", "Editor Judge"]
 
     def test_suppress_document_claim_rejects(self, mock_api_client):
         document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Judge A", "Judge B"))
         judges = document.metadata.judges
         judges.materialise_body_claims()
-        claim_a = next(claim for claim in document.metadata_fields.by_name("judges") if claim.value == "Judge A")
+        claim_a = next(
+            claim
+            for claim in document.metadata_fields.by_name("judges")
+            if claim.value == MetadataStringValue("Judge A")
+        )
 
         judges.suppress_claim(claim_a.id)
 
@@ -90,7 +94,7 @@ class TestJudgesMetadataEditing:
         document.metadata_fields.add(
             MetadataField(
                 name="judges",
-                value="Editor Judge",
+                value=MetadataStringValue("Editor Judge"),
                 source=MetadataSource.EDITOR,
                 id=_id(),
                 timestamp=TIMESTAMP,
@@ -109,4 +113,15 @@ class TestJudgesMetadataEditing:
         assert judges.values == []
 
         judges.restore_claim(claim.id)
+        assert judges.values == ["Judge A"]
+
+    def test_suppress_body_value_blank_name_is_noop(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client, body=_body_with_judges("Judge A"))
+        judges = document.metadata.judges
+        judges.materialise_body_claims()
+
+        judges.suppress_body_value("   ")
+
+        claim = document.metadata_fields.by_name("judges")[0]
+        assert claim.rejected is False
         assert judges.values == ["Judge A"]
