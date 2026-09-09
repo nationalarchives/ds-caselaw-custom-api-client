@@ -23,7 +23,13 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
 
     @property
     def value(self) -> datetime.date | None:
-        return self._date_value(self.document.body.document_date_as_date)
+        resolved = self._resolve_claims()
+        if not resolved.has_any_claims:
+            return self.document.body.document_date_as_date
+        if resolved.value is None:
+            return None
+        self.validate_value(resolved.value)
+        return cast(MetadataDateValue, resolved.value).value
 
     @property
     def as_string(self) -> str:

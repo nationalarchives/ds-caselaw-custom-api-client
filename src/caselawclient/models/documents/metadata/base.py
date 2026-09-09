@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from datetime import date
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar, cast
 
 from caselawclient.models.documents.metadata.fields.field import (
-    MetadataDateValue,
     MetadataField,
     MetadataFieldValue,
     MetadataStringValue,
@@ -107,16 +105,6 @@ class SingleMetadata(Metadata, Generic[T]):
             return None
         self.validate_value(resolved.value)
         return cast(MetadataStringValue, resolved.value).value or None
-
-    def _date_value(self, body: date | None) -> date | None:
-        """Resolve a date claim, falling back to ``body`` when none exist."""
-        resolved = self._resolve_claims()
-        if not resolved.has_any_claims:
-            return body
-        if resolved.value is None:
-            return None
-        self.validate_value(resolved.value)
-        return cast(MetadataDateValue, resolved.value).value
 
 
 class MultipleMetadata(Metadata, Generic[T]):
