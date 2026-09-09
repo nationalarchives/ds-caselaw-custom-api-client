@@ -10,7 +10,7 @@ from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.documents.exceptions import DocumentAlreadyExistsError, DocumentNotPersistedError
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
-from caselawclient.models.documents.metadata.fields.field import MetadataField
+from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
@@ -223,7 +223,7 @@ class TestDocumentSave:
         field_id = str(uuid4())
         document.metadata_fields["wrong-key"] = MetadataField(
             name="title",
-            value="Bad key",
+            value=MetadataStringValue("Bad key"),
             source=MetadataSource.EDITOR,
             id=field_id,
             timestamp=datetime(2024, 1, 1, tzinfo=UTC),
@@ -338,7 +338,7 @@ class TestDocumentSave:
         document = JudgmentFactory.build(api_client=mock_api_client)
         existing_claim = MetadataField(
             name="title",
-            value="Existing editor title",
+            value=MetadataStringValue("Existing editor title"),
             source=MetadataSource.EDITOR,
             id="existing-claim-id",
             timestamp=datetime(2024, 1, 1, tzinfo=UTC),
