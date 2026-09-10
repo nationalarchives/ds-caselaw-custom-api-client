@@ -11,6 +11,7 @@ from caselawclient.models.documents import (
 from caselawclient.models.documents.body import (
     UnparsableDate,
 )
+from caselawclient.models.documents.metadata.fields.field import MetadataPartyValue
 from caselawclient.types import DocumentCategory
 
 
@@ -213,6 +214,91 @@ class TestDocumentBody:
         )
 
         assert body.judges == ["Lord Justice Smith", "Mrs Justice Jones & Co"]
+
+    @pytest.mark.parametrize(
+        "opening_tag, closing_tag",
+        [
+            ("judgment", "judgment"),
+            ('doc name="pressSummary"', "doc"),
+        ],
+    )
+    def test_parties(self, opening_tag, closing_tag):
+        body = DocumentBody(
+            f"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <{opening_tag}>
+                    <meta>
+                        <proprietary>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                            <uk:party role="Defendant">Tom</uk:party>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                            <uk:party>   </uk:party>
+                            <uk:party>Unnamed Role</uk:party>
+                        </proprietary>
+                    </meta>
+                </{closing_tag}>
+            </akomaNtoso>
+        """.encode()
+        )
+
+        assert body.parties == [
+            MetadataPartyValue(name="Jerry", role="Claimant"),
+            MetadataPartyValue(name="Tom", role="Defendant"),
+            MetadataPartyValue(name="Unnamed Role"),
+        ]
+
+    def test_parties_empty_when_absent(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta><proprietary/></meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.parties == []
+
+    def test_parties_ignores_parties_outside_proprietary(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:party role="Claimant">Meta Party</uk:party>
+                        </proprietary>
+                    </meta>
+                    <header>
+                        <p><uk:party role="Defendant">Header Party</uk:party></p>
+                    </header>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.parties == [MetadataPartyValue(name="Meta Party", role="Claimant")]
+
+    def test_parties_flattens_nested_inline_markup(self):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:party role="Claimant">Acme <span>Ltd</span></uk:party>
+                        </proprietary>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+
+        assert body.parties == [MetadataPartyValue(name="Acme Ltd", role="Claimant")]
 
     @pytest.mark.parametrize(
         "opening_tag, closing_tag",

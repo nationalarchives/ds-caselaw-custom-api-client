@@ -225,6 +225,169 @@ class TestJudgesMetadata:
         assert document.metadata.judges.values == document.body.judges
 
 
+class TestPartiesMetadata:
+    def test_parties_metadata_is_multiple_with_parties_key(self):
+        from caselawclient.models.documents.metadata.types.parties import PartiesMetadata
+
+        assert issubclass(PartiesMetadata, MultipleMetadata)
+        assert PartiesMetadata.key == "parties"
+        assert PartiesMetadata.editable is True
+
+    def test_parties_empty_when_no_claims_and_no_body_parties(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        assert document.metadata.parties.values == []
+        assert document.metadata.parties.values == document.body.parties
+
+    def test_parties_metadata_values_match_document_body(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataPartyValue
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                            <uk:party role="Defendant">Tom</uk:party>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=body)
+        assert document.metadata.parties.values == [
+            MetadataPartyValue(name="Jerry", role="Claimant"),
+            MetadataPartyValue(name="Tom", role="Defendant"),
+        ]
+        assert document.metadata.parties.values == document.body.parties
+
+    def test_parties_values_from_active_claims_across_sources(self, mock_api_client):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.fields.collection import MetadataFieldAddResult
+        from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataPartyValue
+        from caselawclient.models.documents.metadata.fields.source import MetadataSource
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        timestamp = datetime(2025, 1, 1, tzinfo=UTC)
+        document_party = MetadataPartyValue(name="Doc Party", role="respondent")
+        external_party = MetadataPartyValue(name="Ext Party", role="appellant")
+
+        assert (
+            document.metadata_fields.add(
+                MetadataField(
+                    name="parties",
+                    value=document_party,
+                    source=MetadataSource.DOCUMENT,
+                    id=str(uuid4()),
+                    timestamp=timestamp,
+                )
+            )
+            is MetadataFieldAddResult.ADDED
+        )
+        assert (
+            document.metadata_fields.add(
+                MetadataField(
+                    name="parties",
+                    value=external_party,
+                    source=MetadataSource.EXTERNAL,
+                    id=str(uuid4()),
+                    timestamp=timestamp,
+                )
+            )
+            is MetadataFieldAddResult.ADDED
+        )
+        assert (
+            document.metadata_fields.add(
+                MetadataField(
+                    name="parties",
+                    value=external_party,
+                    source=MetadataSource.EXTERNAL,
+                    id=str(uuid4()),
+                    timestamp=timestamp,
+                )
+            )
+            is MetadataFieldAddResult.ALREADY_PRESENT
+        )
+
+        assert document.metadata.parties.values == [document_party, external_party]
+
+    def test_parties_facade_dedupes_same_party_across_sources(self, mock_api_client):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataPartyValue
+        from caselawclient.models.documents.metadata.fields.source import MetadataSource
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        timestamp = datetime(2025, 1, 1, tzinfo=UTC)
+        shared = MetadataPartyValue(name="Acme Ltd", role="appellant")
+
+        document.metadata_fields.add(
+            MetadataField(
+                name="parties",
+                value=shared,
+                source=MetadataSource.DOCUMENT,
+                id=str(uuid4()),
+                timestamp=timestamp,
+            )
+        )
+        document.metadata_fields.add(
+            MetadataField(
+                name="parties",
+                value=shared,
+                source=MetadataSource.EXTERNAL,
+                id=str(uuid4()),
+                timestamp=timestamp,
+            )
+        )
+
+        assert len(document.metadata_fields.by_name("parties")) == 2
+        assert document.metadata.parties.values == [shared]
+
+    def test_parties_materialise_body_claims_yanks_body_parties(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataPartyValue
+        from caselawclient.models.documents.metadata.fields.source import MetadataSource
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata.parties.materialise_body_claims()
+
+        claims = document.metadata_fields.by_name("parties")
+        assert len(claims) == 1
+        assert claims[0].source is MetadataSource.DOCUMENT
+        assert claims[0].value == MetadataPartyValue(name="Jerry", role="Claimant")
+
+
 class TestDocumentMetadata:
     def test_factory_built_document_metadata_exposes_typed_facades(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -236,6 +399,7 @@ class TestDocumentMetadata:
         from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
         from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
         from caselawclient.models.documents.metadata.types.name import NameMetadata
+        from caselawclient.models.documents.metadata.types.parties import PartiesMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
@@ -247,6 +411,7 @@ class TestDocumentMetadata:
         assert isinstance(document.metadata.case_number, CaseNumberMetadata)
         assert isinstance(document.metadata.categories, CategoriesMetadata)
         assert isinstance(document.metadata.judges, JudgesMetadata)
+        assert isinstance(document.metadata.parties, PartiesMetadata)
         assert document.metadata.title.value == "Judgment v Judgement"
         assert document.metadata.court.value == "Court of Testing"
 

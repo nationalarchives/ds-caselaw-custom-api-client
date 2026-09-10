@@ -13,7 +13,12 @@ from caselawclient.models.documents.metadata.fields.exceptions import (
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import Element
 
-MetadataFieldValue = Union["MetadataStringValue", "MetadataDateValue", "MetadataCategoryValue"]
+MetadataFieldValue = Union[
+    "MetadataStringValue",
+    "MetadataDateValue",
+    "MetadataCategoryValue",
+    "MetadataPartyValue",
+]
 
 
 @dataclass(frozen=True)
@@ -60,6 +65,27 @@ class MetadataCategoryValue:
             raise ValueError("category name must be non-empty")
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "parent", parent)
+
+    def normalised(self) -> Self | None:
+        return self
+
+
+@dataclass(frozen=True)
+class MetadataPartyValue:
+    """Structured value for a ``parties`` metadata claim."""
+
+    name: str
+    role: str | None = None
+
+    def __post_init__(self) -> None:
+        name = self.name.strip()
+        role = self.role.strip() if self.role else None
+        if role == "":
+            role = None
+        if not name:
+            raise ValueError("party name must be non-empty")
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "role", role)
 
     def normalised(self) -> Self | None:
         return self

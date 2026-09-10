@@ -14,7 +14,8 @@ The format is based on [Keep a Changelog 1.0.0].
   values/in. Legacy name/judge keys are gone.
 - Date metadata claim values are `datetime.date`, not `str`.
 - Claim payloads are structured `MetadataStringValue` /
-  `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
+  `MetadataDateValue` / `MetadataCategoryValue` / `MetadataPartyValue`,
+  not bare `str` / `date`.
 - `metadata_fields.add` / `__setitem__` are idempotent: matching
   name/value/source is a noop (including rejected); id collision with a
   different payload raises; unknown claim names and wrong value types
@@ -36,6 +37,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Metadata**: per-type pack/unpack with date claims as date
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 - **Metadata**: idempotent MetadataFieldsCollection.add
+- **Metadata**: add parties claims with MetadataPartyValue; materialise `uk:party` from the body XML
 
 ### Fix
 
