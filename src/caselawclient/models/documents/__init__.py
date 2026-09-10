@@ -658,6 +658,7 @@ class Document:
         *,
         version_type: VersionType = VersionType.EDIT,
         automated: bool = False,
+        payload: dict[str, Any] | None = None,
     ) -> None:
         """
         Save the document's XML representation back to MarkLogic as a new version.
@@ -667,6 +668,8 @@ class Document:
         document XML, then saves identifier and metadata properties to MarkLogic.
 
         :param message: Human-readable message describing the changes made.
+        :param payload: Optional structured data stored on the version annotation (for example TRE
+            metadata used later by restore flows).
         """
         if type(self) is Document:
             raise TypeError("Use a concrete document class such as Judgment, PressSummary, or ParserLog to save.")
@@ -675,6 +678,7 @@ class Document:
             version_type=version_type,
             automated=automated,
             message=message,
+            payload=payload,
         )
 
         self._convert_body_claims_to_structured_metadata()

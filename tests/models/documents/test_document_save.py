@@ -285,6 +285,32 @@ class TestDocumentSave:
         assert annotation.version_type == VersionType.SUBMISSION
         assert annotation.automated is True
 
+    def test_save_passes_payload_on_update(self, mock_api_client):
+        document = JudgmentFactory.build(api_client=mock_api_client)
+        payload = {"tre_raw_metadata": {"parameters": {"TRE": {"reference": "TDR-2024-ABC"}}}}
+
+        document.save(message="Updated document", payload=payload)
+
+        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        assert annotation.payload == payload
+
+    def test_save_passes_payload_on_insert(self, mock_api_client):
+        document = Judgment.from_xml(DocumentBodyFactory.build(), mock_api_client)
+        payload = {"tre_raw_metadata": {"parameters": {"TRE": {"reference": "TDR-2024-XYZ"}}}}
+
+        document.save(message="New document", payload=payload)
+
+        annotation = mock_api_client.insert_document_xml.call_args[0][3]
+        assert annotation.payload == payload
+
+    def test_save_without_payload_leaves_annotation_payload_none(self, mock_api_client):
+        document = JudgmentFactory.build(api_client=mock_api_client)
+
+        document.save(message="Changed document")
+
+        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        assert annotation.payload is None
+
     def test_partial_save_failure_leaves_document_persisted_after_insert(self, mock_api_client):
         document = Judgment.from_xml(DocumentBodyFactory.build(), mock_api_client)
         mock_api_client.document_exists.return_value = False

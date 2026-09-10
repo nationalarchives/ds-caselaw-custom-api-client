@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Document**: add `Document.from_xml()` for in-memory construction from parser XML without MarkLogic
 - **Document**: upsert `save()` with `version_type` and `automated` parameters
+- **Document**: allow `Document.save()` to pass an optional version annotation `payload`
 - **Document**: add `document_from_xml()` helper and `mint_document_uri()`
 - **Document**: guard MarkLogic-backed APIs until `save()` completes (`DocumentNotPersistedError`)
 - **Document**: reject `from_xml()` for URIs that already exist in MarkLogic (`DocumentAlreadyExistsError`)
