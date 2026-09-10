@@ -28,6 +28,7 @@ class JudgesMetadata(MultipleMetadata[str]):
     title = "Judges"
     description = "A list of the names of the judges (or equivalent for the body) involved in any particular case."
     editable = True
+    LOGIC_VERSION = 2
 
     @property
     def values(self) -> list[str]:

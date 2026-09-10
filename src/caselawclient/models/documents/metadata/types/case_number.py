@@ -6,6 +6,7 @@ class CaseNumberMetadata(SingleMetadata[str | None]):
     key = "case_number"
     title = "Case Number"
     description = "The case number of the document."
+    LOGIC_VERSION = 2
 
     @property
     def value(self) -> str | None:

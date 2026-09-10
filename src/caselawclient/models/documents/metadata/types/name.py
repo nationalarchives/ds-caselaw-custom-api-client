@@ -6,6 +6,7 @@ class NameMetadata(SingleMetadata[str]):
     key = "title"
     title = "Title"
     description = "The title of the document."
+    LOGIC_VERSION = 2
 
     @property
     def value(self) -> str:

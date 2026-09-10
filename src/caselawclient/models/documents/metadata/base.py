@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 from caselawclient.models.documents.metadata.fields.field import (
     MetadataField,
@@ -26,11 +26,22 @@ class Metadata(ABC):
     editable: ClassVar[bool] = False
     """Should editors be allowed to manually edit this metadata field?"""
 
-    LOGIC_VERSION: ClassVar[int] = 2
-    """Bump when this field's body-extraction / materialisation rules change."""
+    LOGIC_VERSION: ClassVar[int]
+    """Per-type body-extraction / materialisation generation. Concrete types must set this."""
 
     PACK_VERSION: ClassVar[int] = 1
     """Bump when pack_value / unpack_value for this type change the XML shape."""
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # Intermediate bases (SingleMetadata / MultipleMetadata) have no claim key.
+        if "key" not in cls.__dict__:
+            return
+        for base in cls.__mro__:
+            if base is Metadata:
+                raise TypeError(f"{cls.__name__} must define LOGIC_VERSION")
+            if "LOGIC_VERSION" in base.__dict__:
+                return
 
     def __init__(self, document: "Document") -> None:
         self.document = document
@@ -66,8 +77,7 @@ class Metadata(ABC):
             normalised = value.normalised()
             if normalised is None:
                 continue
-            if self.document.metadata_fields.has_claim(self.key, normalised, MetadataSource.DOCUMENT):
-                continue
+            # Idempotent ``add`` noops when an equivalent DOCUMENT claim exists.
             self.document.metadata_fields.add(
                 MetadataField(
                     name=self.key,

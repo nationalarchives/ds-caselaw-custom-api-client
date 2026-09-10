@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog 1.0.0].
 - Date metadata claim values are `datetime.date`, not `str`.
 - Claim payloads are structured `MetadataStringValue` /
   `MetadataDateValue` / `MetadataCategoryValue`, not bare `str` / `date`.
+- `metadata_fields.add` / `__setitem__` are idempotent: matching
+  name/value/source is a noop (including rejected); id collision with a
+  different payload raises; unknown claim names and wrong value types
+  raise; empty values raise. `add` returns whether the claim was added
+  or already present. Duplicate claims are also deduped on unpack.
+  Key/id mismatch raises. `validate_metadata_fields` / key-id validation
+  on save is removed.
 
 ### Feat
 
@@ -23,11 +30,12 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Document**: add `document_from_xml()` helper and `mint_document_uri()`
 - **Document**: guard MarkLogic-backed APIs until `save()` completes (`DocumentNotPersistedError`)
 - **Document**: reject `from_xml()` for URIs that already exist in MarkLogic (`DocumentAlreadyExistsError`)
-- **Document**: validate identifier and metadata field IDs before upserting document XML during `save()`
+- **Document**: validate identifier IDs before upserting document XML during `save()`
 - **Document**: persist identifiers and structured metadata properties after upserting document XML during `save()`
 - **Metadata**: wrap all claim values in structured Metadata\*Value types
 - **Metadata**: per-type pack/unpack with date claims as date
 - **Metadata**: expose DocumentMetadata as typed attribute facades
+- **Metadata**: idempotent MetadataFieldsCollection.add
 
 ### Fix
 
@@ -37,6 +45,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Refactor
 
+- **Metadata**: require each metadata type to declare its own LOGIC_VERSION
 - **Metadata**: drop MetadataAttributeKey from the registry
 - **Metadata**: centralise METADATA_FIELD_CLASSES in the registry
 

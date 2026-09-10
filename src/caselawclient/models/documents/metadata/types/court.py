@@ -6,6 +6,7 @@ class CourtMetadata(SingleMetadata[str]):
     key = "court"
     title = "Court"
     description = "The court that issued the document."
+    LOGIC_VERSION = 2
 
     @property
     def value(self) -> str:

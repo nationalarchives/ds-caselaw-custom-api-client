@@ -9,7 +9,7 @@ import pytest
 from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.documents.exceptions import DocumentAlreadyExistsError, DocumentNotPersistedError
-from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldValidationException
+from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldKeyMismatchException
 from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.materialisation import (
@@ -218,24 +218,19 @@ class TestDocumentSave:
         with pytest.raises(DocumentAlreadyExistsError, match="already exists"):
             document.save(message="Initial insert")
 
-    def test_save_rejects_mismatched_metadata_field_keys_before_insert(self, mock_api_client):
+    def test_metadata_fields_reject_mismatched_keys_on_assignment(self, mock_api_client):
         document = Judgment.from_xml(DocumentBodyFactory.build(), mock_api_client)
         field_id = str(uuid4())
-        document.metadata_fields["wrong-key"] = MetadataField(
-            name="title",
-            value=MetadataStringValue("Bad key"),
-            source=MetadataSource.EDITOR,
-            id=field_id,
-            timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-        )
 
-        with (
-            patch.object(document.api_client, "insert_document_xml") as mock_insert,
-            pytest.raises(MetadataFieldValidationException, match="wrong-key"),
-        ):
-            document.save(message="Initial insert")
+        with pytest.raises(MetadataFieldKeyMismatchException, match="wrong-key"):
+            document.metadata_fields["wrong-key"] = MetadataField(
+                name="title",
+                value=MetadataStringValue("Bad key"),
+                source=MetadataSource.EDITOR,
+                id=field_id,
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
+            )
 
-        mock_insert.assert_not_called()
         assert document.is_persisted is False
 
     def test_is_persisted_false_after_from_xml(self, mock_api_client):
