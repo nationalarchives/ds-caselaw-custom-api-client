@@ -9,18 +9,24 @@ from caselawclient.models.documents.metadata.types.case_number import CaseNumber
 from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
 from caselawclient.models.documents.metadata.types.court import CourtMetadata
 from caselawclient.models.documents.metadata.types.date import DateMetadata
+from caselawclient.models.documents.metadata.types.headnote_summary import HeadnoteSummaryMetadata
 from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
 from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
 from caselawclient.models.documents.metadata.types.name import NameMetadata
+from caselawclient.models.documents.metadata.types.parties import PartiesMetadata
+from caselawclient.models.documents.metadata.types.web_archiving_link import WebArchivingLinkMetadata
 
 METADATA_FIELD_CLASSES: tuple[type[Metadata], ...] = (
     CaseNumberMetadata,
     CategoriesMetadata,
     CourtMetadata,
     DateMetadata,
+    HeadnoteSummaryMetadata,
     JudgesMetadata,
     JurisdictionMetadata,
     NameMetadata,
+    PartiesMetadata,
+    WebArchivingLinkMetadata,
 )
 
 
@@ -49,6 +55,9 @@ class DocumentMetadata:
     case_number: CaseNumberMetadata
     categories: CategoriesMetadata
     judges: JudgesMetadata
+    parties: PartiesMetadata
+    headnote_summary: HeadnoteSummaryMetadata
+    web_archiving_link: WebArchivingLinkMetadata
 
     def __iter__(self) -> Iterator[Metadata]:
         for field in fields(self):

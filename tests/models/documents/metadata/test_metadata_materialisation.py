@@ -10,6 +10,7 @@ from caselawclient.models.documents.metadata.fields.field import (
     MetadataCategoryValue,
     MetadataDateValue,
     MetadataField,
+    MetadataPartyValue,
     MetadataStringValue,
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
@@ -242,6 +243,43 @@ class TestMaterialiseBodyClaims:
             if isinstance(claim.value, MetadataCategoryValue)
         }
         assert values == {("Child", None)}
+
+    def test_parties_materialise_body_claims(self, mock_api_client):
+        parties_xml = DocumentBodyFactory.build(
+            """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                        xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification><FRBRWork>
+                            <FRBRname value="Name"/>
+                            <FRBRdate date="2023-02-03"/>
+                        </FRBRWork></identification>
+                        <proprietary>
+                            <uk:court>Court</uk:court>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                            <uk:party role="Defendant">Tom</uk:party>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=parties_xml)
+        document.metadata.parties.materialise_body_claims()
+        document.metadata.parties.materialise_body_claims()
+
+        values = [
+            claim.value
+            for claim in document.metadata_fields.by_name("parties")
+            if isinstance(claim.value, MetadataPartyValue)
+        ]
+        assert values == [
+            MetadataPartyValue(name="Jerry", role="Claimant"),
+            MetadataPartyValue(name="Tom", role="Defendant"),
+        ]
 
 
 class TestDocumentSaveStructuredMetadataToMarklogic:

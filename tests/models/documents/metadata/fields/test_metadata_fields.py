@@ -21,6 +21,7 @@ from caselawclient.models.documents.metadata.fields.field import (
     MetadataDateValue,
     MetadataField,
     MetadataFieldValue,
+    MetadataPartyValue,
     MetadataStringValue,
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
@@ -52,6 +53,14 @@ class TestMetadataFieldValues:
         assert MetadataCategoryValue(name=" Child ", parent="  ").parent is None
         with pytest.raises(ValueError, match="non-empty"):
             MetadataCategoryValue(name="")
+
+    def test_party_value_strips_role_and_rejects_empty_name(self):
+        assert MetadataPartyValue(name=" Acme ", role="  appellant  ") == MetadataPartyValue(
+            name="Acme", role="appellant"
+        )
+        assert MetadataPartyValue(name="Acme", role="  ").role is None
+        with pytest.raises(ValueError, match="non-empty"):
+            MetadataPartyValue(name="")
 
     def test_pack_unknown_name_raises(self):
         field = MetadataField(
@@ -108,6 +117,29 @@ class TestMetadataFieldPacking:
 
         assert element.findtext("name") == "Subcategory"
         assert element.findtext("parent") == "Category"
+
+    def test_pack_party_with_role(self):
+        field = MetadataField(
+            name="parties",
+            value=MetadataPartyValue(name="Acme Ltd", role="appellant"),
+            source=MetadataSource.EXTERNAL,
+            id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        element = field.as_etree
+
+        assert element.findtext("name") == "Acme Ltd"
+        assert element.findtext("role") == "appellant"
+
+    def test_pack_party_without_role_omits_role_element(self):
+        field = MetadataField(
+            name="parties",
+            value=MetadataPartyValue(name="Acme Ltd"),
+            source=MetadataSource.EXTERNAL,
+            id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            timestamp=EARLY_TIMESTAMP,
+        )
+        assert field.as_etree.find("role") is None
 
     def test_pack_category_with_null_parent(self):
         field = MetadataField(
@@ -173,6 +205,26 @@ class TestMetadataFieldUnpacking:
 
         assert isinstance(field.value, MetadataCategoryValue)
         assert field.value.parent is None
+
+    def test_unpack_party_with_role(self):
+        xml = etree.fromstring(
+            '<metadata id="7c4e8a91-3b2f-4d6e-9a1c-5e8f0b2d4a67" name="parties" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">'
+            "<name>Acme Ltd</name><role>appellant</role></metadata>"
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataPartyValue(name="Acme Ltd", role="appellant")
+
+    def test_unpack_party_without_role(self):
+        xml = etree.fromstring(
+            '<metadata id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" name="parties" source="external" '
+            f'timestamp="{EARLY_TIMESTAMP.isoformat()}">'
+            "<name>Acme Ltd</name></metadata>"
+        )
+        field = unpack_a_metadata_field_from_etree(xml)
+        assert field is not None
+        assert field.value == MetadataPartyValue(name="Acme Ltd", role=None)
 
     def test_unpack_rejected(self):
         xml = etree.fromstring(
@@ -413,6 +465,8 @@ class TestMetadataUnpackContract:
             return MetadataDateValue(date(2023, 2, 3))
         if metadata_cls.key == "categories":
             return MetadataCategoryValue(name="Child", parent="Parent")
+        if metadata_cls.key == "parties":
+            return MetadataPartyValue(name="Acme Ltd", role="appellant")
         return MetadataStringValue("Sample")
 
     @staticmethod

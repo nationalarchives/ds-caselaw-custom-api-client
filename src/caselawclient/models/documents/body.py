@@ -7,6 +7,7 @@ from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
 
+from caselawclient.models.documents.metadata.fields.field import MetadataPartyValue
 from caselawclient.models.documents.metadata.types.date import date_as_string_from_value
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
@@ -26,6 +27,7 @@ CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
+PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -78,6 +80,29 @@ def judges_from_nodes(nodes: list[Element]) -> list[str]:
     return judges
 
 
+def parties_from_nodes(nodes: list[Element]) -> list[MetadataPartyValue]:
+    """Extract unique parties from Akoma Ntoso ``uk:party`` nodes.
+
+    Parties are returned in first-seen document order. Empty or whitespace-only
+    names are skipped; duplicate name+role pairs are de-duplicated. Nested inline
+    markup inside a party node is flattened via ``itertext``. Role is taken from
+    the ``role`` attribute when present.
+    """
+    parties: list[MetadataPartyValue] = []
+
+    for node in nodes:
+        name = "".join(node.itertext()).strip()
+        if not name:
+            continue
+        role = node.get("role")
+        party = MetadataPartyValue(name=name, role=role)
+        if party in parties:
+            continue
+        parties.append(party)
+
+    return parties
+
+
 class DocumentBody:
     """
     A class for abstracting out interactions with the body of a document.
@@ -126,6 +151,10 @@ class DocumentBody:
     @cached_property
     def judges(self) -> list[str]:
         return judges_from_nodes(self.get_xpath_nodes(JUDGES_XPATH))
+
+    @cached_property
+    def parties(self) -> list[MetadataPartyValue]:
+        return parties_from_nodes(self.get_xpath_nodes(PARTIES_XPATH))
 
     @property
     def court_and_jurisdiction_identifier_string(self) -> CourtCode:
