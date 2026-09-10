@@ -388,6 +388,51 @@ class TestPartiesMetadata:
         assert claims[0].value == MetadataPartyValue(name="Jerry", role="Claimant")
 
 
+class TestHeadnoteSummaryMetadata:
+    def test_headnote_summary_is_optional_string_key(self):
+        from caselawclient.models.documents.metadata.types.headnote_summary import HeadnoteSummaryMetadata
+
+        assert issubclass(HeadnoteSummaryMetadata, SingleMetadata)
+        assert HeadnoteSummaryMetadata.key == "headnote_summary"
+        assert HeadnoteSummaryMetadata.editable is True
+
+    def test_headnote_summary_none_when_no_claims(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        assert document.metadata.headnote_summary.value is None
+
+    def test_headnote_summary_prefers_claim_value(self, mock_api_client):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
+        from caselawclient.models.documents.metadata.fields.source import MetadataSource
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata_fields.add(
+            MetadataField(
+                name="headnote_summary",
+                value=MetadataStringValue("  Short headnote  "),
+                source=MetadataSource.EXTERNAL,
+                id=str(uuid4()),
+                timestamp=datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        assert document.metadata.headnote_summary.value == "Short headnote"
+
+    def test_headnote_summary_materialise_body_claims_is_noop(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata.headnote_summary.materialise_body_claims()
+
+        assert document.metadata_fields.by_name("headnote_summary") == []
+
+
 class TestDocumentMetadata:
     def test_factory_built_document_metadata_exposes_typed_facades(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -396,6 +441,7 @@ class TestDocumentMetadata:
         from caselawclient.models.documents.metadata.types.categories import CategoriesMetadata
         from caselawclient.models.documents.metadata.types.court import CourtMetadata
         from caselawclient.models.documents.metadata.types.date import DateMetadata
+        from caselawclient.models.documents.metadata.types.headnote_summary import HeadnoteSummaryMetadata
         from caselawclient.models.documents.metadata.types.judges import JudgesMetadata
         from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
         from caselawclient.models.documents.metadata.types.name import NameMetadata
@@ -412,6 +458,7 @@ class TestDocumentMetadata:
         assert isinstance(document.metadata.categories, CategoriesMetadata)
         assert isinstance(document.metadata.judges, JudgesMetadata)
         assert isinstance(document.metadata.parties, PartiesMetadata)
+        assert isinstance(document.metadata.headnote_summary, HeadnoteSummaryMetadata)
         assert document.metadata.title.value == "Judgment v Judgement"
         assert document.metadata.court.value == "Court of Testing"
 

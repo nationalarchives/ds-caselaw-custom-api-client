@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Metadata**: expose DocumentMetadata as typed attribute facades
 - **Metadata**: idempotent MetadataFieldsCollection.add
 - **Metadata**: add parties claims with MetadataPartyValue; materialise `uk:party` from the body XML
+- **Metadata**: add headnote_summary claims
 
 ### Fix
 
