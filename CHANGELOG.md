@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Metadata**: idempotent MetadataFieldsCollection.add
 - **Metadata**: add parties claims with MetadataPartyValue; materialise `uk:party` from the body XML
 - **Metadata**: add headnote_summary claims
+- **Metadata**: add web_archiving_link claims
 
 ### Fix
 

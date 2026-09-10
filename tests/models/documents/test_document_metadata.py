@@ -433,6 +433,51 @@ class TestHeadnoteSummaryMetadata:
         assert document.metadata_fields.by_name("headnote_summary") == []
 
 
+class TestWebArchivingLinkMetadata:
+    def test_web_archiving_link_is_optional_string_key(self):
+        from caselawclient.models.documents.metadata.types.web_archiving_link import WebArchivingLinkMetadata
+
+        assert issubclass(WebArchivingLinkMetadata, SingleMetadata)
+        assert WebArchivingLinkMetadata.key == "web_archiving_link"
+        assert WebArchivingLinkMetadata.editable is True
+
+    def test_web_archiving_link_none_when_no_claims(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+
+        assert document.metadata.web_archiving_link.value is None
+
+    def test_web_archiving_link_prefers_claim_value(self, mock_api_client):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from caselawclient.factories import DocumentFactory
+        from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
+        from caselawclient.models.documents.metadata.fields.source import MetadataSource
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata_fields.add(
+            MetadataField(
+                name="web_archiving_link",
+                value=MetadataStringValue("  https://web.archive.org/example  "),
+                source=MetadataSource.EXTERNAL,
+                id=str(uuid4()),
+                timestamp=datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        assert document.metadata.web_archiving_link.value == "https://web.archive.org/example"
+
+    def test_web_archiving_link_materialise_body_claims_is_noop(self, mock_api_client):
+        from caselawclient.factories import DocumentFactory
+
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata.web_archiving_link.materialise_body_claims()
+
+        assert document.metadata_fields.by_name("web_archiving_link") == []
+
+
 class TestDocumentMetadata:
     def test_factory_built_document_metadata_exposes_typed_facades(self, mock_api_client):
         from caselawclient.factories import DocumentFactory
@@ -446,6 +491,7 @@ class TestDocumentMetadata:
         from caselawclient.models.documents.metadata.types.jurisdiction import JurisdictionMetadata
         from caselawclient.models.documents.metadata.types.name import NameMetadata
         from caselawclient.models.documents.metadata.types.parties import PartiesMetadata
+        from caselawclient.models.documents.metadata.types.web_archiving_link import WebArchivingLinkMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
 
@@ -459,6 +505,7 @@ class TestDocumentMetadata:
         assert isinstance(document.metadata.judges, JudgesMetadata)
         assert isinstance(document.metadata.parties, PartiesMetadata)
         assert isinstance(document.metadata.headnote_summary, HeadnoteSummaryMetadata)
+        assert isinstance(document.metadata.web_archiving_link, WebArchivingLinkMetadata)
         assert document.metadata.title.value == "Judgment v Judgement"
         assert document.metadata.court.value == "Court of Testing"
 
