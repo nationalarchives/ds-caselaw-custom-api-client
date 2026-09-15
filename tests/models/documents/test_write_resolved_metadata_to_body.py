@@ -841,6 +841,25 @@ class TestSaveDoesNotWritePartiesToBody:
         assert party_nodes_after[0].get("role") == "Claimant"
 
 
+class TestWriteResolvedCourtToBody:
+    def test_write_resolved_court_updates_proprietary(self, mock_api_client):
+        body = DocumentBodyFactory.build(court="Original Court")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.court == "EWHC"
+
+
 class TestMetadataWriteBackSupport:
     def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
