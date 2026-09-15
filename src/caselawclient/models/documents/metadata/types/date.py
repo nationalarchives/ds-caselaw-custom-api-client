@@ -42,6 +42,13 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
             return
         self._materialise_document_values([MetadataDateValue(document_date)])
 
+    def write_resolved_to_body(self) -> None:
+        decision_date = self.value
+        if decision_date is None:
+            self.document.body.clear_decision_date()
+            return
+        self.document.body.write_decision_date(decision_date)
+
     @classmethod
     def validate_value(cls, value: MetadataFieldValue) -> None:
         if not isinstance(value, MetadataDateValue):

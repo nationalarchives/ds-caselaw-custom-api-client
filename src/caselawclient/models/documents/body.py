@@ -4,6 +4,7 @@ import warnings
 from functools import cached_property
 
 from ds_caselaw_utils.types import CourtCode
+from lxml import etree
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
 
@@ -28,6 +29,14 @@ CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumbe
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
+AKN_NS = DEFAULT_NAMESPACES["akn"]
+UK_NS = DEFAULT_NAMESPACES["uk"]
+FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
+IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
+PROPRIETARY_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
+LIFECYCLE_EVENTREF_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:lifecycle/akn:eventRef"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -120,6 +129,113 @@ class DocumentBody:
 
     def get_xpath_nodes(self, xpath: str) -> list[Element]:
         return self._xml.get_xpath_nodes(xpath)
+
+    @property
+    def supports_metadata_write_back(self) -> bool:
+        """True when this body has AKN identification metadata that write-back can update."""
+        return bool(self.get_xpath_nodes(IDENTIFICATION_XPATH))
+
+    def _invalidate_cached_properties(self, *property_names: str) -> None:
+        for name in {*property_names, "content_as_xml"}:
+            self.__dict__.pop(name, None)
+
+    def write_title(self, title: str) -> None:
+        name_element = self._xml.get_or_create_element(FRBR_WORK_XPATH, "FRBRname", AKN_NS)
+        self._xml.set_element_attribute(name_element, "value", title)
+        self._invalidate_cached_properties("name")
+
+    def write_decision_date(self, decision_date: datetime.date) -> None:
+        date_string = decision_date.isoformat()
+        frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
+        self._xml.get_or_create_element(IDENTIFICATION_XPATH, "FRBRExpression", AKN_NS)
+        for work_parent_xpath in (FRBR_WORK_XPATH, FRBR_EXPRESSION_XPATH):
+            frbr_date = self._xml.get_or_create_element(work_parent_xpath, "FRBRdate", AKN_NS)
+            self._xml.set_element_attribute(frbr_date, "date", date_string)
+            self._xml.set_element_attribute(frbr_date, "name", frbr_date_name)
+
+        year_element = self._xml.get_or_create_element(PROPRIETARY_XPATH, "year", UK_NS)
+        self._xml.set_element_value(year_element, str(decision_date.year))
+
+        event_refs = self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH)
+        if event_refs:
+            self._xml.set_element_attribute(event_refs[0], "date", date_string)
+
+        self._invalidate_cached_properties("document_date_as_date", "document_date_as_string")
+
+    def clear_decision_date(self) -> None:
+        for frbr_date in self.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") + self.get_xpath_nodes(
+            f"{FRBR_EXPRESSION_XPATH}/akn:FRBRdate"
+        ):
+            parent = frbr_date.getparent()
+            if parent is not None:
+                parent.remove(frbr_date)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "year", UK_NS, [])
+        for event_ref in self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH):
+            event_ref.attrib.pop("date", None)
+        self._invalidate_cached_properties("document_date_as_date", "document_date_as_string")
+
+    def _proprietary_uk_text_elements(self, local_name: str, text_values: list[str]) -> list[Element]:
+        elements: list[Element] = []
+        for text in text_values:
+            element = etree.Element(etree.QName(UK_NS, local_name))
+            element.text = text
+            elements.append(element)
+        return elements
+
+    def write_court(self, court: str) -> None:
+        if court == "":
+            if self.get_xpath_nodes(f"{PROPRIETARY_XPATH}/uk:court"):
+                self._xml.replace_child_elements(PROPRIETARY_XPATH, "court", UK_NS, [])
+            else:
+                self._xml.replace_child_elements(
+                    PROPRIETARY_XPATH,
+                    "court",
+                    UK_NS,
+                    self._proprietary_uk_text_elements("court", [""]),
+                )
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "court",
+                UK_NS,
+                self._proprietary_uk_text_elements("court", [court]),
+            )
+        self._invalidate_cached_properties("court")
+
+    def write_jurisdiction(self, jurisdiction: str) -> None:
+        if jurisdiction == "":
+            self._xml.replace_child_elements(PROPRIETARY_XPATH, "jurisdiction", UK_NS, [])
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "jurisdiction",
+                UK_NS,
+                self._proprietary_uk_text_elements("jurisdiction", [jurisdiction]),
+            )
+        self._invalidate_cached_properties("jurisdiction")
+
+    def write_case_numbers(self, case_numbers: list[str]) -> None:
+        elements = self._proprietary_uk_text_elements("caseNumber", case_numbers) if case_numbers else []
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "caseNumber", UK_NS, elements)
+        self._invalidate_cached_properties("case_number")
+
+    def write_categories(self, categories: list[DocumentCategory]) -> None:
+        elements: list[Element] = []
+
+        def append_categories(tree: list[DocumentCategory], parent: str | None) -> None:
+            for category in tree:
+                if not category.name.strip():
+                    continue
+                element = etree.Element(etree.QName(UK_NS, "category"))
+                element.text = category.name
+                if parent is not None:
+                    element.set("parent", parent)
+                elements.append(element)
+                append_categories(category.subcategories, category.name)
+
+        append_categories(categories, None)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "category", UK_NS, elements)
+        self._invalidate_cached_properties("categories", "category")
 
     @cached_property
     def name(self) -> str:

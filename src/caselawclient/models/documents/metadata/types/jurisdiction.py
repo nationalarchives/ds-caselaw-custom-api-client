@@ -14,3 +14,6 @@ class JurisdictionMetadata(SingleMetadata[str]):
 
     def materialise_body_claims(self) -> None:
         self._materialise_document_values([MetadataStringValue(self.document.body.jurisdiction)])
+
+    def write_resolved_to_body(self) -> None:
+        self.document.body.write_jurisdiction(self.value)

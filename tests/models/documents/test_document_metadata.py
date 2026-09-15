@@ -183,7 +183,9 @@ class TestCaseNumberMetadata:
         from caselawclient.models.documents.metadata.types.case_number import CaseNumberMetadata
 
         document = DocumentFactory.build(api_client=mock_api_client)
-        assert CaseNumberMetadata(document).value == document.body.case_number
+        body_case_number = document.body.case_number
+        expected = body_case_number if body_case_number else None
+        assert CaseNumberMetadata(document).value == expected
 
 
 class TestCategoriesMetadata:

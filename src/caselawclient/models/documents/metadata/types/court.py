@@ -14,3 +14,6 @@ class CourtMetadata(SingleMetadata[str]):
 
     def materialise_body_claims(self) -> None:
         self._materialise_document_values([MetadataStringValue(self.document.body.court)])
+
+    def write_resolved_to_body(self) -> None:
+        self.document.body.write_court(self.value)
