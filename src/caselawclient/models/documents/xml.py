@@ -144,3 +144,20 @@ class XML:
         :param value: Value to set as text content
         """
         element.text = value
+
+    def replace_child_elements(
+        self,
+        parent_xpath: str,
+        child_local_name: str,
+        namespace: str,
+        new_elements: list[Element],
+    ) -> None:
+        """Remove all namespaced children with ``child_local_name``, then append ``new_elements``."""
+        if namespace not in set(DEFAULT_NAMESPACES.values()):
+            raise ValueError(f"Namespace not in DEFAULT_NAMESPACES: {namespace}")
+        parent = self.get_single_xpath_node(parent_xpath)
+        qname = etree.QName(namespace, child_local_name)
+        for child in list(parent.findall(qname)):
+            parent.remove(child)
+        for element in new_elements:
+            parent.append(element)
