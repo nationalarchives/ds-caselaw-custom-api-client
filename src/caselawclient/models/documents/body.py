@@ -4,6 +4,7 @@ import warnings
 from functools import cached_property
 
 from ds_caselaw_utils.types import CourtCode
+from lxml import etree
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
 
@@ -172,6 +173,34 @@ class DocumentBody:
         for event_ref in self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH):
             event_ref.attrib.pop("date", None)
         self._invalidate_cached_properties("document_date_as_date", "document_date_as_string")
+
+    def _proprietary_uk_text_elements(self, local_name: str, text_values: list[str]) -> list[Element]:
+        elements: list[Element] = []
+        for text in text_values:
+            element = etree.Element(etree.QName(UK_NS, local_name))
+            element.text = text
+            elements.append(element)
+        return elements
+
+    def write_court(self, court: str) -> None:
+        if court == "":
+            if self.get_xpath_nodes(f"{PROPRIETARY_XPATH}/uk:court"):
+                self._xml.replace_child_elements(PROPRIETARY_XPATH, "court", UK_NS, [])
+            else:
+                self._xml.replace_child_elements(
+                    PROPRIETARY_XPATH,
+                    "court",
+                    UK_NS,
+                    self._proprietary_uk_text_elements("court", [""]),
+                )
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "court",
+                UK_NS,
+                self._proprietary_uk_text_elements("court", [court]),
+            )
+        self._invalidate_cached_properties("court")
 
     @cached_property
     def name(self) -> str:
