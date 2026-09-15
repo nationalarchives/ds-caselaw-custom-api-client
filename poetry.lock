@@ -734,14 +734,14 @@ websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "ds-caselaw-utils"
-version = "4.10.0"
+version = "5.0.0"
 description = "Utilities for the National Archives Caselaw project"
 optional = false
 python-versions = "<4.0,>=3.12"
 groups = ["main"]
 files = [
-    {file = "ds_caselaw_utils-4.10.0-py3-none-any.whl", hash = "sha256:dead1f9418a6a9c92e8fb8efbfa96843ac064ed545059df4038a4d69f33dc332"},
-    {file = "ds_caselaw_utils-4.10.0.tar.gz", hash = "sha256:dd0b009eccbf7705f291bcc78c20392f319e1892aa2e2b62e7ccb6b06ea994e1"},
+    {file = "ds_caselaw_utils-5.0.0-py3-none-any.whl", hash = "sha256:6b7ed5f7dacba36921667d422987ce946a775b078159ad1a629ed3f1b29d7686"},
+    {file = "ds_caselaw_utils-5.0.0.tar.gz", hash = "sha256:024a05954f3f0392171cd36f4762ff0ed2c4624119fea9d671a487fdb1ea76f9"},
 ]
 
 [package.dependencies]
@@ -2821,4 +2821,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12.0"
-content-hash = "6ad0a742131d5084bd76b6d95117bd8d36c6a981bae3a9192eaf4252dcca34c8"
+content-hash = "3b74a657571b38126dfb016bfb029064011503eb8a5e59c31a497f4481a8b787"
