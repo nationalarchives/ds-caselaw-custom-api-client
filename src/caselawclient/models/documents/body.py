@@ -219,6 +219,24 @@ class DocumentBody:
         self._xml.replace_child_elements(PROPRIETARY_XPATH, "caseNumber", UK_NS, elements)
         self._invalidate_cached_properties("case_number")
 
+    def write_categories(self, categories: list[DocumentCategory]) -> None:
+        elements: list[Element] = []
+
+        def append_categories(tree: list[DocumentCategory], parent: str | None) -> None:
+            for category in tree:
+                if not category.name.strip():
+                    continue
+                element = etree.Element(etree.QName(UK_NS, "category"))
+                element.text = category.name
+                if parent is not None:
+                    element.set("parent", parent)
+                elements.append(element)
+                append_categories(category.subcategories, category.name)
+
+        append_categories(categories, None)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "category", UK_NS, elements)
+        self._invalidate_cached_properties("categories", "category")
+
     @cached_property
     def name(self) -> str:
         return self.get_xpath_match_string(NAME_XPATH)

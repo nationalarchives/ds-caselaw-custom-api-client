@@ -180,6 +180,44 @@ class TestWriteResolvedCaseNumberToBody:
         assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber") == []
 
 
+class TestWriteResolvedCategoriesToBody:
+    def test_write_resolved_categories_replaces_proprietary_nodes(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue
+        from caselawclient.types import DocumentCategory
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Old</uk:category>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="categories",
+                value=MetadataCategoryValue(name="Human rights", parent=None),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.categories.write_resolved_to_body()
+
+        assert document.body.categories == [DocumentCategory(name="Human rights")]
+
+
 class TestMetadataWriteBackSupport:
     def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
