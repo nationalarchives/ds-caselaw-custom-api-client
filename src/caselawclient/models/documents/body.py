@@ -28,6 +28,9 @@ CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumbe
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
+AKN_NS = DEFAULT_NAMESPACES["akn"]
+FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -120,6 +123,20 @@ class DocumentBody:
 
     def get_xpath_nodes(self, xpath: str) -> list[Element]:
         return self._xml.get_xpath_nodes(xpath)
+
+    @property
+    def supports_metadata_write_back(self) -> bool:
+        """True when this body has AKN identification metadata that write-back can update."""
+        return bool(self.get_xpath_nodes(IDENTIFICATION_XPATH))
+
+    def _invalidate_cached_properties(self, *property_names: str) -> None:
+        for name in {*property_names, "content_as_xml"}:
+            self.__dict__.pop(name, None)
+
+    def write_title(self, title: str) -> None:
+        name_element = self._xml.get_or_create_element(FRBR_WORK_XPATH, "FRBRname", AKN_NS)
+        self._xml.set_element_attribute(name_element, "value", title)
+        self._invalidate_cached_properties("name")
 
     @cached_property
     def name(self) -> str:
