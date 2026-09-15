@@ -1,0 +1,13 @@
+<akomaNtoso
+  xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+  xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+  <judgment name="judgment">
+    <meta>
+      <identification source="#tna">
+        <FRBRWork>
+          <FRBRname value="Schema-invalid fixture"/>
+        </FRBRWork>
+      </identification>
+    </meta>
+  </judgment>
+</akomaNtoso>
