@@ -4,5 +4,24 @@
     "github>nationalarchives/ds-find-caselaw-docs",
     ":preserveSemverRanges"
   ],
-  "addLabels": ["no-changelog"]
+  "addLabels": ["no-changelog"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/MARKLOGIC_REF$/"],
+      "matchStrings": [
+        "^(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\n(?<currentDigest>[a-f0-9]{40})\\s*$"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "nationalarchives/ds-caselaw-marklogic"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "MarkLogic config pin used by integration-test CI",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["nationalarchives/ds-caselaw-marklogic"],
+      "minimumReleaseAge": "0 days"
+    }
+  ]
 }

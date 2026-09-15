@@ -1,27 +1,21 @@
-import glob
 import logging
-
-import environ
-from dotenv import load_dotenv
+from pathlib import Path
 
 from caselawclient import Client
+from marklogic_harness.client import build_marklogic_api_client
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-env = environ.Env()
+REPO_ROOT = Path(__file__).resolve().parents[1]
+ASSERTIONS_DIR = Path(__file__).resolve().parent
+api_client = build_marklogic_api_client()
 
-api_client = Client.MarklogicApiClient(
-    host=env("MARKLOGIC_HOST"),
-    username=env("MARKLOGIC_USER"),
-    password=env("MARKLOGIC_PASSWORD"),
-    use_https=env("MARKLOGIC_USE_HTTPS", default=None),
-)
-
-files = glob.glob("*.xqy")
+files = sorted(ASSERTIONS_DIR.glob("*.xqy"))
+if not files:
+    raise SystemExit(f"No assertion XQuery files found in {ASSERTIONS_DIR}")
 
 for file in files:
-    path = f"../../../assertions/{file}"
+    path = str(file)
     logger.info("Evaluating: %s", path)
-    response = api_client._send_to_eval({}, path)  ## noqa: SLF001
+    response = api_client.eval(path, vars="{}")
     logger.info("Response: %s", Client.get_multipart_strings_from_marklogic_response(response))

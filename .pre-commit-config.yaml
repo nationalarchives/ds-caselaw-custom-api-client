@@ -54,7 +54,6 @@ repos:
           - types-defusedxml==0.7.0.20260504
           - ds-caselaw-utils==5.0.0
           - pydantic==2.13.5
-        exclude: ^smoketest/
         id: mypy
         name: mypy-tests
     repo: https://github.com/pre-commit/mirrors-mypy
@@ -68,8 +67,8 @@ repos:
           - markdown
           - scss
           - javascript
-    repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.6
+    repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
   - hooks:
       - id: commitizen
       - id: commitizen-branch
@@ -86,6 +85,6 @@ repos:
         files: ^renovate\.json$
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.30.1
+    rev: v1.30.0
     hooks:
       - id: zizmor

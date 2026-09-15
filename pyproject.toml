@@ -62,8 +62,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-m 'not marklogic' --ignore=tests/marklogic"
 markers = [
-    "write: the test deliberately changes the Marklogic DB')",
+    "marklogic: integration test against a live MarkLogic database",
+    "write: the test deliberately changes the Marklogic DB",
 ]
 filterwarnings = ["ignore::DeprecationWarning"]
 
@@ -80,7 +84,6 @@ unfixable = ["ERA"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = ["S101"] # `assert` is fine in tests
-"smoketest/*" = ["S101"] # `assert` is fine in tests
 "tests/client/test_client.py" = ["SLF001"]  # TODO: This really shouldn't be the case, but it's not important to fix right now.
 "src/caselawclient/Client.py" = ["N999"]  # TODO: rename Client.py to client.py (wide import churn)
 
