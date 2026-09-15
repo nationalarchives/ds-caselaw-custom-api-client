@@ -202,6 +202,18 @@ class DocumentBody:
             )
         self._invalidate_cached_properties("court")
 
+    def write_jurisdiction(self, jurisdiction: str) -> None:
+        if jurisdiction == "":
+            self._xml.replace_child_elements(PROPRIETARY_XPATH, "jurisdiction", UK_NS, [])
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "jurisdiction",
+                UK_NS,
+                self._proprietary_uk_text_elements("jurisdiction", [jurisdiction]),
+            )
+        self._invalidate_cached_properties("jurisdiction")
+
     @cached_property
     def name(self) -> str:
         return self.get_xpath_match_string(NAME_XPATH)
