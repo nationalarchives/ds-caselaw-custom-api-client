@@ -6,7 +6,11 @@ from uuid import uuid4
 
 from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
 from caselawclient.models.documents.body import NAME_XPATH
-from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
+from caselawclient.models.documents.metadata.fields.field import (
+    MetadataDateValue,
+    MetadataField,
+    MetadataStringValue,
+)
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
@@ -47,6 +51,55 @@ class TestWriteResolvedTitleToBody:
         xml_tree = mock_api_client.update_document_xml.call_args[0][1]
         title_value = xml_tree.xpath(NAME_XPATH, namespaces=DEFAULT_NAMESPACES)[0]
         assert title_value == "Saved title"
+
+
+class TestWriteResolvedDateToBody:
+    def test_write_resolved_date_updates_work_and_expression_frbrdate(self, mock_api_client):
+        body = DocumentBodyFactory.build(document_date_as_string="2020-01-01")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        resolved = datetime.date(2024, 6, 15)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(resolved),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.document_date_as_date == resolved
+        expression_date = document.body.get_xpath_match_string(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/akn:FRBRdate/@date"
+        )
+        assert expression_date == "2024-06-15"
+        assert (
+            document.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:year/text()")
+            == "2024"
+        )
+
+    def test_suppressed_date_claim_clears_frbr_dates_in_body(self, mock_api_client):
+        body = DocumentBodyFactory.build(document_date_as_string="2020-01-01")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 1, 1)),
+                source=MetadataSource.DOCUMENT,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.document_date_as_date is None
+        assert (
+            document.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:year/text()") == ""
+        )
 
 
 class TestMetadataWriteBackSupport:

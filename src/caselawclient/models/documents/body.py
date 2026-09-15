@@ -30,7 +30,12 @@ JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 AKN_NS = DEFAULT_NAMESPACES["akn"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
+PROPRIETARY_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
+UK_NS = DEFAULT_NAMESPACES["uk"]
+JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
+LIFECYCLE_EVENTREF_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:lifecycle/akn:eventRef"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -137,6 +142,36 @@ class DocumentBody:
         name_element = self._xml.get_or_create_element(FRBR_WORK_XPATH, "FRBRname", AKN_NS)
         self._xml.set_element_attribute(name_element, "value", title)
         self._invalidate_cached_properties("name")
+
+    def write_decision_date(self, decision_date: datetime.date) -> None:
+        date_string = decision_date.isoformat()
+        frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
+        self._xml.get_or_create_element(IDENTIFICATION_XPATH, "FRBRExpression", AKN_NS)
+        for work_parent_xpath in (FRBR_WORK_XPATH, FRBR_EXPRESSION_XPATH):
+            frbr_date = self._xml.get_or_create_element(work_parent_xpath, "FRBRdate", AKN_NS)
+            self._xml.set_element_attribute(frbr_date, "date", date_string)
+            self._xml.set_element_attribute(frbr_date, "name", frbr_date_name)
+
+        year_element = self._xml.get_or_create_element(PROPRIETARY_XPATH, "year", UK_NS)
+        self._xml.set_element_value(year_element, str(decision_date.year))
+
+        event_refs = self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH)
+        if event_refs:
+            self._xml.set_element_attribute(event_refs[0], "date", date_string)
+
+        self._invalidate_cached_properties("document_date_as_date", "document_date_as_string")
+
+    def clear_decision_date(self) -> None:
+        for frbr_date in self.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") + self.get_xpath_nodes(
+            f"{FRBR_EXPRESSION_XPATH}/akn:FRBRdate"
+        ):
+            parent = frbr_date.getparent()
+            if parent is not None:
+                parent.remove(frbr_date)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "year", UK_NS, [])
+        for event_ref in self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH):
+            event_ref.attrib.pop("date", None)
+        self._invalidate_cached_properties("document_date_as_date", "document_date_as_string")
 
     @cached_property
     def name(self) -> str:
