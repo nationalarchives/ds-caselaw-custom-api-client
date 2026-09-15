@@ -121,6 +121,65 @@ class TestWriteResolvedCourtToBody:
         assert document.body.court == "EWHC"
 
 
+class TestWriteResolvedJurisdictionToBody:
+    def test_write_resolved_jurisdiction_updates_proprietary(self, mock_api_client):
+        body = DocumentBodyFactory.build(jurisdiction="EW")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="jurisdiction",
+                value=MetadataStringValue("NI"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.jurisdiction.write_resolved_to_body()
+
+        assert document.body.jurisdiction == "NI"
+
+
+class TestWriteResolvedCaseNumberToBody:
+    def test_write_resolved_case_number_replaces_nodes(self, mock_api_client):
+        body = DocumentBodyFactory.build(case_number="OLD/123")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="case_number",
+                value=MetadataStringValue("NEW/456"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.case_number.write_resolved_to_body()
+
+        assert document.body.case_number == "NEW/456"
+
+    def test_no_case_number_metadata_leaves_body_without_uk_case_number(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta><proprietary/></meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        document.metadata.case_number.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber") == []
+
+
 class TestMetadataWriteBackSupport:
     def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")

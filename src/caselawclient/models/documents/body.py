@@ -30,11 +30,11 @@ DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 AKN_NS = DEFAULT_NAMESPACES["akn"]
+UK_NS = DEFAULT_NAMESPACES["uk"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
 FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 PROPRIETARY_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
-UK_NS = DEFAULT_NAMESPACES["uk"]
 JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
 LIFECYCLE_EVENTREF_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:lifecycle/akn:eventRef"
 
@@ -213,6 +213,11 @@ class DocumentBody:
                 self._proprietary_uk_text_elements("jurisdiction", [jurisdiction]),
             )
         self._invalidate_cached_properties("jurisdiction")
+
+    def write_case_numbers(self, case_numbers: list[str]) -> None:
+        elements = self._proprietary_uk_text_elements("caseNumber", case_numbers) if case_numbers else []
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "caseNumber", UK_NS, elements)
+        self._invalidate_cached_properties("case_number")
 
     @cached_property
     def name(self) -> str:
