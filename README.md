@@ -25,19 +25,15 @@ poetry install
 poetry run pytest
 ```
 
-There are also some smoketests in `smoketests.py` which run against a MarkLogic database but do not run in CI currently.
+MarkLogic integration tests live under `tests/marklogic/` and are **opt-in**: the default `poetry run pytest` excludes them (`-m 'not marklogic'`). They replace the old standalone `smoketest/` module and load a fixed corpus from `marklogic_harness/fixtures/documents/` (URIs under `test/…` as well as `smoketest/…`) so CI does not depend on staging.
 
-To run them locally you can set the environment variables as detailed in the file in a `.env` file or just hardcode them in, as long as you don't commit those changes to the repo.
+CI runs them in a dedicated job against a local MarkLogic container (see `.github/workflows/test.yml`).
 
-And then run
+To run locally against Docker or another MarkLogic instance, set `MARKLOGIC_HOST`, `MARKLOGIC_USER`, and `MARKLOGIC_PASSWORD` in a `.env` file, then:
 
 ```bash
-poetry run pytest smoketest.py
+poetry run pytest -o addopts= -p marklogic_harness.pytest_plugin -m marklogic tests/marklogic
 ```
-
-To start with when running this, we have been choosing to point to the staging MarkLogic to have more confidence that the setup is a good representation of production as opposed to a local MarkLogic instance but that can work too.
-
-Eventually we will make it so that we run these tests in CI and probably point to a dedicated testing MarkLogic instance so we don't get conflicts with people using staging for manual testing.
 
 ## Making changes
 

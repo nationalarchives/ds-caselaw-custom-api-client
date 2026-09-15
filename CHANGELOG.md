@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## v50.0.0 (2026-09-10)
 
+### Added
+
+- MarkLogic integration test harness and migration of the former `smoketest/` suite into `tests/marklogic/`, with CI against a local MarkLogic container
+- Repo-controlled `test/…` document corpus and additional MarkLogic integration tests (schema validation, press-summary linkage, metadata writes)
+
 ### BREAKING CHANGE
 
 - `Document.save()` on a URI that does not yet exist in MarkLogic now inserts the document instead of failing on update

@@ -57,13 +57,21 @@ jobs:
       - name: Run image
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
         with:
-          poetry-version: 2.4.3
+          poetry-version: 2.1.1
 
       - name: Install libraries
-        run: poetry install
+        run: |
+          for attempt in 1 2 3; do
+            if poetry install; then
+              exit 0
+            fi
+            echo "poetry install failed (attempt ${attempt}), retrying..."
+            sleep 10
+          done
+          exit 1
 
       - name: Run tests with coverage
-        run: poetry run pytest --cov --junitxml=junit.xml -o junit_family=legacy --cov-branch --cov-report=xml
+        run: poetry run pytest -m "not marklogic" --cov --junitxml=junit.xml -o junit_family=legacy --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
@@ -78,3 +86,90 @@ jobs:
           report_type: test_results
           token: ${{ secrets.CODECOV_TOKEN }} # zizmor: ignore[secrets-outside-env]
           flags: py${{ matrix.python-version }}
+
+  marklogic-integration:
+    name: MarkLogic integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout API client
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read MarkLogic release pin
+        id: marklogic_ref
+        run: |
+          version=$(head -n1 .github/MARKLOGIC_REF | tr -d '[:space:]')
+          sha=$(tail -n1 .github/MARKLOGIC_REF | tr -d '[:space:]')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout MarkLogic configuration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: nationalarchives/ds-caselaw-marklogic
+          ref: ${{ steps.marklogic_ref.outputs.sha }}
+          path: ds-caselaw-marklogic
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Create docker network
+        run: docker network create caselaw
+
+      - name: Start MarkLogic
+        working-directory: ds-caselaw-marklogic
+        run: |
+          for attempt in 1 2 3; do
+            if docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait; then
+              exit 0
+            fi
+            echo "MarkLogic docker start failed (attempt ${attempt}), retrying..."
+            docker compose -f docker-compose.yml -f docker-compose.ci.yml down --remove-orphans || true
+            sleep 15
+          done
+          exit 1
+
+      - name: Deploy MarkLogic configuration
+        working-directory: ds-caselaw-marklogic
+        run: gradle mlWaitTillReady mlDeploy -PmlDatabaseNamesAndReplicaCounts=
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
+        with:
+          poetry-version: 2.1.1
+
+      - name: Install libraries
+        run: |
+          for attempt in 1 2 3; do
+            if poetry install; then
+              exit 0
+            fi
+            echo "poetry install failed (attempt ${attempt}), retrying..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run MarkLogic integration tests
+        env:
+          MARKLOGIC_HOST: localhost
+          MARKLOGIC_USER: admin
+          MARKLOGIC_PASSWORD: admin
+          MARKLOGIC_USE_HTTPS: "false"
+        run: poetry run pytest -o addopts= -p marklogic_harness.pytest_plugin -m marklogic tests/marklogic --junitxml=marklogic-junit.xml -o junit_family=legacy
