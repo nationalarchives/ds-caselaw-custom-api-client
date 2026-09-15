@@ -6,11 +6,6 @@ from caselawclient.Client import get_multipart_strings_from_marklogic_response
 from caselawclient.models.utilities import extract_version
 from caselawclient.types import DocumentURIString
 from marklogic_harness.corpus import TEST_METADATA_WRITES_URI
-from tests.marklogic.xml_assertions import (
-    judgment_court,
-    judgment_frbr_name,
-    judgment_work_expression_date,
-)
 
 pytestmark = [pytest.mark.marklogic, pytest.mark.write]
 
@@ -40,9 +35,10 @@ def test_set_document_metadata_persists_in_marklogic(
     marklogic_api_client.set_document_name(metadata_writes_uri, new_name)
     marklogic_api_client.set_document_work_expression_date(metadata_writes_uri, new_date)
 
-    assert judgment_court(marklogic_api_client, metadata_writes_uri) == new_court
-    assert judgment_frbr_name(marklogic_api_client, metadata_writes_uri) == new_name
-    assert judgment_work_expression_date(marklogic_api_client, metadata_writes_uri) == new_date
+    document = marklogic_api_client.get_document_by_uri(metadata_writes_uri)
+    assert document.court == new_court
+    assert document.name == new_name
+    assert document.document_date_as_string == new_date
 
 
 def test_get_version_annotation(marklogic_api_client):
