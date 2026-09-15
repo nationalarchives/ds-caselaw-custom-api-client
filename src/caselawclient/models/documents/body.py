@@ -14,7 +14,7 @@ from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
 
-from .xml import XML
+from .xml import AKN_META_CHILDREN_ORDER, XML
 
 
 class UnparsableDate(Warning):
@@ -26,17 +26,27 @@ COURT_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()"
 JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()"
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
-DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+WORK_DECISION_FRBRDATE_DATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
+DATE_XPATH = WORK_DECISION_FRBRDATE_DATE_XPATH
+DECISION_FRBRDATE_NAMES = frozenset({"judgment", "decision"})
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 AKN_NS = DEFAULT_NAMESPACES["akn"]
+UK_NS = DEFAULT_NAMESPACES["uk"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
 FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
+META_XPATH = "/akn:akomaNtoso/akn:*/akn:meta"
 PROPRIETARY_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
-UK_NS = DEFAULT_NAMESPACES["uk"]
 JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
-LIFECYCLE_EVENTREF_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:lifecycle/akn:eventRef"
+
+
+def _strip_body_metadata_text(raw: str) -> str:
+    """Strip body-derived metadata text; whitespace-only values are treated as absent."""
+    return raw.strip()
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -139,27 +149,90 @@ class DocumentBody:
         for name in {*property_names, "content_as_xml"}:
             self.__dict__.pop(name, None)
 
+    def _remove_akn_children(self, parent_xpath: str, child_local_name: str) -> None:
+        qname = etree.QName(AKN_NS, child_local_name)
+        for parent in self.get_xpath_nodes(parent_xpath):
+            for child in list(parent.findall(qname)):
+                parent.remove(child)
+
+    def _ensure_proprietary_element(self) -> None:
+        self._xml.get_or_create_element_in_child_order(
+            META_XPATH,
+            "proprietary",
+            AKN_NS,
+            AKN_META_CHILDREN_ORDER,
+        )
+
+    def _frbr_work_date_elements(self) -> list[Element]:
+        qname = etree.QName(AKN_NS, "FRBRdate")
+        elements: list[Element] = []
+        for parent in self.get_xpath_nodes(FRBR_WORK_XPATH):
+            elements.extend(parent.findall(qname))
+        return elements
+
+    def _work_decision_frbrdate_elements(self) -> list[Element]:
+        return [
+            element for element in self._frbr_work_date_elements() if element.get("name") in DECISION_FRBRDATE_NAMES
+        ]
+
+    def _legacy_single_work_frbrdate_element(self) -> Element | None:
+        work_dates = self._frbr_work_date_elements()
+        if len(work_dates) != 1:
+            return None
+        only_date = work_dates[0]
+        name = only_date.get("name")
+        if name in DECISION_FRBRDATE_NAMES:
+            return None
+        if name not in (None, ""):
+            return None
+        return only_date
+
+    def _get_or_create_work_decision_frbrdate_element(self) -> Element:
+        existing_decision_dates = self._work_decision_frbrdate_elements()
+        if len(existing_decision_dates) > 1:
+            raise ValueError("Multiple decision FRBRdate elements under FRBRWork")
+        if existing_decision_dates:
+            return existing_decision_dates[0]
+        legacy_single = self._legacy_single_work_frbrdate_element()
+        if legacy_single is not None:
+            return legacy_single
+        parent = self._xml.get_single_xpath_node(FRBR_WORK_XPATH)
+        frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
+        if frbr_date_name not in DECISION_FRBRDATE_NAMES:
+            frbr_date_name = "judgment"
+        new_element = etree.SubElement(parent, etree.QName(AKN_NS, "FRBRdate"))
+        new_element.set("name", frbr_date_name)
+        return new_element
+
+    def _remove_work_decision_frbrdates(self) -> None:
+        qname = etree.QName(AKN_NS, "FRBRdate")
+        for parent in self.get_xpath_nodes(FRBR_WORK_XPATH):
+            children = list(parent.findall(qname))
+            decision_dates = [child for child in children if child.get("name") in DECISION_FRBRDATE_NAMES]
+            if decision_dates:
+                for child in decision_dates:
+                    parent.remove(child)
+                continue
+            if len(children) == 1 and children[0].get("name") in (None, ""):
+                parent.remove(children[0])
+
     def write_title(self, title: str) -> None:
-        name_element = self._xml.get_or_create_element(FRBR_WORK_XPATH, "FRBRname", AKN_NS)
-        self._xml.set_element_attribute(name_element, "value", title)
+        title = _strip_body_metadata_text(title)
+        if not title:
+            self._remove_akn_children(FRBR_WORK_XPATH, "FRBRname")
+        else:
+            name_element = self._xml.get_or_create_element(FRBR_WORK_XPATH, "FRBRname", AKN_NS)
+            self._xml.set_element_attribute(name_element, "value", title)
         self._invalidate_cached_properties("name")
 
     def write_decision_date(self, decision_date: datetime.date) -> None:
         date_string = decision_date.isoformat()
         frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
-        self._xml.get_or_create_element(IDENTIFICATION_XPATH, "FRBRExpression", AKN_NS)
-        for work_parent_xpath in (FRBR_WORK_XPATH, FRBR_EXPRESSION_XPATH):
-            frbr_date = self._xml.get_or_create_element(work_parent_xpath, "FRBRdate", AKN_NS)
-            self._xml.set_element_attribute(frbr_date, "date", date_string)
-            self._xml.set_element_attribute(frbr_date, "name", frbr_date_name)
-
-        year_element = self._xml.get_or_create_element(PROPRIETARY_XPATH, "year", UK_NS)
-        self._xml.set_element_value(year_element, str(decision_date.year))
-
-        event_refs = self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH)
-        if event_refs:
-            self._xml.set_element_attribute(event_refs[0], "date", date_string)
-
+        if frbr_date_name not in DECISION_FRBRDATE_NAMES:
+            frbr_date_name = "judgment"
+        frbr_date = self._get_or_create_work_decision_frbrdate_element()
+        self._xml.set_element_attribute(frbr_date, "date", date_string)
+        self._xml.set_element_attribute(frbr_date, "name", frbr_date_name)
         self._invalidate_cached_properties(
             "decision_date_raw",
             "decision_date_is_unparsable",
@@ -168,15 +241,7 @@ class DocumentBody:
         )
 
     def clear_decision_date(self) -> None:
-        for frbr_date in self.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") + self.get_xpath_nodes(
-            f"{FRBR_EXPRESSION_XPATH}/akn:FRBRdate"
-        ):
-            parent = frbr_date.getparent()
-            if parent is not None:
-                parent.remove(frbr_date)
-        self._xml.replace_child_elements(PROPRIETARY_XPATH, "year", UK_NS, [])
-        for event_ref in self.get_xpath_nodes(LIFECYCLE_EVENTREF_XPATH):
-            event_ref.attrib.pop("date", None)
+        self._remove_work_decision_frbrdates()
         self._invalidate_cached_properties(
             "decision_date_raw",
             "decision_date_is_unparsable",
@@ -185,7 +250,12 @@ class DocumentBody:
         )
 
     def _decision_date_raw_string(self) -> str:
-        return self.get_xpath_match_string(DATE_XPATH)
+        date_as_string = self.get_xpath_match_string(DATE_XPATH)
+        if not date_as_string:
+            legacy_single = self._legacy_single_work_frbrdate_element()
+            if legacy_single is not None:
+                date_as_string = legacy_single.get("date") or ""
+        return date_as_string
 
     @cached_property
     def decision_date_raw(self) -> str:
@@ -211,16 +281,10 @@ class DocumentBody:
         return elements
 
     def write_court(self, court: str) -> None:
-        if court == "":
-            if self.get_xpath_nodes(f"{PROPRIETARY_XPATH}/uk:court"):
-                self._xml.replace_child_elements(PROPRIETARY_XPATH, "court", UK_NS, [])
-            else:
-                self._xml.replace_child_elements(
-                    PROPRIETARY_XPATH,
-                    "court",
-                    UK_NS,
-                    self._proprietary_uk_text_elements("court", [""]),
-                )
+        self._ensure_proprietary_element()
+        court = _strip_body_metadata_text(court)
+        if not court:
+            self._xml.replace_child_elements(PROPRIETARY_XPATH, "court", UK_NS, [])
         else:
             self._xml.replace_child_elements(
                 PROPRIETARY_XPATH,
@@ -231,7 +295,9 @@ class DocumentBody:
         self._invalidate_cached_properties("court")
 
     def write_jurisdiction(self, jurisdiction: str) -> None:
-        if jurisdiction == "":
+        self._ensure_proprietary_element()
+        jurisdiction = _strip_body_metadata_text(jurisdiction)
+        if not jurisdiction:
             self._xml.replace_child_elements(PROPRIETARY_XPATH, "jurisdiction", UK_NS, [])
         else:
             self._xml.replace_child_elements(
@@ -242,17 +308,36 @@ class DocumentBody:
             )
         self._invalidate_cached_properties("jurisdiction")
 
+    def write_categories(self, categories: list[DocumentCategory]) -> None:
+        self._ensure_proprietary_element()
+        elements: list[Element] = []
+
+        def append_categories(tree: list[DocumentCategory], parent: str | None) -> None:
+            for category in tree:
+                if not category.name.strip():
+                    continue
+                element = etree.Element(etree.QName(UK_NS, "category"))
+                element.text = category.name
+                if parent is not None:
+                    element.set("parent", parent)
+                elements.append(element)
+                append_categories(category.subcategories, category.name)
+
+        append_categories(categories, None)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "category", UK_NS, elements)
+        self._invalidate_cached_properties("categories", "category")
+
     @cached_property
     def name(self) -> str:
-        return self.get_xpath_match_string(NAME_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(NAME_XPATH))
 
     @cached_property
     def court(self) -> str:
-        return self.get_xpath_match_string(COURT_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(COURT_XPATH))
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self.get_xpath_match_string(JURISDICTION_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(JURISDICTION_XPATH))
 
     @cached_property
     def categories(self) -> list[DocumentCategory]:
@@ -286,6 +371,10 @@ class DocumentBody:
     @cached_property
     def document_date_as_date(self) -> datetime.date | None:
         date_as_string = self._decision_date_raw_string()
+        if not date_as_string:
+            legacy_single = self._legacy_single_work_frbrdate_element()
+            if legacy_single is not None:
+                date_as_string = legacy_single.get("date") or ""
         if not date_as_string:
             return None
         try:

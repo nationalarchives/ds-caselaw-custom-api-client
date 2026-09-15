@@ -68,6 +68,18 @@ class TestWriteResolvedTitleToBody:
             == []
         )
 
+    def test_whitespace_only_body_title_is_treated_as_empty_on_write_back(self, mock_api_client):
+        body = DocumentBodyFactory.build(name="   ")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        document.metadata.title.write_resolved_to_body()
+
+        assert document.body.name == ""
+        assert (
+            document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname")
+            == []
+        )
+
     def test_save_writes_resolved_title_into_xml(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
@@ -590,6 +602,38 @@ class TestWriteResolvedCourtToBody:
 
         assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court") == []
 
+    def test_whitespace_only_body_court_is_removed_on_write_back(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta><proprietary><uk:court>   </uk:court></proprietary></meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.court == ""
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court") == []
+
 
 class TestWriteResolvedJurisdictionToBody:
     def test_write_resolved_jurisdiction_updates_proprietary(self, mock_api_client):
@@ -627,26 +671,7 @@ class TestWriteResolvedJurisdictionToBody:
 
         assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction") == []
 
-
-class TestWriteResolvedCaseNumberToBody:
-    def test_write_resolved_case_number_replaces_nodes(self, mock_api_client):
-        body = DocumentBodyFactory.build(case_number="OLD/123")
-        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="case_number",
-                value=MetadataStringValue("NEW/456"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
-
-        document.metadata.case_number.write_resolved_to_body()
-
-        assert document.body.case_number == "NEW/456"
-
-    def test_no_case_number_metadata_leaves_body_without_uk_case_number(self, mock_api_client):
+    def test_whitespace_only_body_jurisdiction_is_removed_on_write_back(self, mock_api_client):
         from caselawclient.models.documents.body import DocumentBody
 
         body = DocumentBody(
@@ -654,7 +679,7 @@ class TestWriteResolvedCaseNumberToBody:
             <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
                 xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
                 <judgment>
-                    <meta><identification><FRBRWork><FRBRname value="n"/></FRBRWork></identification></meta>
+                    <meta><proprietary><uk:jurisdiction>  </uk:jurisdiction></proprietary></meta>
                     <header><p/></header>
                     <judgmentBody><decision><p/></decision></judgmentBody>
                 </judgment>
@@ -662,10 +687,21 @@ class TestWriteResolvedCaseNumberToBody:
             """
         )
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="jurisdiction",
+                value=MetadataStringValue("NI"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
 
-        document.metadata.case_number.write_resolved_to_body()
+        document.metadata.jurisdiction.write_resolved_to_body()
 
-        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber") == []
+        assert document.body.jurisdiction == ""
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction") == []
 
 
 class TestWriteResolvedCategoriesToBody:
@@ -841,25 +877,6 @@ class TestSaveDoesNotWritePartiesToBody:
         assert party_nodes_after[0].get("role") == "Claimant"
 
 
-class TestWriteResolvedCourtToBody:
-    def test_write_resolved_court_updates_proprietary(self, mock_api_client):
-        body = DocumentBodyFactory.build(court="Original Court")
-        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="court",
-                value=MetadataStringValue("EWHC"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
-
-        document.metadata.court.write_resolved_to_body()
-
-        assert document.body.court == "EWHC"
-
-
 class TestMetadataWriteBackSupport:
     def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
@@ -928,3 +945,46 @@ class TestMetadataWriteBackSupport:
         document.metadata.court.write_resolved_to_body()
 
         assert document.body.court == "EWHC"
+
+    def test_write_court_inserts_proprietary_before_presentation(self, mock_api_client):
+        from lxml import etree
+
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:html="http://www.w3.org/1999/xhtml"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork><FRBRname value="Title"/></FRBRWork>
+                        </identification>
+                        <presentation source="#"><html:style/></presentation>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        meta = document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta")[0]
+        akn_ns = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+        child_local_names = [
+            name for child in meta if (name := etree.QName(child).localname) and etree.QName(child).namespace == akn_ns
+        ]
+        assert child_local_names.index("proprietary") < child_local_names.index("presentation")
