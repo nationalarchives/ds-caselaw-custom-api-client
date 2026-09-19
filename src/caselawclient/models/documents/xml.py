@@ -17,6 +17,26 @@ def _xslt_path(xslt_file_name: str) -> str:
     return os.path.join(ROOT_DIR, "xslt", xslt_file_name)
 
 
+AKN_META_CHILDREN_ORDER = (
+    "identification",
+    "lifecycle",
+    "references",
+    "proprietary",
+    "presentation",
+    "analysis",
+)
+
+
+def _local_name_in_namespace(element: Element, namespace: str) -> str | None:
+    tag = element.tag
+    if not isinstance(tag, str) or not tag.startswith("{"):
+        return None
+    ns_uri, local_name = tag[1:].split("}", 1)
+    if ns_uri != namespace:
+        return None
+    return local_name
+
+
 class NonXMLDocumentError(Exception):
     """A document cannot be parsed as XML."""
 
@@ -122,6 +142,43 @@ class XML:
         new_element = etree.SubElement(parent, qname)
         return new_element
 
+    def get_or_create_element_in_child_order(
+        self,
+        parent_xpath: str,
+        element_name: str,
+        namespace: str,
+        child_order: tuple[str, ...],
+    ) -> Element:
+        """Like ``get_or_create_element``, but insert new children at the schema position in ``child_order``."""
+        if namespace not in set(DEFAULT_NAMESPACES.values()):
+            raise ValueError(f"Namespace not in DEFAULT_NAMESPACES: {namespace}")
+        if element_name not in child_order:
+            raise ValueError(f"Element {element_name!r} is not listed in child_order")
+
+        parent = self.get_single_xpath_node(parent_xpath)
+        qname = etree.QName(namespace, element_name)
+        existing_children = parent.findall(qname)
+        if len(existing_children) > 1:
+            raise ValueError(
+                f"Multiple child elements with name {element_name} already exist in parent at {parent_xpath}"
+            )
+        if existing_children:
+            return existing_children[0]
+
+        target_index = child_order.index(element_name)
+        insert_at = len(parent)
+        for index, child in enumerate(parent):
+            local_name = _local_name_in_namespace(child, namespace)
+            if local_name is None or local_name not in child_order:
+                continue
+            if child_order.index(local_name) > target_index:
+                insert_at = index
+                break
+
+        new_element = etree.Element(qname)
+        parent.insert(insert_at, new_element)
+        return new_element
+
     def set_element_attribute(self, element: Element, attribute_name: str, attribute_value: str) -> None:
         """
         Set an attribute on an element.
@@ -144,3 +201,20 @@ class XML:
         :param value: Value to set as text content
         """
         element.text = value
+
+    def replace_child_elements(
+        self,
+        parent_xpath: str,
+        child_local_name: str,
+        namespace: str,
+        new_elements: list[Element],
+    ) -> None:
+        """Remove all namespaced children with ``child_local_name``, then append ``new_elements``."""
+        if namespace not in set(DEFAULT_NAMESPACES.values()):
+            raise ValueError(f"Namespace not in DEFAULT_NAMESPACES: {namespace}")
+        parent = self.get_single_xpath_node(parent_xpath)
+        qname = etree.QName(namespace, child_local_name)
+        for child in list(parent.findall(qname)):
+            parent.remove(child)
+        for element in new_elements:
+            parent.append(element)

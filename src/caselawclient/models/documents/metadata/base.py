@@ -90,6 +90,10 @@ class Metadata(ABC):
         """Yank body-derived values into DOCUMENT claims (in-memory, additive)."""
         raise NotImplementedError(f"{type(self).__name__} does not implement materialise_body_claims")
 
+    def write_resolved_to_body(self) -> None:
+        """Write resolved metadata claims into the Akoma Ntoso body XML."""
+        return
+
 
 class SingleMetadata(Metadata, Generic[T]):
     @property

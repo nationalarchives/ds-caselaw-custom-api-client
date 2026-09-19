@@ -76,6 +76,9 @@ class CategoriesMetadata(MultipleMetadata[DocumentCategory]):
     def materialise_body_claims(self) -> None:
         self._materialise_document_values(category_claim_values_from_document_categories(self.document.body.categories))
 
+    def write_resolved_to_body(self) -> None:
+        self.document.body.write_categories(self.values)
+
     @classmethod
     def validate_value(cls, value: MetadataFieldValue) -> None:
         if not isinstance(value, MetadataCategoryValue):
