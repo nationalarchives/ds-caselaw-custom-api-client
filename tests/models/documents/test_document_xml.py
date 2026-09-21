@@ -3,9 +3,17 @@ import os
 import pytest
 from lxml import etree
 
-from caselawclient.models.documents.body import DEFAULT_NAMESPACES
-from caselawclient.models.documents.xml import XML, NonXMLDocumentError
+from caselawclient.models.documents.body import DEFAULT_NAMESPACES, FRBR_WORK_CHILDREN_ORDER
+from caselawclient.models.documents.xml import (
+    AKN_META_CHILDREN_ORDER,
+    XML,
+    NonXMLDocumentError,
+    _local_name_in_namespace,
+)
 from caselawclient.xml_helpers import Element
+
+AKN_NS = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+META_XPATH = "/akn:akomaNtoso/akn:judgment/akn:meta"
 
 
 @pytest.fixture
@@ -75,6 +83,26 @@ class TestDocumentXMLXSLTMethods:
 
 
 class TestDocumentXMLXPathMethods:
+    def test_get_xpath_match_strings_returns_all_matches(self):
+        document_xml = XML(
+            b"""<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+            <judgment>
+                <meta>
+                    <identification>
+                        <FRBRWork>
+                            <FRBRdate date="2020-01-01" name="judgment"/>
+                            <FRBRdate date="2021-01-01" name="transform"/>
+                        </FRBRWork>
+                    </identification>
+                </meta>
+            </judgment>
+        </akomaNtoso>"""
+        )
+        dates = document_xml.get_xpath_match_strings(
+            "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+        )
+        assert dates == ["2020-01-01", "2021-01-01"]
+
     def test_get_xpath_nodes_returns_empty_for_nonexistent_element(self, full_document_xml):
         """Test that get_xpath_nodes returns empty list for non-existent elements."""
         document_xml = XML(full_document_xml)
@@ -265,3 +293,267 @@ class TestDocumentXMLElementSetters:
         # Verify both mutations persisted by re-querying
         assert document_xml.get_xpath_match_string(name_xpath + "/@value") == "Updated Case Name"
         assert document_xml.get_xpath_match_string(court_xpath + "/text()") == "New Court"
+
+    def test_get_or_create_element_without_namespace(self):
+        document_xml = XML(b"<root><parent><existing/></parent></root>")
+        parent_xpath = "/root/parent"
+        created = document_xml.get_or_create_element(parent_xpath, "newChild")
+        assert created.tag == "newChild"
+        assert document_xml.get_single_xpath_node("/root/parent/newChild") is created
+
+
+class TestLocalNameInNamespace:
+    def test_returns_local_name_for_matching_namespace(self):
+        element = etree.Element(etree.QName(AKN_NS, "proprietary"))
+        assert _local_name_in_namespace(element, AKN_NS) == "proprietary"
+
+    def test_returns_none_for_different_namespace(self):
+        element = etree.Element(etree.QName("https://caselaw.nationalarchives.gov.uk/akn", "court"))
+        assert _local_name_in_namespace(element, AKN_NS) is None
+
+    def test_returns_none_for_unqualified_tag(self):
+        element = etree.Element("plain")
+        assert _local_name_in_namespace(element, AKN_NS) is None
+
+
+class TestGetOrCreateElementInChildOrder:
+    def test_returns_existing_element(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification/>
+                        <proprietary/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        existing = document_xml.get_single_xpath_node(f"{META_XPATH}/akn:proprietary")
+        result = document_xml.get_or_create_element_in_child_order(
+            META_XPATH, "proprietary", AKN_NS, AKN_META_CHILDREN_ORDER
+        )
+        assert result is existing
+
+    def test_inserts_before_later_schema_sibling(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:html="http://www.w3.org/1999/xhtml">
+                <judgment>
+                    <meta>
+                        <identification/>
+                        <unknownMeta/>
+                        <html:foreign/>
+                        <presentation><html:style/></presentation>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        proprietary = document_xml.get_or_create_element_in_child_order(
+            META_XPATH, "proprietary", AKN_NS, AKN_META_CHILDREN_ORDER
+        )
+        meta = document_xml.get_single_xpath_node(META_XPATH)
+        child_tags = [etree.QName(child).localname for child in meta]
+        assert child_tags.index("proprietary") < child_tags.index("presentation")
+        assert proprietary.tag == f"{{{AKN_NS}}}proprietary"
+
+    def test_inserts_publication_before_lifecycle(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification/>
+                        <lifecycle/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document_xml.get_or_create_element_in_child_order(META_XPATH, "publication", AKN_NS, AKN_META_CHILDREN_ORDER)
+        meta = document_xml.get_single_xpath_node(META_XPATH)
+        child_tags = [etree.QName(child).localname for child in meta]
+        assert child_tags.index("publication") < child_tags.index("lifecycle")
+
+    def test_inserts_lifecycle_before_workflow(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification/>
+                        <workflow/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document_xml.get_or_create_element_in_child_order(META_XPATH, "lifecycle", AKN_NS, AKN_META_CHILDREN_ORDER)
+        meta = document_xml.get_single_xpath_node(META_XPATH)
+        child_tags = [etree.QName(child).localname for child in meta]
+        assert child_tags.index("lifecycle") < child_tags.index("workflow")
+
+    def test_inserts_proprietary_after_analysis(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification/>
+                        <analysis/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document_xml.get_or_create_element_in_child_order(META_XPATH, "proprietary", AKN_NS, AKN_META_CHILDREN_ORDER)
+        meta = document_xml.get_single_xpath_node(META_XPATH)
+        child_tags = [etree.QName(child).localname for child in meta]
+        assert child_tags.index("analysis") < child_tags.index("proprietary")
+
+    def test_insert_element_in_child_order_allows_repeatable_siblings(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2025-07-29" name="transform"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        work_xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork"
+        new_date = document_xml.insert_element_in_child_order(work_xpath, "FRBRdate", AKN_NS, FRBR_WORK_CHILDREN_ORDER)
+        new_date.set("date", "2024-01-01")
+        new_date.set("name", "judgment")
+        dates = document_xml.get_xpath_match_strings(f"{work_xpath}/akn:FRBRdate/@name")
+        assert sorted(dates) == ["judgment", "transform"]
+        assert new_date.get("name") == "judgment"
+
+    def test_inserts_frbrname_before_prescriptive(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRthis value=""/>
+                                <FRBRuri value=""/>
+                                <FRBRdate date="2020-01-01" name="judgment"/>
+                                <FRBRauthor href="#court"/>
+                                <FRBRcountry value="GB"/>
+                                <FRBRprescriptive value="prescriptive-id"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        work_xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:identification/akn:FRBRWork"
+        name_element = document_xml.get_or_create_element_in_child_order(
+            work_xpath, "FRBRname", AKN_NS, FRBR_WORK_CHILDREN_ORDER
+        )
+        name_element.set("value", "Title")
+        work = document_xml.get_single_xpath_node(work_xpath)
+        child_tags = [etree.QName(child).localname for child in work]
+        assert child_tags.index("FRBRname") < child_tags.index("FRBRprescriptive")
+
+    def test_appends_when_no_later_schema_siblings(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document_xml.get_or_create_element_in_child_order(META_XPATH, "proprietary", AKN_NS, AKN_META_CHILDREN_ORDER)
+        meta = document_xml.get_single_xpath_node(META_XPATH)
+        assert etree.QName(meta[-1]).localname == "proprietary"
+
+    def test_raises_for_invalid_namespace(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment><meta/></judgment>
+            </akomaNtoso>
+            """
+        )
+        with pytest.raises(ValueError, match="Namespace not in DEFAULT_NAMESPACES"):
+            document_xml.get_or_create_element_in_child_order(
+                META_XPATH, "proprietary", "http://invalid.example/ns", AKN_META_CHILDREN_ORDER
+            )
+
+    def test_raises_when_element_not_in_child_order(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment><meta/></judgment>
+            </akomaNtoso>
+            """
+        )
+        with pytest.raises(ValueError, match="not listed in child_order"):
+            document_xml.get_or_create_element_in_child_order(META_XPATH, "unknown", AKN_NS, AKN_META_CHILDREN_ORDER)
+
+    def test_raises_when_duplicate_children_exist(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <proprietary/>
+                        <proprietary/>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        with pytest.raises(ValueError, match="Multiple child elements with name proprietary"):
+            document_xml.get_or_create_element_in_child_order(
+                META_XPATH, "proprietary", AKN_NS, AKN_META_CHILDREN_ORDER
+            )
+
+
+class TestReplaceChildElements:
+    UK_NS = "https://caselaw.nationalarchives.gov.uk/akn"
+
+    def test_replaces_all_matching_children(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:court>Old</uk:court>
+                        </proprietary>
+                    </meta>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        parent_xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary"
+        replacement = etree.Element(etree.QName(self.UK_NS, "court"))
+        replacement.text = "New"
+        document_xml.replace_child_elements(parent_xpath, "court", self.UK_NS, [replacement])
+        assert document_xml.get_xpath_match_string(f"{parent_xpath}/uk:court/text()") == "New"
+
+    def test_raises_for_invalid_namespace(self, full_document_xml):
+        document_xml = XML(full_document_xml)
+        parent_xpath = "/akn:akomaNtoso/akn:judgment/akn:meta/akn:proprietary"
+        with pytest.raises(ValueError, match="Namespace not in DEFAULT_NAMESPACES"):
+            document_xml.replace_child_elements(parent_xpath, "court", "http://invalid.example/ns", [])

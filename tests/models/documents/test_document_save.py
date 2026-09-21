@@ -299,4 +299,5 @@ class TestDocumentSave:
         assert existing_claim in document.metadata_fields.values()
         title_claims = document.metadata_fields.by_name("title")
         assert any(claim.source is MetadataSource.EDITOR for claim in title_claims)
-        assert any(claim.source is MetadataSource.DOCUMENT for claim in title_claims)
+        assert not any(claim.source is MetadataSource.DOCUMENT for claim in title_claims)
+        assert document.body.name == "Existing editor title"
