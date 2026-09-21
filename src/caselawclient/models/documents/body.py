@@ -58,10 +58,12 @@ DECISION_FRBRDATE_NAMES = frozenset({"judgment", "decision"})
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 AKN_NS = DEFAULT_NAMESPACES["akn"]
+UK_NS = DEFAULT_NAMESPACES["uk"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
 FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 META_XPATH = "/akn:akomaNtoso/akn:*/akn:meta"
+PROPRIETARY_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary"
 JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
 
 
@@ -214,6 +216,14 @@ class DocumentBody:
             FRBR_WORK_CHILDREN_ORDER,
         )
 
+    def _ensure_proprietary_element(self) -> None:
+        self._xml.get_or_create_element_in_child_order(
+            META_XPATH,
+            "proprietary",
+            AKN_NS,
+            AKN_META_CHILDREN_ORDER,
+        )
+
     def _frbr_work_date_elements(self) -> list[Element]:
         qname = etree.QName(AKN_NS, "FRBRdate")
         elements: list[Element] = []
@@ -322,17 +332,72 @@ class DocumentBody:
             return True
         return False
 
+    def _proprietary_uk_text_elements(self, local_name: str, text_values: list[str]) -> list[Element]:
+        elements: list[Element] = []
+        for text in text_values:
+            element = etree.Element(etree.QName(UK_NS, local_name))
+            element.text = text
+            elements.append(element)
+        return elements
+
+    def write_court(self, court: str) -> None:
+        self._ensure_proprietary_element()
+        court = _strip_body_metadata_text(court)
+        if not court:
+            self._xml.replace_child_elements(PROPRIETARY_XPATH, "court", UK_NS, [])
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "court",
+                UK_NS,
+                self._proprietary_uk_text_elements("court", [court]),
+            )
+        self._invalidate_cached_properties("court")
+
+    def write_jurisdiction(self, jurisdiction: str) -> None:
+        self._ensure_proprietary_element()
+        jurisdiction = _strip_body_metadata_text(jurisdiction)
+        if not jurisdiction:
+            self._xml.replace_child_elements(PROPRIETARY_XPATH, "jurisdiction", UK_NS, [])
+        else:
+            self._xml.replace_child_elements(
+                PROPRIETARY_XPATH,
+                "jurisdiction",
+                UK_NS,
+                self._proprietary_uk_text_elements("jurisdiction", [jurisdiction]),
+            )
+        self._invalidate_cached_properties("jurisdiction")
+
+    def write_categories(self, categories: list[DocumentCategory]) -> None:
+        self._ensure_proprietary_element()
+        elements: list[Element] = []
+
+        def append_categories(tree: list[DocumentCategory], parent: str | None) -> None:
+            for category in tree:
+                if not category.name.strip():
+                    continue
+                element = etree.Element(etree.QName(UK_NS, "category"))
+                element.text = category.name
+                if parent is not None:
+                    element.set("parent", parent)
+                elements.append(element)
+                append_categories(category.subcategories, category.name)
+
+        append_categories(categories, None)
+        self._xml.replace_child_elements(PROPRIETARY_XPATH, "category", UK_NS, elements)
+        self._invalidate_cached_properties("categories", "category")
+
     @cached_property
     def name(self) -> str:
         return _strip_body_metadata_text(self.get_xpath_match_string(NAME_XPATH))
 
     @cached_property
     def court(self) -> str:
-        return self.get_xpath_match_string(COURT_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(COURT_XPATH))
 
     @cached_property
     def jurisdiction(self) -> str:
-        return self.get_xpath_match_string(JURISDICTION_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(JURISDICTION_XPATH))
 
     @cached_property
     def categories(self) -> list[DocumentCategory]:

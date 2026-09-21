@@ -12,11 +12,13 @@ from caselawclient.models.documents.body import (
     FRBR_EXPRESSION_XPATH,
     FRBR_WORK_XPATH,
     NAME_XPATH,
+    PARTIES_XPATH,
 )
 from caselawclient.models.documents.exceptions import UnparsableDecisionDateError
 from caselawclient.models.documents.metadata.fields.field import (
     MetadataDateValue,
     MetadataField,
+    MetadataPartyValue,
     MetadataStringValue,
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
@@ -124,7 +126,7 @@ class TestWriteResolvedTitleToBody:
 class TestSaveMaterialisesBeforeWriteBack:
     def test_save_materialises_body_claims_before_writing_resolved_metadata_to_body(self, mock_api_client):
         """Write-back must run after materialisation so DOCUMENT claims exist before we sync XML."""
-        body = DocumentBodyFactory.build(name="Body title")
+        body = DocumentBodyFactory.build(court="Body court")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
         call_order: list[str] = []
         original_materialise = document._convert_body_claims_to_structured_metadata  # noqa: SLF001
@@ -141,8 +143,8 @@ class TestSaveMaterialisesBeforeWriteBack:
         document.metadata.title.materialise_body_claims()
         document.metadata_fields.add(
             MetadataField(
-                name="title",
-                value=MetadataStringValue("Editor title"),
+                name="court",
+                value=MetadataStringValue("Editor court"),
                 source=MetadataSource.EDITOR,
                 id=str(uuid4()),
                 timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
@@ -158,48 +160,12 @@ class TestSaveMaterialisesBeforeWriteBack:
             document.save(message="Ordered save")
 
         assert call_order == ["materialise", "write_back"]
-        document_claims = document.metadata_fields.by_name("title")
+        document_claims = document.metadata_fields.by_name("court")
         assert any(
-            claim.source is MetadataSource.DOCUMENT and claim.value == MetadataStringValue("Body title")
+            claim.source is MetadataSource.DOCUMENT and claim.value == MetadataStringValue("Body court")
             for claim in document_claims
         )
-        assert document.body.name == "Editor title"
-
-
-class TestMetadataWriteBackSupport:
-    def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
-        body = DocumentBodyFactory.build(name="Original title")
-        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        _ = document.body.content_as_xml
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("Updated title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
-
-        document.metadata.title.write_resolved_to_body()
-
-        assert "Updated title" in document.body.content_as_xml
-        assert "Original title" not in document.body.content_as_xml
-
-    def test_press_summary_shape_does_not_support_metadata_write_back(self, mock_api_client):
-        from caselawclient.models.documents.body import DocumentBody
-
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <doc name="pressSummary">
-                    <preface><p><docTitle><span>Press Summary</span></docTitle></p></preface>
-                </doc>
-            </akomaNtoso>
-            """
-        )
-        assert body.supports_metadata_write_back is False
+        assert document.body.court == "Editor court"
 
     def test_write_title_creates_frbrwork_when_identification_has_only_manifestation(self, mock_api_client):
         from lxml import etree
@@ -815,3 +781,427 @@ class TestWriteResolvedDateToBody:
         document.metadata.date.write_resolved_to_body()
 
         assert document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") == []
+
+
+class TestWriteResolvedCourtToBody:
+    def test_write_resolved_court_updates_proprietary(self, mock_api_client):
+        body = DocumentBodyFactory.build(court="Original Court")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.court == "EWHC"
+
+    def test_suppressed_court_removes_uk_court_nodes(self, mock_api_client):
+        body = DocumentBodyFactory.build(court="Original Court")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court") == []
+
+    def test_whitespace_only_body_court_is_removed_on_write_back(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta><proprietary><uk:court>   </uk:court></proprietary></meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.court == ""
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court") == []
+
+
+class TestWriteResolvedJurisdictionToBody:
+    def test_write_resolved_jurisdiction_updates_proprietary(self, mock_api_client):
+        body = DocumentBodyFactory.build(jurisdiction="EW")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="jurisdiction",
+                value=MetadataStringValue("NI"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.jurisdiction.write_resolved_to_body()
+
+        assert document.body.jurisdiction == "NI"
+
+    def test_suppressed_jurisdiction_removes_uk_jurisdiction_nodes(self, mock_api_client):
+        body = DocumentBodyFactory.build(jurisdiction="EW")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="jurisdiction",
+                value=MetadataStringValue("NI"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.jurisdiction.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction") == []
+
+    def test_whitespace_only_body_jurisdiction_is_removed_on_write_back(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta><proprietary><uk:jurisdiction>  </uk:jurisdiction></proprietary></meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="jurisdiction",
+                value=MetadataStringValue("NI"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.jurisdiction.write_resolved_to_body()
+
+        assert document.body.jurisdiction == ""
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction") == []
+
+
+class TestWriteResolvedCategoriesToBody:
+    def test_write_resolved_categories_replaces_proprietary_nodes(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue
+        from caselawclient.types import DocumentCategory
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Old</uk:category>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="categories",
+                value=MetadataCategoryValue(name="Human rights", parent=None),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.categories.write_resolved_to_body()
+
+        assert document.body.categories == [DocumentCategory(name="Human rights")]
+
+    def test_write_resolved_categories_writes_nested_category_tree(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue
+        from caselawclient.types import DocumentCategory
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta><proprietary/></meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="categories",
+                value=MetadataCategoryValue(name="Appeals", parent=None),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+        document.metadata_fields.add(
+            MetadataField(
+                name="categories",
+                value=MetadataCategoryValue(name="Registration variation", parent="Appeals"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.categories.write_resolved_to_body()
+
+        assert document.body.categories == [
+            DocumentCategory(
+                name="Appeals",
+                subcategories=[DocumentCategory(name="Registration variation")],
+            )
+        ]
+        category_nodes = document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category")
+        assert len(category_nodes) == 2
+        parent_nodes = [node for node in category_nodes if node.get("parent") is None]
+        child_nodes = [node for node in category_nodes if node.get("parent") == "Appeals"]
+        assert [node.text for node in parent_nodes] == ["Appeals"]
+        assert [node.text for node in child_nodes] == ["Registration variation"]
+
+    def test_suppressed_category_claims_remove_uk_category_nodes(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+        from caselawclient.models.documents.metadata.fields.field import MetadataCategoryValue
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <proprietary>
+                            <uk:category>Old</uk:category>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="categories",
+                value=MetadataCategoryValue(name="Human rights", parent=None),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.categories.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category") == []
+
+
+class TestSaveDoesNotWritePartiesToBody:
+    def test_save_leaves_uk_party_nodes_unchanged(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork><FRBRname value="Title"/></FRBRWork>
+                        </identification>
+                        <proprietary>
+                            <uk:party role="Claimant">Jerry</uk:party>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        party_nodes_before = document.body.get_xpath_nodes(PARTIES_XPATH)
+        document.metadata_fields.add(
+            MetadataField(
+                name="parties",
+                value=MetadataPartyValue(name="Tom", role="Defendant"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        with patch.object(document.api_client, "document_exists", return_value=True):
+            document.save(message="Save with party claim")
+
+        party_nodes_after = document.body.get_xpath_nodes(PARTIES_XPATH)
+        assert len(party_nodes_before) == 1
+        assert party_nodes_before[0].text == "Jerry"
+        assert party_nodes_before[0].get("role") == "Claimant"
+        assert len(party_nodes_after) == 1
+        assert party_nodes_after[0].text == "Jerry"
+        assert party_nodes_after[0].get("role") == "Claimant"
+
+
+class TestMetadataWriteBackSupport:
+    def test_content_as_xml_updates_after_title_write_back(self, mock_api_client):
+        body = DocumentBodyFactory.build(name="Original title")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        _ = document.body.content_as_xml
+        document.metadata_fields.add(
+            MetadataField(
+                name="title",
+                value=MetadataStringValue("Updated title"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.title.write_resolved_to_body()
+
+        assert "Updated title" in document.body.content_as_xml
+        assert "Original title" not in document.body.content_as_xml
+
+    def test_press_summary_shape_does_not_support_metadata_write_back(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <doc name="pressSummary">
+                    <preface><p><docTitle><span>Press Summary</span></docTitle></p></preface>
+                </doc>
+            </akomaNtoso>
+            """
+        )
+        assert body.supports_metadata_write_back is False
+
+    def test_write_court_creates_proprietary_when_missing(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork><FRBRname value="Title"/></FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        assert document.body.court == "EWHC"
+
+    def test_write_court_inserts_proprietary_before_presentation(self, mock_api_client):
+        from lxml import etree
+
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:html="http://www.w3.org/1999/xhtml"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork><FRBRname value="Title"/></FRBRWork>
+                        </identification>
+                        <presentation source="#"><html:style/></presentation>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="court",
+                value=MetadataStringValue("EWHC"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.court.write_resolved_to_body()
+
+        meta = document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta")[0]
+        akn_ns = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+        child_local_names = [
+            name for child in meta if (name := etree.QName(child).localname) and etree.QName(child).namespace == akn_ns
+        ]
+        assert child_local_names.index("proprietary") < child_local_names.index("presentation")

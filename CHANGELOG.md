@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- **Document**: write resolved title and decision date into Akoma Ntoso body XML during `save()`
+- **Document**: write resolved metadata claims into Akoma Ntoso body XML during `save()` (title, date, court, jurisdiction, categories; not case number, parties, or identifiers)
 
 ## v50.0.1 (2026-09-15)
 
