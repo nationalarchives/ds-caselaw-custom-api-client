@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
-- **Document**: write resolved title into Akoma Ntoso body XML during `save()`
+- **Document**: write resolved title and decision date into Akoma Ntoso body XML during `save()`
 
 ## v50.0.1 (2026-09-15)
 

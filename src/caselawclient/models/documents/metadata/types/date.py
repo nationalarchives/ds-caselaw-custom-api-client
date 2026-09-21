@@ -1,6 +1,7 @@
 import datetime
 from typing import cast
 
+from caselawclient.models.documents.exceptions import UnparsableDecisionDateError
 from caselawclient.models.documents.metadata.base import SingleMetadata
 from caselawclient.models.documents.metadata.fields.exceptions import (
     InvalidMetadataFieldXMLRepresentationException,
@@ -41,6 +42,28 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
         if document_date is None:
             return
         self._materialise_document_values([MetadataDateValue(document_date)])
+
+    def write_resolved_to_body(self) -> None:
+        resolved = self._resolve_claims()
+        if resolved.has_any_claims:
+            decision_date = self.value
+            if decision_date is None:
+                self.document.body.clear_decision_date()
+            else:
+                self.document.body.write_decision_date(decision_date)
+            return
+
+        if self.document.body.decision_date_is_unparsable:
+            raw = self.document.body.decision_date_raw
+            raise UnparsableDecisionDateError(
+                f"Cannot save: work decision date {raw!r} is not a valid ISO date; "
+                "fix the body XML or add a date metadata claim before saving."
+            )
+
+        decision_date = self.document.body.document_date_as_date
+        if decision_date is None:
+            return
+        self.document.body.write_decision_date(decision_date)
 
     @classmethod
     def validate_value(cls, value: MetadataFieldValue) -> None:

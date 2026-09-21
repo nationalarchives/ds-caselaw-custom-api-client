@@ -49,20 +49,25 @@ COURT_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()"
 JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()"
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
-DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+WORK_DECISION_FRBRDATE_DATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
+DATE_XPATH = WORK_DECISION_FRBRDATE_DATE_XPATH
+DECISION_FRBRDATE_NAMES = frozenset({"judgment", "decision"})
+JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
+PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 AKN_NS = DEFAULT_NAMESPACES["akn"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+FRBR_EXPRESSION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 META_XPATH = "/akn:akomaNtoso/akn:*/akn:meta"
+JUDGMENT_NAME_XPATH = "/akn:akomaNtoso/akn:*/@name"
 
 
 def _strip_body_metadata_text(raw: str) -> str:
     """Strip body-derived metadata text; whitespace-only values are treated as absent."""
     return raw.strip()
-
-
-JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
-PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 
 
 def categories_from_nodes(nodes: list[Element]) -> list[DocumentCategory]:
@@ -209,6 +214,58 @@ class DocumentBody:
             FRBR_WORK_CHILDREN_ORDER,
         )
 
+    def _frbr_work_date_elements(self) -> list[Element]:
+        qname = etree.QName(AKN_NS, "FRBRdate")
+        elements: list[Element] = []
+        for parent in self.get_xpath_nodes(FRBR_WORK_XPATH):
+            elements.extend(parent.findall(qname))
+        return elements
+
+    def _work_decision_frbrdate_elements(self) -> list[Element]:
+        return [
+            element for element in self._frbr_work_date_elements() if element.get("name") in DECISION_FRBRDATE_NAMES
+        ]
+
+    def _legacy_unnamed_work_frbrdate_element(self) -> Element | None:
+        unnamed_dates = [element for element in self._frbr_work_date_elements() if (element.get("name") or "") == ""]
+        if len(unnamed_dates) != 1:
+            return None
+        return unnamed_dates[0]
+
+    def _get_or_create_work_decision_frbrdate_element(self) -> Element:
+        existing_decision_dates = self._work_decision_frbrdate_elements()
+        if len(existing_decision_dates) > 1:
+            raise ValueError("Multiple decision FRBRdate elements under FRBRWork")
+        if existing_decision_dates:
+            return existing_decision_dates[0]
+        legacy_unnamed = self._legacy_unnamed_work_frbrdate_element()
+        if legacy_unnamed is not None:
+            return legacy_unnamed
+        frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
+        if frbr_date_name not in DECISION_FRBRDATE_NAMES:
+            frbr_date_name = "judgment"
+        new_element = self._xml.insert_element_in_child_order(
+            FRBR_WORK_XPATH,
+            "FRBRdate",
+            AKN_NS,
+            FRBR_WORK_CHILDREN_ORDER,
+        )
+        new_element.set("name", frbr_date_name)
+        return new_element
+
+    def _remove_work_decision_frbrdates(self) -> None:
+        qname = etree.QName(AKN_NS, "FRBRdate")
+        for parent in self.get_xpath_nodes(FRBR_WORK_XPATH):
+            children = list(parent.findall(qname))
+            decision_dates = [child for child in children if child.get("name") in DECISION_FRBRDATE_NAMES]
+            if decision_dates:
+                for child in decision_dates:
+                    parent.remove(child)
+                continue
+            unnamed_dates = [child for child in children if (child.get("name") or "") == ""]
+            if len(unnamed_dates) == 1:
+                parent.remove(unnamed_dates[0])
+
     def write_title(self, title: str) -> None:
         title = _strip_body_metadata_text(title)
         if not title:
@@ -217,6 +274,53 @@ class DocumentBody:
             name_element = self._get_or_create_work_frbrname_element()
             self._xml.set_element_attribute(name_element, "value", title)
         self._invalidate_cached_properties("name")
+
+    def write_decision_date(self, decision_date: datetime.date) -> None:
+        date_string = decision_date.isoformat()
+        frbr_date_name = self.get_xpath_match_string(JUDGMENT_NAME_XPATH) or "judgment"
+        if frbr_date_name not in DECISION_FRBRDATE_NAMES:
+            frbr_date_name = "judgment"
+        frbr_date = self._get_or_create_work_decision_frbrdate_element()
+        self._xml.set_element_attribute(frbr_date, "date", date_string)
+        self._xml.set_element_attribute(frbr_date, "name", frbr_date_name)
+        self._invalidate_cached_properties(
+            "decision_date_raw",
+            "decision_date_is_unparsable",
+            "document_date_as_date",
+            "document_date_as_string",
+        )
+
+    def clear_decision_date(self) -> None:
+        self._remove_work_decision_frbrdates()
+        self._invalidate_cached_properties(
+            "decision_date_raw",
+            "decision_date_is_unparsable",
+            "document_date_as_date",
+            "document_date_as_string",
+        )
+
+    def _decision_date_raw_string(self) -> str:
+        date_as_string = self.get_xpath_match_string(DATE_XPATH)
+        if not date_as_string:
+            legacy_unnamed = self._legacy_unnamed_work_frbrdate_element()
+            if legacy_unnamed is not None:
+                date_as_string = legacy_unnamed.get("date") or ""
+        return date_as_string
+
+    @cached_property
+    def decision_date_raw(self) -> str:
+        return self._decision_date_raw_string()
+
+    @cached_property
+    def decision_date_is_unparsable(self) -> bool:
+        raw = self._decision_date_raw_string()
+        if not raw:
+            return False
+        try:
+            datetime.date.fromisoformat(raw)
+        except ValueError:
+            return True
+        return False
 
     @cached_property
     def name(self) -> str:
@@ -261,7 +365,11 @@ class DocumentBody:
 
     @cached_property
     def document_date_as_date(self) -> datetime.date | None:
-        date_as_string = self.get_xpath_match_string(DATE_XPATH)
+        date_as_string = self._decision_date_raw_string()
+        if not date_as_string:
+            legacy_unnamed = self._legacy_unnamed_work_frbrdate_element()
+            if legacy_unnamed is not None:
+                date_as_string = legacy_unnamed.get("date") or ""
         if not date_as_string:
             return None
         try:

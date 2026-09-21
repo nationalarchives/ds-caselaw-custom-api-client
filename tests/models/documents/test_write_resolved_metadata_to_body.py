@@ -8,13 +8,23 @@ from uuid import uuid4
 import pytest
 
 from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
-from caselawclient.models.documents.body import FRBR_WORK_XPATH, NAME_XPATH
+from caselawclient.models.documents.body import (
+    FRBR_EXPRESSION_XPATH,
+    FRBR_WORK_XPATH,
+    NAME_XPATH,
+)
+from caselawclient.models.documents.exceptions import UnparsableDecisionDateError
 from caselawclient.models.documents.metadata.fields.field import (
+    MetadataDateValue,
     MetadataField,
     MetadataStringValue,
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
+
+EXPRESSION_DATE_XPATH = f"{FRBR_EXPRESSION_XPATH}/akn:FRBRdate/@date"
+LIFECYCLE_EVENTREF_DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:lifecycle/akn:eventRef/@date"
+WORK_FRBRDATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
 
 
 class TestWriteResolvedTitleToBody:
@@ -230,7 +240,9 @@ class TestMetadataWriteBackSupport:
 
         assert document.body.name == "New title"
         assert len(document.body.get_xpath_nodes(FRBR_WORK_XPATH)) == 1
-        identification = document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification")[0]
+        identification = document.body.get_xpath_nodes(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
+        )[0]
         akn_ns = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
         child_names = [
             etree.QName(child).localname
@@ -318,3 +330,488 @@ class TestMetadataWriteBackSupport:
 
         with pytest.raises(ValueError, match="Multiple FRBRname elements under FRBRWork"):
             document.metadata.title.write_resolved_to_body()
+
+
+class TestWriteResolvedDateToBody:
+    def test_write_decision_date_does_not_touch_expression_lifecycle_or_year(self, mock_api_client):
+        """Date write-back is scoped to FRBRWork/FRBRdate only (see write_decision_date / clear_decision_date)."""
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment name="judgment">
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2020-01-01" name="judgment"/>
+                            </FRBRWork>
+                            <FRBRExpression>
+                                <FRBRdate date="2019-01-01" name="judgment"/>
+                                <FRBRdate date="2019-06-01" name="transform"/>
+                            </FRBRExpression>
+                        </identification>
+                        <lifecycle>
+                            <eventRef date="2018-01-01" source="#tna"/>
+                        </lifecycle>
+                        <proprietary>
+                            <uk:year>2020</uk:year>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+
+        def unrelated_date_fields() -> dict[str, str | list[str]]:
+            return {
+                "expression_judgment_date": body.get_xpath_match_string(EXPRESSION_DATE_XPATH),
+                "expression_transform_dates": body.get_xpath_match_strings(
+                    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/"
+                    "akn:FRBRdate[@name='transform']/@date"
+                ),
+                "lifecycle_eventref_date": body.get_xpath_match_string(LIFECYCLE_EVENTREF_DATE_XPATH),
+                "proprietary_year": body.get_xpath_match_string(
+                    "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:year/text()"
+                ),
+            }
+
+        before_write = unrelated_date_fields()
+        body.write_decision_date(datetime.date(2024, 6, 15))
+        assert body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        assert unrelated_date_fields() == before_write
+
+        before_clear = unrelated_date_fields()
+        body.clear_decision_date()
+        assert body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == ""
+        assert unrelated_date_fields() == before_clear
+
+    def test_write_resolved_date_updates_only_frbrwork_frbrdate(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment name="judgment">
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2020-01-01" name="judgment"/>
+                            </FRBRWork>
+                            <FRBRExpression>
+                                <FRBRdate date="2019-01-01" name="judgment"/>
+                            </FRBRExpression>
+                        </identification>
+                        <lifecycle>
+                            <eventRef date="2018-01-01" source="#tna"/>
+                        </lifecycle>
+                        <proprietary>
+                            <uk:year>2020</uk:year>
+                        </proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        resolved = datetime.date(2024, 6, 15)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(resolved),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        assert document.body.get_xpath_match_string(EXPRESSION_DATE_XPATH) == "2019-01-01"
+        assert document.body.get_xpath_match_string(LIFECYCLE_EVENTREF_DATE_XPATH) == "2018-01-01"
+        assert (
+            document.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:year/text()")
+            == "2020"
+        )
+
+    def test_write_resolved_date_does_not_create_frbrexpression(self, mock_api_client):
+        body = DocumentBodyFactory.build(document_date_as_string="2020-01-01")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        assert document.body.get_xpath_nodes(FRBR_EXPRESSION_XPATH) == []
+
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 6, 15)),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes(FRBR_EXPRESSION_XPATH) == []
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+
+    def test_write_resolved_date_creates_work_frbrdate_when_absent(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment name="judgment">
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        assert document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") == []
+
+        resolved = datetime.date(2024, 6, 15)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(resolved),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        assert (
+            document.body.get_xpath_match_string(
+                "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@name"
+            )
+            == "judgment"
+        )
+        from lxml import etree
+
+        work = document.body.get_xpath_nodes(FRBR_WORK_XPATH)[0]
+        child_names = [etree.QName(child).localname for child in work]
+        assert child_names.index("FRBRdate") < child_names.index("FRBRname")
+
+    def test_write_decision_date_does_not_reuse_transform_frbrdate(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment name="judgment">
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2025-07-29T12:47:42" name="transform"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 6, 15)),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        transform_dates = document.body.get_xpath_match_strings(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate[@name='transform']/@date"
+        )
+        assert transform_dates == ["2025-07-29T12:47:42"]
+        assert len(document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")) == 2
+
+    def test_legacy_unnamed_work_frbrdate_with_transform_sibling(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRdate date="2020-01-01"/>
+                                <FRBRdate date="2025-07-29T12:47:42" name="transform"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        assert document.body.document_date_as_date == datetime.date(2020, 1, 1)
+        assert len(document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")) == 2
+
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 6, 15)),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        assert len(document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")) == 2
+
+    def test_write_resolved_date_with_multiple_work_frbrdates(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment name="judgment">
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2020-01-01" name="decision"/>
+                                <FRBRdate date="2025-07-29T12:47:42" name="transform"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 6, 15)),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-06-15"
+        transform_dates = document.body.get_xpath_match_strings(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate[@name='transform']/@date"
+        )
+        assert transform_dates == ["2025-07-29T12:47:42"]
+
+        with patch.object(document.api_client, "document_exists", return_value=True):
+            document.save(message="Save with multiple work FRBRdates")
+
+    def test_suppressed_date_claim_clears_work_frbrdate_only(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="2020-01-01" name="judgment"/>
+                                <FRBRdate date="2025-07-29T12:47:42" name="transform"/>
+                            </FRBRWork>
+                            <FRBRExpression>
+                                <FRBRdate date="2019-01-01" name="judgment"/>
+                            </FRBRExpression>
+                        </identification>
+                        <proprietary><uk:year>2020</uk:year></proprietary>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 1, 1)),
+                source=MetadataSource.DOCUMENT,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.document_date_as_date is None
+        transform_dates = document.body.get_xpath_match_strings(
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate[@name='transform']/@date"
+        )
+        assert transform_dates == ["2025-07-29T12:47:42"]
+        assert document.body.get_xpath_match_string(EXPRESSION_DATE_XPATH) == "2019-01-01"
+        assert (
+            document.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:year/text()")
+            == "2020"
+        )
+
+    def test_unparsable_body_date_without_claims_raises_on_write_back(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="kitten" name="judgment"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        with pytest.raises(UnparsableDecisionDateError, match="kitten"):
+            document.metadata.date.write_resolved_to_body()
+
+        assert document.body.decision_date_raw == "kitten"
+
+    def test_save_with_unparsable_body_date_and_no_claims_raises(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="kitten" name="judgment"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        with (
+            patch.object(document.api_client, "document_exists", return_value=True),
+            pytest.raises(UnparsableDecisionDateError, match="kitten"),
+        ):
+            document.save(message="Should not rewrite unparsable date")
+
+        mock_api_client.update_document_xml.assert_not_called()
+
+    def test_editor_date_claim_can_fix_unparsable_body_date_on_save(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                                <FRBRdate date="kitten" name="judgment"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="date",
+                value=MetadataDateValue(datetime.date(2024, 3, 1)),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+            )
+        )
+
+        with patch.object(document.api_client, "document_exists", return_value=True):
+            document.save(message="Replace unparsable date")
+
+        assert document.body.get_xpath_match_string(WORK_FRBRDATE_XPATH) == "2024-03-01"
+
+    def test_no_date_claims_and_absent_work_date_is_no_op(self, mock_api_client):
+        from caselawclient.models.documents.body import DocumentBody
+
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+                <judgment>
+                    <meta>
+                        <identification>
+                            <FRBRWork>
+                                <FRBRname value="Name"/>
+                            </FRBRWork>
+                        </identification>
+                    </meta>
+                    <header><p/></header>
+                    <judgmentBody><decision><p/></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        document.metadata.date.write_resolved_to_body()
+
+        assert document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate") == []
