@@ -53,13 +53,12 @@ class TestDocumentSave:
     def test_save_passes_uri_and_xml_to_api(self, mock_api_client):
         uri = DocumentURIString("test/2023/456")
         document = JudgmentFactory.build(uri=uri, api_client=mock_api_client)
-        expected_xml = document.body.content_as_xml_tree
 
         document.save(message="Changed document")
 
         call_args = mock_api_client.update_document_xml.call_args
         assert call_args[0][0] == uri
-        assert call_args[0][1] is expected_xml
+        assert call_args[0][1] is document.body.content_as_xml_tree
 
     def test_save_with_message_includes_message_in_annotation(self, mock_api_client):
         uri = DocumentURIString("test/2023/789")

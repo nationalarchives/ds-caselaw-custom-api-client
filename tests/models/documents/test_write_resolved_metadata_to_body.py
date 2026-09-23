@@ -7,33 +7,44 @@ from uuid import uuid4
 
 import pytest
 
-from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
-from caselawclient.models.documents.body import FRBR_WORK_XPATH, NAME_XPATH
+from caselawclient.factories import DocumentBodyFactory, JudgmentFactory, PressSummaryFactory
+from caselawclient.models.documents.body import FRBR_WORK_XPATH, NAME_XPATH, DocumentBody
+from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
 from caselawclient.models.documents.metadata.fields.field import (
+    MetadataDateValue,
     MetadataField,
     MetadataStringValue,
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
+from tests.models.documents.body_metadata.fixtures import (
+    FRBRWORK_NAME_VALUE_XPATH,
+    IDENTIFICATION_XPATH,
+    add_editor_title,
+    akn_child_local_names,
+    doc_press_summary_body,
+    judgment_with_identification,
+)
+
+
+def _sync_resolved_metadata_to_body(document) -> None:
+    assert BodyMetadataWriteBack().sync(document)
+
+
+def _assert_write_back_noops(document) -> None:
+    assert BodyMetadataWriteBack().sync(document) is False
 
 
 class TestWriteResolvedTitleToBody:
     def test_write_resolved_title_updates_frbrname(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("Resolved title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "Resolved title")
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
         assert document.body.name == "Resolved title"
+        assert document.body.get_xpath_match_string(FRBRWORK_NAME_VALUE_XPATH) == "Resolved title"
 
     def test_suppressed_title_removes_frbrname(self, mock_api_client):
         body = DocumentBodyFactory.build(name="Original title")
@@ -49,37 +60,76 @@ class TestWriteResolvedTitleToBody:
             )
         )
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
         assert (
             document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname")
             == []
         )
 
-    def test_whitespace_only_body_title_is_treated_as_empty_on_write_back(self, mock_api_client):
-        body = DocumentBodyFactory.build(name="   ")
+    @pytest.mark.parametrize("body_name", ["Body-only title", "   "])
+    def test_body_title_is_not_written_back_without_title_claims(self, mock_api_client, body_name):
+        body = DocumentBodyFactory.build(name=body_name)
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        original_frbrname = body.get_xpath_match_string(FRBRWORK_NAME_VALUE_XPATH)
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
-        assert document.body.name == ""
-        assert (
-            document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname")
-            == []
+        assert body.get_xpath_match_string(FRBRWORK_NAME_VALUE_XPATH) == original_frbrname
+        if body_name.strip():
+            assert document.body.name == body_name.strip()
+        else:
+            assert document.body.name == ""
+
+    def test_date_claims_do_not_change_frbrdate_in_pr1(self, mock_api_client):
+        triple_with_title = """
+                    <FRBRWork>
+                      <FRBRthis value="https://example/id/work"/>
+                      <FRBRuri value="https://example/id/work"/>
+                      <FRBRdate date="2020-05-10" name="judgment"/>
+                      <FRBRauthor href="#tna"/>
+                      <FRBRcountry value="GB-UKM"/>
+                      <FRBRname value="Original title"/>
+                    </FRBRWork>
+                    <FRBRExpression>
+                      <FRBRthis value="https://example/expression"/>
+                      <FRBRuri value="https://example/expression"/>
+                      <FRBRdate date="2020-05-10" name="judgment"/>
+                      <FRBRauthor href="#tna"/>
+                      <FRBRlanguage language="eng"/>
+                    </FRBRExpression>
+                    <FRBRManifestation>
+                      <FRBRthis value="https://example/data.xml"/>
+                      <FRBRuri value="https://example/data.xml"/>
+                      <FRBRdate date="2020-05-10" name="judgment"/>
+                      <FRBRauthor href="#tna"/>
+                      <FRBRformat value="application/xml"/>
+                    </FRBRManifestation>
+        """
+        body = DocumentBody(judgment_with_identification(triple_inner=triple_with_title))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        decision_date_xpath = (
+            "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate[@name='judgment']/@date"
         )
-
-    def test_save_writes_resolved_title_into_xml(self, mock_api_client):
-        body = DocumentBodyFactory.build(name="Original title")
-        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        original_work_date = body.get_xpath_match_string(decision_date_xpath)
         document.metadata_fields.add(
             MetadataField(
-                name="title",
-                value=MetadataStringValue("Saved title"),
+                name="date",
+                value=MetadataDateValue(datetime.date(2025, 6, 15)),
                 source=MetadataSource.EDITOR,
                 id=str(uuid4()),
                 timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
             )
         )
+
+        _sync_resolved_metadata_to_body(document)
+
+        assert body.get_xpath_match_string(decision_date_xpath) == original_work_date
+
+    def test_save_writes_resolved_title_into_xml(self, mock_api_client):
+        body = DocumentBodyFactory.build(name="Original title")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_title(document, "Saved title")
 
         with patch.object(document.api_client, "document_exists", return_value=True):
             document.save(message="Sync title to XML")
@@ -95,15 +145,7 @@ class TestWriteResolvedTitleToBody:
         body = DocumentBodyFactory.build(name="Original title")
         with patch.object(mock_api_client, "document_exists", return_value=False):
             document = Judgment.from_xml(body, mock_api_client, uri=DocumentURIString("test/new-doc"))
-            document.metadata_fields.add(
-                MetadataField(
-                    name="title",
-                    value=MetadataStringValue("Inserted title"),
-                    source=MetadataSource.EDITOR,
-                    id=str(uuid4()),
-                    timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-                )
-            )
+            add_editor_title(document, "Inserted title")
             document.save(message="Insert with title sync")
 
         xml_tree = mock_api_client.insert_document_xml.call_args[0][1]
@@ -113,7 +155,7 @@ class TestWriteResolvedTitleToBody:
 
 class TestSaveMaterialisesBeforeWriteBack:
     def test_save_materialises_body_claims_before_writing_resolved_metadata_to_body(self, mock_api_client):
-        """Write-back must run after materialisation so DOCUMENT claims exist before we sync XML."""
+        """On save(), body-claim materialisation runs before write-back (patched hooks record call order)."""
         body = DocumentBodyFactory.build(name="Body title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
         call_order: list[str] = []
@@ -129,15 +171,7 @@ class TestSaveMaterialisesBeforeWriteBack:
             original_write_back()
 
         document.metadata.title.materialise_body_claims()
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("Editor title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "Editor title")
 
         with (
             patch.object(document, "_convert_body_claims_to_structured_metadata", side_effect=track_materialise),
@@ -161,160 +195,74 @@ class TestMetadataWriteBackSupport:
         body = DocumentBodyFactory.build(name="Original title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
         _ = document.body.content_as_xml
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("Updated title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "Updated title")
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
         assert "Updated title" in document.body.content_as_xml
         assert "Original title" not in document.body.content_as_xml
 
-    def test_press_summary_shape_does_not_support_metadata_write_back(self, mock_api_client):
-        from caselawclient.models.documents.body import DocumentBody
+    def test_press_summary_body_supports_metadata_write_back(self):
+        assert doc_press_summary_body().supports_metadata_write_back is True
 
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
-                xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <doc name="pressSummary">
-                    <preface><p><docTitle><span>Press Summary</span></docTitle></p></preface>
-                </doc>
-            </akomaNtoso>
-            """
-        )
-        assert body.supports_metadata_write_back is False
+    def test_press_summary_title_write_back_scaffolds_identification(self, mock_api_client):
+        document = PressSummaryFactory.build(api_client=mock_api_client, body=doc_press_summary_body())
+        add_editor_title(document, "Resolved press summary title")
+
+        _sync_resolved_metadata_to_body(document)
+
+        assert document.body.name == "Resolved press summary title"
+        assert document.body.get_xpath_nodes(FRBR_WORK_XPATH)
+        assert document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression")
 
     def test_write_title_creates_frbrwork_when_identification_has_only_manifestation(self, mock_api_client):
-        from lxml import etree
-
-        from caselawclient.models.documents.body import DocumentBody
-
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
-                <judgment>
-                    <meta>
-                        <identification>
-                            <FRBRManifestation>
-                                <FRBRthis value=""/>
-                            </FRBRManifestation>
-                        </identification>
-                    </meta>
-                    <header><p/></header>
-                    <judgmentBody><decision><p/></decision></judgmentBody>
-                </judgment>
-            </akomaNtoso>
-            """
-        )
+        triple = """
+                    <FRBRManifestation>
+                      <FRBRthis value=""/>
+                    </FRBRManifestation>
+        """
+        body = DocumentBody(judgment_with_identification(triple_inner=triple, source=None))
         assert body.supports_metadata_write_back is True
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("New title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "New title")
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
         assert document.body.name == "New title"
         assert len(document.body.get_xpath_nodes(FRBR_WORK_XPATH)) == 1
-        identification = document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification")[0]
-        akn_ns = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-        child_names = [
-            etree.QName(child).localname
-            for child in identification
-            if isinstance(child.tag, str) and etree.QName(child).namespace == akn_ns
-        ]
+        identification = document.body.get_xpath_nodes(IDENTIFICATION_XPATH)[0]
+        child_names = akn_child_local_names(identification)
         assert child_names.index("FRBRWork") < child_names.index("FRBRManifestation")
 
     def test_write_title_inserts_frbrname_in_schema_order(self, mock_api_client):
-        from lxml import etree
-
-        from caselawclient.models.documents.body import DocumentBody
-
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <judgment>
-                    <meta>
-                        <identification>
-                            <FRBRWork>
-                                <FRBRauthor href="#court"/>
-                            </FRBRWork>
-                        </identification>
-                    </meta>
-                    <header><p/></header>
-                    <judgmentBody><decision><p/></decision></judgmentBody>
-                </judgment>
-            </akomaNtoso>
-            """
-        )
+        triple = """
+                    <FRBRWork>
+                      <FRBRauthor href="#court"/>
+                    </FRBRWork>
+        """
+        body = DocumentBody(judgment_with_identification(triple_inner=triple, source=None))
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("Ordered title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "Ordered title")
 
-        document.metadata.title.write_resolved_to_body()
+        _sync_resolved_metadata_to_body(document)
 
         work = document.body.get_xpath_nodes(FRBR_WORK_XPATH)[0]
-        akn_ns = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-        child_names = [
-            etree.QName(child).localname
-            for child in work
-            if isinstance(child.tag, str) and etree.QName(child).namespace == akn_ns
-        ]
+        child_names = akn_child_local_names(work)
         assert child_names.index("FRBRauthor") < child_names.index("FRBRname")
         assert document.body.name == "Ordered title"
 
-    def test_write_title_raises_when_multiple_frbrname_elements(self, mock_api_client):
-        from caselawclient.models.documents.body import DocumentBody
-
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <judgment>
-                    <meta>
-                        <identification>
-                            <FRBRWork>
-                                <FRBRname value="first"/>
-                                <FRBRname value="second"/>
-                            </FRBRWork>
-                        </identification>
-                    </meta>
-                    <header><p/></header>
-                    <judgmentBody><decision><p/></decision></judgmentBody>
-                </judgment>
-            </akomaNtoso>
-            """
-        )
+    def test_write_title_noops_when_multiple_frbrname_elements(self, mock_api_client, caplog):
+        triple = """
+                    <FRBRWork>
+                      <FRBRname value="first"/>
+                      <FRBRname value="second"/>
+                    </FRBRWork>
+        """
+        body = DocumentBody(judgment_with_identification(triple_inner=triple, source=None))
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        document.metadata_fields.add(
-            MetadataField(
-                name="title",
-                value=MetadataStringValue("New title"),
-                source=MetadataSource.EDITOR,
-                id=str(uuid4()),
-                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
-            )
-        )
+        add_editor_title(document, "New title")
+        original_xml = body.content_as_xml
 
-        with pytest.raises(ValueError, match="Multiple FRBRname elements under FRBRWork"):
-            document.metadata.title.write_resolved_to_body()
+        _assert_write_back_noops(document)
+        assert body.content_as_xml == original_xml
+        assert "Multiple FRBRname elements" in caplog.text

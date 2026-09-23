@@ -4,7 +4,6 @@ import warnings
 from functools import cached_property
 
 from ds_caselaw_utils.types import CourtCode
-from lxml import etree
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
 
@@ -14,30 +13,7 @@ from caselawclient.models.utilities.dates import parse_string_date_as_utc
 from caselawclient.types import DocumentCategory
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
 
-from .xml import AKN_META_CHILDREN_ORDER, XML
-
-IDENTIFICATION_CHILDREN_ORDER = (
-    "FRBRWork",
-    "FRBRExpression",
-    "FRBRManifestation",
-)
-
-# OASIS Akoma Ntoso 3.0 FRBRWork content model (coreProperties + workProperties).
-FRBR_WORK_CHILDREN_ORDER = (
-    "FRBRthis",
-    "FRBRuri",
-    "FRBRalias",
-    "FRBRdate",
-    "FRBRauthor",
-    "componentInfo",
-    "preservation",
-    "FRBRcountry",
-    "FRBRsubtype",
-    "FRBRnumber",
-    "FRBRname",
-    "FRBRprescriptive",
-    "FRBRauthoritative",
-)
+from .xml import XML
 
 
 class UnparsableDate(Warning):
@@ -158,65 +134,14 @@ class DocumentBody:
 
     @property
     def supports_metadata_write_back(self) -> bool:
-        """True when this body has AKN ``meta/identification`` (``FRBRWork`` is created on write if missing)."""
-        return bool(self.get_xpath_nodes(IDENTIFICATION_XPATH))
+        """True when the body is an ``akn:judgment`` or ``akn:doc`` we can write metadata into."""
+        from caselawclient.models.documents.body_metadata import writable_akn_document_root_xpath
 
-    def _ensure_identification_element(self) -> None:
-        self._xml.get_or_create_element_in_child_order(
-            META_XPATH,
-            "identification",
-            AKN_NS,
-            AKN_META_CHILDREN_ORDER,
-        )
-
-    def _ensure_frbr_work_element(self) -> None:
-        self._ensure_identification_element()
-        self._xml.get_or_create_element_in_child_order(
-            IDENTIFICATION_XPATH,
-            "FRBRWork",
-            AKN_NS,
-            IDENTIFICATION_CHILDREN_ORDER,
-        )
+        return writable_akn_document_root_xpath(self._xml) is not None
 
     def _invalidate_cached_properties(self, *property_names: str) -> None:
         for name in {*property_names, "content_as_xml"}:
             self.__dict__.pop(name, None)
-
-    def _remove_akn_children(self, parent_xpath: str, child_local_name: str) -> None:
-        qname = etree.QName(AKN_NS, child_local_name)
-        for parent in self.get_xpath_nodes(parent_xpath):
-            for child in list(parent.findall(qname)):
-                parent.remove(child)
-
-    def _frbr_work_name_elements(self) -> list[Element]:
-        qname = etree.QName(AKN_NS, "FRBRname")
-        elements: list[Element] = []
-        for parent in self.get_xpath_nodes(FRBR_WORK_XPATH):
-            elements.extend(parent.findall(qname))
-        return elements
-
-    def _get_or_create_work_frbrname_element(self) -> Element:
-        existing_names = self._frbr_work_name_elements()
-        if len(existing_names) > 1:
-            raise ValueError("Multiple FRBRname elements under FRBRWork")
-        if existing_names:
-            return existing_names[0]
-        self._ensure_frbr_work_element()
-        return self._xml.get_or_create_element_in_child_order(
-            FRBR_WORK_XPATH,
-            "FRBRname",
-            AKN_NS,
-            FRBR_WORK_CHILDREN_ORDER,
-        )
-
-    def write_title(self, title: str) -> None:
-        title = _strip_body_metadata_text(title)
-        if not title:
-            self._remove_akn_children(FRBR_WORK_XPATH, "FRBRname")
-        else:
-            name_element = self._get_or_create_work_frbrname_element()
-            self._xml.set_element_attribute(name_element, "value", title)
-        self._invalidate_cached_properties("name")
 
     @cached_property
     def name(self) -> str:

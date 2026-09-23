@@ -720,10 +720,9 @@ class Document:
             field.materialise_body_claims()
 
     def _write_resolved_metadata_to_body(self) -> None:
-        if not self.body.supports_metadata_write_back:
-            return
-        for field in self.metadata:
-            field.write_resolved_to_body()
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(self)
 
     def _validate_metadata_for_save(self) -> None:
         """Hook for save(); claim invariants are enforced by ``add`` / ``__setitem__``."""

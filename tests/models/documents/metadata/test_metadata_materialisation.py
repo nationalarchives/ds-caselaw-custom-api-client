@@ -123,7 +123,9 @@ class TestMaterialiseBodyClaims:
                 timestamp=TIMESTAMP,
             )
         )
-        document.metadata.title.write_resolved_to_body()
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(document)
         assert document.body.name == "Editor title"
 
         document.metadata.title.materialise_body_claims()
@@ -146,11 +148,13 @@ class TestMaterialiseBodyClaims:
             timestamp=TIMESTAMP,
         )
         document.metadata_fields.add(editor)
-        document.metadata.title.write_resolved_to_body()
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(document)
         document.metadata_fields.reject(editor.id)
 
         document.metadata.title.materialise_body_claims()
-        document.metadata.title.write_resolved_to_body()
+        BodyMetadataWriteBack().sync(document)
 
         assert document.body.name == "Original title"
 

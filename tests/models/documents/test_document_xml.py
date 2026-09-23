@@ -3,14 +3,14 @@ import os
 import pytest
 from lxml import etree
 
-from caselawclient.models.documents.body import DEFAULT_NAMESPACES, FRBR_WORK_CHILDREN_ORDER
+from caselawclient.models.documents.body_metadata.akn import FRBR_WORK_CHILDREN_ORDER
 from caselawclient.models.documents.xml import (
     AKN_META_CHILDREN_ORDER,
     XML,
     NonXMLDocumentError,
     _local_name_in_namespace,
 )
-from caselawclient.xml_helpers import Element
+from caselawclient.xml_helpers import DEFAULT_NAMESPACES, Element
 
 AKN_NS = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
 META_XPATH = "/akn:akomaNtoso/akn:judgment/akn:meta"
@@ -498,6 +498,19 @@ class TestGetOrCreateElementInChildOrder:
                 META_XPATH, "proprietary", "http://invalid.example/ns", AKN_META_CHILDREN_ORDER
             )
 
+    def test_insert_raises_for_invalid_namespace(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment><meta/></judgment>
+            </akomaNtoso>
+            """
+        )
+        with pytest.raises(ValueError, match="Namespace not in DEFAULT_NAMESPACES"):
+            document_xml.insert_element_in_child_order(
+                META_XPATH, "proprietary", "http://invalid.example/ns", AKN_META_CHILDREN_ORDER
+            )
+
     def test_raises_when_element_not_in_child_order(self):
         document_xml = XML(
             b"""
@@ -508,6 +521,17 @@ class TestGetOrCreateElementInChildOrder:
         )
         with pytest.raises(ValueError, match="not listed in child_order"):
             document_xml.get_or_create_element_in_child_order(META_XPATH, "unknown", AKN_NS, AKN_META_CHILDREN_ORDER)
+
+    def test_insert_raises_when_element_not_in_child_order(self):
+        document_xml = XML(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment><meta/></judgment>
+            </akomaNtoso>
+            """
+        )
+        with pytest.raises(ValueError, match="not listed in child_order"):
+            document_xml.insert_element_in_child_order(META_XPATH, "unknown", AKN_NS, AKN_META_CHILDREN_ORDER)
 
     def test_raises_when_duplicate_children_exist(self):
         document_xml = XML(
