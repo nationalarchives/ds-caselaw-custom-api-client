@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 
 from lxml import etree
 
-from caselawclient.models.documents.metadata.fields.field import MetadataStringValue
+from caselawclient.models.documents.metadata.fields.field import MetadataDateValue, MetadataStringValue
 from caselawclient.types import DocumentURIString
 from caselawclient.xml_helpers import Element
 
@@ -46,6 +46,7 @@ DEFAULT_FRBR_COUNTRY = "GB-UKM"
 DEFAULT_FRBR_LANGUAGE = "eng"
 DEFAULT_FRBR_FORMAT = "application/xml"
 PLACEHOLDER_DECISION_DATE = datetime.date(1001, 1, 1)
+_DECISION_FRBRDATE_NAME_XPATH_PREDICATE = " or ".join(f"@name='{name}'" for name in sorted(DECISION_FRBRDATE_NAMES))
 
 
 class FrbrIdentificationWriter:
@@ -84,7 +85,13 @@ class FrbrIdentificationWriter:
             return False
 
         live_xml.xml_as_tree = copy.deepcopy(trial_xml.xml_as_tree)
-        body._invalidate_cached_properties("name")  # noqa: SLF001
+        body._invalidate_cached_properties(  # noqa: SLF001
+            "name",
+            "decision_date_raw",
+            "decision_date_is_unparsable",
+            "document_date_as_date",
+            "document_date_as_string",
+        )
         return True
 
 
@@ -99,6 +106,9 @@ def _apply_resolved_metadata_to_identification(document: Document, xml: XML) -> 
 
     if title_claims.has_any_claims:
         _apply_resolved_title(document, xml)
+
+    if document.metadata_fields.resolve("date").has_any_claims:
+        _apply_resolved_decision_date(document, xml, frbr_date_name)
 
     _normalize_frbr_identification_child_order(xml)
 
@@ -174,6 +184,15 @@ def _apply_document_uri_frbr_identifiers(document: Document, xml: XML, frbr_date
     _sync_frbr_manifestation_level(xml, manifestation_uri, decision_date, frbr_date_name)
 
 
+def _apply_resolved_decision_date(document: Document, xml: XML, frbr_date_name: str) -> None:
+    resolved = document.metadata_fields.resolve("date")
+    if resolved.value is None:
+        _remove_work_decision_frbrdates(xml)
+        return
+    decision_date = cast(MetadataDateValue, resolved.value).value
+    _upsert_work_decision_frbrdate(xml, frbr_date_name, decision_date)
+
+
 def _apply_resolved_title(document: Document, xml: XML) -> None:
     resolved = document.metadata_fields.resolve("title")
     if resolved.value is None:
@@ -202,9 +221,11 @@ def _frbr_uris_for_document_uri(document_uri: DocumentURIString) -> tuple[str, s
     return work_uri, expression_uri, manifestation_uri
 
 
-def _existing_decision_date_for_scaffold(xml: XML, frbr_date_name: str) -> datetime.date:
+def _existing_decision_date_for_scaffold(xml: XML, _frbr_date_name: str) -> datetime.date:
     for xpath in (FRBR_WORK_XPATH, FRBR_EXPRESSION_XPATH, FRBR_MANIFESTATION_XPATH):
-        for date_string in xml.get_xpath_match_strings(f"{xpath}/akn:FRBRdate[@name='{frbr_date_name}']/@date"):
+        for date_string in xml.get_xpath_match_strings(
+            f"{xpath}/akn:FRBRdate[{_DECISION_FRBRDATE_NAME_XPATH_PREDICATE}]/@date"
+        ):
             try:
                 return datetime.date.fromisoformat(date_string)
             except ValueError:
@@ -291,6 +312,60 @@ def _ensure_frbr_country(xml: XML, parent_xpath: str, child_order: tuple[str, ..
         element.set("value", DEFAULT_FRBR_COUNTRY)
 
 
+def _frbr_work_frbrdate_elements(xml: XML) -> list[Element]:
+    return xml.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")
+
+
+def _work_decision_frbrdate_elements(xml: XML) -> list[Element]:
+    return [
+        element
+        for element in _frbr_work_frbrdate_elements(xml)
+        if (element.get("name") or "") in DECISION_FRBRDATE_NAMES
+    ]
+
+
+def _legacy_unnamed_work_frbrdate_element(xml: XML) -> Element | None:
+    unnamed_dates = [element for element in _frbr_work_frbrdate_elements(xml) if (element.get("name") or "") == ""]
+    if len(unnamed_dates) != 1:
+        return None
+    return unnamed_dates[0]
+
+
+def _remove_work_decision_frbrdates(xml: XML) -> None:
+    qname = etree.QName(AKN_NS, "FRBRdate")
+    for parent in xml.get_xpath_nodes(FRBR_WORK_XPATH):
+        children = list(parent.findall(qname))
+        decision_dates = [child for child in children if (child.get("name") or "") in DECISION_FRBRDATE_NAMES]
+        if decision_dates:
+            for child in decision_dates:
+                parent.remove(child)
+            continue
+        unnamed_dates = [child for child in children if (child.get("name") or "") == ""]
+        if len(unnamed_dates) == 1:
+            parent.remove(unnamed_dates[0])
+
+
+def _upsert_work_decision_frbrdate(xml: XML, frbr_date_name: str, decision_date: datetime.date) -> None:
+    existing_decision_dates = _work_decision_frbrdate_elements(xml)
+    if len(existing_decision_dates) > 1:
+        raise ValueError("Multiple decision FRBRdate elements under FRBRWork")
+    if existing_decision_dates:
+        frbr_date = existing_decision_dates[0]
+    else:
+        legacy_unnamed = _legacy_unnamed_work_frbrdate_element(xml)
+        if legacy_unnamed is not None:
+            frbr_date = legacy_unnamed
+        else:
+            frbr_date = xml.insert_element_in_child_order(
+                FRBR_WORK_XPATH,
+                "FRBRdate",
+                AKN_NS,
+                FRBR_WORK_CHILDREN_ORDER,
+            )
+    xml.set_element_attribute(frbr_date, "date", decision_date.isoformat())
+    xml.set_element_attribute(frbr_date, "name", frbr_date_name)
+
+
 def _ensure_named_frbr_date(
     xml: XML,
     parent_xpath: str,
@@ -302,6 +377,17 @@ def _ensure_named_frbr_date(
     qname = etree.QName(AKN_NS, "FRBRdate")
     for child in parent.findall(qname):
         if child.get("name") == frbr_date_name:
+            return
+    for child in parent.findall(qname):
+        if (child.get("name") or "") in DECISION_FRBRDATE_NAMES:
+            xml.set_element_attribute(child, "date", decision_date.isoformat())
+            xml.set_element_attribute(child, "name", frbr_date_name)
+            return
+    if parent_xpath == FRBR_WORK_XPATH:
+        legacy_unnamed = _legacy_unnamed_work_frbrdate_element(xml)
+        if legacy_unnamed is not None:
+            xml.set_element_attribute(legacy_unnamed, "date", decision_date.isoformat())
+            xml.set_element_attribute(legacy_unnamed, "name", frbr_date_name)
             return
     date_element = xml.insert_element_in_child_order(parent_xpath, "FRBRdate", AKN_NS, child_order)
     date_element.set("date", decision_date.isoformat())

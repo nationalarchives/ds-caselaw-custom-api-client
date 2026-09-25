@@ -7,6 +7,7 @@ from ds_caselaw_utils.types import CourtCode
 from saxonche import PySaxonProcessor
 from typing_extensions import deprecated
 
+from caselawclient.models.documents.body_metadata.akn import DECISION_FRBRDATE_NAMES
 from caselawclient.models.documents.metadata.fields.field import MetadataPartyValue
 from caselawclient.models.documents.metadata.types.date import date_as_string_from_value
 from caselawclient.models.utilities.dates import parse_string_date_as_utc
@@ -25,7 +26,11 @@ COURT_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:court/text()"
 JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdiction/text()"
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
-DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+WORK_DECISION_FRBRDATE_DATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
+DATE_XPATH = WORK_DECISION_FRBRDATE_DATE_XPATH
 AKN_NS = DEFAULT_NAMESPACES["akn"]
 FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
@@ -184,9 +189,53 @@ class DocumentBody:
             return CourtCode(f"{self.court}/{self.jurisdiction}")
         return CourtCode(self.court)
 
+    def _frbr_work_frbrdate_elements(self) -> list[Element]:
+        return self.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")
+
+    def _work_decision_frbrdate_elements(self) -> list[Element]:
+        return [
+            element
+            for element in self._frbr_work_frbrdate_elements()
+            if (element.get("name") or "") in DECISION_FRBRDATE_NAMES
+        ]
+
+    def _legacy_unnamed_work_frbrdate_element(self) -> Element | None:
+        unnamed_dates = [
+            element for element in self._frbr_work_frbrdate_elements() if (element.get("name") or "") == ""
+        ]
+        if len(unnamed_dates) != 1:
+            return None
+        return unnamed_dates[0]
+
+    def _decision_date_raw_string(self) -> str:
+        decision_dates = self._work_decision_frbrdate_elements()
+        if len(decision_dates) == 1:
+            return decision_dates[0].get("date") or ""
+        if len(decision_dates) > 1:
+            return self.get_xpath_match_string(DATE_XPATH) or ""
+        legacy_unnamed = self._legacy_unnamed_work_frbrdate_element()
+        if legacy_unnamed is not None:
+            return legacy_unnamed.get("date") or ""
+        return self.get_xpath_match_string(DATE_XPATH) or ""
+
+    @cached_property
+    def decision_date_raw(self) -> str:
+        return self._decision_date_raw_string()
+
+    @cached_property
+    def decision_date_is_unparsable(self) -> bool:
+        raw = self._decision_date_raw_string()
+        if not raw:
+            return False
+        try:
+            datetime.date.fromisoformat(raw)
+        except ValueError:
+            return True
+        return False
+
     @cached_property
     def document_date_as_date(self) -> datetime.date | None:
-        date_as_string = self.get_xpath_match_string(DATE_XPATH)
+        date_as_string = self._decision_date_raw_string()
         if not date_as_string:
             return None
         try:
