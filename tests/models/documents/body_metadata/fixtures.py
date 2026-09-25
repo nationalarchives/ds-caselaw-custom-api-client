@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from uuid import uuid4
 
 from lxml import etree
 
 from caselawclient.models.documents.body import DocumentBody
-from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
+from caselawclient.models.documents.metadata.fields.field import MetadataDateValue, MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
@@ -21,6 +21,14 @@ AKN_NS_URI = AKN_NS
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 FRBRWORK_NAME_VALUE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
+WORK_DECISION_FRBRDATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
+EXPRESSION_DECISION_FRBRDATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 
 
@@ -107,6 +115,18 @@ def akn_child(parent: etree._Element, local_name: str) -> etree._Element:
     child = parent.find(f"{{{AKN_NS}}}{local_name}")
     assert child is not None
     return child
+
+
+def add_editor_date(document, decision_date: date) -> None:
+    document.metadata_fields.add(
+        MetadataField(
+            name="date",
+            value=MetadataDateValue(decision_date),
+            source=MetadataSource.EDITOR,
+            id=str(uuid4()),
+            timestamp=datetime(2025, 1, 1, tzinfo=UTC),
+        )
+    )
 
 
 def add_editor_title(document, title: str) -> None:
