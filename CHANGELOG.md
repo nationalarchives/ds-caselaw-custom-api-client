@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## v50.0.2 (Unreleased)
+
+### Feat
+
+- **Document**: write resolved title into Akoma Ntoso body XML during `save()`
+
 ## v50.0.1 (2026-09-15)
 
 - Bump ds-caselaw-utils to v5 and allow both v4 and v5.

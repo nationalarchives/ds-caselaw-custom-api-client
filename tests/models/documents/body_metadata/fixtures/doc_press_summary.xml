@@ -1,0 +1,6 @@
+<akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn"
+    xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+  <doc name="pressSummary">
+    <preface><p><docTitle><span>Press Summary</span></docTitle></p></preface>
+  </doc>
+</akomaNtoso>
