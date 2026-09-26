@@ -26,6 +26,17 @@ JURISDICTION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:jurisdic
 CATEGORIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:category"
 CASE_NUMBER_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:caseNumber/text()"
 DATE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRdate/@date"
+AKN_NS = DEFAULT_NAMESPACES["akn"]
+FRBR_WORK_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork"
+IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
+META_XPATH = "/akn:akomaNtoso/akn:*/akn:meta"
+
+
+def _strip_body_metadata_text(raw: str) -> str:
+    """Strip body-derived metadata text; whitespace-only values are treated as absent."""
+    return raw.strip()
+
+
 JUDGES_XPATH = "/akn:akomaNtoso/akn:*/akn:header//akn:judge"
 PARTIES_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:proprietary/uk:party"
 
@@ -121,9 +132,33 @@ class DocumentBody:
     def get_xpath_nodes(self, xpath: str) -> list[Element]:
         return self._xml.get_xpath_nodes(xpath)
 
+    @property
+    def supports_metadata_write_back(self) -> bool:
+        """True when save can write a resolved title into ``FRBRWork/FRBRname``.
+
+        Requires one writable ``akn:judgment`` or ``akn:doc`` root and exactly one
+        ``FRBRWork`` under ``meta/identification``. Write-back does not create
+        identification or change FRBR URIs, dates, or other identity fields.
+
+        Returns False for example when the body is a parser error, the root is
+        ambiguous, there is no identification block, ``FRBRWork`` is missing or
+        duplicated, or the body is a press summary (or other ``doc``) with no work
+        FRBR block yet.
+        """
+        from caselawclient.models.documents.body_metadata import writable_akn_document_root_xpath
+        from caselawclient.models.documents.body_metadata.akn import FRBR_WORK_XPATH
+
+        if writable_akn_document_root_xpath(self._xml) is None:
+            return False
+        return len(self.get_xpath_nodes(FRBR_WORK_XPATH)) == 1
+
+    def _invalidate_cached_properties(self, *property_names: str) -> None:
+        for name in {*property_names, "content_as_xml"}:
+            self.__dict__.pop(name, None)
+
     @cached_property
     def name(self) -> str:
-        return self.get_xpath_match_string(NAME_XPATH)
+        return _strip_body_metadata_text(self.get_xpath_match_string(NAME_XPATH))
 
     @cached_property
     def court(self) -> str:
