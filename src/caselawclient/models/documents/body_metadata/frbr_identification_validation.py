@@ -18,12 +18,8 @@ from .akn import (
 
 def frbr_identification_validation_failure(identification: Element) -> str | None:
     """Return a reason string when ``identification`` is invalid, else ``None``."""
-    if etree.QName(identification).localname != "identification":
-        return "node is not an identification element"
-    if etree.QName(identification).namespace != AKN_NS:
-        return "identification is not in the Akoma Ntoso namespace"
-    if not (identification.get("source") or "").strip():
-        return "identification is missing a source attribute"
+    if reason := _identification_element_failure(identification):
+        return reason
 
     work, expression, manifestation = _identification_frbr_triple(identification)
     if work is None:
@@ -50,6 +46,30 @@ def frbr_identification_validation_failure(identification: Element) -> str | Non
 
 def is_valid_frbr_identification(identification: Element) -> bool:
     return frbr_identification_validation_failure(identification) is None
+
+
+def _identification_element_failure(identification: Element) -> str | None:
+    if etree.QName(identification).localname != "identification":
+        return "node is not an identification element"
+    if etree.QName(identification).namespace != AKN_NS:
+        return "identification is not in the Akoma Ntoso namespace"
+    if not (identification.get("source") or "").strip():
+        return "identification is missing a source attribute"
+    return _duplicate_frbr_triple_member_reason(identification)
+
+
+def _duplicate_frbr_triple_member_reason(identification: Element) -> str | None:
+    for local_name in IDENTIFICATION_CHILDREN_ORDER:
+        count = sum(
+            1
+            for child in identification
+            if isinstance(child.tag, str)
+            and etree.QName(child).namespace == AKN_NS
+            and etree.QName(child).localname == local_name
+        )
+        if count > 1:
+            return f"identification has multiple {local_name} elements"
+    return None
 
 
 def _identification_frbr_triple(identification: Element) -> tuple[Element | None, Element | None, Element | None]:
@@ -151,7 +171,19 @@ def _check_frbr_attribute_values(label: str, children_by_name: dict[str, list[El
         if not (node.get("language") or "").strip():
             return f"{label}/FRBRlanguage is missing a language attribute"
 
+    if label == "FRBRManifestation":
+        return _check_any_frbrdate_values(label, children_by_name)
     return _check_decision_frbrdate_values(label, children_by_name)
+
+
+def _check_any_frbrdate_values(label: str, children_by_name: dict[str, list[Element]]) -> str | None:
+    frbr_dates = children_by_name.get("FRBRdate", [])
+    if not frbr_dates:
+        return f"{label} is missing FRBRdate"
+    for node in frbr_dates:
+        if not (node.get("date") or "").strip():
+            return f"{label}/FRBRdate is missing a date attribute"
+    return None
 
 
 def _check_decision_frbrdate_values(label: str, children_by_name: dict[str, list[Element]]) -> str | None:

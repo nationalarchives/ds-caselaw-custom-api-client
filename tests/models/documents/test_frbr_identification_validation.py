@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from lxml import etree
 
@@ -23,6 +25,22 @@ def _identification_from_bytes(xml: bytes) -> etree._Element:
 class TestFrbrIdentificationValidation:
     def test_valid_triple_passes(self):
         assert is_valid_frbr_identification(fresh_valid_identification())
+
+    def test_manifestation_with_transform_dates_passes(self):
+        matching_schema = (
+            Path(__file__).resolve().parents[3] / "marklogic_harness/fixtures/documents/matching_schema.xml"
+        )
+        identification = _identification_from_bytes(matching_schema.read_bytes())
+
+        assert is_valid_frbr_identification(identification)
+
+    def test_rejects_duplicate_frbrwork(self):
+        identification = fresh_valid_identification()
+        etree.SubElement(identification, f"{{{AKN_NS}}}FRBRWork")
+
+        reason = frbr_identification_validation_failure(identification)
+
+        assert reason == "identification has multiple FRBRWork elements"
 
     def test_work_only_identification_fails(self):
         identification = _identification_from_bytes(read_fixture("work_only_identification.xml"))

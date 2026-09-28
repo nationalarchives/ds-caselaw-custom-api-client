@@ -18,7 +18,7 @@ AKN_NS = DEFAULT_NAMESPACES["akn"]
 UK_NS = DEFAULT_NAMESPACES["uk"]
 AKN_NS_URI = AKN_NS
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+FIXTURES_DIR = Path(__file__).parent / "fixture_xml"
 
 FRBRWORK_NAME_VALUE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"

@@ -63,7 +63,16 @@ class FrbrIdentificationWriter:
             )
             return False
 
-        live_xml.xml_as_tree = copy.deepcopy(trial_xml.xml_as_tree)
+        try:
+            _apply_resolved_title_to_identification(document, live_xml)
+        except ValueError as exc:
+            logger.warning(
+                "Skipping FRBR identification write-back for %s: %s",
+                document.uri,
+                exc,
+            )
+            return False
+
         body._invalidate_cached_properties("name")  # noqa: SLF001
         return True
 

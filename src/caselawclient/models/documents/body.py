@@ -146,9 +146,11 @@ class DocumentBody:
         FRBR block yet.
         """
         from caselawclient.models.documents.body_metadata import writable_akn_document_root_xpath
-        from caselawclient.models.documents.body_metadata.akn import FRBR_WORK_XPATH
+        from caselawclient.models.documents.body_metadata.akn import FRBR_WORK_XPATH, IDENTIFICATION_XPATH
 
         if writable_akn_document_root_xpath(self._xml) is None:
+            return False
+        if len(self.get_xpath_nodes(IDENTIFICATION_XPATH)) != 1:
             return False
         return len(self.get_xpath_nodes(FRBR_WORK_XPATH)) == 1
 

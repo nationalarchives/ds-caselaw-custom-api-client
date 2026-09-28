@@ -20,6 +20,7 @@ from caselawclient.models.documents.versions import VersionAnnotation, VersionTy
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.judgments import Judgment
 from caselawclient.types import SuccessFailureMessageTuple
+from tests.models.documents.body_metadata.fixtures import judgment_body_with_valid_identification
 
 
 @pytest.fixture(autouse=True)
@@ -281,6 +282,7 @@ class TestDocumentSave:
         assert document.is_persisted is True
 
     def test_reparse_body_swap_retains_existing_metadata_fields(self, mock_api_client):
+        """After reparse, structured editor title still wins over the new body FRBRname on save."""
         document = JudgmentFactory.build(api_client=mock_api_client)
         existing_claim = MetadataField(
             name="title",
@@ -291,7 +293,7 @@ class TestDocumentSave:
         )
         document.metadata_fields.add(existing_claim)
 
-        document.body = DocumentBodyFactory.build(name="Updated title")
+        document.body = judgment_body_with_valid_identification(title="Updated title")
 
         document.save(message="Re-parsed body")
 
