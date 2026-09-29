@@ -22,6 +22,7 @@ from caselawclient.models.documents.metadata.materialisation import (
     metadata_logic_versions,
 )
 from caselawclient.types import DocumentCategory
+from tests.models.documents.body_metadata.fixtures import judgment_body_with_valid_identification
 
 TIMESTAMP = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
 
@@ -72,7 +73,7 @@ class TestMaterialiseBodyClaims:
         assert len(claims) == 1
         assert claims[0].id == first_id
 
-    def test_editor_claim_does_not_block_document_materialisation(self, mock_api_client):
+    def test_title_skips_materialisation_when_structured_claims_exist(self, mock_api_client):
         document = DocumentFactory.build(
             api_client=mock_api_client,
             body=DocumentBodyFactory.build(name="Body Title"),
@@ -89,10 +90,74 @@ class TestMaterialiseBodyClaims:
         document.metadata.title.materialise_body_claims()
 
         claims = document.metadata_fields.by_name("title")
-        assert {(c.source, c.value) for c in claims} == {
-            (MetadataSource.EDITOR, MetadataStringValue("Editor Title")),
-            (MetadataSource.DOCUMENT, MetadataStringValue("Body Title")),
-        }
+        assert len(claims) == 1
+        assert claims[0].source is MetadataSource.EDITOR
+        assert claims[0].value == MetadataStringValue("Editor Title")
+
+    def test_title_does_not_rematerialise_from_body_when_storage_already_has_claim(self, mock_api_client):
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBodyFactory.build(name="Stored title"),
+        )
+        document.metadata.title.materialise_body_claims()
+        document.body = DocumentBodyFactory.build(name="Reparsed body title")
+
+        document.metadata.title.materialise_body_claims()
+
+        claims = document.metadata_fields.by_name("title")
+        assert len(claims) == 1
+        assert claims[0].source is MetadataSource.DOCUMENT
+        assert claims[0].value == MetadataStringValue("Stored title")
+
+    def test_title_materialisation_after_write_back_does_not_add_document_claim(self, mock_api_client):
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=judgment_body_with_valid_identification(title="Original title"),
+        )
+        document.metadata.title.materialise_body_claims()
+        document.metadata_fields.add(
+            MetadataField(
+                name="title",
+                value=MetadataStringValue("Editor title"),
+                source=MetadataSource.EDITOR,
+                id=_id(),
+                timestamp=TIMESTAMP,
+            )
+        )
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(document)
+        assert document.body.name == "Editor title"
+
+        document.metadata.title.materialise_body_claims()
+
+        document_claims = [c for c in document.metadata_fields.by_name("title") if c.source is MetadataSource.DOCUMENT]
+        assert len(document_claims) == 1
+        assert document_claims[0].value == MetadataStringValue("Original title")
+
+    def test_rejected_editor_title_write_back_restores_document_claim(self, mock_api_client):
+        document = DocumentFactory.build(
+            api_client=mock_api_client,
+            body=judgment_body_with_valid_identification(title="Original title"),
+        )
+        document.metadata.title.materialise_body_claims()
+        editor = MetadataField(
+            name="title",
+            value=MetadataStringValue("Editor title"),
+            source=MetadataSource.EDITOR,
+            id=_id(),
+            timestamp=TIMESTAMP,
+        )
+        document.metadata_fields.add(editor)
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(document)
+        document.metadata_fields.reject(editor.id)
+
+        document.metadata.title.materialise_body_claims()
+        BodyMetadataWriteBack().sync(document)
+
+        assert document.body.name == "Original title"
 
     def test_skips_empty_body_values(self, mock_api_client):
         document = DocumentFactory.build(

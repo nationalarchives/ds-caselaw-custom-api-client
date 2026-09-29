@@ -1,0 +1,25 @@
+<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+  <judgment><meta><identification source="#tna">
+    <FRBRWork>
+      <FRBRthis value="https://example/id/work"/>
+      <FRBRuri value="https://example/id/work"/>
+      <FRBRdate date="2023-01-01" name="judgment"/>
+      <FRBRauthor href="#tna"/>
+      <FRBRcountry value="GB-UKM"/>
+    </FRBRWork>
+    <FRBRExpression>
+      <FRBRthis value="https://example/expression"/>
+      <FRBRuri value="https://example/expression"/>
+      <FRBRdate date="2023-01-01" name="judgment"/>
+      <FRBRauthor href="#tna"/>
+      <FRBRlanguage language="eng"/>
+    </FRBRExpression>
+    <FRBRManifestation>
+      <FRBRthis value="https://example/data.xml"/>
+      <FRBRuri value="https://example/data.xml"/>
+      <FRBRdate date="2023-01-01" name="judgment"/>
+      <FRBRauthor href="#tna"/>
+      <FRBRformat value="application/xml"/>
+    </FRBRManifestation>
+  </identification></meta></judgment>
+</akomaNtoso>

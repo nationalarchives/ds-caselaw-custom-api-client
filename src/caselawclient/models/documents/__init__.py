@@ -664,8 +664,9 @@ class Document:
         Save the document's XML representation back to MarkLogic as a new version.
 
         Inserts when this object is not yet persisted; otherwise updates the existing MarkLogic document.
-        Validates identifiers and metadata, converts body claims to structured metadata, upserts the
-        document XML, then saves identifier and metadata properties to MarkLogic.
+        Validates identifiers and metadata, converts body claims to structured metadata, writes
+        resolved title claims into ``FRBRWork/FRBRname`` when eligible, upserts the document XML,
+        then saves identifier and metadata properties to MarkLogic.
 
         :param message: Human-readable message describing the changes made.
         :param payload: Optional structured data stored on the version annotation (for example TRE
@@ -684,6 +685,7 @@ class Document:
         self._convert_body_claims_to_structured_metadata()
         self._validate_metadata_for_save()
         self._validate_identifiers_for_save()
+        self._write_resolved_metadata_to_body()
 
         if not self._persisted:
             if self.document_exists():
@@ -717,6 +719,11 @@ class Document:
     def _convert_body_claims_to_structured_metadata(self) -> None:
         for field in self.metadata:
             field.materialise_body_claims()
+
+    def _write_resolved_metadata_to_body(self) -> None:
+        from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
+
+        BodyMetadataWriteBack().sync(self)
 
     def _validate_metadata_for_save(self) -> None:
         """Hook for save(); claim invariants are enforced by ``add`` / ``__setitem__``."""

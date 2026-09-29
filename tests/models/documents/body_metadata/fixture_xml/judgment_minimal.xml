@@ -1,0 +1,6 @@
+<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+  <judgment name="{{JUDGMENT_NAME}}">
+    <header><p/></header>
+    <judgmentBody><decision><p/></decision></judgmentBody>
+  </judgment>
+</akomaNtoso>

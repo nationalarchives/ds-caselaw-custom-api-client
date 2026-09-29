@@ -20,6 +20,7 @@ from caselawclient.models.documents.versions import VersionAnnotation, VersionTy
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.judgments import Judgment
 from caselawclient.types import SuccessFailureMessageTuple
+from tests.models.documents.body_metadata.fixtures import judgment_body_with_valid_identification
 
 
 @pytest.fixture(autouse=True)
@@ -53,13 +54,12 @@ class TestDocumentSave:
     def test_save_passes_uri_and_xml_to_api(self, mock_api_client):
         uri = DocumentURIString("test/2023/456")
         document = JudgmentFactory.build(uri=uri, api_client=mock_api_client)
-        expected_xml = document.body.content_as_xml_tree
 
         document.save(message="Changed document")
 
         call_args = mock_api_client.update_document_xml.call_args
         assert call_args[0][0] == uri
-        assert call_args[0][1] is expected_xml
+        assert call_args[0][1] is document.body.content_as_xml_tree
 
     def test_save_with_message_includes_message_in_annotation(self, mock_api_client):
         uri = DocumentURIString("test/2023/789")
@@ -282,6 +282,7 @@ class TestDocumentSave:
         assert document.is_persisted is True
 
     def test_reparse_body_swap_retains_existing_metadata_fields(self, mock_api_client):
+        """After reparse, structured editor title still wins over the new body FRBRname on save."""
         document = JudgmentFactory.build(api_client=mock_api_client)
         existing_claim = MetadataField(
             name="title",
@@ -292,11 +293,12 @@ class TestDocumentSave:
         )
         document.metadata_fields.add(existing_claim)
 
-        document.body = DocumentBodyFactory.build(name="Updated title")
+        document.body = judgment_body_with_valid_identification(title="Updated title")
 
         document.save(message="Re-parsed body")
 
         assert existing_claim in document.metadata_fields.values()
         title_claims = document.metadata_fields.by_name("title")
         assert any(claim.source is MetadataSource.EDITOR for claim in title_claims)
-        assert any(claim.source is MetadataSource.DOCUMENT for claim in title_claims)
+        assert not any(claim.source is MetadataSource.DOCUMENT for claim in title_claims)
+        assert document.body.name == "Existing editor title"
