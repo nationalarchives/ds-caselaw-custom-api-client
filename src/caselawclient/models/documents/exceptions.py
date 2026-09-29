@@ -28,3 +28,7 @@ class DocumentNotPersistedError(Exception):
 
 class DocumentAlreadyExistsError(Exception):
     """A document URI passed to from_xml already exists in MarkLogic."""
+
+
+class UnparsableDecisionDateError(Exception):
+    """Save cannot rewrite body XML while the work decision date is present but unparsable."""
