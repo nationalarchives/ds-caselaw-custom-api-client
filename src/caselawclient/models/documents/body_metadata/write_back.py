@@ -1,4 +1,9 @@
-"""Orchestrate syncing resolved metadata claims into document body XML."""
+"""Orchestrate syncing resolved metadata claims into document body XML.
+
+Title write-back is implemented via ``FrbrIdentificationWriter``. Other metadata
+fields will extend this module or add dedicated writers as they are implemented;
+there is no per-field ``write_resolved_to_body()`` hook on metadata types today.
+"""
 
 from __future__ import annotations
 
@@ -11,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class BodyMetadataWriteBack:
-    """Sync resolved metadata into Akoma Ntoso body XML blocks."""
+    """Sync resolved title metadata into Akoma Ntoso body XML (title-only for now)."""
 
     def __init__(self, frbr_writer: FrbrIdentificationWriter | None = None) -> None:
         self._frbr_writer = frbr_writer or FrbrIdentificationWriter()

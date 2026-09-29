@@ -664,8 +664,9 @@ class Document:
         Save the document's XML representation back to MarkLogic as a new version.
 
         Inserts when this object is not yet persisted; otherwise updates the existing MarkLogic document.
-        Validates identifiers and metadata, converts body claims to structured metadata, upserts the
-        document XML, then saves identifier and metadata properties to MarkLogic.
+        Validates identifiers and metadata, converts body claims to structured metadata, writes
+        resolved title claims into ``FRBRWork/FRBRname`` when eligible, upserts the document XML,
+        then saves identifier and metadata properties to MarkLogic.
 
         :param message: Human-readable message describing the changes made.
         :param payload: Optional structured data stored on the version annotation (for example TRE
