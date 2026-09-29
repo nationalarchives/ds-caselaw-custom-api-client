@@ -109,7 +109,7 @@ class TestFrbrIdentificationWriter:
         )
         assert body.get_xpath_nodes("/akn:akomaNtoso/akn:doc/akn:meta/akn:identification/akn:FRBRExpression")
 
-    def test_does_not_commit_when_trial_identification_stays_invalid(self, mock_api_client, caplog):
+    def test_does_not_commit_when_trial_identification_stays_invalid(self, mock_api_client):
         body = DocumentBody(
             doc_with_identification(
                 triple_inner=valid_frbr_triple_inner(),
@@ -119,6 +119,7 @@ class TestFrbrIdentificationWriter:
         original_frbrname = body.get_xpath_match_string(
             "/akn:akomaNtoso/akn:doc/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
         )
+        assert body.supports_metadata_write_back is False
         document = PressSummaryFactory.build(api_client=mock_api_client, body=body)
         add_editor_title(document, "Editor title")
 
@@ -129,15 +130,11 @@ class TestFrbrIdentificationWriter:
             )
             == original_frbrname
         )
-        assert "unexpected children" in caplog.text
 
     def test_does_not_commit_when_identification_validator_rejects_trial(self, mock_api_client, caplog):
-        work_only = """
-                    <FRBRWork>
-                      <FRBRname value="Before"/>
-                    </FRBRWork>
-        """
-        body = DocumentBody(doc_with_identification(triple_inner=work_only))
+        from tests.models.documents.body_metadata.fixtures import judgment_body_with_valid_identification
+
+        body = judgment_body_with_valid_identification(title="Before")
         original_xml = body.content_as_xml
         document = PressSummaryFactory.build(api_client=mock_api_client, body=body)
         add_editor_title(document, "Example title")

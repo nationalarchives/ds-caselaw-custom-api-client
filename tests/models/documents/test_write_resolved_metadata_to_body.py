@@ -5,8 +5,6 @@ from datetime import UTC
 from unittest.mock import patch
 from uuid import uuid4
 
-import pytest
-
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents.body import FRBR_WORK_XPATH, NAME_XPATH, DocumentBody
 from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
@@ -107,18 +105,25 @@ class TestWriteResolvedTitleToBody:
             == []
         )
 
-    @pytest.mark.parametrize("body_name", ["Body-only title", "   "])
-    def test_body_title_is_not_written_back_without_title_claims(self, mock_api_client, body_name):
-        body = judgment_body_with_valid_identification(title=body_name)
+    def test_body_title_is_not_written_back_without_title_claims(self, mock_api_client):
+        body = judgment_body_with_valid_identification(title="Body-only title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
         original_frbrname = body.get_xpath_match_string(FRBRWORK_NAME_VALUE_XPATH)
 
         assert BodyMetadataWriteBack().sync(document) is False
         assert body.get_xpath_match_string(FRBRWORK_NAME_VALUE_XPATH) == original_frbrname
-        if body_name.strip():
-            assert document.body.name == body_name.strip()
-        else:
-            assert document.body.name == ""
+        assert document.body.name == "Body-only title"
+
+    def test_whitespace_only_body_title_removes_frbrname_without_claims(self, mock_api_client):
+        body = judgment_body_with_valid_identification(title="   ")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        assert BodyMetadataWriteBack().sync(document) is True
+        assert (
+            document.body.get_xpath_nodes("/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname")
+            == []
+        )
+        assert document.body.name == ""
 
     def test_date_claims_do_not_change_frbrdate_in_pr1(self, mock_api_client):
         body = judgment_body_with_valid_identification(title="Original title")
@@ -219,6 +224,15 @@ class TestMetadataWriteBackSupport:
     def test_press_summary_without_frbrwork_does_not_support_write_back(self):
         assert doc_press_summary_body().supports_metadata_write_back is False
 
+    def test_work_only_press_summary_identification_does_not_support_write_back(self):
+        from pathlib import Path
+
+        from caselawclient.models.documents.body import DocumentBody
+
+        harness_fixture = Path(__file__).resolve().parents[3] / "marklogic_harness/fixtures/documents/press_summary.xml"
+        body = DocumentBody(harness_fixture.read_bytes())
+        assert body.supports_metadata_write_back is False
+
     def test_title_write_back_noops_when_identification_has_only_manifestation(self, mock_api_client):
         triple = """
                     <FRBRManifestation>
@@ -272,7 +286,7 @@ class TestMetadataWriteBackSupport:
         assert child_names.index("FRBRauthor") < child_names.index("FRBRname")
         assert document.body.name == "Ordered title"
 
-    def test_write_title_noops_when_multiple_frbrname_elements(self, mock_api_client, caplog):
+    def test_write_title_noops_when_multiple_frbrname_elements(self, mock_api_client):
         triple = valid_frbr_triple_inner().replace(
             '<FRBRcountry value="GB-UKM"/>',
             '<FRBRcountry value="GB-UKM"/>\n                      <FRBRname value="first"/>\n'
@@ -280,10 +294,10 @@ class TestMetadataWriteBackSupport:
             1,
         )
         body = DocumentBody(judgment_with_identification(triple_inner=triple))
+        assert body.supports_metadata_write_back is False
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
         add_editor_title(document, "New title")
         original_xml = body.content_as_xml
 
         _assert_write_back_noops(document)
         assert body.content_as_xml == original_xml
-        assert "Multiple FRBRname elements" in caplog.text

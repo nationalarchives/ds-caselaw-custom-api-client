@@ -36,7 +36,11 @@ class FrbrIdentificationWriter:
         body = document.body
         if not body.supports_metadata_write_back:
             return False
-        if not document.metadata_fields.resolve("title").has_any_claims:
+
+        title_resolved = document.metadata_fields.resolve("title")
+        if title_resolved.has_any_claims:
+            pass
+        elif body.name.strip() or not _work_has_frbrname(document):
             return False
 
         live_xml = body._xml  # noqa: SLF001
@@ -75,6 +79,10 @@ class FrbrIdentificationWriter:
 
         body._invalidate_cached_properties("name")  # noqa: SLF001
         return True
+
+
+def _work_has_frbrname(body: Document) -> bool:
+    return bool(body.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRname"))
 
 
 def _apply_resolved_title_to_identification(document: Document, xml: XML) -> None:

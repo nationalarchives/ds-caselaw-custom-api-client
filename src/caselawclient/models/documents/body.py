@@ -142,17 +142,24 @@ class DocumentBody:
 
         Returns False for example when the body is a parser error, the root is
         ambiguous, there is no identification block, ``FRBRWork`` is missing or
-        duplicated, or the body is a press summary (or other ``doc``) with no work
-        FRBR block yet.
+        duplicated, the FRBR triple fails structural validation (for example a
+        work-only press summary identification), or the body is a press summary
+        with no work FRBR block yet.
         """
         from caselawclient.models.documents.body_metadata import writable_akn_document_root_xpath
         from caselawclient.models.documents.body_metadata.akn import FRBR_WORK_XPATH, IDENTIFICATION_XPATH
+        from caselawclient.models.documents.body_metadata.frbr_identification_validation import (
+            frbr_identification_validation_failure,
+        )
 
         if writable_akn_document_root_xpath(self._xml) is None:
             return False
-        if len(self.get_xpath_nodes(IDENTIFICATION_XPATH)) != 1:
+        identification_nodes = self.get_xpath_nodes(IDENTIFICATION_XPATH)
+        if len(identification_nodes) != 1:
             return False
-        return len(self.get_xpath_nodes(FRBR_WORK_XPATH)) == 1
+        if len(self.get_xpath_nodes(FRBR_WORK_XPATH)) != 1:
+            return False
+        return frbr_identification_validation_failure(identification_nodes[0]) is None
 
     def _invalidate_cached_properties(self, *property_names: str) -> None:
         for name in {*property_names, "content_as_xml"}:
