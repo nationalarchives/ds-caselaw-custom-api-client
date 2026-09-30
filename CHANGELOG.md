@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Document**: write resolved title into Akoma Ntoso body XML during `save()`
 
+### Fix
+
+- **AWS**: align signed-link test expectations with region-aware S3 hostnames
+
 ## v50.0.1 (2026-09-15)
 
 - Bump ds-caselaw-utils to v5 and allow both v4 and v5.
