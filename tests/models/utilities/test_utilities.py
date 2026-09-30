@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import tarfile
+from typing import Any, cast
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib import parse
 
@@ -33,9 +34,10 @@ from caselawclient.models.utilities.aws import (
 @pytest.fixture(autouse=True)
 def clear_aws_client_cache():
     """Clear the AWS client cache before and after each test to ensure test isolation."""
-    aws_utils.create_aws_client.cache_clear()  # type: ignore[attr-defined]
+    clear_cache = cast(Any, aws_utils.create_aws_client).cache_clear
+    clear_cache()
     yield
-    aws_utils.create_aws_client.cache_clear()  # type: ignore[attr-defined]
+    clear_cache()
 
 
 @pytest.fixture
@@ -305,29 +307,33 @@ class TestAWSUtils:
         assert s3_object["Body"].read() == b"%PDF"
 
 
-@patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+@patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET", "PRIVATE_ASSET_BUCKET_REGION": "eu-west-2"})
 @mock_aws
 class TestSignedLinks:
+    @staticmethod
+    def _s3_hostname() -> str:
+        return "s3.eu-west-2.amazonaws.com"
+
     def test_signed_link_direct(self):
         signed_link = generate_signed_asset_url("key.png")
-        assert signed_link.startswith("https://s3.amazonaws.com/MY_BUCKET/key.png?")
+        assert signed_link.startswith(f"https://{self._s3_hostname()}/MY_BUCKET/key.png?")
         assert "response-content-disposition" not in signed_link
 
     def test_signed_link_docx_default(self):
         signed_link = generate_docx_url(DocumentURIString("d-a1"))
         assert signed_link.startswith(
-            "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.docx?response-content-disposition=attachment%3Bfilename%3Dd-a1.docx&"
+            f"https://{self._s3_hostname()}/MY_BUCKET/d-a1/d-a1.docx?response-content-disposition=attachment%3Bfilename%3Dd-a1.docx&"
         )
 
     def test_signed_link_pdf_default(self):
         signed_link = generate_pdf_url(DocumentURIString("d-a1"))
-        assert signed_link.startswith("https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.pdf?")
+        assert signed_link.startswith(f"https://{self._s3_hostname()}/MY_BUCKET/d-a1/d-a1.pdf?")
         assert "response-content-disposition" not in signed_link
 
     def test_signed_link_pdf_force_download(self):
         signed_link = generate_pdf_url(DocumentURIString("d-a1"), force_download=True)
         assert signed_link.startswith(
-            "https://s3.amazonaws.com/MY_BUCKET/d-a1/d-a1.pdf?response-content-disposition=attachment%3Bfilename%3Dd-a1.pdf&"
+            f"https://{self._s3_hostname()}/MY_BUCKET/d-a1/d-a1.pdf?response-content-disposition=attachment%3Bfilename%3Dd-a1.pdf&"
         )
 
     def test_signed_link_direct_custom_filename(self):
@@ -335,7 +341,7 @@ class TestSignedLinks:
             "key.png", force_download=True, content_disposition_filename="filename.png"
         )
         assert signed_link.startswith(
-            "https://s3.amazonaws.com/MY_BUCKET/key.png?response-content-disposition=attachment%3Bfilename%3Dfilename.png&"
+            f"https://{self._s3_hostname()}/MY_BUCKET/key.png?response-content-disposition=attachment%3Bfilename%3Dfilename.png&"
         )
 
 
