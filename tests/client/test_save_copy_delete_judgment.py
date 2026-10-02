@@ -1,9 +1,11 @@
 import json
 import os
 import unittest
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
+import time_machine
 from lxml import etree
 
 import caselawclient.Client
@@ -124,6 +126,7 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                     ),
                 )
 
+    @time_machine.travel(datetime(2026, 1, 1, tzinfo=UTC), tick=False)
     def test_insert_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:
             uri = DocumentURIString("ewca/civ/2004/632")
@@ -142,6 +145,12 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         "message": "test_insert_document_xml",
                         "payload": {"test_payload": True},
                     },
+                ),
+                "properties": (
+                    "<properties>"
+                    "<first_submission_datetime>2026-01-01T00:00:00+00:00</first_submission_datetime>"
+                    "<latest_submission_datetime>2026-01-01T00:00:00+00:00</latest_submission_datetime>"
+                    "</properties>"
                 ),
             }
             self.client.insert_document_xml(
