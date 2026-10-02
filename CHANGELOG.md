@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Feat
 
+- **Document**: add metrics and submission timestamps
 - **Document**: write resolved title into Akoma Ntoso body XML during `save()`
 
 ### Fix
