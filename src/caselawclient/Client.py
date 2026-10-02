@@ -27,6 +27,7 @@ from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
 )
+from caselawclient.models.documents.metrics.metrics_state import SUBMISSION_AFTER_PUBLICATION_PROPERTY, MetricsState
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
@@ -616,11 +617,18 @@ class MarklogicApiClient:
         annotation.set_calling_function("insert_document_xml")
         annotation.set_calling_agent(self.user_agent)
 
+        properties = etree.Element("properties")
+        if annotation.version_type == VersionType.SUBMISSION:
+            updates = MetricsState.for_new_document().submission_properties(datetime.now(UTC))
+            for name, value in updates.items():
+                etree.SubElement(properties, name).text = value.isoformat()
+
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
             "type_collection": document_type.type_collection_name,
             "document": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "properties": etree.tostring(properties).decode(),
         }
 
         return self._send_to_eval(vars, "insert_document.xqy")
@@ -658,8 +666,15 @@ class MarklogicApiClient:
             "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
         }
+        properties: dict[str, datetime] = {}
+        if annotation.version_type == VersionType.SUBMISSION:
+            state = self._get_document_metrics_state(document_uri)
+            properties = state.submission_properties(datetime.now(UTC))
 
-        return self._send_to_eval(vars, "update_document.xqy")
+        response = self._send_to_eval(vars, "update_document.xqy")
+        for name, value in properties.items():
+            self.set_datetime_property(document_uri, name, value)
+        return response
 
     def list_judgment_versions(
         self,
@@ -1028,6 +1043,23 @@ class MarklogicApiClient:
             return require_aware_utc(isoparse(content), name=name)
 
         return None
+
+    def _get_document_metrics_state(self, document_uri: DocumentURIString) -> MetricsState:
+        vars: query_dicts.GetDocumentMetricsStateDict = {"uri": self._format_uri_for_marklogic(document_uri)}
+        return MetricsState.from_etree(etree.fromstring(self._eval_and_decode(vars, "get_document_metrics_state.xqy")))
+
+    def publish_document(self, document_uri: DocumentURIString) -> requests.Response:
+        """Calculate reporting properties and record publication date times"""
+        state = self._get_document_metrics_state(document_uri)
+        now = datetime.now(UTC)
+        dates = state.publication_dates(now)
+        metrics = state.publication_metrics(now)
+        response = self.set_published(document_uri, True)
+        for name, value in dates.items():
+            self.set_datetime_property(document_uri, name, value)
+        self.set_property_as_node(document_uri, "metrics", metrics.as_etree)
+        self.set_property(document_uri, SUBMISSION_AFTER_PUBLICATION_PROPERTY, "")
+        return response
 
     def set_published(
         self,

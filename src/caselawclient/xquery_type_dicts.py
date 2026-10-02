@@ -67,6 +67,11 @@ class GetComponentsForDocumentDict(MarkLogicAPIDict):
     parent_uri: DocumentURIString
 
 
+# get_document_metrics_state.xqy
+class GetDocumentMetricsStateDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     search_query: Optional[str]
@@ -149,6 +154,7 @@ class GetVersionCreatedDict(MarkLogicAPIDict):
 class InsertDocumentDict(MarkLogicAPIDict):
     annotation: str
     document: str
+    properties: str
     type_collection: str
     uri: MarkLogicDocumentURIString
 
