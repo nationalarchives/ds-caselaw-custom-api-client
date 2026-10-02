@@ -92,7 +92,8 @@ with open(DICTS_FILES_PATCH, "w") as dicts_file:
 class {class_name}(MarkLogicAPIDict):""",
                 )
 
-                for match in sorted(matches):
+                # Multi-statement transactions redeclare external variables in each statement.
+                for match in sorted(set(matches)):
                     type_declaration = ml_type_to_python_type_declaration(
                         variable_name=match[0],
                         variable_type=match[1],
