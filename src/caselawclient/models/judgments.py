@@ -26,6 +26,7 @@ class Judgment(NeutralCitationMixin, Document):
     document_noun_plural = "judgments"
     type_collection_name = "judgment"
     _default_reparse_document_type = "judgment"
+    requires_content_hash = True
 
     def __init__(
         self, uri: DocumentURIString, api_client: "MarklogicApiClient", search_query: str | None = None

@@ -565,24 +565,33 @@ class MarklogicApiClient:
 
         return self._send_to_eval(vars, "set_metadata_this_uri.xqy")
 
-    def save_locked_judgment_xml(
+    def update_locked_document_xml(
         self,
-        judgment_uri: DocumentURIString,
-        judgment_xml: bytes,
+        document_uri: DocumentURIString,
+        document_xml: Element,
         annotation: VersionAnnotation,
+        validate_hash: bool = True,
     ) -> requests.Response:
-        """assumes the judgment is already locked, does not unlock/check in
-        note this version assumes the XML is raw bytes, rather than a tree..."""
+        """Update document XML while a DLS checkout is already held.
 
-        validate_content_hash(judgment_xml)
-        uri = self._format_uri_for_marklogic(judgment_uri)
+        Does not check out or check in; the caller must already hold the checkout (normally via
+        ``Document.editing_session()``, which releases it on exit). Raises
+        ``MarklogicResourceNotCheckedOutError`` if the document is not checked out.
 
-        annotation.set_calling_function("save_locked_judgment_xml")
+        If ``validate_hash`` is true, raises ``InvalidContentHashError`` unless the XML carries a ``uk:hash``
+        matching its content. Pass ``False`` for document types that do not carry a content hash.
+        """
+        xml = etree.tostring(document_xml)
+        if validate_hash:
+            validate_content_hash(xml)
+        uri = self._format_uri_for_marklogic(document_uri)
+
+        annotation.set_calling_function("update_locked_document_xml")
         annotation.set_calling_agent(self.user_agent)
 
         vars: query_dicts.UpdateLockedJudgmentDict = {
             "uri": uri,
-            "judgment": judgment_xml.decode("utf-8"),
+            "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
         }
 
@@ -624,42 +633,6 @@ class MarklogicApiClient:
         }
 
         return self._send_to_eval(vars, "insert_document.xqy")
-
-    def update_document_xml(
-        self,
-        document_uri: DocumentURIString,
-        document_xml: Element,
-        annotation: VersionAnnotation,
-    ) -> requests.Response:
-        """
-        Updates an existing XML document in MarkLogic with a new version.
-
-        This uses `dls:document-checkout-update-checkin` to perform this in a single operation.
-
-        .. deprecated::
-            Prefer ``Document.save(...)`` for document lifecycle workflows.
-            This method remains available for internal use by ``Document.save()``.
-
-        :param document_uri: The URI of the document to update
-        :param document_xml: The new XML content of the document
-        :param annotation: Annotations to record alongside this version
-
-        :return: The response object from MarkLogic
-        """
-        xml = etree.tostring(document_xml)
-
-        uri = self._format_uri_for_marklogic(document_uri)
-
-        annotation.set_calling_function("update_document_xml")
-        annotation.set_calling_agent(self.user_agent)
-
-        vars: query_dicts.UpdateDocumentDict = {
-            "uri": uri,
-            "judgment": xml.decode("utf-8"),
-            "annotation": annotation.as_json,
-        }
-
-        return self._send_to_eval(vars, "update_document.xqy")
 
     def list_judgment_versions(
         self,
@@ -1053,6 +1026,34 @@ class MarklogicApiClient:
         content = str(decoder.MultipartDecoder.from_response(response).parts[0].text)
         return content
 
+    def checkin_judgment_if_ours(self, judgment_uri: DocumentURIString, annotation: str) -> bool:
+        """Check in the document only if its current checkout carries ``annotation``.
+
+        The ownership check and the check-in happen in a single MarkLogic transaction, so a checkout
+        taken by another session in the meantime is never checked in by mistake.
+
+        :return: ``True`` if the document was checked in, ``False`` if it was not checked out with this annotation.
+        """
+        vars: query_dicts.CheckinJudgmentIfAnnotationMatchesDict = {
+            "uri": self._format_uri_for_marklogic(judgment_uri),
+            "annotation": annotation,
+        }
+        return self._eval_and_decode(vars, "checkin_judgment_if_annotation_matches.xqy") == "true"
+
+    def break_checkout_if_ours(self, judgment_uri: DocumentURIString, annotation: str) -> bool:
+        """Break the document's checkout only if it carries ``annotation``.
+
+        The ownership check and the break happen in a single MarkLogic transaction, so a checkout
+        taken by another session in the meantime is never broken by mistake.
+
+        :return: ``True`` if the checkout was broken, ``False`` if it was not checked out with this annotation.
+        """
+        vars: query_dicts.BreakJudgmentCheckoutIfAnnotationMatchesDict = {
+            "uri": self._format_uri_for_marklogic(judgment_uri),
+            "annotation": annotation,
+        }
+        return self._eval_and_decode(vars, "break_judgment_checkout_if_annotation_matches.xqy") == "true"
+
     def restore_document(
         self, document_uri: DocumentURIString, version_number: int, annotation: VersionAnnotation | None = None
     ) -> requests.Response:
@@ -1062,9 +1063,11 @@ class MarklogicApiClient:
         history. If no annotation is supplied, a restore annotation is created
         that records the source version and the client user agent. The
         annotation payload always includes `restored_from_version`, even when
-        a custom annotation is provided. This uses MarkLogic's
-        document-checkout-update-checkin flow to handle the checkout and
-        checkin.
+        a custom annotation is provided.
+
+        The document must already be checked out (for example inside
+        ``Document.editing_session()``). This does not check out or check in,
+        so the caller's checkout is left intact.
 
         Args:
             document_uri: The URI of the document to restore.
@@ -1075,6 +1078,9 @@ class MarklogicApiClient:
 
         Returns:
             The MarkLogic response from restoring the document.
+
+        Raises:
+            MarklogicResourceNotCheckedOutError: If the document is not checked out.
         """
         # This may not restore all of the properties of the previous document,
         # as MarkLogic only versions properties if a change to the content is

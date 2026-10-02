@@ -17,6 +17,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
+from caselawclient.models.documents.exceptions import DocumentNotLockedForEditingError
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -24,6 +25,8 @@ from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.types import SuccessFailureMessageTuple
+
+pytestmark = pytest.mark.assume_editing_lock
 
 
 class TestDocumentSaveIdentifiers:
@@ -225,11 +228,20 @@ class TestDocumentUnpublish:
         document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
-        mock_api_client.break_checkout.assert_called_once_with("test/1234")
+        mock_api_client.break_checkout.assert_not_called()
         mock_announce_document_event.assert_called_once_with(
             uri="test/1234",
             status="unpublish",
         )
+
+    def test_unpublish_requires_editing_lock(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document._editing_lock_held = False  # noqa: SLF001
+
+        with pytest.raises(DocumentNotLockedForEditingError):
+            document.unpublish()
+
+        mock_api_client.break_checkout.assert_not_called()
 
 
 class TestDocumentForceEnrich:
@@ -598,6 +610,15 @@ class TestReparse:
             "last_sent_to_parser",
             "2015-10-21T16:29:00+00:00",
         )
+
+    def test_reparse_requires_editing_lock(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document._editing_lock_held = False  # noqa: SLF001
+
+        with pytest.raises(DocumentNotLockedForEditingError):
+            document.reparse()
+
+        mock_api_client.set_property.assert_not_called()
 
 
 _MISSING_PAYLOAD = object()

@@ -23,6 +23,12 @@ class BreakJudgmentCheckoutDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# break_judgment_checkout_if_annotation_matches.xqy
+class BreakJudgmentCheckoutIfAnnotationMatchesDict(MarkLogicAPIDict):
+    annotation: str
+    uri: MarkLogicDocumentURIString
+
+
 # check_content_hash_unique_by_uri.xqy
 class CheckContentHashUniqueByUriDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
@@ -30,6 +36,12 @@ class CheckContentHashUniqueByUriDict(MarkLogicAPIDict):
 
 # checkin_judgment.xqy
 class CheckinJudgmentDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
+# checkin_judgment_if_annotation_matches.xqy
+class CheckinJudgmentIfAnnotationMatchesDict(MarkLogicAPIDict):
+    annotation: str
     uri: MarkLogicDocumentURIString
 
 
@@ -241,13 +253,6 @@ class SetPropertyAsNodeDict(MarkLogicAPIDict):
     name: str
     uri: MarkLogicDocumentURIString
     value: str
-
-
-# update_document.xqy
-class UpdateDocumentDict(MarkLogicAPIDict):
-    annotation: str
-    judgment: str
-    uri: MarkLogicDocumentURIString
 
 
 # update_locked_judgment.xqy
