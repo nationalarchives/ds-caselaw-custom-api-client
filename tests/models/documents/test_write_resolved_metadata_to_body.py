@@ -153,7 +153,7 @@ class TestWriteResolvedTitleToBody:
         with patch.object(document.api_client, "document_exists", return_value=True):
             document.save(message="Sync title to XML")
 
-        xml_tree = mock_api_client.update_document_xml.call_args[0][1]
+        xml_tree = mock_api_client.update_locked_document_xml.call_args[0][1]
         title_value = xml_tree.xpath(NAME_XPATH, namespaces=DEFAULT_NAMESPACES)[0]
         assert title_value == "Saved title"
 
@@ -196,7 +196,7 @@ class TestSaveMaterialisesBeforeWriteBack:
             patch.object(document, "_convert_body_claims_to_structured_metadata", side_effect=track_materialise),
             patch.object(document, "_write_resolved_metadata_to_body", side_effect=track_write_back),
             patch.object(document.api_client, "document_exists", return_value=True),
-            patch.object(document.api_client, "update_document_xml"),
+            patch.object(document.api_client, "update_locked_document_xml"),
         ):
             document.save(message="Ordered save")
 

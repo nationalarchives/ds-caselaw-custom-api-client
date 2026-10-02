@@ -145,3 +145,33 @@ def mock_api_client():
     mock_client.resolve_from_identifier_value.return_value = IdentifierResolutionsFactory.build()
 
     return mock_client
+
+
+@pytest.fixture(autouse=True)
+def assume_editing_lock_for_constructed_documents(request, monkeypatch):
+    """For tests marked ``assume_editing_lock``, treat documents built via ``Document(...)`` as already locked."""
+    if request.node.get_closest_marker("assume_editing_lock") is None:
+        return
+
+    from caselawclient.models.documents import Document
+
+    original_init = Document.__init__
+
+    def init_with_test_editing_lock(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        self._editing_lock_held = True
+
+    monkeypatch.setattr(Document, "__init__", init_with_test_editing_lock)
+
+
+@pytest.fixture
+def checkout_status_matches_session_token(mock_api_client):
+    """MarkLogic reports the annotation of the most recent checkout as the current lock holder."""
+
+    def _status(_uri: str) -> str | None:
+        call = mock_api_client.checkout_judgment.call_args
+        if call is None:
+            return None
+        return call.kwargs["annotation"]
+
+    mock_api_client.get_judgment_checkout_status_message.side_effect = _status
