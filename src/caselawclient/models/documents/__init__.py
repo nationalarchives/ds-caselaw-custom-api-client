@@ -1,7 +1,10 @@
 import datetime
 import logging
 import os
+import uuid
 import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, Self
 
@@ -59,6 +62,8 @@ from .exceptions import (
     CannotRestoreDocumentWithoutConsignmentReference,
     CannotRestorePublishedDocument,
     DocumentAlreadyExistsError,
+    DocumentEditingSessionAlreadyActiveError,
+    DocumentNotLockedForEditingError,
     DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
 )
@@ -96,6 +101,9 @@ class Document:
     """ The default noun to pass to the parser when reparsing given the document type if known. This is used to determine how the document should be parsed and processed."""
 
     type_collection_name: str
+
+    requires_content_hash = False
+    """ Whether saving an existing document of this type must validate its ``uk:hash`` content hash. """
 
     attributes_to_validate: list[tuple[str, bool, str]] = [
         (
@@ -171,6 +179,8 @@ class Document:
         self._initialise_metadata_fields()
         self._initialise_metadata()
         self._persisted = True
+        self._editing_lock_held = False
+        self._editing_session_token: str | None = None
 
     @property
     def is_persisted(self) -> bool:
@@ -181,6 +191,100 @@ class Document:
             raise DocumentNotPersistedError(
                 f"Document {self.uri} is not persisted in MarkLogic; call save() before using MarkLogic-backed APIs."
             )
+
+    @property
+    def editing_session_token(self) -> str | None:
+        """UUID annotation on the MarkLogic checkout for this session, if any."""
+        return self._editing_session_token
+
+    def _clear_local_editing_lock(self) -> None:
+        self._editing_lock_held = False
+        self._editing_session_token = None
+        self._clear_checkout_cache()
+
+    def _marklogic_checkout_has_annotation(self, annotation: str) -> bool:
+        return self.api_client.get_judgment_checkout_status_message(self.uri) == annotation
+
+    def _server_checkout_matches_session(self) -> bool:
+        if self._editing_session_token is None:
+            return True
+        return self._marklogic_checkout_has_annotation(self._editing_session_token)
+
+    def _require_editing_lock(self) -> None:
+        if not self._editing_lock_held:
+            raise DocumentNotLockedForEditingError(
+                f"Document {self.uri} is not locked for editing; use editing_session() before mutating."
+            )
+        if self._editing_session_token is not None and not self._server_checkout_matches_session():
+            self._clear_local_editing_lock()
+            raise DocumentNotLockedForEditingError(
+                f"Document {self.uri} is no longer locked for editing in MarkLogic "
+                "(checkout expired, broken, or held by another session)."
+            )
+
+    def _clear_checkout_cache(self) -> None:
+        self.__dict__.pop("checkout_message", None)
+        self.__dict__.pop("is_locked", None)
+
+    def _break_owned_checkout_during_error(self, session_token: str) -> None:
+        """Best-effort release while another exception is propagating; never masks that exception."""
+        try:
+            self.api_client.break_checkout_if_ours(self.uri, session_token)
+        except Exception:
+            logger.exception("Could not break checkout of %s while cleaning up editing_session", self.uri)
+
+    @contextmanager
+    def editing_session(
+        self,
+        *,
+        timeout_seconds: int = 60,
+    ) -> Iterator[Self]:
+        """
+        Check out the document for editing, then check in on clean exit or break the checkout on error.
+
+        The checkout annotation is a random UUID so concurrent workers sharing MarkLogic
+        credentials can tell whether this session still owns the lease. Check-in and break are
+        conditional on that UUID inside MarkLogic, so a session never releases a checkout that
+        another session has since taken.
+
+        Persisted updates via ``save()`` and other MarkLogic mutators require an active session.
+        Callers should keep the ``with`` block short; the default checkout lease is one minute.
+        """
+        self._require_persisted()
+        if self._editing_lock_held:
+            if self._editing_session_token is None or self._server_checkout_matches_session():
+                raise DocumentEditingSessionAlreadyActiveError(
+                    f"Document {self.uri} already has an active editing session."
+                )
+            self._clear_local_editing_lock()
+        session_token = str(uuid.uuid4())
+        try:
+            self.api_client.checkout_judgment(
+                self.uri,
+                annotation=session_token,
+                timeout_seconds=timeout_seconds,
+            )
+        except BaseException:
+            # The checkout may have been committed even though the call raised (e.g. a response
+            # timeout), so release it if it carries our token; this is a no-op otherwise.
+            self._break_owned_checkout_during_error(session_token)
+            raise
+        self._editing_lock_held = True
+        self._editing_session_token = session_token
+        self._clear_checkout_cache()
+        try:
+            yield self
+        except BaseException:
+            self._break_owned_checkout_during_error(session_token)
+            raise
+        else:
+            try:
+                self.api_client.checkin_judgment_if_ours(self.uri, session_token)
+            except BaseException:
+                self._break_owned_checkout_during_error(session_token)
+                raise
+        finally:
+            self._clear_local_editing_lock()
 
     @classmethod
     def _assemble_from_body(
@@ -197,6 +301,8 @@ class Document:
         doc.metadata_fields = MetadataFieldsCollection()
         doc._initialise_metadata()  # noqa: SLF001
         doc._persisted = False  # noqa: SLF001
+        doc._editing_lock_held = False  # noqa: SLF001
+        doc._editing_session_token = None  # noqa: SLF001
         if isinstance(doc, NeutralCitationMixin):
             doc._initialise_neutral_citation_validation(cls.document_noun)  # noqa: SLF001
         return doc
@@ -576,6 +682,7 @@ class Document:
         Request enrichment of the document, but do no checks
         """
         self._require_persisted()
+        self._require_editing_lock()
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(
             self.uri,
@@ -640,6 +747,7 @@ class Document:
     def assign_fclid_if_missing(self) -> FindCaseLawIdentifier | None:
         """If the document does not have an FCLID already, mint a new one and save it."""
         self._require_persisted()
+        self._require_editing_lock()
         if len(self.identifiers.of_type(FindCaseLawIdentifier)) == 0:
             logger.info("Document has no FCLID, minting a new one")
             document_fclid = FindCaseLawIdentifierSchema.mint(self.api_client)
@@ -700,10 +808,12 @@ class Document:
             )
             self._persisted = True
         else:
-            self.api_client.update_document_xml(
+            self._require_editing_lock()
+            self.api_client.update_locked_document_xml(
                 self.uri,
                 self.body.content_as_xml_tree,
                 annotation,
+                validate_hash=self.requires_content_hash,
             )
 
         self._save_identifiers_to_marklogic()
@@ -752,6 +862,7 @@ class Document:
         such cannot be published.
         """
         self._require_persisted()
+        self._require_editing_lock()
         logger.debug("Assert that document is publishable")
         self.assert_is_publishable()
 
@@ -786,7 +897,7 @@ class Document:
 
     def unpublish(self) -> None:
         self._require_persisted()
-        self.api_client.break_checkout(self.uri)
+        self._require_editing_lock()
         unpublish_documents(self.uri)
         self.api_client.set_published(self.uri, False)
         announce_document_event(
@@ -796,10 +907,12 @@ class Document:
 
     def hold(self) -> None:
         self._require_persisted()
+        self._require_editing_lock()
         self.api_client.set_property(self.uri, "editor-hold", "true")
 
     def unhold(self) -> None:
         self._require_persisted()
+        self._require_editing_lock()
         self.api_client.set_property(self.uri, "editor-hold", "false")
 
     @cached_property
@@ -818,6 +931,7 @@ class Document:
         Deletes this document from MarkLogic and any resources from AWS.
         """
         self._require_persisted()
+        self._require_editing_lock()
 
         if self.safe_to_delete:
             self.api_client.delete_judgment(self.uri)
@@ -950,6 +1064,7 @@ class Document:
                 assets.
         """
         self._require_persisted()
+        self._require_editing_lock()
         restore_version_document = self._get_version(version_number)
 
         if restore_version_document is None:
@@ -1015,11 +1130,13 @@ class Document:
 
     def move(self, new_citation: NeutralCitationString) -> None:
         self._require_persisted()
+        self._require_editing_lock()
         self.api_client.update_document_uri(self.uri, new_citation)
 
     def force_reparse(self) -> None:
         "Send an SNS notification that triggers reparsing, also sending all editor-modifiable metadata and URI"
         self._require_persisted()
+        self._require_editing_lock()
 
         now = datetime.datetime.now(datetime.timezone.utc)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
@@ -1059,6 +1176,7 @@ class Document:
 
     def reparse(self) -> bool:
         self._require_persisted()
+        self._require_editing_lock()
         # note that we set 'last_sent_to_parser' even if we can't send it to the parser
         # it means 'last tried to reparse' much more consistently.
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -1090,6 +1208,7 @@ class Document:
     def save_identifiers(self) -> None:
         """Validate the identifiers, and if the validation passes save them to MarkLogic"""
         self._require_persisted()
+        self._require_editing_lock()
         self._validate_identifiers_for_save()
         self._save_identifiers_to_marklogic()
 
@@ -1099,6 +1218,7 @@ class Document:
     def save_metadata_fields(self) -> None:
         """Save metadata claims to MarkLogic."""
         self._require_persisted()
+        self._require_editing_lock()
         self._save_metadata_fields()
 
     def _save_metadata_fields(self) -> None:

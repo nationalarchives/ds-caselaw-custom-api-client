@@ -24,8 +24,11 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             user_agent="marklogic-api-client-test",
         )
 
-    def test_update_document_xml(self):
-        with patch.object(self.client, "eval") as mock_eval:
+    def test_update_locked_document_xml(self):
+        with (
+            patch.object(caselawclient.Client, "validate_content_hash"),
+            patch.object(self.client, "eval") as mock_eval,
+        ):
             uri = DocumentURIString("ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
             judgment_xml = etree.fromstring(judgment_str)
@@ -35,62 +38,21 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                 "annotation": json.dumps(
                     {
                         "type": "edit",
-                        "calling_function": "update_document_xml",
+                        "calling_function": "update_locked_document_xml",
                         "calling_agent": "marklogic-api-client-test",
                         "automated": False,
-                        "message": "test_update_document_xml",
+                        "message": "test_update_locked_document_xml",
                         "payload": {"test_payload": True},
                     },
                 ),
             }
-            self.client.update_document_xml(
+            self.client.update_locked_document_xml(
                 uri,
                 judgment_xml,
                 VersionAnnotation(
                     VersionType.EDIT,
-                    message="test_update_document_xml",
+                    message="test_update_locked_document_xml",
                     automated=False,
-                    payload={"test_payload": True},
-                ),
-            )
-
-            assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "update_document.xqy"))
-            assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
-
-    def test_save_locked_judgment_xml(self):
-        """
-        Given a locked judgement uri, a judgement_xml and an annotation
-        When `Client.save_locked_judgment_xml` is called with these as arguments
-        Then the xquery in `update_locked_judgment.xqy` is called on the Marklogic db with those arguments
-        """
-        with (
-            patch.object(caselawclient.Client, "validate_content_hash"),
-            patch.object(self.client, "eval") as mock_eval,
-        ):
-            uri = DocumentURIString("ewca/civ/2004/632")
-            judgment_str = "<root>My updated judgment</root>"
-            judgment_xml = judgment_str.encode("utf-8")
-            expected_vars = {
-                "uri": "/ewca/civ/2004/632.xml",
-                "judgment": judgment_str,
-                "annotation": json.dumps(
-                    {
-                        "type": "enrichment",
-                        "calling_function": "save_locked_judgment_xml",
-                        "calling_agent": "marklogic-api-client-test",
-                        "automated": True,
-                        "message": "test_save_locked_judgment_xml",
-                        "payload": {"test_payload": True},
-                    },
-                ),
-            }
-            self.client.save_locked_judgment_xml(
-                uri,
-                judgment_xml,
-                VersionAnnotation(
-                    VersionType.ENRICHMENT,
-                    message="test_save_locked_judgment_xml",
-                    automated=True,
                     payload={"test_payload": True},
                 ),
             )
@@ -98,31 +60,41 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
             assert mock_eval.call_args.args[0] == (os.path.join(ROOT_DIR, "xquery", "update_locked_judgment.xqy"))
             assert mock_eval.call_args.kwargs["vars"] == json.dumps(expected_vars)
 
-    def test_save_locked_judgment_xml_checks_content_hash(self):
-        """
-        Given content hash validation will fail with an error
-        When `Client.save_locked_judgment_xml` is called
-        Then the error is raised.
-        """
+    def test_update_locked_document_xml_checks_content_hash(self):
         with patch.object(
             caselawclient.Client,
             "validate_content_hash",
         ) as mock_validate_hash:
             uri = DocumentURIString("ewca/civ/2004/632")
             judgment_str = "<root>My updated judgment</root>"
-            judgment_xml = judgment_str.encode("utf-8")
+            judgment_xml = etree.fromstring(judgment_str)
             mock_validate_hash.side_effect = InvalidContentHashError()
             with pytest.raises(InvalidContentHashError):
-                self.client.save_locked_judgment_xml(
+                self.client.update_locked_document_xml(
                     uri,
                     judgment_xml,
                     VersionAnnotation(
                         VersionType.SUBMISSION,
-                        message="test_save_locked_judgment_xml_checks_content_hash",
+                        message="test_update_locked_document_xml_checks_content_hash",
                         automated=False,
                         payload={"test_payload": True},
                     ),
                 )
+
+    def test_update_locked_document_xml_skips_content_hash_when_not_validating(self):
+        with (
+            patch.object(caselawclient.Client, "validate_content_hash") as mock_validate_hash,
+            patch.object(self.client, "eval") as mock_eval,
+        ):
+            self.client.update_locked_document_xml(
+                DocumentURIString("ewca/civ/2004/632"),
+                etree.fromstring("<root>No hash here</root>"),
+                VersionAnnotation(VersionType.EDIT, message="no hash", automated=False),
+                validate_hash=False,
+            )
+
+            mock_validate_hash.assert_not_called()
+            mock_eval.assert_called_once()
 
     def test_insert_document_xml(self):
         with patch.object(self.client, "eval") as mock_eval:

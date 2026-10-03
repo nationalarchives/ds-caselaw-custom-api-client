@@ -28,3 +28,11 @@ class DocumentNotPersistedError(Exception):
 
 class DocumentAlreadyExistsError(Exception):
     """A document URI passed to from_xml already exists in MarkLogic."""
+
+
+class DocumentNotLockedForEditingError(Exception):
+    """A persisted document mutation was attempted without an active editing session."""
+
+
+class DocumentEditingSessionAlreadyActiveError(Exception):
+    """``editing_session`` was entered while a session is already active on this document."""

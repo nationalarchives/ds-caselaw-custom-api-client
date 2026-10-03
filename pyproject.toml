@@ -68,6 +68,7 @@ addopts = "-m 'not marklogic' --ignore=tests/marklogic"
 markers = [
     "marklogic: integration test against a live MarkLogic database",
     "write: the test deliberately changes the Marklogic DB",
+    "assume_editing_lock: treat documents constructed via Document(...) as already holding an editing lock (no server check)",
 ]
 filterwarnings = ["ignore::DeprecationWarning"]
 

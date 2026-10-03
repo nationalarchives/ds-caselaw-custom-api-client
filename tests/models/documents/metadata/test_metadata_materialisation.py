@@ -356,7 +356,7 @@ class TestDocumentSaveStructuredMetadataToMarklogic:
 
         with (
             patch.object(document.api_client, "document_exists", return_value=True),
-            patch.object(document.api_client, "update_document_xml"),
+            patch.object(document.api_client, "update_locked_document_xml"),
         ):
             document.save(message="Persist metadata")
 
