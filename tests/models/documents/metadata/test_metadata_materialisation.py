@@ -138,7 +138,7 @@ class TestMaterialiseBodyClaims:
     def test_rejected_editor_title_write_back_restores_document_claim(self, mock_api_client):
         document = DocumentFactory.build(
             api_client=mock_api_client,
-            body=judgment_body_with_valid_identification(title="Original title"),
+            body=DocumentBodyFactory.build(name="Original title"),
         )
         document.metadata.title.materialise_body_claims()
         editor = MetadataField(
