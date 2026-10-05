@@ -20,7 +20,10 @@ class MoveJudgmentError(Exception):
 
 
 def update_document_uri(
-    source_uri: DocumentURIString, target_citation: NeutralCitationString, api_client: "MarklogicApiClient"
+    source_uri: DocumentURIString,
+    target_citation: NeutralCitationString,
+    api_client: "MarklogicApiClient",
+    source_checkout_annotation: str | None = None,
 ) -> DocumentURIString:
     """
     Move the document at source_uri to the correct location based on the neutral citation
@@ -29,6 +32,8 @@ def update_document_uri(
     :param source_uri: The URI with the contents of the document to be written. (possibly a failure url)
     :param target_citation: The NCN (implying an unused URL) where the document will be written to
     :param api_client: An instance of MarklogicApiClient used to make the search request
+    :param source_checkout_annotation: If the source document is checked out, the annotation of that checkout. The
+        source is deleted (which breaks the checkout) only if it still carries this annotation.
     :return: The URL associated with the `target_citation`
     """
     new_ncn_based_uri = caselawutils.neutral_url(target_citation)
@@ -55,7 +60,12 @@ def update_document_uri(
         )
 
     try:
-        api_client.delete_judgment(source_uri)
+        if source_checkout_annotation is None:
+            api_client.delete_judgment(source_uri)
+        elif not api_client.delete_judgment_if_ours(source_uri, source_checkout_annotation):
+            raise MoveJudgmentError(
+                f"Not deleting {source_uri} after copying it to {new_uri}: it is no longer checked out by this session."
+            )
     except MarklogicAPIError as e:
         raise MoveJudgmentError(
             f"Failure when attempting to delete judgment from {source_uri}: {e}",

@@ -106,6 +106,7 @@ class DocumentFactory:
         uri: DocumentURIString | None = None,
         api_client: MarklogicApiClient | None = None,
         identifiers: list[Identifier] | None = None,
+        editing_lock_held: bool = True,
         **kwargs: Any,
     ) -> TargetClass:
         def _fake_linked_documents(*args: Any, **kwargs: Any) -> list["Document"]:
@@ -122,6 +123,7 @@ class DocumentFactory:
         document = cls.TargetClass._assemble_from_body(body, api_client, uri=uri)  # noqa: SLF001
         document._initialise_metadata_fields()  # noqa: SLF001
         document._persisted = True  # noqa: SLF001
+        document._editing_lock_held = editing_lock_held  # noqa: SLF001
 
         if identifiers is None:
             document.identifiers = IdentifiersCollection()

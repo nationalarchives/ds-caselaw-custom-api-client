@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## v50.0.2 (Unreleased)
+## Unreleased
+
+### BREAKING CHANGE
+
+- **Document**: persisted mutations (including `save()` of an existing document) require an active `editing_session()`, otherwise raising `DocumentNotLockedForEditingError`
+- **Client**: remove `update_document_xml` and `save_locked_judgment_xml` in favour of `update_locked_document_xml`, which validates the content hash (`Judgment.save()` always validates; other types do not)
+- **Client**: `restore_document` requires the caller to hold the checkout
+
+### Added
+
+- **Document**: `editing_session()` context manager, holding a UUID-annotated checkout that is only released if still owned
+- **Client**: `checkin_judgment_if_ours`, `break_checkout_if_ours` and `delete_judgment_if_ours`
 
 ### Feat
 

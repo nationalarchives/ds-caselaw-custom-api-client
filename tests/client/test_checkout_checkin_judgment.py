@@ -197,3 +197,46 @@ class TestGetCheckoutStatus(unittest.TestCase):
                 accept_header="application/xml",
                 timeout=ANY,
             )
+
+
+@pytest.mark.parametrize(
+    ("method", "xquery_file"),
+    [
+        ("checkin_judgment_if_ours", "checkin_judgment_if_annotation_matches.xqy"),
+        ("break_checkout_if_ours", "break_judgment_checkout_if_annotation_matches.xqy"),
+    ],
+)
+class TestConditionalCheckoutRelease:
+    def test_calls_conditional_xquery_with_uri_and_annotation(self, method, xquery_file):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, "_eval_and_decode", return_value="true") as mock_eval_and_decode:
+            getattr(client, method)(DocumentURIString("judgment/uri"), "session-token")
+
+        mock_eval_and_decode.assert_called_once_with(
+            {"uri": "/judgment/uri.xml", "annotation": "session-token"},
+            xquery_file,
+        )
+
+    @pytest.mark.parametrize(("response", "expected"), [("true", True), ("false", False)])
+    def test_returns_whether_checkout_was_released(self, method, xquery_file, response, expected):
+        client = MarklogicApiClient("", "", "", False)
+
+        with patch.object(client, "_eval_and_decode", return_value=response):
+            assert getattr(client, method)(DocumentURIString("judgment/uri"), "session-token") is expected
+
+
+class TestDeleteJudgmentIfOurs:
+    @pytest.mark.parametrize("checkout_was_ours", [True, False])
+    def test_deletes_only_after_breaking_our_checkout(self, checkout_was_ours):
+        client = MarklogicApiClient("", "", "", False)
+
+        with (
+            patch.object(client, "break_checkout_if_ours", return_value=checkout_was_ours) as mock_break,
+            patch.object(client, "delete_judgment") as mock_delete,
+        ):
+            result = client.delete_judgment_if_ours(DocumentURIString("judgment/uri"), "session-token")
+
+        assert result is checkout_was_ours
+        mock_break.assert_called_once_with("judgment/uri", "session-token")
+        assert mock_delete.called is checkout_was_ours

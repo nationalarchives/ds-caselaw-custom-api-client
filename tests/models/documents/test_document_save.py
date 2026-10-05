@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
+from caselawclient.factories import DocumentBodyFactory, JudgmentFactory, PressSummaryFactory
 from caselawclient.models.documents import DocumentURIString
 from caselawclient.models.documents.exceptions import DocumentAlreadyExistsError, DocumentNotPersistedError
 from caselawclient.models.documents.metadata.fields.exceptions import MetadataFieldKeyMismatchException
@@ -31,14 +31,25 @@ def document_does_not_exist_in_marklogic(mock_api_client):
 class TestDocumentSave:
     """Tests for the Document.save() method."""
 
-    def test_save_calls_update_document_xml(self, mock_api_client):
+    def test_save_calls_update_locked_document_xml(self, mock_api_client):
         uri = DocumentURIString("test/2023/101")
         document = JudgmentFactory.build(uri=uri, api_client=mock_api_client)
 
         document.save(message="Changed document")
 
-        mock_api_client.update_document_xml.assert_called_once()
+        mock_api_client.update_locked_document_xml.assert_called_once()
         mock_api_client.set_property.assert_called()
+
+    @pytest.mark.parametrize(
+        ("factory", "validate_hash"),
+        [(JudgmentFactory, True), (PressSummaryFactory, False)],
+    )
+    def test_save_validates_content_hash_only_for_types_that_require_it(self, mock_api_client, factory, validate_hash):
+        document = factory.build(api_client=mock_api_client)
+
+        document.save(message="Changed document")
+
+        assert mock_api_client.update_locked_document_xml.call_args.kwargs["validate_hash"] is validate_hash
 
     def test_save_creates_edit_annotation(self, mock_api_client):
         uri = DocumentURIString("test/2023/123")
@@ -46,7 +57,7 @@ class TestDocumentSave:
 
         document.save(message="Changed document")
 
-        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        annotation = mock_api_client.update_locked_document_xml.call_args[0][2]
         assert isinstance(annotation, VersionAnnotation)
         assert annotation.version_type == VersionType.EDIT
         assert annotation.automated is False
@@ -57,7 +68,7 @@ class TestDocumentSave:
 
         document.save(message="Changed document")
 
-        call_args = mock_api_client.update_document_xml.call_args
+        call_args = mock_api_client.update_locked_document_xml.call_args
         assert call_args[0][0] == uri
         assert call_args[0][1] is document.body.content_as_xml_tree
 
@@ -68,14 +79,14 @@ class TestDocumentSave:
 
         document.save(message=test_message)
 
-        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        annotation = mock_api_client.update_locked_document_xml.call_args[0][2]
         assert annotation.message == test_message
 
     def test_save_validates_and_converts_before_xml_update(self, mock_api_client):
         document = JudgmentFactory.build(api_client=mock_api_client)
         call_order: list[str] = []
 
-        mock_api_client.update_document_xml.side_effect = lambda *_args, **_kwargs: call_order.append("xml")
+        mock_api_client.update_locked_document_xml.side_effect = lambda *_args, **_kwargs: call_order.append("xml")
 
         with (
             patch.object(
@@ -217,7 +228,7 @@ class TestDocumentSave:
             automated=True,
         )
 
-        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        annotation = mock_api_client.update_locked_document_xml.call_args[0][2]
         assert annotation.version_type == VersionType.SUBMISSION
         assert annotation.automated is True
 
@@ -227,7 +238,7 @@ class TestDocumentSave:
 
         document.save(message="Updated document", payload=payload)
 
-        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        annotation = mock_api_client.update_locked_document_xml.call_args[0][2]
         assert annotation.payload == payload
 
     def test_save_passes_payload_on_insert(self, mock_api_client):
@@ -244,7 +255,7 @@ class TestDocumentSave:
 
         document.save(message="Changed document")
 
-        annotation = mock_api_client.update_document_xml.call_args[0][2]
+        annotation = mock_api_client.update_locked_document_xml.call_args[0][2]
         assert annotation.payload is None
 
     def test_partial_save_failure_leaves_document_persisted_after_insert(self, mock_api_client):
@@ -262,7 +273,9 @@ class TestDocumentSave:
 
         assert document.is_persisted is True
 
-    def test_save_retry_after_metadata_persist_failure_uses_update_path(self, mock_api_client):
+    def test_save_retry_after_metadata_persist_failure_uses_update_path(
+        self, mock_api_client, checkout_status_matches_session_token
+    ):
         document = Judgment.from_xml(DocumentBodyFactory.build(), mock_api_client)
 
         with (
@@ -275,9 +288,10 @@ class TestDocumentSave:
         ):
             document.save(message="Initial insert")
 
-        document.save(message="Retry save")
+        with document.editing_session():
+            document.save(message="Retry save")
 
-        mock_api_client.update_document_xml.assert_called_once()
+        mock_api_client.update_locked_document_xml.assert_called_once()
         mock_api_client.insert_document_xml.assert_called_once()
         assert document.is_persisted is True
 

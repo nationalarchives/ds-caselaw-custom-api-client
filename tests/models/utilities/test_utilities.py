@@ -371,6 +371,42 @@ class TestMove:
         fake_api_client.set_judgment_this_uri.assert_called_with("new/uri")
         fake_api_client.delete_judgment.assert_called_with("old/uri")
 
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch("caselawclient.models.utilities.move.set_metadata")
+    @patch("caselawclient.models.utilities.move.copy_assets")
+    def test_move_judgment_deletes_source_only_if_checkout_is_ours(self, fake_copy, fake_metadata):
+        ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
+        fake_api_client = MagicMock()
+        fake_api_client.document_exists.return_value = False
+        fake_api_client.delete_judgment_if_ours.return_value = True
+
+        move.update_document_uri(
+            DocumentURIString("old/uri"),
+            NeutralCitationString("[2023] EAT 1"),
+            fake_api_client,
+            source_checkout_annotation="session-token",
+        )
+
+        fake_api_client.delete_judgment_if_ours.assert_called_once_with("old/uri", "session-token")
+        fake_api_client.delete_judgment.assert_not_called()
+
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    @patch("caselawclient.models.utilities.move.set_metadata")
+    @patch("caselawclient.models.utilities.move.copy_assets")
+    def test_move_judgment_fails_if_checkout_is_not_ours(self, fake_copy, fake_metadata):
+        ds_caselaw_utils.neutral_url = MagicMock(return_value="new/uri")
+        fake_api_client = MagicMock()
+        fake_api_client.document_exists.return_value = False
+        fake_api_client.delete_judgment_if_ours.return_value = False
+
+        with pytest.raises(move.MoveJudgmentError, match="no longer checked out by this session"):
+            move.update_document_uri(
+                DocumentURIString("old/uri"),
+                NeutralCitationString("[2023] EAT 1"),
+                fake_api_client,
+                source_checkout_annotation="session-token",
+            )
+
 
 class TestCheckCleaningTags:
     @pytest.fixture

@@ -17,6 +17,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
+from caselawclient.models.documents.exceptions import DocumentNotLockedForEditingError
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -24,6 +25,8 @@ from caselawclient.models.identifiers.fclid import FindCaseLawIdentifier
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.neutral_citation_mixin import NeutralCitationString
 from caselawclient.types import SuccessFailureMessageTuple
+
+pytestmark = pytest.mark.assume_editing_lock
 
 
 class TestDocumentSaveIdentifiers:
@@ -225,11 +228,20 @@ class TestDocumentUnpublish:
         document.unpublish()
         mock_unpublish_documents.assert_called_once_with("test/1234")
         mock_api_client.set_published.assert_called_once_with("test/1234", False)
-        mock_api_client.break_checkout.assert_called_once_with("test/1234")
+        mock_api_client.break_checkout.assert_not_called()
         mock_announce_document_event.assert_called_once_with(
             uri="test/1234",
             status="unpublish",
         )
+
+    def test_unpublish_requires_editing_lock(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document._editing_lock_held = False  # noqa: SLF001
+
+        with pytest.raises(DocumentNotLockedForEditingError):
+            document.unpublish()
+
+        mock_api_client.set_published.assert_not_called()
 
 
 class TestDocumentForceEnrich:
@@ -386,26 +398,74 @@ class TestDocumentDelete:
 
         assert document.safe_to_delete is True
 
-    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
-    def test_delete_if_safe(self, mock_aws_delete_documents, mock_api_client):
+    @pytest.fixture
+    def document_in_session(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.safe_to_delete = True
+        document._editing_session_token = "session-token"  # noqa: SLF001, S105
+        mock_api_client.get_judgment_checkout_status_message.return_value = "session-token"
+        return document
 
-        document.delete()
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_safe(self, mock_aws_delete_documents, mock_api_client, document_in_session):
+        document_in_session.safe_to_delete = True
+        mock_api_client.delete_judgment_if_ours.return_value = True
 
-        mock_api_client.delete_judgment.assert_called_once_with("test/1234")
+        document_in_session.delete()
+
+        mock_api_client.delete_judgment_if_ours.assert_called_once_with("test/1234", "session-token")
         mock_aws_delete_documents.assert_called_once_with("test/1234")
 
     @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
-    def test_delete_if_unsafe(self, mock_aws_delete_documents, mock_api_client):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.safe_to_delete = False
+    def test_delete_if_checkout_no_longer_ours(self, mock_aws_delete_documents, mock_api_client, document_in_session):
+        document_in_session.safe_to_delete = True
+        mock_api_client.delete_judgment_if_ours.return_value = False
 
-        with pytest.raises(DocumentNotSafeForDeletion):
+        with pytest.raises(DocumentNotLockedForEditingError, match="no longer locked"):
+            document_in_session.delete()
+
+        mock_aws_delete_documents.assert_not_called()
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_without_editing_session_token(self, mock_aws_delete_documents, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document.safe_to_delete = True
+
+        with pytest.raises(DocumentNotLockedForEditingError, match="no editing session"):
             document.delete()
 
-        mock_api_client.delete_judgment.assert_not_called()
+        mock_api_client.delete_judgment_if_ours.assert_not_called()
         mock_aws_delete_documents.assert_not_called()
+
+    @patch("caselawclient.models.documents.delete_documents_from_private_bucket")
+    def test_delete_if_unsafe(self, mock_aws_delete_documents, mock_api_client, document_in_session):
+        document_in_session.safe_to_delete = False
+
+        with pytest.raises(DocumentNotSafeForDeletion):
+            document_in_session.delete()
+
+        mock_api_client.delete_judgment_if_ours.assert_not_called()
+        mock_aws_delete_documents.assert_not_called()
+
+
+class TestDocumentMove:
+    def test_move_passes_session_token_to_client(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document._editing_session_token = "session-token"  # noqa: SLF001, S105
+        mock_api_client.get_judgment_checkout_status_message.return_value = "session-token"
+
+        document.move(NeutralCitationString("[2023] EAT 1"))
+
+        mock_api_client.update_document_uri.assert_called_once_with(
+            "test/1234", "[2023] EAT 1", source_checkout_annotation="session-token"
+        )
+
+    def test_move_without_editing_session_token(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+
+        with pytest.raises(DocumentNotLockedForEditingError, match="no editing session"):
+            document.move(NeutralCitationString("[2023] EAT 1"))
+
+        mock_api_client.update_document_uri.assert_not_called()
 
 
 class TestReparse:
@@ -598,6 +658,15 @@ class TestReparse:
             "last_sent_to_parser",
             "2015-10-21T16:29:00+00:00",
         )
+
+    def test_reparse_requires_editing_lock(self, mock_api_client):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        document._editing_lock_held = False  # noqa: SLF001
+
+        with pytest.raises(DocumentNotLockedForEditingError):
+            document.reparse()
+
+        mock_api_client.set_property.assert_not_called()
 
 
 _MISSING_PAYLOAD = object()
