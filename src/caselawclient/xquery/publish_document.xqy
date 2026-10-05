@@ -1,28 +1,21 @@
 xquery version "1.0-ml";
 
-import module namespace dls = "http://marklogic.com/xdmp/dls"
-      at "/MarkLogic/dls.xqy";
+import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls.xqy";
 
 declare variable $uri as xs:string external;
-declare variable $judgment as xs:string external;
-declare variable $annotation as xs:string external;
 declare variable $properties as xs:string external;
 declare variable $expected_state as xs:string external;
 
 declare option xdmp:update "true";
 
 let $_ := xdmp:lock-for-update($uri)
-let $current_state := if ($expected_state eq "") then "" else xdmp:sha256(xdmp:quote(<state>{
+let $state := <state>{
   <properties>{xdmp:document-properties($uri)/*/*}</properties>,
   dls:document-history($uri)
-}</state>))
-let $judgment_xml := xdmp:unquote($judgment)
-
+}</state>
 return
-  if ($expected_state ne $current_state) then
+  if ($expected_state ne xdmp:sha256(xdmp:quote($state))) then
     fn:error(xs:QName("METRICS-STATE-CHANGED"), "Document changed while calculating metrics")
-  else (
-    dls:document-update($uri, $judgment_xml, $annotation, fn:true()),
+  else
     for $property in xdmp:unquote($properties)/properties/*
     return dls:document-set-property($uri, $property)
-  )

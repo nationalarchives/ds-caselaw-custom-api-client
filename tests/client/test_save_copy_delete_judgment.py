@@ -47,6 +47,8 @@ class TestSaveCopyDeleteJudgment(unittest.TestCase):
                         "payload": {"test_payload": True},
                     },
                 ),
+                "properties": "<properties/>",
+                "expected_state": "",
             }
             self.client.update_locked_document_xml(
                 uri,

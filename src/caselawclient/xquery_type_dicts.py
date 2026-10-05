@@ -176,6 +176,13 @@ class ListJudgmentVersionsDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# publish_document.xqy
+class PublishDocumentDict(MarkLogicAPIDict):
+    expected_state: str
+    properties: str
+    uri: MarkLogicDocumentURIString
+
+
 # resolve_from_identifier_slug.xqy
 class ResolveFromIdentifierSlugDict(MarkLogicAPIDict):
     identifier_slug: DocumentIdentifierSlug
@@ -264,7 +271,9 @@ class SetPropertyAsNodeDict(MarkLogicAPIDict):
 # update_locked_judgment.xqy
 class UpdateLockedJudgmentDict(MarkLogicAPIDict):
     annotation: str
+    expected_state: str
     judgment: str
+    properties: str
     uri: MarkLogicDocumentURIString
 
 

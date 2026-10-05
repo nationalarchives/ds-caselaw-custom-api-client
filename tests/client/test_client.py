@@ -19,7 +19,7 @@ from caselawclient.Client import (
     get_multipart_strings_from_marklogic_response,
     get_single_string_from_marklogic_response,
 )
-from caselawclient.errors import GatewayTimeoutError
+from caselawclient.errors import GatewayTimeoutError, MarklogicMetricsStateChangedError
 from caselawclient.models.documents import DocumentURIString
 
 
@@ -77,6 +77,22 @@ class TestErrors(unittest.TestCase):
         with pytest.raises(GatewayTimeoutError) as gateway_exception:
             self.client._raise_for_status(response)
         assert "Example Gateway Timeout" in str(gateway_exception.value)
+
+    def test_metrics_state_conflict(self):
+        with responses.RequestsMock() as response_list:
+            response_list.add(
+                responses.GET,
+                url="http://example.com",
+                status=500,
+                body=(
+                    '<error-response xmlns="http://marklogic.com/xdmp/error">'
+                    "<message-code>METRICS-STATE-CHANGED</message-code>"
+                    "</error-response>"
+                ),
+            )
+            response = requests.get("http://example.com")  # noqa: S113
+        with pytest.raises(MarklogicMetricsStateChangedError):
+            self.client._raise_for_status(response)
 
 
 class TestMarklogicResponseHandlers(unittest.TestCase):

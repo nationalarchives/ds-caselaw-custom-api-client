@@ -4,7 +4,8 @@ import module namespace dls = "http://marklogic.com/xdmp/dls" at "/MarkLogic/dls
 
 declare variable $uri as xs:string external;
 
-<state>{
+let $state := <state>{
   <properties>{xdmp:document-properties($uri)/*/*}</properties>,
   dls:document-history($uri)
 }</state>
+return <state signature="{xdmp:sha256(xdmp:quote($state))}">{$state/*}</state>

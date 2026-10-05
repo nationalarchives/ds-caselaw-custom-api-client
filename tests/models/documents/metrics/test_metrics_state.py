@@ -161,7 +161,7 @@ def test_no_submissions_is_a_real_zero_count():
     ],
 )
 def test_parses_version_types_from_history(numbers, annotations, expected):
-    root = etree.Element("state")
+    root = etree.Element("state", signature="stored-state")
     etree.SubElement(root, "properties")
     history = etree.SubElement(root, f"{DLS_NAMESPACE}document-history")
     for number, annotation in zip(numbers, annotations):
@@ -170,3 +170,4 @@ def test_parses_version_types_from_history(numbers, annotations, expected):
         etree.SubElement(version, f"{DLS_NAMESPACE}annotation").text = annotation
     state = MetricsState.from_etree(root)
     assert state.version_types == expected
+    assert state.signature == "stored-state"
