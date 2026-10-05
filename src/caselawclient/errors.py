@@ -56,6 +56,11 @@ class MarklogicCheckoutConflictError(MarklogicAPIError):
     default_message = "The resource is checked out by another user."
 
 
+class MarklogicMetricsStateChangedError(MarklogicAPIError):
+    status_code = 409
+    default_message = "The document changed while its metrics were being calculated; no updates were written."
+
+
 class MarklogicValidationFailedError(MarklogicAPIError):
     status_code = 422
     default_message = "The XML document did not validate according to the schema."

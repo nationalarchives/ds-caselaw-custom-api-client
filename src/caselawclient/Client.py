@@ -51,6 +51,7 @@ from .errors import (
     MarklogicBadRequestError,
     MarklogicCheckoutConflictError,
     MarklogicCommunicationError,
+    MarklogicMetricsStateChangedError,
     MarklogicNotPermittedError,
     MarklogicResourceLockedError,
     MarklogicResourceNotCheckedOutError,
@@ -190,6 +191,7 @@ class MarklogicApiClient:
         "DLS-UNMANAGED": MarklogicResourceUnmanagedError,
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
+        "METRICS-STATE-CHANGED": MarklogicMetricsStateChangedError,
         "SEC-PRIVDNE": MarklogicNotPermittedError,
         "XDMP-VALIDATE.*": MarklogicValidationFailedError,
         "FCL-DOCUMENTNOTFOUND.*": DocumentNotFoundError,
@@ -594,18 +596,20 @@ class MarklogicApiClient:
             "uri": uri,
             "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "properties": "<properties/>",
+            "expected_state": "",
         }
 
-        properties: dict[str, datetime] = {}
         if annotation.version_type == VersionType.SUBMISSION:
             # Read history before adding this version so we can identify a first submission.
             state = self._get_document_metrics_state(document_uri)
-            properties = state.submission_properties(datetime.now(UTC))
+            properties = etree.Element("properties")
+            for name, value in state.submission_properties(datetime.now(UTC)).items():
+                etree.SubElement(properties, name).text = value.isoformat()
+            vars["properties"] = etree.tostring(properties).decode()
+            vars["expected_state"] = state.signature
 
-        response = self._send_to_eval(vars, "update_locked_judgment.xqy")
-        for name, value in properties.items():
-            self.set_datetime_property(document_uri, name, value)
-        return response
+        return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
     def insert_document_xml(
         self,
@@ -1024,17 +1028,21 @@ class MarklogicApiClient:
         return MetricsState.from_etree(etree.fromstring(self._eval_and_decode(vars, "get_document_metrics_state.xqy")))
 
     def publish_document(self, document_uri: DocumentURIString) -> requests.Response:
-        """Calculate reporting properties and record publication date times"""
+        """Calculate reporting properties and record publication date times."""
         state = self._get_document_metrics_state(document_uri)
         now = datetime.now(UTC)
-        dates = state.publication_dates(now)
-        metrics = state.publication_metrics(now)
-        response = self.set_published(document_uri, True)
-        for name, value in dates.items():
-            self.set_datetime_property(document_uri, name, value)
-        self.set_property_as_node(document_uri, "metrics", metrics.as_etree)
-        self.set_property(document_uri, SUBMISSION_AFTER_PUBLICATION_PROPERTY, "")
-        return response
+        properties = etree.Element("properties")
+        etree.SubElement(properties, "published").text = "true"
+        for name, value in state.publication_dates(now).items():
+            etree.SubElement(properties, name).text = value.isoformat()
+        properties.append(state.publication_metrics(now).as_etree)
+        etree.SubElement(properties, SUBMISSION_AFTER_PUBLICATION_PROPERTY)
+        vars: query_dicts.PublishDocumentDict = {
+            "uri": self._format_uri_for_marklogic(document_uri),
+            "properties": etree.tostring(properties).decode(),
+            "expected_state": state.signature,
+        }
+        return self._send_to_eval(vars, "publish_document.xqy")
 
     def set_published(
         self,

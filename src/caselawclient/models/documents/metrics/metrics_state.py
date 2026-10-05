@@ -22,6 +22,7 @@ class MetricsState:
 
     properties: Element
     version_types: list[VersionType] | None
+    signature: str = ""
 
     @classmethod
     def for_new_document(cls) -> "MetricsState":
@@ -32,7 +33,9 @@ class MetricsState:
         properties = root.find("properties")
         if properties is None:
             raise ValueError("Expected document metrics state with properties")
-        return cls(properties, cls._version_types(root.find(f"{DLS_NAMESPACE}document-history")))
+        return cls(
+            properties, cls._version_types(root.find(f"{DLS_NAMESPACE}document-history")), root.attrib["signature"]
+        )
 
     @staticmethod
     def _version_types(history: Element | None) -> list[VersionType] | None:

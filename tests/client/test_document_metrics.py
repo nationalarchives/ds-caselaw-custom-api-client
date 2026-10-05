@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
-from unittest.mock import Mock, call, patch
+from unittest.mock import patch
 
 import pytest
 import time_machine
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.errors import MarklogicMetricsStateChangedError
 from caselawclient.models.documents.metrics import DocumentMetrics
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.judgments import Judgment
@@ -13,7 +14,7 @@ from caselawclient.types import DocumentURIString
 
 NOW = datetime(2026, 1, 2, tzinfo=UTC)
 URI = DocumentURIString("test/metrics")
-STATE = """<state>
+STATE = """<state signature="initial-state">
   <properties>
     <first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>
   </properties>
@@ -31,6 +32,7 @@ def publishing_client():
     client = MarklogicApiClient("", "", "", False)
     with (
         patch.object(client, "_eval_and_decode", return_value=STATE),
+        patch.object(client, "_send_to_eval"),
         patch.object(client, "set_published"),
         patch.object(client, "set_datetime_property"),
         patch.object(client, "set_property_as_node"),
@@ -40,21 +42,27 @@ def publishing_client():
 
 
 @time_machine.travel(NOW, tick=False)
-def test_publish_uses_existing_property_methods(publishing_client):
+def test_publish_writes_all_properties_in_one_request(publishing_client):
     client = publishing_client
     response = client.publish_document(URI)
-    assert response is client.set_published.return_value
-    client.set_published.assert_called_once_with(URI, True)
-    assert client.set_datetime_property.call_args_list == [
-        call(URI, "first_published_datetime", NOW),
-        call(URI, "latest_published_datetime", NOW),
-    ]
-    uri, name, node = client.set_property_as_node.call_args.args
-    assert (uri, name) == (URI, "metrics")
-    metrics = DocumentMetrics.from_etree(node)
+    assert response is client._send_to_eval.return_value  # noqa: SLF001
+    client._send_to_eval.assert_called_once()  # noqa: SLF001
+    variables, query = client._send_to_eval.call_args.args  # noqa: SLF001
+    assert query == "publish_document.xqy"
+    assert variables["uri"] == "/test/metrics.xml"
+    assert variables["expected_state"] == "initial-state"
+    properties = etree.fromstring(variables["properties"])
+    assert properties.findtext("published") == "true"
+    assert properties.findtext("first_published_datetime") == NOW.isoformat()
+    assert properties.findtext("latest_published_datetime") == NOW.isoformat()
+    metrics = DocumentMetrics.from_etree(properties.find("metrics"))
     assert metrics.tdr_to_first_publish.value == 86400
     assert metrics.submissions_before_first_publish.value == 1
-    client.set_property.assert_called_once_with(URI, "first_submission_after_latest_publication_datetime", "")
+    assert properties.findtext("first_submission_after_latest_publication_datetime") == ""
+    client.set_published.assert_not_called()
+    client.set_datetime_property.assert_not_called()
+    client.set_property_as_node.assert_not_called()
+    client.set_property.assert_not_called()
 
 
 @time_machine.travel(NOW, tick=False)
@@ -64,16 +72,18 @@ def test_publish_does_not_write_existing_first_publication_date(publishing_clien
         "<properties>", "<properties><first_published_datetime>2025-01-01T00:00:00Z</first_published_datetime>"
     )
     client.publish_document(URI)
-    client.set_datetime_property.assert_called_once_with(URI, "latest_published_datetime", NOW)
+    variables, _ = client._send_to_eval.call_args.args  # noqa: SLF001
+    properties = etree.fromstring(variables["properties"])
+    assert properties.find("first_published_datetime") is None
+    assert properties.findtext("latest_published_datetime") == NOW.isoformat()
 
 
-def test_failed_metrics_write_does_not_clear_first_submission_after_publication(publishing_client):
+def test_failed_publication_is_not_retried(publishing_client):
     client = publishing_client
-    client.set_property_as_node.side_effect = RuntimeError("Property write failed")
+    client._send_to_eval.side_effect = RuntimeError("Property write failed")  # noqa: SLF001
     with pytest.raises(RuntimeError, match="Property write failed"):
         client.publish_document(URI)
-    client.set_property.assert_not_called()
-    client.set_published.assert_called_once_with(URI, True)
+    client._send_to_eval.assert_called_once()  # noqa: SLF001
 
 
 def test_invalid_metrics_abort_before_database_write():
@@ -90,22 +100,18 @@ def test_invalid_metrics_abort_before_database_write():
 
 @time_machine.travel(NOW, tick=False)
 @pytest.mark.parametrize("first_submission", [False, True])
-def test_submission_update_writes_timestamps_after_content(first_submission):
+def test_submission_update_writes_content_and_timestamps_in_one_request(first_submission):
     client = MarklogicApiClient("", "", "", False)
     state = STATE
     if first_submission:
         state = state.replace(
             "<first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>", ""
         ).replace('"type":"submission"', '"type":"edit"')
-    operations = Mock()
     with (
         patch.object(client, "_eval_and_decode", return_value=state) as read,
         patch.object(client, "_send_to_eval") as send,
         patch.object(client, "set_datetime_property") as write_property,
     ):
-        operations.attach_mock(read, "read")
-        operations.attach_mock(send, "save")
-        operations.attach_mock(write_property, "write_property")
         response = client.update_locked_document_xml(
             URI, etree.Element("document"), VersionAnnotation(VersionType.SUBMISSION, True), validate_hash=False
         )
@@ -114,21 +120,22 @@ def test_submission_update_writes_timestamps_after_content(first_submission):
     assert response is send.return_value
     variables, query = send.call_args.args
     assert query == "update_locked_judgment.xqy"
-    assert set(variables) == {"uri", "judgment", "annotation"}
-    expected_writes = [call(URI, "latest_submission_datetime", NOW)]
+    assert variables["expected_state"] == "initial-state"
+    assert variables["judgment"] == "<document/>"
+    properties = etree.fromstring(variables["properties"])
+    assert properties.findtext("latest_submission_datetime") == NOW.isoformat()
     if first_submission:
-        expected_writes.insert(0, call(URI, "first_submission_datetime", NOW))
-    assert write_property.call_args_list == expected_writes
-    assert [operation[0] for operation in operations.mock_calls] == ["read", "save"] + ["write_property"] * len(
-        expected_writes
-    )
+        assert properties.findtext("first_submission_datetime") == NOW.isoformat()
+    else:
+        assert properties.find("first_submission_datetime") is None
+    write_property.assert_not_called()
 
 
 def test_failed_content_update_does_not_write_submission_timestamps():
     client = MarklogicApiClient("", "", "", False)
     with (
         patch.object(client, "_eval_and_decode", return_value=STATE),
-        patch.object(client, "_send_to_eval", side_effect=RuntimeError("Content update failed")),
+        patch.object(client, "_send_to_eval", side_effect=RuntimeError("Content update failed")) as send,
         patch.object(client, "set_datetime_property") as write_property,
         pytest.raises(RuntimeError, match="Content update failed"),
     ):
@@ -136,6 +143,7 @@ def test_failed_content_update_does_not_write_submission_timestamps():
             URI, etree.Element("document"), VersionAnnotation(VersionType.SUBMISSION, True), validate_hash=False
         )
     write_property.assert_not_called()
+    send.assert_called_once()
 
 
 @pytest.mark.parametrize("version_type", [VersionType.EDIT, VersionType.ENRICHMENT, VersionType.RESTORE])
@@ -157,4 +165,23 @@ def test_other_versions_do_not_read_or_change_metrics(version_type, insert):
     if insert:
         assert send.call_args.args[0]["properties"] == "<properties/>"
     else:
-        assert set(send.call_args.args[0]) == {"uri", "judgment", "annotation"}
+        assert send.call_args.args[0]["properties"] == "<properties/>"
+        assert send.call_args.args[0]["expected_state"] == ""
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_state_conflict_is_not_retried(publish):
+    client = MarklogicApiClient("", "", "", False)
+    with (
+        patch.object(client, "_eval_and_decode", return_value=STATE) as read,
+        patch.object(client, "_send_to_eval", side_effect=MarklogicMetricsStateChangedError()) as send,
+        pytest.raises(MarklogicMetricsStateChangedError),
+    ):
+        if publish:
+            client.publish_document(URI)
+        else:
+            client.update_locked_document_xml(
+                URI, etree.Element("document"), VersionAnnotation(VersionType.SUBMISSION, True), validate_hash=False
+            )
+    read.assert_called_once()
+    send.assert_called_once()
