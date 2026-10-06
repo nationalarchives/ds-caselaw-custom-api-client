@@ -36,3 +36,11 @@ class DocumentNotLockedForEditingError(Exception):
 
 class DocumentEditingSessionAlreadyActiveError(Exception):
     """``editing_session`` was entered while a session is already active on this document."""
+
+
+class DocumentMergeNotPossibleError(Exception):
+    """A document failed the checks required to merge it into an existing document."""
+
+    def __init__(self, messages: list[str]) -> None:
+        self.messages = messages
+        super().__init__("; ".join(messages))
