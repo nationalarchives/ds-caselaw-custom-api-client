@@ -94,6 +94,26 @@ class TestErrors(unittest.TestCase):
         with pytest.raises(MarklogicMetricsStateChangedError):
             self.client._raise_for_status(response)
 
+    def test_metrics_state_conflict_json(self):
+        with responses.RequestsMock() as response_list:
+            response_list.add(
+                responses.GET,
+                url="http://example.com",
+                status=500,
+                json={
+                    "errorResponse": {
+                        "statusCode": 500,
+                        "status": "Internal Server Error",
+                        "messageCode": "Document changed while calculating metrics",
+                        "message": "Document changed while calculating metrics:",
+                        "stackTrace": "Document changed while calculating metrics (METRICS-STATE-CHANGED):",
+                    },
+                },
+            )
+            response = requests.get("http://example.com")  # noqa: S113
+        with pytest.raises(MarklogicMetricsStateChangedError):
+            self.client._raise_for_status(response)
+
 
 class TestMarklogicResponseHandlers(unittest.TestCase):
     @patch("caselawclient.Client.decoder.MultipartDecoder.from_response")

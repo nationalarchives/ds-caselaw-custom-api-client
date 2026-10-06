@@ -192,6 +192,8 @@ class MarklogicApiClient:
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
         "METRICS-STATE-CHANGED": MarklogicMetricsStateChangedError,
+        # REST eval can return the custom error description as its message code.
+        "Document changed while calculating metrics": MarklogicMetricsStateChangedError,
         "SEC-PRIVDNE": MarklogicNotPermittedError,
         "XDMP-VALIDATE.*": MarklogicValidationFailedError,
         "FCL-DOCUMENTNOTFOUND.*": DocumentNotFoundError,
@@ -275,15 +277,27 @@ class MarklogicApiClient:
         return f"{self.base_url}/{path.lstrip('/')}"
 
     @classmethod
-    def _get_error_code(cls, content_as_xml: str | None) -> str:
+    def _get_error_code(cls, content: str | None) -> str:
+        """Extract the message code from a MarkLogic XML or JSON error response."""
         logger.warning(
             "XMLTools is deprecated and will be removed in later versions. "
             "Use methods from MarklogicApiClient.Client instead.",
         )
-        if not content_as_xml:
+        if not content:
             return "Unknown error, Marklogic returned a null or empty response"
         try:
-            xml = fromstring(content_as_xml)
+            response_data = json.loads(content)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        else:
+            if isinstance(response_data, dict):
+                error_response = response_data.get("errorResponse")
+                if isinstance(error_response, dict):
+                    message_code = error_response.get("messageCode")
+                    if isinstance(message_code, str) and message_code:
+                        return message_code
+        try:
+            xml = fromstring(content)
             message_code_element = xml.find(
                 "message-code",
                 namespaces={"": "http://marklogic.com/xdmp/error"},
