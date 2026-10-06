@@ -22,6 +22,7 @@ from caselawclient.models.utilities.aws import (
     build_new_key,
     check_docx_exists,
     copy_assets,
+    delete_documents_from_private_bucket,
     delete_non_targz_from_bucket,
     generate_docx_url,
     generate_pdf_url,
@@ -145,6 +146,40 @@ class TestAWSUtils:
         )
 
     @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_copy_assets_follows_truncated_listings(self, client):
+        """A single listing returns at most 1,000 keys, so every page must be copied."""
+        client.return_value.list_objects.side_effect = [
+            {"Contents": [{"Key": "uksc/2023/1/a.png"}], "IsTruncated": True, "NextMarker": "uksc/2023/1/a.png"},
+            {"Contents": [{"Key": "uksc/2023/1/b.png"}], "IsTruncated": False},
+        ]
+
+        copy_assets(DocumentURIString("uksc/2023/1"), DocumentURIString("ukpc/1999/9"))
+
+        assert [c.kwargs for c in client.return_value.list_objects.call_args_list] == [
+            {"Bucket": "MY_BUCKET", "Prefix": "uksc/2023/1/"},
+            {"Bucket": "MY_BUCKET", "Prefix": "uksc/2023/1/", "Marker": "uksc/2023/1/a.png"},
+        ]
+        assert [c.args[2] for c in client.return_value.copy.call_args_list] == [
+            "ukpc/1999/9/a.png",
+            "ukpc/1999/9/b.png",
+        ]
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_copy_assets_uses_last_key_as_marker_without_next_marker(self, client):
+        """S3 only returns `NextMarker` when a delimiter is used; otherwise continue from the last key."""
+        client.return_value.list_objects.side_effect = [
+            {"Contents": [{"Key": "uksc/2023/1/a.png"}, {"Key": "uksc/2023/1/b.png"}], "IsTruncated": True},
+            {"Contents": [{"Key": "uksc/2023/1/c.png"}]},
+        ]
+
+        copy_assets(DocumentURIString("uksc/2023/1"), DocumentURIString("ukpc/1999/9"))
+
+        assert client.return_value.list_objects.call_args_list[1].kwargs["Marker"] == "uksc/2023/1/b.png"
+        assert client.return_value.copy.call_count == 3
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
     def test_delete_non_tar_gz(self, client):
         client.return_value.list_objects.return_value = {
             "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}, {"Key": "uksc/2023/1/TDR-2023-AAA.tar.gz"}]
@@ -154,6 +189,53 @@ class TestAWSUtils:
         client.return_value.delete_objects.assert_called_with(
             Bucket="fake_bucket", Delete={"Objects": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}]}
         )
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_delete_documents_from_private_bucket_follows_truncated_listings(self, client):
+        """A single listing returns at most 1,000 keys, so every page must be deleted."""
+        client.return_value.list_objects.side_effect = [
+            {"Contents": [{"Key": "uksc/2023/1/a.png"}], "IsTruncated": True},
+            {"Contents": [{"Key": "uksc/2023/1/b.png"}], "IsTruncated": False},
+        ]
+
+        delete_documents_from_private_bucket(DocumentURIString("uksc/2023/1"))
+
+        assert [c.kwargs for c in client.return_value.list_objects.call_args_list] == [
+            {"Bucket": "MY_BUCKET", "Prefix": "uksc/2023/1/"},
+            {"Bucket": "MY_BUCKET", "Prefix": "uksc/2023/1/", "Marker": "uksc/2023/1/a.png"},
+        ]
+        deleted_keys = [
+            obj["Key"]
+            for call in client.return_value.delete_objects.call_args_list
+            for obj in call.kwargs["Delete"]["Objects"]
+        ]
+        assert deleted_keys == ["uksc/2023/1/a.png", "uksc/2023/1/b.png"]
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_delete_documents_from_private_bucket_batches_deletes(self, client):
+        """S3 accepts at most 1,000 keys per `delete_objects` call."""
+        keys = [f"uksc/2023/1/{i:04}.png" for i in range(2500)]
+        client.return_value.list_objects.return_value = {"Contents": [{"Key": key} for key in keys]}
+
+        delete_documents_from_private_bucket(DocumentURIString("uksc/2023/1"))
+
+        batches = [
+            [obj["Key"] for obj in call.kwargs["Delete"]["Objects"]]
+            for call in client.return_value.delete_objects.call_args_list
+        ]
+        assert [len(batch) for batch in batches] == [1000, 1000, 500]
+        assert [key for batch in batches for key in batch] == keys
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_delete_documents_from_private_bucket_with_nothing_to_delete(self, client):
+        client.return_value.list_objects.return_value = {}
+
+        delete_documents_from_private_bucket(DocumentURIString("uksc/2023/1"))
+
+        client.return_value.delete_objects.assert_not_called()
 
     @staticmethod
     def _build_consignment_archive(consignment_reference: str, files: dict[str, bytes]) -> bytes:
@@ -492,6 +574,7 @@ class TestS3TrailingSlash:
     @patch("caselawclient.models.utilities.aws.create_s3_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
     def test_copy(self, fake_s3):
+        fake_s3.return_value.list_objects.return_value = {}
         aws_utils.copy_assets(DocumentURIString("from"), DocumentURIString("to"))
         fake_s3.return_value.list_objects.assert_called_with(Bucket="MY_BUCKET", Prefix="from/")
 

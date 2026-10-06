@@ -4,14 +4,14 @@ import os
 import uuid
 import warnings
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, Self
 
 from ds_caselaw_utils import courts
 from ds_caselaw_utils.courts import CourtNotFoundException
 from ds_caselaw_utils.types import CourtCode, NeutralCitationString
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 from requests_toolbelt.multipart import decoder
 
 from caselawclient.errors import (
@@ -46,6 +46,7 @@ from caselawclient.models.utilities.aws import (
     announce_document_event,
     are_unpublished_assets_clean,
     check_docx_exists,
+    copy_assets,
     delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
@@ -64,6 +65,7 @@ from .exceptions import (
     CannotRestorePublishedDocument,
     DocumentAlreadyExistsError,
     DocumentEditingSessionAlreadyActiveError,
+    DocumentMergeNotPossibleError,
     DocumentNotLockedForEditingError,
     DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
@@ -73,6 +75,35 @@ from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMEN
 logger = logging.getLogger(__name__)
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+
+MERGED_PROPERTIES = (
+    "source-organisation",
+    "source-name",
+    "source-email",
+    "transfer-consignment-reference",
+    "transfer-received-at",
+    "parser-run-id",
+)
+""" MarkLogic properties describing where a document came from; when merging, a persisted source's values replace the target's. """
+
+_MARKLOGIC_STATE_CACHES = (
+    "source_name",
+    "source_email",
+    "consignment_reference",
+    "versions",
+    "versions_as_documents",
+    "annotation",
+    "structured_annotation",
+    "version_created_datetime",
+    "is_published",
+    "is_held",
+    "first_published_datetime",
+    "has_ever_been_published",
+    "slug",
+    "validation_failure_messages",
+    "is_publishable",
+)
+""" Cached properties which are read from MarkLogic and so go stale when it changes underneath us. """
 
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
@@ -985,6 +1016,167 @@ class Document:
             delete_documents_from_private_bucket(self.uri)
         else:
             raise DocumentNotSafeForDeletion
+
+    def _check_can_merge_into(self, target: "Document") -> SuccessFailureMessageTuple:
+        """Can this document be merged into `target`? Checks needing MarkLogic state only run if this document is persisted."""
+        messages: list[str] = []
+
+        if self.uri == target.uri:
+            messages.append("You cannot merge a document with itself")
+        if self.is_version:
+            messages.append("This document is a specific version, and cannot be used as a merge source")
+        if target.is_version:
+            messages.append("The target document is a specific version, and cannot be merged into")
+        if type(self) is not type(target):
+            messages.append(
+                f"The type of {self.uri} ({type(self).document_noun}) does not match "
+                f"the type of {target.uri} ({type(target).document_noun})"
+            )
+
+        # These queries only make sense for managed documents; MarkLogic errors if asked about a version's versions.
+        if self._persisted and not self.is_version:
+            if len(self.versions) > 1:
+                messages.append("This document has more than one version")
+            if self.has_ever_been_published:
+                messages.append("This document has previously been published")
+            if not self.safe_to_delete:
+                messages.append("This document cannot be deleted because it is published")
+            if not target.is_version and self.version_created_datetime < target.version_created_datetime:
+                messages.append(f"The document at {self.uri} is older than the latest version of {target.uri}")
+
+        return SuccessFailureMessageTuple(not messages, messages)
+
+    def _discard_cached_state(self) -> None:
+        """Forget anything read from MarkLogic that a save, publish or concurrent writer could have changed."""
+        for cached in _MARKLOGIC_STATE_CACHES:
+            self.__dict__.pop(cached, None)
+
+    def _reload_state_from_marklogic(self) -> None:
+        """Re-read this persisted document's body, identifiers and metadata claims, discarding cached state."""
+        self._initialise_document_body()
+        self._initialise_identifiers()
+        self._initialise_metadata_fields()
+        self._discard_cached_state()
+
+    def _merge_identifiers_into(self, target: "Document") -> None:
+        """
+        Add this document's identifiers to `target`'s, skipping any with the same value and schema.
+
+        Where a schema permits only one non-deprecated identifier, the target's existing one is deprecated so the
+        incoming one is preferred; nothing is removed.
+        """
+        for identifier in self.identifiers.values():
+            if target.identifiers.contains(identifier):
+                continue
+
+            if not identifier.deprecated and not identifier.schema.allow_multiple:
+                for existing in target.identifiers.values():
+                    if existing.schema is identifier.schema:
+                        existing.deprecated = True
+
+            target.identifiers.add(identifier)
+
+    def _hand_over_to(self, target: "Document") -> None:
+        """
+        Move this persisted document's ingest properties and S3 assets to `target`, then delete this document.
+
+        Deletion is last, so a failure leaves a duplicate rather than losing data.
+        """
+        for property_name in MERGED_PROPERTIES:
+            value = self.api_client.get_property(self.uri, property_name)
+            if value:
+                self.api_client.set_property(target.uri, property_name, value)
+        copy_assets(self.uri, target.uri, strict=True)
+        self.delete()
+
+    def merge_into(
+        self,
+        target_uri: DocumentURIString,
+        message: str,
+        *,
+        version_type: VersionType = VersionType.SUBMISSION,
+        automated: bool = False,
+        payload: dict[str, Any] | None = None,
+    ) -> "Document":
+        """
+        Merge this document into the existing document at `target_uri`, which becomes a new version of that document.
+
+        The target must already be persisted, as MarkLogic's own versioning preserves its history. This document may
+        be in memory only or already persisted. If persisted, its ingest properties (see `MERGED_PROPERTIES`) replace
+        the target's, its S3 assets are copied to the target, and it is deleted once everything else has succeeded; a
+        failure before that point therefore leaves a duplicate rather than losing data.
+
+        The target keeps all its identifiers and metadata claims; this document's are added to them. Where a schema
+        allows only one non-deprecated identifier and the values differ, the target's is deprecated. Metadata held
+        only in either document's body is turned into claims first, so neither body's values are lost; where the
+        two disagree, this document's body is the newer claim and wins.
+
+        This method takes its own editing sessions on the target (and on this document, if persisted). Once they
+        are held the target is reloaded and the checks are repeated against fresh state, so a concurrent writer
+        cannot slip in between the checks and the merge. A persisted source must still have a single version at
+        that point; any other worker's save would have added another, so unsaved in-memory edits to this document
+        are kept and used.
+
+        :param target_uri: The URI of the existing document to merge into.
+        :param message: Human-readable message describing the merge, stored on the new version.
+        :param payload: Optional structured data stored on the version annotation. If omitted and this document is
+            persisted, the payload of its latest version is used. If persisted, `merged_from` is added to it.
+
+        :return: The updated target document.
+
+        :raises DocumentNotFoundError: There is no document at `target_uri`.
+        :raises DocumentMergeNotPossibleError: The documents failed the checks required to merge them.
+        """
+        if type(self) is Document:
+            raise TypeError("Use a concrete document class such as Judgment or PressSummary to merge.")
+
+        target = self.api_client.get_document_by_uri(target_uri)
+
+        validation = self._check_can_merge_into(target)
+        if not validation.success:
+            raise DocumentMergeNotPossibleError(validation.messages)
+
+        merge_payload: dict[str, Any] = dict(payload) if payload is not None else {}
+        if self._persisted:
+            if payload is None:
+                try:
+                    merge_payload = dict(self.structured_annotation.get("payload") or {})
+                except ValidationError:
+                    logger.warning("Could not read the version annotation of %s; not inheriting its payload", self.uri)
+            merge_payload["merged_from"] = self.uri
+
+        with ExitStack() as sessions:
+            if self._persisted:
+                sessions.enter_context(self.editing_session())
+            sessions.enter_context(target.editing_session())
+
+            # Anything read before the sessions were held may be stale. The source's body, identifiers and claims
+            # are left alone as they may carry unsaved edits; the rules require a single version, so any other
+            # worker's save to it shows up in the repeated checks.
+            target._reload_state_from_marklogic()  # noqa: SLF001
+            self._discard_cached_state()
+            validation = self._check_can_merge_into(target)
+            if not validation.success:
+                raise DocumentMergeNotPossibleError(validation.messages)
+
+            # A claim is only taken from a body if the document has none of that kind yet, so do this before
+            # combining claims. Target first, so that the source's newer claims win where the two disagree.
+            target._convert_body_claims_to_structured_metadata()  # noqa: SLF001
+            self._convert_body_claims_to_structured_metadata()
+
+            target.body = self.body
+            self._merge_identifiers_into(target)
+            for metadata_field in self.metadata_fields.values():
+                target.metadata_fields.add(metadata_field)
+
+            target.save(message, version_type=version_type, automated=automated, payload=merge_payload)
+
+            if self._persisted:
+                self._hand_over_to(target)
+
+        target._discard_cached_state()  # noqa: SLF001
+
+        return target
 
     def _get_restore_metadata_source_version(self, version_number: int) -> Optional["Document"]:
         """Find the latest version that should source metadata during restore.
