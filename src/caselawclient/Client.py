@@ -4,7 +4,8 @@ import logging
 import os
 import re
 import warnings
-from datetime import UTC, datetime, time, timedelta
+from dataclasses import replace
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,13 @@ from requests_toolbelt.multipart import decoder
 
 from caselawclient import xquery_type_dicts as query_dicts
 from caselawclient.identifier_resolution import IdentifierResolutions
+from caselawclient.metrics import (
+    METRIC_DATE_PROPERTIES,
+    MetricBucketing,
+    MetricName,
+    MetricStatistics,
+    get_metric_buckets,
+)
 from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_JUDGMENT,
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
@@ -853,6 +861,36 @@ class MarklogicApiClient:
         )
         vars = json.dumps(search_parameters.as_marklogic_payload())
         return self.invoke(module, vars)
+
+    def get_metrics(
+        self,
+        *,
+        metric: MetricName,
+        bucketing: MetricBucketing,
+        start_date: date,
+        end_date: date,
+        search_parameters: SearchParameters | None = None,
+    ) -> dict[str, MetricStatistics]:
+        """Aggregate a lifecycle metric over daily or monthly buckets.
+
+        Start and end dates are exclusive. Search parameters can be passed in to filter metrics scope.
+        """
+        if metric not in METRIC_DATE_PROPERTIES:
+            raise ValueError(f"Unknown lifecycle metric: {metric}")
+        buckets = get_metric_buckets(start_date, end_date, bucketing)
+        parameters = replace(search_parameters or SearchParameters(), page=1, page_size=10, order=None)
+        can_show_unpublished = self.verify_show_unpublished(parameters.show_unpublished or parameters.only_unpublished)
+        if parameters.only_unpublished and not can_show_unpublished:
+            raise MarklogicNotPermittedError("Not permitted to aggregate unpublished documents")
+        parameters.show_unpublished = can_show_unpublished
+        vars: query_dicts.GetMetricsDict = {
+            "metric": metric,
+            "date_property": METRIC_DATE_PROPERTIES[metric],
+            "buckets": json.dumps(buckets),
+            "search_parameters": json.dumps(parameters.as_marklogic_payload()),
+        }
+        result: dict[str, MetricStatistics] = json.loads(self._eval_and_decode(vars, "get_metrics.xqy"))
+        return result
 
     def eval_xslt(
         self,
