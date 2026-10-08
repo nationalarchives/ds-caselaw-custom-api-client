@@ -27,6 +27,7 @@ from caselawclient.models.documents import (
     DOCUMENT_COLLECTION_URI_PRESS_SUMMARY,
     Document,
 )
+from caselawclient.models.documents.metrics.metrics_state import SUBMISSION_AFTER_PUBLICATION_PROPERTY, MetricsState
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.judgments import Judgment
 from caselawclient.models.press_summaries import PressSummary
@@ -50,6 +51,7 @@ from .errors import (
     MarklogicBadRequestError,
     MarklogicCheckoutConflictError,
     MarklogicCommunicationError,
+    MarklogicMetricsStateChangedError,
     MarklogicNotPermittedError,
     MarklogicResourceLockedError,
     MarklogicResourceNotCheckedOutError,
@@ -189,6 +191,9 @@ class MarklogicApiClient:
         "DLS-UNMANAGED": MarklogicResourceUnmanagedError,
         "DLS-NOTCHECKEDOUT": MarklogicResourceNotCheckedOutError,
         "DLS-CHECKOUTCONFLICT": MarklogicCheckoutConflictError,
+        "METRICS-STATE-CHANGED": MarklogicMetricsStateChangedError,
+        # REST eval can return the custom error description as its message code.
+        "Document changed while calculating metrics": MarklogicMetricsStateChangedError,
         "SEC-PRIVDNE": MarklogicNotPermittedError,
         "XDMP-VALIDATE.*": MarklogicValidationFailedError,
         "FCL-DOCUMENTNOTFOUND.*": DocumentNotFoundError,
@@ -272,15 +277,27 @@ class MarklogicApiClient:
         return f"{self.base_url}/{path.lstrip('/')}"
 
     @classmethod
-    def _get_error_code(cls, content_as_xml: str | None) -> str:
+    def _get_error_code(cls, content: str | None) -> str:
+        """Extract the message code from a MarkLogic XML or JSON error response."""
         logger.warning(
             "XMLTools is deprecated and will be removed in later versions. "
             "Use methods from MarklogicApiClient.Client instead.",
         )
-        if not content_as_xml:
+        if not content:
             return "Unknown error, Marklogic returned a null or empty response"
         try:
-            xml = fromstring(content_as_xml)
+            response_data = json.loads(content)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        else:
+            if isinstance(response_data, dict):
+                error_response = response_data.get("errorResponse")
+                if isinstance(error_response, dict):
+                    message_code = error_response.get("messageCode")
+                    if isinstance(message_code, str) and message_code:
+                        return message_code
+        try:
+            xml = fromstring(content)
             message_code_element = xml.find(
                 "message-code",
                 namespaces={"": "http://marklogic.com/xdmp/error"},
@@ -593,7 +610,18 @@ class MarklogicApiClient:
             "uri": uri,
             "judgment": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "properties": "<properties/>",
+            "expected_state": "",
         }
+
+        if annotation.version_type == VersionType.SUBMISSION:
+            # Read history before adding this version so we can identify a first submission.
+            state = self._get_document_metrics_state(document_uri)
+            properties = etree.Element("properties")
+            for name, value in state.submission_properties(datetime.now(UTC)).items():
+                etree.SubElement(properties, name).text = value.isoformat()
+            vars["properties"] = etree.tostring(properties).decode()
+            vars["expected_state"] = state.signature
 
         return self._send_to_eval(vars, "update_locked_judgment.xqy")
 
@@ -625,11 +653,18 @@ class MarklogicApiClient:
         annotation.set_calling_function("insert_document_xml")
         annotation.set_calling_agent(self.user_agent)
 
+        properties = etree.Element("properties")
+        if annotation.version_type == VersionType.SUBMISSION:
+            updates = MetricsState.for_new_document().submission_properties(datetime.now(UTC))
+            for name, value in updates.items():
+                etree.SubElement(properties, name).text = value.isoformat()
+
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
             "type_collection": document_type.type_collection_name,
             "document": xml.decode("utf-8"),
             "annotation": annotation.as_json,
+            "properties": etree.tostring(properties).decode(),
         }
 
         return self._send_to_eval(vars, "insert_document.xqy")
@@ -1001,6 +1036,27 @@ class MarklogicApiClient:
             return require_aware_utc(isoparse(content), name=name)
 
         return None
+
+    def _get_document_metrics_state(self, document_uri: DocumentURIString) -> MetricsState:
+        vars: query_dicts.GetDocumentMetricsStateDict = {"uri": self._format_uri_for_marklogic(document_uri)}
+        return MetricsState.from_etree(etree.fromstring(self._eval_and_decode(vars, "get_document_metrics_state.xqy")))
+
+    def publish_document(self, document_uri: DocumentURIString) -> requests.Response:
+        """Calculate reporting properties and record publication date times."""
+        state = self._get_document_metrics_state(document_uri)
+        now = datetime.now(UTC)
+        properties = etree.Element("properties")
+        etree.SubElement(properties, "published").text = "true"
+        for name, value in state.publication_dates(now).items():
+            etree.SubElement(properties, name).text = value.isoformat()
+        properties.append(state.publication_metrics(now).as_etree)
+        etree.SubElement(properties, SUBMISSION_AFTER_PUBLICATION_PROPERTY)
+        vars: query_dicts.PublishDocumentDict = {
+            "uri": self._format_uri_for_marklogic(document_uri),
+            "properties": etree.tostring(properties).decode(),
+            "expected_state": state.signature,
+        }
+        return self._send_to_eval(vars, "publish_document.xqy")
 
     def set_published(
         self,

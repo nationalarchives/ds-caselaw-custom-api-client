@@ -78,7 +78,7 @@ class TestDocumentPublish:
             document = Document(DocumentURIString("test/1234"), mock_api_client)
             document.is_publishable = False
             document.publish()
-            mock_api_client.set_published.assert_not_called()
+            mock_api_client.publish_document.assert_not_called()
 
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
@@ -94,7 +94,7 @@ class TestDocumentPublish:
         document.is_publishable = True
         document.publish()
         mock_publish_documents.assert_called_once_with("test/1234")
-        mock_api_client.set_published.assert_called_once_with("test/1234", True)
+        mock_api_client.publish_document.assert_called_once_with("test/1234")
         mock_announce_document_event.assert_called_once_with(
             uri="test/1234",
             status="publish",
@@ -142,32 +142,10 @@ class TestDocumentPublish:
             next(identifier.value for identifier in document.identifiers.of_type(FindCaseLawIdentifier)) == "tn4t35ts"
         )
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
-    def test_publish_sets_first_published_date_if_unset(
-        self,
-        mock_enrich,
-        mock_publish_documents,
-        mock_announce_document_event,
-        mock_api_client,
-    ):
-        document = Document(DocumentURIString("test/1234"), mock_api_client)
-        document.is_publishable = True
-        document.first_published_datetime = None
-        document.publish()
-
-        expected_now = datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc)
-        mock_api_client.set_datetime_property.assert_any_call("test/1234", "first_published_datetime", expected_now)
-        mock_api_client.set_datetime_property.assert_any_call("test/1234", "latest_published_datetime", expected_now)
-        assert mock_api_client.set_datetime_property.call_count == 2
-
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
-    @patch("caselawclient.models.documents.announce_document_event")
-    @patch("caselawclient.models.documents.publish_documents")
-    @patch("caselawclient.models.documents.Document.enrich")
-    def test_publish_does_not_set_first_published_date_if_already_set(
+    def test_publish_invalidates_cached_publication_state(
         self,
         mock_enrich,
         mock_publish_documents,
@@ -179,19 +157,18 @@ class TestDocumentPublish:
         document.first_published_datetime = datetime.datetime(
             2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
         )
+        document.is_published = False
+        _ = document.metrics
         document.publish()
 
-        mock_api_client.set_datetime_property.assert_called_once_with(
-            "test/1234",
-            "latest_published_datetime",
-            datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
-        )
+        assert "first_published_datetime" not in document.__dict__
+        assert "is_published" not in document.__dict__
+        assert "metrics" not in document.__dict__
 
-    @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.documents.announce_document_event")
     @patch("caselawclient.models.documents.publish_documents")
     @patch("caselawclient.models.documents.Document.enrich")
-    def test_publish_always_sets_latest_published_date(
+    def test_failed_publication_does_not_announce_or_discard_cache(
         self,
         mock_enrich,
         mock_publish_documents,
@@ -206,13 +183,14 @@ class TestDocumentPublish:
         document.latest_published_datetime = datetime.datetime(
             2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
         )
-        document.publish()
+        metrics = document.metrics
+        mock_api_client.publish_document.side_effect = RuntimeError("Database update failed")
+        with pytest.raises(RuntimeError, match="Database update failed"):
+            document.publish()
 
-        mock_api_client.set_datetime_property.assert_called_once_with(
-            "test/1234",
-            "latest_published_datetime",
-            datetime.datetime(1955, 11, 5, 6, 0, tzinfo=datetime.timezone.utc),
-        )
+        assert document.metrics is metrics
+        mock_announce_document_event.assert_not_called()
+        mock_enrich.assert_not_called()
 
 
 class TestDocumentUnpublish:

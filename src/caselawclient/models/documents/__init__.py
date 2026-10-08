@@ -32,6 +32,7 @@ from caselawclient.models.documents.metadata.registry import (
     METADATA_FIELD_CLASSES,
     DocumentMetadata,
 )
+from caselawclient.models.documents.metrics import DocumentMetrics
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
 from caselawclient.models.identifiers.collection import IdentifiersCollection
@@ -294,6 +295,37 @@ class Document:
                 raise
         finally:
             self._clear_local_editing_lock()
+
+    @cached_property
+    def metrics(self) -> DocumentMetrics:
+        """Values for reporting; individual metric values are None when not set."""
+        if not self.is_persisted:
+            return DocumentMetrics()
+        return DocumentMetrics.from_etree(self.api_client.get_property_as_node(self.uri, "metrics"))
+
+    def save_metrics(self) -> None:
+        """Persist the metrics within an active editing session."""
+        self._require_persisted()
+        self._require_editing_lock()
+        self.api_client.set_property_as_node(self.uri, "metrics", self.metrics.as_etree)
+
+    @property
+    def first_submission_datetime(self) -> datetime.datetime | None:
+        """Date time of the first recorded SUBMISSION save."""
+        self._require_persisted()
+        return self.api_client.get_datetime_property(self.uri, "first_submission_datetime")
+
+    @property
+    def latest_submission_datetime(self) -> datetime.datetime | None:
+        """Date time of the latest recorded SUBMISSION save."""
+        self._require_persisted()
+        return self.api_client.get_datetime_property(self.uri, "latest_submission_datetime")
+
+    @property
+    def first_submission_after_latest_publication_datetime(self) -> datetime.datetime | None:
+        """First submission since the most recent publication; cleared when published again."""
+        self._require_persisted()
+        return self.api_client.get_datetime_property(self.uri, "first_submission_after_latest_publication_datetime")
 
     @classmethod
     def _assemble_from_body(
@@ -882,16 +914,17 @@ class Document:
         ## Copy the document assets into the appropriate place in S3
         publish_documents(self.uri)
 
-        ## Set the fact the document is published
-        self.api_client.set_published(self.uri, True)
-
-        ## If necessary, set the first published date
-        now = datetime.datetime.now(datetime.timezone.utc)
-        if not self.first_published_datetime:
-            self.api_client.set_datetime_property(self.uri, "first_published_datetime", now)
-
-        ## Always update the latest published date
-        self.api_client.set_datetime_property(self.uri, "latest_published_datetime", now)
+        ## Record publication state, timestamps and reporting metrics
+        self.api_client.publish_document(self.uri)
+        for name in (
+            "metrics",
+            "is_published",
+            "first_published_datetime",
+            "first_published_datetime_display",
+            "latest_published_datetime",
+            "has_ever_been_published",
+        ):
+            self.__dict__.pop(name, None)
 
         ## Announce the publication on the event bus
         announce_document_event(

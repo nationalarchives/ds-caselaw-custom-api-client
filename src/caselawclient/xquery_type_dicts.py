@@ -79,6 +79,11 @@ class GetComponentsForDocumentDict(MarkLogicAPIDict):
     parent_uri: DocumentURIString
 
 
+# get_document_metrics_state.xqy
+class GetDocumentMetricsStateDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
 # get_judgment.xqy
 class GetJudgmentDict(MarkLogicAPIDict):
     search_query: Optional[str]
@@ -161,12 +166,20 @@ class GetVersionCreatedDict(MarkLogicAPIDict):
 class InsertDocumentDict(MarkLogicAPIDict):
     annotation: str
     document: str
+    properties: str
     type_collection: str
     uri: MarkLogicDocumentURIString
 
 
 # list_judgment_versions.xqy
 class ListJudgmentVersionsDict(MarkLogicAPIDict):
+    uri: MarkLogicDocumentURIString
+
+
+# publish_document.xqy
+class PublishDocumentDict(MarkLogicAPIDict):
+    expected_state: str
+    properties: str
     uri: MarkLogicDocumentURIString
 
 
@@ -258,7 +271,9 @@ class SetPropertyAsNodeDict(MarkLogicAPIDict):
 # update_locked_judgment.xqy
 class UpdateLockedJudgmentDict(MarkLogicAPIDict):
     annotation: str
+    expected_state: str
     judgment: str
+    properties: str
     uri: MarkLogicDocumentURIString
 
 

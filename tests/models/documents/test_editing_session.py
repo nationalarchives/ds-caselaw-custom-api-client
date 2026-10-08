@@ -148,6 +148,19 @@ class TestEditingSessionLifecycle:
 
 
 class TestEditingLockRequirement:
+    def test_save_metrics_without_lock_raises(self, mock_api_client, unlocked_document):
+        with pytest.raises(DocumentNotLockedForEditingError):
+            unlocked_document.save_metrics()
+
+        mock_api_client.set_property_as_node.assert_not_called()
+
+    def test_save_metrics_inside_session(self, mock_api_client, unlocked_document):
+        with unlocked_document.editing_session():
+            unlocked_document.metrics.tdr_to_first_publish.value = 60
+            unlocked_document.save_metrics()
+
+        mock_api_client.set_property_as_node.assert_called_once()
+
     def test_save_update_without_lock_raises(self, mock_api_client, unlocked_document):
         with pytest.raises(DocumentNotLockedForEditingError):
             unlocked_document.save(message="Changed document")
