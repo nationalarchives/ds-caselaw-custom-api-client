@@ -108,6 +108,14 @@ class GetLastModifiedDict(MarkLogicAPIDict):
     uri: MarkLogicDocumentURIString
 
 
+# get_metrics.xqy
+class GetMetricsDict(MarkLogicAPIDict):
+    buckets: str
+    date_property: str
+    metric: str
+    search_parameters: str
+
+
 # get_missing_fclid.xqy
 class GetMissingFclidDict(MarkLogicAPIDict):
     maximum_records: Optional[int]

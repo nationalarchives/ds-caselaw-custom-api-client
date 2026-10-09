@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Added
 
+- **Client**: `get_metrics()` returns daily or monthly lifecycle counts, sums, means and medians using shared search filters and MarkLogic range indexes.
 - **Document**: `editing_session()` context manager, holding a UUID-annotated checkout that is only released if still owned
 - **Client**: `checkin_judgment_if_ours`, `break_checkout_if_ours` and `delete_judgment_if_ours`
 
