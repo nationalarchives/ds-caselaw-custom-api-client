@@ -4,7 +4,7 @@ import json
 import logging
 import tarfile
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from functools import cache
 from typing import Any, Literal, Self, TypedDict, overload
 
@@ -12,7 +12,7 @@ import boto3
 import botocore.client
 import environ
 from mypy_boto3_s3.client import S3Client
-from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef
+from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef, ObjectTypeDef
 from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
 from typing_extensions import NotRequired
@@ -22,6 +22,9 @@ from caselawclient.types import DocumentURIString
 env = environ.Env()
 
 logger = logging.getLogger(__name__)
+
+S3_DELETE_BATCH_SIZE = 1000
+"""The most keys S3 accepts in a single `delete_objects` call."""
 
 
 class S3PrefixString(str):
@@ -144,20 +147,19 @@ def delete_from_bucket(uri: DocumentURIString, bucket: str) -> None:
 def delete_some_from_bucket(
     uri: DocumentURIString, bucket: str, filter: Callable[[ObjectIdentifierTypeDef], bool]
 ) -> None:
+    """Delete every object under `uri`'s prefix accepted by `filter`, across all pages of the listing."""
     client = create_s3_client()
-    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(uri))
 
-    if response.get("Contents"):
-        objects_to_maybe_delete: list[ObjectIdentifierTypeDef] = [
-            {"Key": obj["Key"]} for obj in response.get("Contents", [])
-        ]
-        objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
-        if not objects_to_delete:
-            return
+    objects_to_maybe_delete: list[ObjectIdentifierTypeDef] = [
+        {"Key": str(obj["Key"])} for obj in _list_all_objects(client, bucket, uri_for_s3(uri))
+    ]
+    objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
+
+    for start in range(0, len(objects_to_delete), S3_DELETE_BATCH_SIZE):
         client.delete_objects(
             Bucket=bucket,
             Delete={
-                "Objects": objects_to_delete,
+                "Objects": objects_to_delete[start : start + S3_DELETE_BATCH_SIZE],
             },
         )
 
@@ -362,16 +364,30 @@ def upload_asset_to_private_bucket(body: bytes, s3_key: str) -> None:
     s3client.put_object(Body=body, Bucket=bucket, Key=s3_key, Tagging="pdfsource=custom-pdfs")
 
 
-def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
+def _list_all_objects(client: S3Client, bucket: str, prefix: str) -> Iterator[ObjectTypeDef]:
+    """List every object under `prefix`; a single `list_objects` call returns at most 1,000 keys."""
+    request: dict[str, str] = {"Bucket": bucket, "Prefix": prefix}
+    while True:
+        response = client.list_objects(**request)  # type: ignore[arg-type]
+        contents = response.get("Contents", [])
+        yield from contents
+        if response.get("IsTruncated") is not True or not contents:
+            return
+        request["Marker"] = response.get("NextMarker") or str(contents[-1]["Key"])
+
+
+def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString, *, strict: bool = False) -> None:
     """
     Copy *unpublished* assets from one path to another,
     renaming DOCX and PDF files as appropriate.
+
+    :param strict: If `True`, re-raise any failure to copy an asset rather than logging a warning and carrying on.
+        Use this when the originals are about to be deleted.
     """
     client = create_s3_client()
     bucket = env("PRIVATE_ASSET_BUCKET")
-    response = client.list_objects(Bucket=bucket, Prefix=uri_for_s3(old_uri))
 
-    for result in response.get("Contents", []):
+    for result in _list_all_objects(client, bucket, uri_for_s3(old_uri)):
         old_key = str(result["Key"])
         new_key = build_new_key(old_key, new_uri)
         if new_key is None:
@@ -380,6 +396,8 @@ def copy_assets(old_uri: DocumentURIString, new_uri: DocumentURIString) -> None:
             source: CopySourceTypeDef = {"Bucket": bucket, "Key": old_key}
             client.copy(source, bucket, new_key)
         except botocore.client.ClientError as e:
+            if strict:
+                raise
             logger.warning(
                 "Unable to copy file %s to new location %s, error: %s",
                 old_key,

@@ -11,9 +11,13 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Document**: persisted mutations (including `save()` of an existing document) require an active `editing_session()`, otherwise raising `DocumentNotLockedForEditingError`
 - **Client**: remove `update_document_xml` and `save_locked_judgment_xml` in favour of `update_locked_document_xml`, which validates the content hash (`Judgment.save()` always validates; other types do not)
 - **Client**: `restore_document` requires the caller to hold the checkout
+- **Managers**: remove the unused `MergeManager` and `caselawclient.managers.merge`; use `Document.merge_into` instead
 
 ### Added
 
+- **Document**: `merge_into(target_uri, message, ...)` merges a document (in memory or persisted) into an existing persisted document as a new version, preserving history, identifiers and metadata; persisted sources are cleaned up afterwards
+- **Document**: `DocumentMergeNotPossibleError`, raised when merge checks fail
+- **AWS**: `copy_assets` takes `strict=True` to re-raise S3 errors instead of logging them, and now copies every object under the prefix rather than only the first 1,000
 - **Document**: `editing_session()` context manager, holding a UUID-annotated checkout that is only released if still owned
 - **Client**: `checkin_judgment_if_ours`, `break_checkout_if_ours` and `delete_judgment_if_ours`
 
@@ -25,6 +29,7 @@ The format is based on [Keep a Changelog 1.0.0].
 ### Fix
 
 - **AWS**: align signed-link test expectations with region-aware S3 hostnames
+- **AWS**: deleting a document's assets (including `Document.delete()`) now covers every object under the prefix, listing all pages and deleting in batches of at most 1,000 keys, rather than only the first 1,000
 
 ## v50.0.1 (2026-09-15)
 
