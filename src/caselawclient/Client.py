@@ -873,7 +873,7 @@ class MarklogicApiClient:
     ) -> dict[str, MetricStatistics]:
         """Aggregate a lifecycle metric over daily or monthly buckets.
 
-        Start and end dates are exclusive. Search parameters can be passed in to filter metrics scope.
+        The start date is inclusive and the end date is exclusive. Search parameters can be passed in to filter metrics scope.
         """
         if metric not in METRIC_DATE_PROPERTIES:
             raise ValueError(f"Unknown lifecycle metric: {metric}")
