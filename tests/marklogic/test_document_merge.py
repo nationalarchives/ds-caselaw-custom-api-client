@@ -70,7 +70,8 @@ def _remove(client, uri) -> None:
 def s3_calls(monkeypatch):
     calls: list[tuple] = []
     monkeypatch.setattr(
-        "caselawclient.models.documents.copy_assets", lambda *args, **kwargs: calls.append(("copy", args, kwargs))
+        "caselawclient.models.documents.merge.copy_assets",
+        lambda *args, **kwargs: calls.append(("copy", args, kwargs)),
     )
     monkeypatch.setattr(
         "caselawclient.models.documents.delete_documents_from_private_bucket", lambda uri: calls.append(("delete", uri))
