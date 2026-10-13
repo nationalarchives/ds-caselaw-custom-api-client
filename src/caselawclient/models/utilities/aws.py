@@ -6,7 +6,7 @@ import tarfile
 import uuid
 from collections.abc import Callable
 from functools import cache
-from typing import Any, Literal, Self, TypedDict, overload
+from typing import Any, Literal, NotRequired, Self, TypedDict, overload
 
 import boto3
 import botocore.client
@@ -15,7 +15,6 @@ from mypy_boto3_s3.client import S3Client
 from mypy_boto3_s3.type_defs import CopySourceTypeDef, ObjectIdentifierTypeDef
 from mypy_boto3_sns.client import SNSClient
 from mypy_boto3_sns.type_defs import MessageAttributeValueTypeDef
-from typing_extensions import NotRequired
 
 from caselawclient.types import DocumentURIString
 
@@ -432,7 +431,7 @@ def request_parse(
     message_to_send = {
         "properties": {
             "messageType": "uk.gov.nationalarchives.da.messages.request.courtdocument.parse.RequestCourtDocumentParse",
-            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z"),
             "function": "fcl-judgment-parse-request",
             "producer": "FCL",
             "executionId": str(uuid.uuid4()),

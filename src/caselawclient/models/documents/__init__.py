@@ -640,7 +640,7 @@ class Document:
         """
         self._require_persisted()
 
-        if self.first_published_datetime == datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc):
+        if self.first_published_datetime == datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.UTC):
             return None
 
         return self.first_published_datetime
@@ -724,7 +724,7 @@ class Document:
         """
         self._require_persisted()
         self._require_editing_lock()
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         self.api_client.set_property(
             self.uri,
             "last_sent_to_enrichment",
@@ -773,7 +773,7 @@ class Document:
         if not last_enrichment:
             return False
 
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
 
         return now - last_enrichment < MINIMUM_ENRICHMENT_TIME
 
@@ -1185,7 +1185,7 @@ class Document:
         self._require_persisted()
         self._require_editing_lock()
 
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
 
         checked_date: str | None = (
@@ -1226,7 +1226,7 @@ class Document:
         self._require_editing_lock()
         # note that we set 'last_sent_to_parser' even if we can't send it to the parser
         # it means 'last tried to reparse' much more consistently.
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
         if self.can_reparse:
             self.force_reparse()

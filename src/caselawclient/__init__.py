@@ -1,9 +1,8 @@
 import os
 
 if os.getenv("PDOC_DYNAMIC_VERSION") == "1":
-    from pathlib import Path
-
     import tomllib
+    from pathlib import Path
 
     pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
     with pyproject_path.open("rb") as f:
