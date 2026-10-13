@@ -7,6 +7,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
+from caselawclient.models.documents.body_metadata.akn import (
+    FRBR_EXPRESSION_XPATH,
+    FRBR_MANIFESTATION_XPATH,
+    FRBR_WORK_XPATH,
+)
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.versions import VersionType
 from caselawclient.models.utilities.aws import copy_assets
@@ -93,6 +98,8 @@ class DocumentMerge:
         only in either document's body is turned into claims first, so neither body's values are lost; where the
         two disagree, the source wins. Newly synthesised target body claims are ranked below the source's DOCUMENT
         claims so an older stored source claim is not overwritten by a just-materialised target body value.
+        FRBR this/uri values on the saved body are rewritten to the target URI, so a source's expression and
+        manifestation identity is not stored on the target.
 
         This method takes its own editing sessions on the target (and on the source, if persisted). Once they are
         held the target is reloaded and the checks are repeated against fresh state. For a persisted source,
@@ -181,6 +188,7 @@ class DocumentMerge:
         self._materialise_body_claims_for_merge(target)
 
         target.body = source.body
+        self._rewrite_frbr_identity(target)
         self._merge_identifiers_into(target)
         for metadata_field in source.metadata_fields.values():
             target.metadata_fields.add(metadata_field)
@@ -240,6 +248,26 @@ class DocumentMerge:
                 continue
             earliest = min(candidate.timestamp for candidate in source_document_claims)
             claim.timestamp = earliest - datetime.timedelta(microseconds=1)
+
+    def _rewrite_frbr_identity(self, target: Document) -> None:
+        """Point existing FRBR this/uri values at ``target``.
+
+        These are the same three URI forms ``set_judgment_this_uri`` writes after a move. Elements the source
+        body does not have are left absent. The content hash ignores ``akn:meta``, so this does not invalidate it.
+        """
+        document_uri = target.uri.lstrip("/")
+        base = "https://caselaw.nationalarchives.gov.uk"
+        values_by_block = {
+            FRBR_WORK_XPATH: f"{base}/id/{document_uri}",
+            FRBR_EXPRESSION_XPATH: f"{base}/{document_uri}",
+            FRBR_MANIFESTATION_XPATH: f"{base}/{document_uri}/data.xml",
+        }
+        xml = target.body._xml  # noqa: SLF001
+        for block_xpath, value in values_by_block.items():
+            for element_name in ("FRBRthis", "FRBRuri"):
+                for node in xml.get_xpath_nodes(f"{block_xpath}/akn:{element_name}"):
+                    xml.set_element_attribute(node, "value", value)
+        target.body._invalidate_cached_properties()  # noqa: SLF001
 
     def _merge_identifiers_into(self, target: Document) -> None:
         """

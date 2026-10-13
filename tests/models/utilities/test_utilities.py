@@ -8,6 +8,7 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib import parse
 
 import boto3
+import botocore.exceptions
 import ds_caselaw_utils
 import pytest
 from moto import mock_aws
@@ -180,6 +181,38 @@ class TestAWSUtils:
         assert client.return_value.copy.call_count == 3
 
     @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_copy_assets_logs_and_continues_when_a_copy_fails(self, client, caplog: pytest.LogCaptureFixture):
+        client.return_value.list_objects.return_value = {
+            "Contents": [{"Key": "uksc/2023/1/a.png"}, {"Key": "uksc/2023/1/b.png"}],
+        }
+        client.return_value.copy.side_effect = [
+            botocore.exceptions.ClientError({"Error": {"Code": "InternalError", "Message": "nope"}}, "CopyObject"),
+            None,
+        ]
+        caplog.set_level(logging.WARNING)
+
+        copy_assets(DocumentURIString("uksc/2023/1"), DocumentURIString("ukpc/1999/9"))
+
+        assert client.return_value.copy.call_count == 2
+        assert "Unable to copy file uksc/2023/1/a.png" in caplog.text
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_copy_assets_strict_reraises_the_copy_failure(self, client):
+        client.return_value.list_objects.return_value = {
+            "Contents": [{"Key": "uksc/2023/1/a.png"}, {"Key": "uksc/2023/1/b.png"}],
+        }
+        failure = botocore.exceptions.ClientError({"Error": {"Code": "InternalError", "Message": "nope"}}, "CopyObject")
+        client.return_value.copy.side_effect = failure
+
+        with pytest.raises(botocore.exceptions.ClientError) as raised:
+            copy_assets(DocumentURIString("uksc/2023/1"), DocumentURIString("ukpc/1999/9"), strict=True)
+
+        assert raised.value is failure
+        assert client.return_value.copy.call_count == 1
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
     def test_delete_non_tar_gz(self, client):
         client.return_value.list_objects.return_value = {
             "Contents": [{"Key": "uksc/2023/1/uksc_2023_1.docx"}, {"Key": "uksc/2023/1/TDR-2023-AAA.tar.gz"}]
@@ -236,6 +269,19 @@ class TestAWSUtils:
         delete_documents_from_private_bucket(DocumentURIString("uksc/2023/1"))
 
         client.return_value.delete_objects.assert_not_called()
+
+    @patch("caselawclient.models.utilities.aws.create_s3_client")
+    @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
+    def test_delete_documents_from_private_bucket_raises_when_s3_reports_key_errors(self, client):
+        client.return_value.list_objects.return_value = {
+            "Contents": [{"Key": "uksc/2023/1/a.png"}, {"Key": "uksc/2023/1/b.png"}],
+        }
+        client.return_value.delete_objects.return_value = {
+            "Errors": [{"Key": "uksc/2023/1/b.png", "Code": "AccessDenied", "Message": "nope"}],
+        }
+
+        with pytest.raises(RuntimeError, match="uksc/2023/1/b.png"):
+            delete_documents_from_private_bucket(DocumentURIString("uksc/2023/1"))
 
     @staticmethod
     def _build_consignment_archive(consignment_reference: str, files: dict[str, bytes]) -> bytes:

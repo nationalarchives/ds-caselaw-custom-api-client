@@ -154,13 +154,19 @@ def delete_some_from_bucket(
     ]
     objects_to_delete = [obj for obj in objects_to_maybe_delete if filter(obj)]
 
+    failures: list[str] = []
     for start in range(0, len(objects_to_delete), S3_DELETE_BATCH_SIZE):
-        client.delete_objects(
+        response = client.delete_objects(
             Bucket=bucket,
             Delete={
                 "Objects": objects_to_delete[start : start + S3_DELETE_BATCH_SIZE],
             },
         )
+        # A 200 response can still list per-key failures, which must fail the delete.
+        for error in response.get("Errors") or []:
+            failures.append(f"{error.get('Key')} ({error.get('Code')}: {error.get('Message')})")
+    if failures:
+        raise RuntimeError(f"S3 failed to delete {len(failures)} object(s) from {bucket}: {', '.join(failures)}")
 
 
 def delete_non_targz_from_bucket(uri: DocumentURIString, bucket: str) -> None:
