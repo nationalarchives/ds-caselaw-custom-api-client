@@ -154,9 +154,7 @@ class TestDocumentPublish:
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_publishable = True
-        document.first_published_datetime = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
-        )
+        document.first_published_datetime = datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC)
         document.is_published = False
         _ = document.metrics
         document.publish()
@@ -177,12 +175,8 @@ class TestDocumentPublish:
     ):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.is_publishable = True
-        document.first_published_datetime = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
-        )
-        document.latest_published_datetime = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
-        )
+        document.first_published_datetime = datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC)
+        document.latest_published_datetime = datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC)
         metrics = document.metrics
         mock_api_client.publish_document.side_effect = RuntimeError("Database update failed")
         with pytest.raises(RuntimeError, match="Database update failed"):

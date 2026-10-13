@@ -200,33 +200,31 @@ class TestDocument:
 
     def test_document_first_published_datetime(self, mock_api_client):
         mock_api_client.get_datetime_property.return_value = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
 
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         assert document.first_published_datetime == datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
         mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
 
     def test_document_first_published_datetime_display(self, mock_api_client):
         mock_api_client.get_datetime_property.return_value = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
 
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         assert document.first_published_datetime_display == datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
         mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "first_published_datetime")
 
     def test_document_first_published_datetime_display_sentinel(self, mock_api_client):
         """We expect that our sentinel value will return `None`."""
-        mock_api_client.get_datetime_property.return_value = datetime.datetime(
-            1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc
-        )
+        mock_api_client.get_datetime_property.return_value = datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.UTC)
 
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
@@ -235,13 +233,13 @@ class TestDocument:
 
     def test_document_latest_published_datetime(self, mock_api_client):
         mock_api_client.get_datetime_property.return_value = datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
 
         document = Document(DocumentURIString("test/1234"), mock_api_client)
 
         assert document.latest_published_datetime == datetime.datetime(
-            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc
+            2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC
         )
         mock_api_client.get_datetime_property.assert_called_once_with("test/1234", "latest_published_datetime")
 
@@ -250,10 +248,10 @@ class TestDocument:
         [
             (False, None, False),
             (True, None, True),
-            (False, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
-            (True, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.timezone.utc), True),
-            (False, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), True),
-            (True, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), True),
+            (False, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC), True),
+            (True, datetime.datetime(2025, 8, 19, 12, 5, 53, 398214, tzinfo=datetime.UTC), True),
+            (False, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.UTC), True),
+            (True, datetime.datetime(1970, 1, 1, 0, 0, tzinfo=datetime.UTC), True),
         ],
     )
     def test_document_has_ever_been_published(
@@ -335,7 +333,7 @@ class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_true_within_cooldown(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.body.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc,
+            tz=datetime.UTC,
         ) - datetime.timedelta(seconds=30)
 
         assert document.enriched_recently is True
@@ -343,7 +341,7 @@ class TestDocumentEnrichedRecently:
     def test_enriched_recently_returns_false_outside_cooldown(self, mock_api_client):
         document = Document(DocumentURIString("test/1234"), mock_api_client)
         document.body.enrichment_datetime = datetime.datetime.now(
-            tz=datetime.timezone.utc,
+            tz=datetime.UTC,
         ) - datetime.timedelta(days=2)
 
         assert document.enriched_recently is False

@@ -116,9 +116,9 @@ class SearchResultMetadata:
         :return: The submission datetime
         """
         if tdr_time := self._get_xpath_match_string("//transfer-received-at/text()"):
-            return datetime.fromisoformat(tdr_time.replace("Z", "+00:00")).astimezone(UTC)
+            return datetime.fromisoformat(tdr_time).astimezone(UTC)
         if email_time := self._get_xpath_match_string("//email-received-at/text()"):
-            return datetime.fromisoformat(email_time.replace("Z", "+00:00")).astimezone(UTC)
+            return datetime.fromisoformat(email_time).astimezone(UTC)
         return datetime.min.replace(tzinfo=UTC)
 
     @property
