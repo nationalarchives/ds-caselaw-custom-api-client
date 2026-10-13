@@ -96,9 +96,10 @@ class DocumentMerge:
 
         This method takes its own editing sessions on the target (and on the source, if persisted). Once they are
         held the target is reloaded and the checks are repeated against fresh state. For a persisted source,
-        identifiers and metadata claims are also re-read from MarkLogic (then any local-only additions reapplied),
-        so a concurrent ``save_identifiers`` / ``save_metadata_fields`` is not lost; the body may still carry
-        unsaved in-memory edits. A persisted source must still have a single version at that point.
+        identifiers and metadata claims are re-read from MarkLogic. Additions made on this object since it was
+        loaded are put back; a deletion made by a concurrent ``save_identifiers`` / ``save_metadata_fields`` is kept.
+        The body may still carry unsaved in-memory edits. A persisted source must still have a single version at
+        that point.
 
         :param target_uri: The URI of the existing document to merge into.
         :param message: Human-readable message describing the merge, stored on the new version.
@@ -191,24 +192,33 @@ class DocumentMerge:
             self._hand_over_to(target)
 
     def _reload_source_collections_preserving_local_edits(self) -> None:
-        """Re-read identifiers and metadata from MarkLogic, then reapply local-only additions.
+        """Re-read identifiers and metadata from MarkLogic, then reapply additions made since load.
 
         ``save_identifiers`` / ``save_metadata_fields`` do not create a new XML version, so the single-version
-        check alone cannot detect a concurrent property save. The body is left alone so intentional unsaved
-        body edits still merge.
+        check alone cannot detect a concurrent property save. Reapplying every identifier that was on this object
+        before the session would put back one that another session had deleted. Only additions made in memory
+        since load are put back. The body is left alone so unsaved body edits still merge.
         """
         source = self.source
-        local_identifiers = list(source.identifiers.values())
-        local_claims = list(source.metadata_fields.values())
+        added_identifiers = [
+            identifier
+            for identifier in source.identifiers.values()
+            if identifier.uuid not in source._loaded_identifier_uuids  # noqa: SLF001
+        ]
+        added_claims = [
+            claim
+            for claim in source.metadata_fields.values()
+            if claim.id not in source._loaded_metadata_field_ids  # noqa: SLF001
+        ]
 
         source._initialise_identifiers()  # noqa: SLF001
         source._initialise_metadata_fields()  # noqa: SLF001
 
-        for identifier in local_identifiers:
+        for identifier in added_identifiers:
             if not source.identifiers.contains(identifier):
                 source.identifiers.add(identifier)
 
-        for claim in local_claims:
+        for claim in added_claims:
             source.metadata_fields.add(claim)
 
     def _materialise_body_claims_for_merge(self, target: Document) -> None:

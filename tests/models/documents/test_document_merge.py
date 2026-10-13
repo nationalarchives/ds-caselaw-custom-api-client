@@ -15,6 +15,7 @@ from caselawclient.factories import (
 from caselawclient.models.documents import Document, DocumentURIString
 from caselawclient.models.documents.exceptions import DocumentMergeNotPossibleError
 from caselawclient.models.documents.merge import DocumentMerge
+from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
@@ -451,6 +452,68 @@ class TestMergeIntoRefreshesState:
 
         assert ("ukncn", "[2023] UKSC 50") in [(i.schema.namespace, i.value) for i in target.identifiers.values()]
 
+    def test_persisted_source_does_not_restore_identifiers_removed_by_another_session(
+        self, persisted_source, target, mock_api_client, aws, refresh
+    ):
+        removed = next(iter(persisted_source.identifiers.values()))
+        ml_identifiers_xml = IdentifiersCollection().as_etree
+        ml_metadata_xml = persisted_source.metadata_fields.as_etree
+
+        def get_property_as_node(uri, name):
+            if uri == SOURCE_URI and name == "identifiers":
+                return ml_identifiers_xml
+            if uri == SOURCE_URI and name == "metadata_fields":
+                return ml_metadata_xml
+            return None
+
+        mock_api_client.get_property_as_node.side_effect = get_property_as_node
+
+        persisted_source.merge_into(TARGET_URI, "Merged")
+
+        assert removed.uuid not in target.identifiers
+
+    def test_persisted_source_keeps_unsaved_local_metadata_additions(
+        self, persisted_source, target, mock_api_client, aws, refresh
+    ):
+        ml_identifiers_xml = persisted_source.identifiers.as_etree
+        ml_metadata_xml = persisted_source.metadata_fields.as_etree
+        persisted_source.metadata_fields.add(_court_claim("Added locally", id="local-claim"))
+
+        def get_property_as_node(uri, name):
+            if uri == SOURCE_URI and name == "identifiers":
+                return ml_identifiers_xml
+            if uri == SOURCE_URI and name == "metadata_fields":
+                return ml_metadata_xml
+            return None
+
+        mock_api_client.get_property_as_node.side_effect = get_property_as_node
+
+        persisted_source.merge_into(TARGET_URI, "Merged")
+
+        assert "local-claim" in target.metadata_fields
+
+    def test_persisted_source_does_not_restore_metadata_removed_by_another_session(
+        self, persisted_source, target, mock_api_client, aws, refresh
+    ):
+        stored = _court_claim("Stored", id="stored-claim")
+        persisted_source.metadata_fields.add(stored)
+        persisted_source._note_metadata_fields_loaded_from_marklogic()  # noqa: SLF001
+        ml_identifiers_xml = persisted_source.identifiers.as_etree
+        ml_metadata_xml = MetadataFieldsCollection().as_etree
+
+        def get_property_as_node(uri, name):
+            if uri == SOURCE_URI and name == "identifiers":
+                return ml_identifiers_xml
+            if uri == SOURCE_URI and name == "metadata_fields":
+                return ml_metadata_xml
+            return None
+
+        mock_api_client.get_property_as_node.side_effect = get_property_as_node
+
+        persisted_source.merge_into(TARGET_URI, "Merged")
+
+        assert "stored-claim" not in target.metadata_fields
+
     def test_persisted_source_picks_up_metadata_saved_by_another_session(
         self, persisted_source, target, mock_api_client, aws, refresh
     ):
@@ -588,8 +651,15 @@ class FakeSlugView:
         self.saved: dict[str, IdentifiersCollection] = {}
         self.lookups: list[tuple[str, list[str]]] = []
         mock_api_client.resolve_from_identifier_value.side_effect = self.resolve
+        mock_api_client.get_property_as_node.side_effect = self.get_property_as_node
         mock_api_client.set_property_as_node.side_effect = self.set_property_as_node
         mock_api_client.delete_judgment_if_ours.side_effect = self.delete
+
+    def get_property_as_node(self, uri, name):
+        """The identifiers MarkLogic would return: whatever was last saved for this URI."""
+        if name == "identifiers":
+            return self.saved.get(uri, IdentifiersCollection()).as_etree
+        return None
 
     def persist(self, document) -> None:
         """Record the document's identifiers as already saved, as a copy so later edits to the object don't leak in."""

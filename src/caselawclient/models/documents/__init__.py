@@ -360,6 +360,8 @@ class Document:
         doc.body = body
         doc.identifiers = IdentifiersCollection()
         doc.metadata_fields = MetadataFieldsCollection()
+        doc._loaded_identifier_uuids = set()  # noqa: SLF001
+        doc._loaded_metadata_field_ids = set()  # noqa: SLF001
         doc._initialise_metadata()  # noqa: SLF001
         doc._persisted = False  # noqa: SLF001
         doc._editing_lock_held = False  # noqa: SLF001
@@ -423,12 +425,22 @@ class Document:
 
         identifiers_element_as_etree = self.api_client.get_property_as_node(self.uri, "identifiers")
         self.identifiers = unpack_all_identifiers_from_etree(identifiers_element_as_etree)
+        self._note_identifiers_loaded_from_marklogic()
 
     def _initialise_metadata_fields(self) -> None:
         """Load this document's metadata_fields property from MarkLogic."""
 
         metadata_fields_element = self.api_client.get_property_as_node(self.uri, "metadata_fields")
         self.metadata_fields = unpack_all_metadata_fields_from_etree(metadata_fields_element)
+        self._note_metadata_fields_loaded_from_marklogic()
+
+    def _note_identifiers_loaded_from_marklogic(self) -> None:
+        """Remember which identifiers were stored, so later in-memory additions can be told apart."""
+        self._loaded_identifier_uuids = set(self.identifiers)
+
+    def _note_metadata_fields_loaded_from_marklogic(self) -> None:
+        """Remember which metadata claims were stored, so later in-memory additions can be told apart."""
+        self._loaded_metadata_field_ids = set(self.metadata_fields)
 
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""
