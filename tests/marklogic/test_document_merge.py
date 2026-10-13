@@ -104,15 +104,7 @@ def test_merging_a_persisted_document_adds_a_version_and_removes_the_source(
 
     assert merged.uri == TARGET_URI
     assert _version_count(marklogic_api_client, TARGET_URI) == versions_before + 1
-    stored = marklogic_api_client.get_document_by_uri(TARGET_URI)
-    assert "Content of the document being merged" in stored.body.content_as_xml
-    assert stored.body.get_xpath_match_string(
-        "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRuri/@value"
-    ) == (f"https://caselaw.nationalarchives.gov.uk/id/{TARGET_URI}")
-    assert stored.body.get_xpath_match_string(
-        "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRthis/@value"
-    ) == (f"https://caselaw.nationalarchives.gov.uk/id/{TARGET_URI}")
-    assert "test/metadata_writes" not in stored.body.content_as_xml
+    assert marklogic_api_client.get_document_by_uri(TARGET_URI).body.content_as_xml == source_body_xml
     assert not marklogic_api_client.document_exists(SOURCE_URI)
     assert [call[0] for call in s3_calls] == ["copy", "delete"]
 

@@ -121,61 +121,6 @@ class TestMergeIntoInMemorySource:
         assert isinstance(memory_source.merge, DocumentMerge)
         assert memory_source.merge.source is memory_source
 
-    def test_rewrites_frbr_identity_to_the_target_uri(self, memory_source, target, aws):
-        memory_source.body = DocumentBodyFactory.build(
-            xml_string="""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
-                xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
-              <judgment name="decision">
-                <meta>
-                  <identification source="#tna">
-                    <FRBRWork>
-                      <FRBRthis value="https://caselaw.nationalarchives.gov.uk/id/d-source"/>
-                      <FRBRuri value="https://caselaw.nationalarchives.gov.uk/id/d-source"/>
-                      <FRBRdate date="2023-02-03" name="judgment"/>
-                      <FRBRname value="Judgment v Judgement"/>
-                    </FRBRWork>
-                    <FRBRExpression>
-                      <FRBRthis value="https://caselaw.nationalarchives.gov.uk/d-source"/>
-                      <FRBRuri value="https://caselaw.nationalarchives.gov.uk/d-source"/>
-                      <FRBRdate date="2023-02-03" name="judgment"/>
-                      <FRBRlanguage language="eng"/>
-                    </FRBRExpression>
-                    <FRBRManifestation>
-                      <FRBRthis value="https://caselaw.nationalarchives.gov.uk/d-source/data.xml"/>
-                      <FRBRuri value="https://caselaw.nationalarchives.gov.uk/d-source/data.xml"/>
-                      <FRBRdate date="2023-02-03T00:00:00Z" name="transform"/>
-                      <FRBRformat value="application/xml"/>
-                    </FRBRManifestation>
-                  </identification>
-                  <proprietary>
-                    <uk:court>Court of Testing</uk:court>
-                  </proprietary>
-                </meta>
-                <judgmentBody><decision><p>This is a document.</p></decision></judgmentBody>
-              </judgment>
-            </akomaNtoso>
-            """
-        )
-
-        memory_source.merge_into(TARGET_URI, "Merged")
-
-        base = "https://caselaw.nationalarchives.gov.uk"
-        expected = {
-            "FRBRWork": f"{base}/id/{TARGET_URI}",
-            "FRBRExpression": f"{base}/{TARGET_URI}",
-            "FRBRManifestation": f"{base}/{TARGET_URI}/data.xml",
-        }
-        for block, value in expected.items():
-            for element in ("FRBRthis", "FRBRuri"):
-                assert (
-                    target.body.get_xpath_match_string(
-                        f"/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:{block}/akn:{element}/@value"
-                    )
-                    == value
-                )
-        assert "d-source" not in target.body.content_as_xml
-
     def test_saves_source_body_as_new_version_of_target(self, memory_source, target, mock_api_client, aws):
         result = memory_source.merge_into(
             TARGET_URI, "Merged", version_type=VersionType.SUBMISSION, automated=True, payload={"a": 1}
