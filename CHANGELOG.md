@@ -4,14 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
-
-### BREAKING CHANGE
-
-- **Document**: persisted mutations (including `save()` of an existing document) require an active `editing_session()`, otherwise raising `DocumentNotLockedForEditingError`
-- **Client**: remove `update_document_xml` and `save_locked_judgment_xml` in favour of `update_locked_document_xml`, which validates the content hash (`Judgment.save()` always validates; other types do not)
-- **Client**: `restore_document` requires the caller to hold the checkout
-- **Managers**: remove the unused `MergeManager` and `caselawclient.managers.merge`; use `Document.merge_into` / `DocumentMerge` instead
+## v51.0.0 (2026-10-14)
 
 ### Added
 
@@ -22,16 +15,38 @@ The format is based on [Keep a Changelog 1.0.0].
 - **Document**: `editing_session()` context manager, holding a UUID-annotated checkout that is only released if still owned
 - **Client**: `checkin_judgment_if_ours`, `break_checkout_if_ours` and `delete_judgment_if_ours`
 
+### BREAKING CHANGE
+
+- **Document**: persisted mutations (including `save()` of an existing document) require an active `editing_session()`, otherwise raising `DocumentNotLockedForEditingError`
+- **Client**: remove `update_document_xml` and `save_locked_judgment_xml` in favour of `update_locked_document_xml`, which validates the content hash (`Judgment.save()` always validates; other types do not)
+- **Client**: `restore_document` requires the caller to hold the checkout
+- **Managers**: remove the unused `MergeManager` and `caselawclient.managers.merge`; use `Document.merge_into` / `DocumentMerge` instead
+
 ### Feat
 
 - **Document**: add metrics and submission timestamps
 - **Document**: write resolved title into Akoma Ntoso body XML during `save()`
+- **metadata**: write resolved title to FRBRname on save
+- **test**: extend TEST_CORPUS_DOCUMENTS for integration coverage
 
 ### Fix
 
 - **AWS**: deleting S3 objects raises when a successful `delete_objects` response still lists per-key errors
 - **AWS**: align signed-link test expectations with region-aware S3 hostnames
 - **AWS**: deleting a document's assets (including `Document.delete()`) now covers every object under the prefix, listing all pages and deleting in batches of at most 1,000 keys, rather than only the first 1,000
+- **merge**: load the target once inside its editing session
+- **merge**: keep concurrent identifier and claim deletions
+- **merge**: leave FRBR identity unchanged
+- **merge**: keep the target's FRBR identity and surface failed asset deletes
+- **document**: keep concurrent claims when merging
+- **metadata**: align write-back eligibility with FRBR validation
+- **metadata**: tighten title write-back validation and apply in place
+
+### Refactor
+
+- remove redundant Z timezone replacement
+- **test**: assert metadata writes via Document accessors
+- **test**: move smoketest into MarkLogic harness
 
 ## v50.0.1 (2026-09-15)
 
