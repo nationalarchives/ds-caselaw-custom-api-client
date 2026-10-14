@@ -161,8 +161,9 @@ def test_metadata_claims_survive_in_marklogic(marklogic_api_client, merge_target
 
 def test_failed_checks_leave_both_documents_untouched(marklogic_api_client, merge_target, s3_calls):
     _insert_source(marklogic_api_client, SOURCE_URI)
+    # Publication has to live in MarkLogic. merge_into discards cached state once it holds the source checkout.
+    marklogic_api_client.set_published(SOURCE_URI, True)
     source = marklogic_api_client.get_document_by_uri(SOURCE_URI)
-    source.has_ever_been_published = True
     versions_before = _version_count(marklogic_api_client, TARGET_URI)
 
     with pytest.raises(DocumentMergeNotPossibleError):
