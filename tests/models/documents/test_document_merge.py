@@ -15,10 +15,8 @@ from caselawclient.factories import (
 from caselawclient.models.documents import Document, DocumentURIString
 from caselawclient.models.documents.exceptions import DocumentMergeNotPossibleError
 from caselawclient.models.documents.merge import DocumentMerge
-from caselawclient.models.documents.metadata.fields.collection import MetadataFieldsCollection
 from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
-from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
 from caselawclient.models.documents.versions import VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -160,7 +158,9 @@ class TestMergeIntoInMemorySource:
         with pytest.raises(DocumentNotFoundError):
             memory_source.merge_into(TARGET_URI, "Merged")
 
-        mock_api_client.checkout_judgment.assert_not_called()
+        mock_api_client.checkout_judgment.assert_called_once()
+        mock_api_client.break_checkout_if_ours.assert_called_once()
+        mock_api_client.checkin_judgment_if_ours.assert_not_called()
 
     def test_releases_target_session_if_save_fails(self, memory_source, target, mock_api_client, aws):
         target.save.side_effect = RuntimeError("boom")
@@ -349,36 +349,35 @@ class TestMergeIntoContent:
 
 
 class TestMergeIntoRefreshesState:
-    def test_state_is_reloaded_and_rechecked_once_sessions_are_held(
-        self, persisted_source, target, mock_api_client, refresh, aws
-    ):
+    def test_target_is_loaded_once_after_its_checkout(self, persisted_source, target, mock_api_client, refresh, aws):
+        order = Mock()
+        order.attach_mock(mock_api_client.checkout_judgment, "checkout")
+        order.attach_mock(mock_api_client.get_document_by_uri, "load")
+
         persisted_source.merge_into(TARGET_URI, "Merged")
 
-        refresh.reload.assert_called_once_with()
-        assert refresh.discard.call_count == 2
-        assert mock_api_client.checkout_judgment.call_count == 2
+        assert [call[0] for call in order.mock_calls] == ["checkout", "checkout", "load"]
+        assert [call.args[0] for call in mock_api_client.checkout_judgment.call_args_list] == [SOURCE_URI, TARGET_URI]
+        mock_api_client.get_document_by_uri.assert_called_once_with(TARGET_URI)
+        refresh.reload.assert_not_called()
 
-    def test_changes_after_the_pre_check_abort_the_merge(self, persisted_source, target, mock_api_client, refresh, aws):
-        refresh.reload.side_effect = lambda: setattr(persisted_source, "has_ever_been_published", True)
-
-        with pytest.raises(DocumentMergeNotPossibleError, match="previously been published"):
-            persisted_source.merge_into(TARGET_URI, "Merged")
-
-        target.save.assert_not_called()
-        aws.copy_assets.assert_not_called()
-        mock_api_client.delete_judgment_if_ours.assert_not_called()
-        mock_api_client.checkin_judgment_if_ours.assert_not_called()
-        assert mock_api_client.break_checkout_if_ours.call_count == 2
-
-    def test_source_gaining_a_version_after_the_pre_check_aborts_the_merge(
-        self, persisted_source, target, refresh, aws
+    def test_keeps_a_source_editing_session_the_caller_already_holds(
+        self, persisted_source, target, mock_api_client, aws
     ):
-        refresh.reload.side_effect = lambda: setattr(persisted_source, "versions", [{"uri": "a"}, {"uri": "b"}])
+        caller_token = "caller-token"  # noqa: S105
+        persisted_source._editing_lock_held = True  # noqa: SLF001
+        persisted_source._editing_session_token = caller_token  # noqa: SLF001
+        recorded = mock_api_client.get_judgment_checkout_status_message.side_effect
+        mock_api_client.get_judgment_checkout_status_message.side_effect = lambda uri: (
+            caller_token if uri == SOURCE_URI else recorded(uri)
+        )
 
-        with pytest.raises(DocumentMergeNotPossibleError, match="more than one version"):
-            persisted_source.merge_into(TARGET_URI, "Merged")
+        persisted_source.merge_into(TARGET_URI, "Merged")
 
-        target.save.assert_not_called()
+        assert [call.args[0] for call in mock_api_client.checkout_judgment.call_args_list] == [TARGET_URI]
+        assert persisted_source.editing_session_token == caller_token
+        mock_api_client.checkin_judgment_if_ours.assert_called_once()
+        assert mock_api_client.checkin_judgment_if_ours.call_args.args[0] == TARGET_URI
 
     def test_discard_cached_state_forgets_marklogic_values_only(self, target):
         target.__dict__["slug"] = "stale"
@@ -402,139 +401,6 @@ class TestMergeIntoRefreshesState:
         assert len(target.identifiers) == 0
         assert len(target.metadata_fields) == 0
         refresh.discard.assert_called_once_with()
-
-    def test_persisted_source_picks_up_identifiers_saved_by_another_session(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        concurrent = NeutralCitationNumber(value="[2023] UKSC 99")
-        ml_identifiers = IdentifiersCollection()
-        for identifier in persisted_source.identifiers.values():
-            ml_identifiers.add(identifier)
-        ml_identifiers.add(concurrent)
-        ml_identifiers_xml = ml_identifiers.as_etree
-        ml_metadata_xml = persisted_source.metadata_fields.as_etree
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert ("ukncn", "[2023] UKSC 99") in [(i.schema.namespace, i.value) for i in target.identifiers.values()]
-
-    def test_persisted_source_keeps_unsaved_local_identifier_additions(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        local_only = NeutralCitationNumber(value="[2023] UKSC 50")
-        persisted_source.identifiers.add(local_only)
-        ml_identifiers = IdentifiersCollection()
-        for identifier in persisted_source.identifiers.values():
-            if identifier.uuid != local_only.uuid:
-                ml_identifiers.add(identifier)
-        ml_identifiers_xml = ml_identifiers.as_etree
-        ml_metadata_xml = persisted_source.metadata_fields.as_etree
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert ("ukncn", "[2023] UKSC 50") in [(i.schema.namespace, i.value) for i in target.identifiers.values()]
-
-    def test_persisted_source_does_not_restore_identifiers_removed_by_another_session(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        removed = next(iter(persisted_source.identifiers.values()))
-        ml_identifiers_xml = IdentifiersCollection().as_etree
-        ml_metadata_xml = persisted_source.metadata_fields.as_etree
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert removed.uuid not in target.identifiers
-
-    def test_persisted_source_keeps_unsaved_local_metadata_additions(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        ml_identifiers_xml = persisted_source.identifiers.as_etree
-        ml_metadata_xml = persisted_source.metadata_fields.as_etree
-        persisted_source.metadata_fields.add(_court_claim("Added locally", id="local-claim"))
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert "local-claim" in target.metadata_fields
-
-    def test_persisted_source_does_not_restore_metadata_removed_by_another_session(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        stored = _court_claim("Stored", id="stored-claim")
-        persisted_source.metadata_fields.add(stored)
-        persisted_source._note_metadata_fields_loaded_from_marklogic()  # noqa: SLF001
-        ml_identifiers_xml = persisted_source.identifiers.as_etree
-        ml_metadata_xml = MetadataFieldsCollection().as_etree
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert "stored-claim" not in target.metadata_fields
-
-    def test_persisted_source_picks_up_metadata_saved_by_another_session(
-        self, persisted_source, target, mock_api_client, aws, refresh
-    ):
-        concurrent = _court_claim("Saved Elsewhere", id="concurrent-claim")
-        ml_claims = unpack_all_metadata_fields_from_etree(persisted_source.metadata_fields.as_etree)
-        ml_claims.add(concurrent)
-        ml_identifiers_xml = persisted_source.identifiers.as_etree
-        ml_metadata_xml = ml_claims.as_etree
-
-        def get_property_as_node(uri, name):
-            if uri == SOURCE_URI and name == "identifiers":
-                return ml_identifiers_xml
-            if uri == SOURCE_URI and name == "metadata_fields":
-                return ml_metadata_xml
-            return None
-
-        mock_api_client.get_property_as_node.side_effect = get_property_as_node
-
-        persisted_source.merge_into(TARGET_URI, "Merged")
-
-        assert "concurrent-claim" in target.metadata_fields
 
 
 class TestMergeIntoChecks:
@@ -595,8 +461,8 @@ class TestMergeIntoChecks:
             source.merge_into(TARGET_URI, "Merged")
 
         assert len(excinfo.value.messages) == 2
-        mock_api_client.checkout_judgment.assert_not_called()
         target.save.assert_not_called()
+        mock_api_client.checkin_judgment_if_ours.assert_not_called()
 
     def test_persisted_source_with_several_versions_rejected(self, persisted_source, target, aws):
         persisted_source.versions = [{"uri": "a"}, {"uri": "b"}]
@@ -623,7 +489,8 @@ class TestMergeIntoChecks:
         with pytest.raises(DocumentMergeNotPossibleError, match="older than"):
             persisted_source.merge_into(TARGET_URI, "Merged")
 
-        mock_api_client.checkout_judgment.assert_not_called()
+        target.save.assert_not_called()
+        mock_api_client.checkin_judgment_if_ours.assert_not_called()
 
     def test_persisted_source_newer_than_target_accepted(self, persisted_source, target, aws):
         persisted_source.merge_into(TARGET_URI, "Merged")
@@ -651,15 +518,8 @@ class FakeSlugView:
         self.saved: dict[str, IdentifiersCollection] = {}
         self.lookups: list[tuple[str, list[str]]] = []
         mock_api_client.resolve_from_identifier_value.side_effect = self.resolve
-        mock_api_client.get_property_as_node.side_effect = self.get_property_as_node
         mock_api_client.set_property_as_node.side_effect = self.set_property_as_node
         mock_api_client.delete_judgment_if_ours.side_effect = self.delete
-
-    def get_property_as_node(self, uri, name):
-        """The identifiers MarkLogic would return: whatever was last saved for this URI."""
-        if name == "identifiers":
-            return self.saved.get(uri, IdentifiersCollection()).as_etree
-        return None
 
     def persist(self, document) -> None:
         """Record the document's identifiers as already saved, as a copy so later edits to the object don't leak in."""

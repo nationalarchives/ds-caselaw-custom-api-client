@@ -299,6 +299,39 @@ class Document:
             # timeout), so release it if it carries our token; this is a no-op otherwise.
             self._break_owned_checkout_during_error(session_token)
             raise
+        with self._hold_editing_session(session_token):
+            yield self
+
+    @classmethod
+    @contextmanager
+    def open_for_editing(
+        cls,
+        api_client: "MarklogicApiClient",
+        uri: DocumentURIString,
+        *,
+        timeout_seconds: int = 60,
+    ) -> Iterator["Document"]:
+        """Check out ``uri``, load the document once, and release the checkout on exit.
+
+        The load happens after the checkout, so the object is read while this session holds the lock.
+        """
+        session_token = str(uuid.uuid4())
+        try:
+            api_client.checkout_judgment(uri, annotation=session_token, timeout_seconds=timeout_seconds)
+        except BaseException:
+            cls._break_checkout_during_error(api_client, uri, session_token)
+            raise
+        try:
+            document = api_client.get_document_by_uri(uri)
+        except BaseException:
+            cls._break_checkout_during_error(api_client, uri, session_token)
+            raise
+        with document._hold_editing_session(session_token):  # noqa: SLF001
+            yield document
+
+    @contextmanager
+    def _hold_editing_session(self, session_token: str) -> Iterator[Self]:
+        """Treat ``session_token`` as this object's checkout until the block ends."""
         self._editing_lock_held = True
         self._editing_session_token = session_token
         self._clear_checkout_cache()
@@ -315,6 +348,16 @@ class Document:
                 raise
         finally:
             self._clear_local_editing_lock()
+
+    @staticmethod
+    def _break_checkout_during_error(
+        api_client: "MarklogicApiClient", uri: DocumentURIString, session_token: str
+    ) -> None:
+        """Best-effort release while another exception is propagating; never masks that exception."""
+        try:
+            api_client.break_checkout_if_ours(uri, session_token)
+        except Exception:
+            logger.exception("Could not break checkout of %s while cleaning up editing_session", uri)
 
     @cached_property
     def metrics(self) -> DocumentMetrics:
@@ -360,8 +403,6 @@ class Document:
         doc.body = body
         doc.identifiers = IdentifiersCollection()
         doc.metadata_fields = MetadataFieldsCollection()
-        doc._loaded_identifier_uuids = set()  # noqa: SLF001
-        doc._loaded_metadata_field_ids = set()  # noqa: SLF001
         doc._initialise_metadata()  # noqa: SLF001
         doc._persisted = False  # noqa: SLF001
         doc._editing_lock_held = False  # noqa: SLF001
@@ -425,22 +466,12 @@ class Document:
 
         identifiers_element_as_etree = self.api_client.get_property_as_node(self.uri, "identifiers")
         self.identifiers = unpack_all_identifiers_from_etree(identifiers_element_as_etree)
-        self._note_identifiers_loaded_from_marklogic()
 
     def _initialise_metadata_fields(self) -> None:
         """Load this document's metadata_fields property from MarkLogic."""
 
         metadata_fields_element = self.api_client.get_property_as_node(self.uri, "metadata_fields")
         self.metadata_fields = unpack_all_metadata_fields_from_etree(metadata_fields_element)
-        self._note_metadata_fields_loaded_from_marklogic()
-
-    def _note_identifiers_loaded_from_marklogic(self) -> None:
-        """Remember which identifiers were stored, so later in-memory additions can be told apart."""
-        self._loaded_identifier_uuids = set(self.identifiers)
-
-    def _note_metadata_fields_loaded_from_marklogic(self) -> None:
-        """Remember which metadata claims were stored, so later in-memory additions can be told apart."""
-        self._loaded_metadata_field_ids = set(self.metadata_fields)
 
     def _initialise_metadata(self) -> None:
         """Initialise all this document's metadata values."""

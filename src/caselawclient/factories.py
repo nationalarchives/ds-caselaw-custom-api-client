@@ -132,7 +132,6 @@ class DocumentFactory:
             document.identifiers = IdentifiersCollection()
             for identifier in identifiers:
                 document.identifiers.add(identifier)
-        document._note_identifiers_loaded_from_marklogic()  # noqa: SLF001
 
         setattr(document, "linked_documents", _fake_linked_documents)  # noqa: B010
 

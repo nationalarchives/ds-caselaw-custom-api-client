@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import datetime
 import logging
-from contextlib import ExitStack
+from collections.abc import Iterator
+from contextlib import ExitStack, contextmanager
 from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
@@ -94,12 +95,11 @@ class DocumentMerge:
         two disagree, the source wins. Newly synthesised target body claims are ranked below the source's DOCUMENT
         claims so an older stored source claim is not overwritten by a just-materialised target body value.
 
-        This method takes its own editing sessions on the target (and on the source, if persisted). Once they are
-        held the target is reloaded and the checks are repeated against fresh state. For a persisted source,
-        identifiers and metadata claims are re-read from MarkLogic. Additions made on this object since it was
-        loaded are put back; a deletion made by a concurrent ``save_identifiers`` / ``save_metadata_fields`` is kept.
-        The body may still carry unsaved in-memory edits. A persisted source must still have a single version at
-        that point.
+        This method holds an editing session for the whole merge. A persisted source is checked out first, unless the
+        caller already holds one. The target is checked out and then loaded once; neither document is read again
+        before those sessions end. Checks, the save and source cleanup all happen before the lock is released. A
+        persisted source must still have a single version. Unsaved edits already on the source object are what get
+        merged.
 
         :param target_uri: The URI of the existing document to merge into.
         :param message: Human-readable message describing the merge, stored on the new version.
@@ -112,24 +112,15 @@ class DocumentMerge:
         :raises DocumentMergeNotPossibleError: The documents failed the checks required to merge them.
         """
         from caselawclient.models.documents import Document
-        from caselawclient.models.documents.exceptions import DocumentMergeNotPossibleError
 
         source = self.source
         if type(source) is Document:
             raise TypeError("Use a concrete document class such as Judgment or PressSummary to merge.")
 
-        target = source.api_client.get_document_by_uri(target_uri)
-
-        validation = self.check_can_merge_into(target)
-        if not validation.success:
-            raise DocumentMergeNotPossibleError(validation.messages)
-
-        merge_payload = self._build_merge_payload(payload)
-
         with ExitStack() as sessions:
-            if source._persisted:  # noqa: SLF001
-                sessions.enter_context(source.editing_session())
-            sessions.enter_context(target.editing_session())
+            sessions.enter_context(self._source_lock())
+            merge_payload = self._build_merge_payload(payload)
+            target = sessions.enter_context(Document.open_for_editing(source.api_client, target_uri))
             self._merge_while_locked(
                 target,
                 message,
@@ -141,6 +132,21 @@ class DocumentMerge:
         target._discard_cached_state()  # noqa: SLF001
 
         return target
+
+    @contextmanager
+    def _source_lock(self) -> Iterator[None]:
+        """Hold a checkout of a persisted source for the merge, without opening a second one.
+
+        A caller who already loaded the source inside ``editing_session()`` keeps that session; this method
+        does not check it in.
+        """
+        source = self.source
+        if not source._persisted or source._editing_lock_held:  # noqa: SLF001
+            yield
+            return
+        with source.editing_session():
+            source._discard_cached_state()  # noqa: SLF001
+            yield
 
     def _build_merge_payload(self, payload: dict[str, Any] | None) -> dict[str, Any]:
         source = self.source
@@ -169,12 +175,6 @@ class DocumentMerge:
 
         source = self.source
 
-        # Anything read before the sessions were held may be stale.
-        target._reload_state_from_marklogic()  # noqa: SLF001
-        source._discard_cached_state()  # noqa: SLF001
-        if source._persisted:  # noqa: SLF001
-            self._reload_source_collections_preserving_local_edits()
-
         validation = self.check_can_merge_into(target)
         if not validation.success:
             raise DocumentMergeNotPossibleError(validation.messages)
@@ -190,36 +190,6 @@ class DocumentMerge:
 
         if source._persisted:  # noqa: SLF001
             self._hand_over_to(target)
-
-    def _reload_source_collections_preserving_local_edits(self) -> None:
-        """Re-read identifiers and metadata from MarkLogic, then reapply additions made since load.
-
-        ``save_identifiers`` / ``save_metadata_fields`` do not create a new XML version, so the single-version
-        check alone cannot detect a concurrent property save. Reapplying every identifier that was on this object
-        before the session would put back one that another session had deleted. Only additions made in memory
-        since load are put back. The body is left alone so unsaved body edits still merge.
-        """
-        source = self.source
-        added_identifiers = [
-            identifier
-            for identifier in source.identifiers.values()
-            if identifier.uuid not in source._loaded_identifier_uuids  # noqa: SLF001
-        ]
-        added_claims = [
-            claim
-            for claim in source.metadata_fields.values()
-            if claim.id not in source._loaded_metadata_field_ids  # noqa: SLF001
-        ]
-
-        source._initialise_identifiers()  # noqa: SLF001
-        source._initialise_metadata_fields()  # noqa: SLF001
-
-        for identifier in added_identifiers:
-            if not source.identifiers.contains(identifier):
-                source.identifiers.add(identifier)
-
-        for claim in added_claims:
-            source.metadata_fields.add(claim)
 
     def _materialise_body_claims_for_merge(self, target: Document) -> None:
         """Turn body-only metadata into claims on both documents, with the source winning ties.
