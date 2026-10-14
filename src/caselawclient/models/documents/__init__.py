@@ -68,11 +68,31 @@ from .exceptions import (
     DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
 )
+from .merge import DocumentMerge
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
 
 logger = logging.getLogger(__name__)
 
 MINIMUM_ENRICHMENT_TIME = datetime.timedelta(minutes=20)
+
+_MARKLOGIC_STATE_CACHES = (
+    "source_name",
+    "source_email",
+    "consignment_reference",
+    "versions",
+    "versions_as_documents",
+    "annotation",
+    "structured_annotation",
+    "version_created_datetime",
+    "is_published",
+    "is_held",
+    "first_published_datetime",
+    "has_ever_been_published",
+    "slug",
+    "validation_failure_messages",
+    "is_publishable",
+)
+""" Cached properties which are read from MarkLogic and so go stale when it changes underneath us. """
 
 
 class GatewayTimeoutGettingHTMLWithQuery(RuntimeWarning):
@@ -279,6 +299,39 @@ class Document:
             # timeout), so release it if it carries our token; this is a no-op otherwise.
             self._break_owned_checkout_during_error(session_token)
             raise
+        with self._hold_editing_session(session_token):
+            yield self
+
+    @classmethod
+    @contextmanager
+    def open_for_editing(
+        cls,
+        api_client: "MarklogicApiClient",
+        uri: DocumentURIString,
+        *,
+        timeout_seconds: int = 60,
+    ) -> Iterator["Document"]:
+        """Check out ``uri``, load the document once, and release the checkout on exit.
+
+        The load happens after the checkout, so the object is read while this session holds the lock.
+        """
+        session_token = str(uuid.uuid4())
+        try:
+            api_client.checkout_judgment(uri, annotation=session_token, timeout_seconds=timeout_seconds)
+        except BaseException:
+            cls._break_checkout_during_error(api_client, uri, session_token)
+            raise
+        try:
+            document = api_client.get_document_by_uri(uri)
+        except BaseException:
+            cls._break_checkout_during_error(api_client, uri, session_token)
+            raise
+        with document._hold_editing_session(session_token):  # noqa: SLF001
+            yield document
+
+    @contextmanager
+    def _hold_editing_session(self, session_token: str) -> Iterator[Self]:
+        """Treat ``session_token`` as this object's checkout until the block ends."""
         self._editing_lock_held = True
         self._editing_session_token = session_token
         self._clear_checkout_cache()
@@ -295,6 +348,16 @@ class Document:
                 raise
         finally:
             self._clear_local_editing_lock()
+
+    @staticmethod
+    def _break_checkout_during_error(
+        api_client: "MarklogicApiClient", uri: DocumentURIString, session_token: str
+    ) -> None:
+        """Best-effort release while another exception is propagating; never masks that exception."""
+        try:
+            api_client.break_checkout_if_ours(uri, session_token)
+        except Exception:
+            logger.exception("Could not break checkout of %s while cleaning up editing_session", uri)
 
     @cached_property
     def metrics(self) -> DocumentMetrics:
@@ -985,6 +1048,44 @@ class Document:
             delete_documents_from_private_bucket(self.uri)
         else:
             raise DocumentNotSafeForDeletion
+
+    def _discard_cached_state(self) -> None:
+        """Forget anything read from MarkLogic that a save, publish or concurrent writer could have changed."""
+        for cached in _MARKLOGIC_STATE_CACHES:
+            self.__dict__.pop(cached, None)
+
+    def _reload_state_from_marklogic(self) -> None:
+        """Re-read this persisted document's body, identifiers and metadata claims, discarding cached state."""
+        self._initialise_document_body()
+        self._initialise_identifiers()
+        self._initialise_metadata_fields()
+        self._discard_cached_state()
+
+    @property
+    def merge(self) -> DocumentMerge:
+        """Merge behaviour for this document as a source."""
+        return DocumentMerge(self)
+
+    def merge_into(
+        self,
+        target_uri: DocumentURIString,
+        message: str,
+        *,
+        version_type: VersionType = VersionType.SUBMISSION,
+        automated: bool = False,
+        payload: dict[str, Any] | None = None,
+    ) -> "Document":
+        """Merge this document into the existing document at ``target_uri``.
+
+        See :meth:`DocumentMerge.into` for the full behaviour.
+        """
+        return self.merge.into(
+            target_uri,
+            message,
+            version_type=version_type,
+            automated=automated,
+            payload=payload,
+        )
 
     def _get_restore_metadata_source_version(self, version_number: int) -> Optional["Document"]:
         """Find the latest version that should source metadata during restore.
