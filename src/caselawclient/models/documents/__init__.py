@@ -67,6 +67,7 @@ from .exceptions import (
     DocumentNotLockedForEditingError,
     DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
+    UnparsableDecisionDateError,
 )
 from .merge import DocumentMerge
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
@@ -877,7 +878,7 @@ class Document:
 
         Inserts when this object is not yet persisted; otherwise updates the existing MarkLogic document.
         Validates identifiers and metadata, converts body claims to structured metadata, writes
-        resolved title claims into ``FRBRWork/FRBRname`` when eligible, upserts the document XML,
+        resolved title and decision-date claims into ``FRBRWork`` when eligible, upserts the document XML,
         then saves identifier and metadata properties to MarkLogic.
 
         :param message: Human-readable message describing the changes made.
@@ -897,6 +898,7 @@ class Document:
         self._convert_body_claims_to_structured_metadata()
         self._validate_metadata_for_save()
         self._validate_identifiers_for_save()
+        self._validate_decision_date_for_save()
         self._write_resolved_metadata_to_body()
 
         if not self._persisted:
@@ -942,6 +944,12 @@ class Document:
     def _validate_metadata_for_save(self) -> None:
         """Hook for save(); claim invariants are enforced by ``add`` / ``__setitem__``."""
         return
+
+    def _validate_decision_date_for_save(self) -> None:
+        """Block save before MarkLogic persist when the work decision date is unusable and unresolved."""
+        from caselawclient.models.documents.body_metadata.write_back import validate_decision_date_for_write_back
+
+        validate_decision_date_for_write_back(self)
 
     def _validate_identifiers_for_save(self) -> None:
         validations = self.identifiers.perform_all_validations(document_type=type(self), api_client=self.api_client)
