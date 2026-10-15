@@ -67,7 +67,6 @@ from .exceptions import (
     DocumentNotLockedForEditingError,
     DocumentNotPersistedError,
     DocumentNotSafeForDeletion,
-    UnparsableDecisionDateError as UnparsableDecisionDateError,
 )
 from .merge import DocumentMerge
 from .statuses import DOCUMENT_STATUS_HOLD, DOCUMENT_STATUS_IN_PROGRESS, DOCUMENT_STATUS_NEW, DOCUMENT_STATUS_PUBLISHED
