@@ -223,9 +223,7 @@ class TestWriteResolvedDateToBody:
         _sync_resolved_metadata_to_body(document)
 
         work_dates = document.body.get_xpath_nodes(f"{FRBR_WORK_XPATH}/akn:FRBRdate")
-        decision_named = [
-            element for element in work_dates if (element.get("name") or "") in {"judgment", "decision"}
-        ]
+        decision_named = [element for element in work_dates if (element.get("name") or "") in {"judgment", "decision"}]
         assert len(decision_named) == 1
         assert decision_named[0].get("name") == "decision"
         assert decision_named[0].get("date") == "2024-06-15"
