@@ -27,11 +27,14 @@ poetry run pytest
 
 MarkLogic integration tests live under `tests/marklogic/` and are **opt-in**: the default `poetry run pytest` excludes them (`-m 'not marklogic'`). They replace the old standalone `smoketest/` module and load a fixed corpus from `marklogic_harness/fixtures/documents/` (URIs under `test/…` as well as `smoketest/…`) so CI does not depend on staging.
 
-CI runs them in a dedicated job against a local MarkLogic container (see `.github/workflows/test.yml`).
+CI runs them in a dedicated job: it starts MarkLogic from `nationalarchives/ds-caselaw-marklogic`, runs `gradle mlWaitTillReady mlDeploy mlReloadSchemas`, then runs the harness (see `.github/workflows/test.yml`). The merge fixture tests require the `compiled_url_slugs` TDE view from the caselaw templates.
 
-To run locally against Docker or another MarkLogic instance, set `MARKLOGIC_HOST`, `MARKLOGIC_USER`, and `MARKLOGIC_PASSWORD` in a `.env` file, then:
+Tests must run as a user with the same roles as production, not `admin` (for example, TDE views such as `documents.compiled_url_slugs` are only visible to roles with read permission on the templates, and `admin` has none). `script/create_marklogic_test_user` creates one with the roles of `caselaw-editor-ui` from `ds-caselaw-marklogic`.
+
+To run locally against Docker or another MarkLogic instance, create the test user, set `MARKLOGIC_HOST`, `MARKLOGIC_USER`, and `MARKLOGIC_PASSWORD` in a `.env` file, then:
 
 ```bash
+MARKLOGIC_USER=caselaw-api-client-test MARKLOGIC_PASSWORD=... script/create_marklogic_test_user ../ds-caselaw-marklogic
 poetry run pytest -o addopts= -p marklogic_harness.pytest_plugin -m marklogic tests/marklogic
 ```
 

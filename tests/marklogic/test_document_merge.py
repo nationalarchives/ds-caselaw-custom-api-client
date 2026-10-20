@@ -1,14 +1,11 @@
 """MarkLogic integration tests for Document.merge_into."""
 
 import contextlib
-import json
 
 import pytest
-from lxml import etree
 
 from caselawclient.Client import get_multipart_strings_from_marklogic_response
 from caselawclient.client_helpers import document_from_xml
-from caselawclient.content_hash import get_hash_from_document
 from caselawclient.errors import MarklogicAPIError
 from caselawclient.models.documents.body import DocumentBody
 from caselawclient.models.documents.exceptions import DocumentMergeNotPossibleError
@@ -19,39 +16,23 @@ from caselawclient.models.utilities import extract_version
 from caselawclient.types import DocumentURIString
 from marklogic_harness.corpus import (
     DOCUMENTS_DIR,
-    INSERT_MANAGED_DOCUMENT_XQY,
-    TEST_METADATA_WRITES_URI,
-    _version_annotation_json,
+    MERGE_TEST_DOCUMENTS,
+    TEST_MERGE_SOURCE_URI,
+    TEST_MERGE_TARGET_URI,
+    configure_merge_test_documents,
+    reload_corpus_documents,
 )
 
 pytestmark = [pytest.mark.marklogic, pytest.mark.write]
 
-TARGET_URI = DocumentURIString("test/merge_target")
-SOURCE_URI = DocumentURIString("test/merge_source")
+TARGET_URI = TEST_MERGE_TARGET_URI
+SOURCE_URI = TEST_MERGE_SOURCE_URI
+
+MERGE_SOURCE_BODY_TEXT = "The applicant succeeded in their claim."
 
 
-NSMAP = {
-    "akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0",
-    "uk": "https://caselaw.nationalarchives.gov.uk/akn",
-}
-
-
-def _different_valid_judgment_xml() -> str:
-    """The metadata_writes fixture with altered text and a matching content hash, so it can be saved as a Judgment."""
-    root = etree.fromstring((DOCUMENTS_DIR / "metadata_writes.xml").read_bytes())
-    root.xpath("//akn:p", namespaces=NSMAP)[0].text = "Content of the document being merged"
-    root.xpath("//uk:hash", namespaces=NSMAP)[0].text = get_hash_from_document(etree.tostring(root))
-    return etree.tostring(root).decode()
-
-
-def _insert_source(client, uri) -> None:
-    variables = {
-        "uri": uri.as_marklogic(),
-        "document_xml": _different_valid_judgment_xml(),
-        "annotation": _version_annotation_json(client, "source upload"),
-        "type_collection": "judgment",
-    }
-    client.eval(str(INSERT_MANAGED_DOCUMENT_XQY), vars=json.dumps(variables))
+def _merge_source_fixture_xml() -> bytes:
+    return (DOCUMENTS_DIR / "merge_source.xml").read_bytes()
 
 
 def _version_count(client, uri) -> int:
@@ -81,11 +62,9 @@ def s3_calls(monkeypatch):
 
 @pytest.fixture
 def merge_target(marklogic_api_client):
-    """A throwaway copy of the metadata_writes judgment, to be merged into."""
-    _remove(marklogic_api_client, TARGET_URI)
-    _remove(marklogic_api_client, SOURCE_URI)
-    marklogic_api_client.copy_document(TEST_METADATA_WRITES_URI, TARGET_URI)
-    marklogic_api_client.set_published(TARGET_URI, False)
+    """Reset the merge test corpus pair (target loaded before source)."""
+    reload_corpus_documents(marklogic_api_client, MERGE_TEST_DOCUMENTS)
+    configure_merge_test_documents(marklogic_api_client)
     yield marklogic_api_client.get_document_by_uri(TARGET_URI)
     _remove(marklogic_api_client, TARGET_URI)
     _remove(marklogic_api_client, SOURCE_URI)
@@ -94,8 +73,6 @@ def merge_target(marklogic_api_client):
 def test_merging_a_persisted_document_adds_a_version_and_removes_the_source(
     marklogic_api_client, merge_target, s3_calls
 ):
-    # The source is created after the target so that it is the newer of the two.
-    _insert_source(marklogic_api_client, SOURCE_URI)
     source = marklogic_api_client.get_document_by_uri(SOURCE_URI)
     source_body_xml = source.body.content_as_xml
     versions_before = _version_count(marklogic_api_client, TARGET_URI)
@@ -108,7 +85,6 @@ def test_merging_a_persisted_document_adds_a_version_and_removes_the_source(
     assert not marklogic_api_client.document_exists(SOURCE_URI)
     assert [call[0] for call in s3_calls] == ["copy", "delete"]
 
-    # The previous content is still held in MarkLogic's version history.
     version_uris = get_multipart_strings_from_marklogic_response(
         marklogic_api_client.list_judgment_versions(TARGET_URI)
     )
@@ -119,7 +95,7 @@ def test_merging_a_persisted_document_adds_a_version_and_removes_the_source(
         TARGET_URI, version_uri=first_version, show_unpublished=True
     )
     assert first_version_xml.decode() != source_body_xml
-    assert "Content of the document being merged" not in first_version_xml.decode()
+    assert MERGE_SOURCE_BODY_TEXT not in first_version_xml.decode()
 
     assert marklogic_api_client.get_judgment_checkout_status_message(TARGET_URI) is None
 
@@ -127,8 +103,11 @@ def test_merging_a_persisted_document_adds_a_version_and_removes_the_source(
 def test_merging_an_in_memory_document_adds_a_version_and_touches_no_s3_assets(
     marklogic_api_client, merge_target, s3_calls
 ):
+    _remove(marklogic_api_client, SOURCE_URI)
     source = document_from_xml(
-        DocumentBody(_different_valid_judgment_xml().encode()), marklogic_api_client, uri=SOURCE_URI
+        DocumentBody(_merge_source_fixture_xml()),
+        marklogic_api_client,
+        uri=SOURCE_URI,
     )
     versions_before = _version_count(marklogic_api_client, TARGET_URI)
 
@@ -140,12 +119,14 @@ def test_merging_an_in_memory_document_adds_a_version_and_touches_no_s3_assets(
 
 
 def test_metadata_claims_survive_in_marklogic(marklogic_api_client, merge_target, s3_calls):
-    # Identifiers are covered by unit tests: saving them needs the `compiled_url_slugs` SQL view, which the
-    # harness database does not provide.
+    # Structured identifiers on persisted merge fixtures are covered in test_merge_fixtures.py.
     existing_claim_ids = set(merge_target.metadata_fields)
 
+    _remove(marklogic_api_client, SOURCE_URI)
     source = document_from_xml(
-        DocumentBody(_different_valid_judgment_xml().encode()), marklogic_api_client, uri=SOURCE_URI
+        DocumentBody(_merge_source_fixture_xml()),
+        marklogic_api_client,
+        uri=SOURCE_URI,
     )
     claim = MetadataField("title", MetadataStringValue("Title from the merged document"), MetadataSource.EDITOR)
     source.metadata_fields.add(claim)
@@ -160,8 +141,6 @@ def test_metadata_claims_survive_in_marklogic(marklogic_api_client, merge_target
 
 
 def test_failed_checks_leave_both_documents_untouched(marklogic_api_client, merge_target, s3_calls):
-    _insert_source(marklogic_api_client, SOURCE_URI)
-    # Publication has to live in MarkLogic. merge_into discards cached state once it holds the source checkout.
     marklogic_api_client.set_published(SOURCE_URI, True)
     source = marklogic_api_client.get_document_by_uri(SOURCE_URI)
     versions_before = _version_count(marklogic_api_client, TARGET_URI)

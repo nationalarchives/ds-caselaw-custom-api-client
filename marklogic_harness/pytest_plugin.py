@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from caselawclient.Client import MarklogicApiClient
@@ -15,4 +17,9 @@ def pytest_configure(config: pytest.Config) -> None:
 def marklogic_api_client() -> MarklogicApiClient:
     if not marklogic_configured():
         pytest.skip("MARKLOGIC_HOST, MARKLOGIC_USER and MARKLOGIC_PASSWORD must be set")
+    if os.environ["MARKLOGIC_USER"] == "admin":
+        pytest.fail(
+            "Do not run MarkLogic integration tests as admin: it does not have production roles "
+            "(e.g. TDE views are invisible to it). Use script/create_marklogic_test_user."
+        )
     return build_marklogic_api_client()

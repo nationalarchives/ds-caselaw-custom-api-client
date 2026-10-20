@@ -148,7 +148,13 @@ jobs:
 
       - name: Deploy MarkLogic configuration
         working-directory: ds-caselaw-marklogic
-        run: gradle mlWaitTillReady mlDeploy -PmlDatabaseNamesAndReplicaCounts=
+        run: gradle mlWaitTillReady mlDeploy mlReloadSchemas -PmlDatabaseNamesAndReplicaCounts=
+
+      - name: Create MarkLogic test user with production roles
+        env:
+          MARKLOGIC_USER: caselaw-api-client-test
+          MARKLOGIC_PASSWORD: caselaw-api-client-test
+        run: script/create_marklogic_test_user ds-caselaw-marklogic
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -174,7 +180,7 @@ jobs:
       - name: Run MarkLogic integration tests
         env:
           MARKLOGIC_HOST: localhost
-          MARKLOGIC_USER: admin
-          MARKLOGIC_PASSWORD: admin
+          MARKLOGIC_USER: caselaw-api-client-test
+          MARKLOGIC_PASSWORD: caselaw-api-client-test
           MARKLOGIC_USE_HTTPS: "false"
         run: poetry run pytest -o addopts= -p marklogic_harness.pytest_plugin -m marklogic tests/marklogic --junitxml=marklogic-junit.xml -o junit_family=legacy

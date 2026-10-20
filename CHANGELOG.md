@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Added
 
+- **harness**: merge test corpus fixtures (`test/merge_target`, `test/merge_source`) and MarkLogic integration coverage for `merge_into` (XML, metadata, identifiers, and ingest properties)
+
 - **Client**: `get_metrics()` returns daily or monthly lifecycle counts, sums, means and medians using shared search filters and MarkLogic range indexes.
 - **Document**: `DocumentMerge` (via `document.merge` / `document.merge_into(...)`) merges a document (in memory or persisted) into an existing persisted document as a new version, preserving history, identifiers and metadata; persisted sources are cleaned up afterwards
 - **Document**: `DocumentMergeNotPossibleError`, raised when merge checks fail
