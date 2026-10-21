@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Create (or update) the MarkLogic user for integration tests, with the same roles as the
+# production caselaw-editor-ui user defined in ds-caselaw-marklogic.
+#
+# Usage: MARKLOGIC_PASSWORD=... script/create_marklogic_test_user path/to/ds-caselaw-marklogic
+set -euo pipefail
+
+MARKLOGIC_REPO="${1:?usage: $0 path/to/ds-caselaw-marklogic}"
+export TEST_USER="${MARKLOGIC_USER:-caselaw-api-client-test}"
+export TEST_PASSWORD="${MARKLOGIC_PASSWORD:?MARKLOGIC_PASSWORD must be set}"
+ADMIN_USER="${MARKLOGIC_ADMIN_USER:-admin}"
+ADMIN_PASSWORD="${MARKLOGIC_ADMIN_PASSWORD:-admin}"
+MANAGE_URL="${MARKLOGIC_MANAGE_URL:-http://localhost:8002}"
+export PROD_USER_JSON="$MARKLOGIC_REPO/src/main/ml-config/security/users/caselaw-editor-ui.json"
+
+if [[ "$TEST_USER" == "$ADMIN_USER" ]]; then
+  echo "MARKLOGIC_USER must not be the admin user" >&2
+  exit 1
+fi
+
+body=$(python3 -c '
+import json, os
+prod = json.load(open(os.environ["PROD_USER_JSON"]))
+print(json.dumps({
+    "user-name": os.environ["TEST_USER"],
+    "password": os.environ["TEST_PASSWORD"],
+    "description": "API client integration tests; roles mirror " + prod["user-name"],
+    "role": prod["role"],
+}))
+')
+
+curl_admin() {
+  curl --anyauth --user "$ADMIN_USER:$ADMIN_PASSWORD" --fail --silent --show-error "$@"
+}
+
+if curl_admin --output /dev/null "$MANAGE_URL/manage/v2/users/$TEST_USER" 2>/dev/null; then
+  echo "$body" | curl_admin -X PUT -H "Content-Type: application/json" --data-binary @- \
+    "$MANAGE_URL/manage/v2/users/$TEST_USER/properties"
+  echo "Updated MarkLogic user $TEST_USER"
+else
+  echo "$body" | curl_admin -X POST -H "Content-Type: application/json" --data-binary @- \
+    "$MANAGE_URL/manage/v2/users"
+  echo "Created MarkLogic user $TEST_USER"
+fi

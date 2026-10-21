@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0" xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+  <judgment name="judgment">
+    <meta>
+      <identification source="#tna">
+        <FRBRWork>
+          <FRBRthis value="https://caselaw.nationalarchives.gov.uk/id/test/merge_target"/>
+          <FRBRuri value="https://caselaw.nationalarchives.gov.uk/id/test/merge_target"/>
+          <FRBRdate date="2023-06-01" name="judgment"/>
+          <FRBRname value="Smith v Jnes"/>
+        </FRBRWork>
+        <FRBRExpression>
+          <FRBRdate date="2023-06-01" name="judgment"/>
+        </FRBRExpression>
+        <FRBRManifestation>
+          <FRBRdate date="2023-06-15T10:00:00" name="transform"/>
+        </FRBRManifestation>
+      </identification>
+      <references source="#tna"/>
+      <proprietary source="#">
+        <uk:court>EAT</uk:court>
+        <uk:year>2023</uk:year>
+        <uk:number>100</uk:number>
+        <uk:cite>[2023] EAT 100</uk:cite>
+        <uk:parser>0.13.3</uk:parser>
+        <uk:hash>782965d672daeae9ce2af72fa04c848d832749974aea3920ea7c06c5a99d153d</uk:hash>
+      </proprietary>
+    </meta>
+    <judgmentBody>
+      <p>The applcant succeeded in their claim.</p>
+    </judgmentBody>
+  </judgment>
+</akomaNtoso>
