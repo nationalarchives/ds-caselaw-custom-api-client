@@ -31,7 +31,7 @@ CI runs them in a dedicated job: it starts MarkLogic from `nationalarchives/ds-c
 
 Tests must run as a user with the same roles as production, not `admin` (for example, TDE views such as `documents.compiled_url_slugs` are only visible to roles with read permission on the templates, and `admin` has none). `script/create_marklogic_test_user` creates one with the roles of `caselaw-editor-ui` from `ds-caselaw-marklogic`.
 
-To run locally against Docker or another MarkLogic instance, create the test user, set `MARKLOGIC_HOST`, `MARKLOGIC_USER`, and `MARKLOGIC_PASSWORD` in a `.env` file, then:
+**Local setup:** you must create the test user before running the integration harness against Docker or another MarkLogic instance. This is required on every fresh instance (for example a new container or wiped data); the harness rejects `admin`. Set `MARKLOGIC_HOST`, `MARKLOGIC_USER`, and `MARKLOGIC_PASSWORD` in a `.env` file, then:
 
 ```bash
 MARKLOGIC_USER=caselaw-api-client-test MARKLOGIC_PASSWORD=... script/create_marklogic_test_user ../ds-caselaw-marklogic
