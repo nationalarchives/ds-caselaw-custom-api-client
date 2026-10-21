@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **Document**: add metrics and submission timestamps
 - **Document**: write resolved title into Akoma Ntoso body XML during `save()`
-- **metadata**: write resolved title to FRBRname on save
+- **Document**: write resolved decision date into `FRBRWork` on `save()` when date claims exist
 - **test**: extend TEST_CORPUS_DOCUMENTS for integration coverage
 
 ### Fix
