@@ -17,6 +17,7 @@ URI = DocumentURIString("test/metrics")
 STATE = """<state signature="initial-state">
   <properties>
     <first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>
+    <transfer-received-at>2026-01-01T00:00:00Z</transfer-received-at>
   </properties>
   <dls:document-history xmlns:dls="http://marklogic.com/xdmp/dls">
     <dls:version>
@@ -55,6 +56,7 @@ def test_publish_writes_all_properties_in_one_request(publishing_client):
     assert properties.findtext("published") == "true"
     assert properties.findtext("first_published_datetime") == NOW.isoformat()
     assert properties.findtext("latest_published_datetime") == NOW.isoformat()
+    assert properties.findtext("first_submission_tdr_receipt_datetime") == "2026-01-01T00:00:00+00:00"
     metrics = DocumentMetrics.from_etree(properties.find("metrics"))
     assert metrics.tdr_to_first_publish.value == 86400
     assert metrics.submissions_before_first_publish.value == 1
@@ -63,6 +65,43 @@ def test_publish_writes_all_properties_in_one_request(publishing_client):
     client.set_datetime_property.assert_not_called()
     client.set_property_as_node.assert_not_called()
     client.set_property.assert_not_called()
+
+
+@time_machine.travel(NOW, tick=False)
+def test_publish_without_submission_does_not_record_first_tdr_receipt(publishing_client):
+    client = publishing_client
+    client._eval_and_decode.return_value = (  # noqa: SLF001
+        STATE.replace("    <first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>\n", "")
+        .replace("    <transfer-received-at>2026-01-01T00:00:00Z</transfer-received-at>\n", "")
+        .replace('"type":"submission"', '"type":"edit"')
+    )
+    client.publish_document(URI)
+    variables, _ = client._send_to_eval.call_args.args  # noqa: SLF001
+    properties = etree.fromstring(variables["properties"])
+    assert properties.find("first_submission_tdr_receipt_datetime") is None
+    metrics = DocumentMetrics.from_etree(properties.find("metrics"))
+    assert metrics.tdr_to_first_publish.value is None
+    assert metrics.tdr_to_latest_publish.value is None
+
+
+@time_machine.travel(NOW, tick=False)
+def test_publish_backfills_empty_post_publication_receipt_marker(publishing_client):
+    client = publishing_client
+    client._eval_and_decode.return_value = STATE.replace(  # noqa: SLF001
+        "    <first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>",
+        "    <first_submission_datetime>2026-01-01T00:00:00Z</first_submission_datetime>\n"
+        "    <first_published_datetime>2026-01-01T00:00:00Z</first_published_datetime>\n"
+        "    <first_submission_after_latest_publication_datetime>2026-01-01T00:00:00Z</first_submission_after_latest_publication_datetime>\n"
+        "    <first_submission_after_latest_publication_tdr_receipt_datetime></first_submission_after_latest_publication_tdr_receipt_datetime>",
+    )
+    client.publish_document(URI)
+    variables, _ = client._send_to_eval.call_args.args  # noqa: SLF001
+    properties = etree.fromstring(variables["properties"])
+    assert properties.findtext("first_submission_after_latest_publication_tdr_receipt_datetime") == (
+        "2026-01-01T00:00:00+00:00"
+    )
+    metrics = DocumentMetrics.from_etree(properties.find("metrics"))
+    assert metrics.tdr_to_latest_publish.value == 86400
 
 
 @time_machine.travel(NOW, tick=False)

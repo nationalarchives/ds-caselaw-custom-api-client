@@ -627,7 +627,7 @@ class MarklogicApiClient:
             state = self._get_document_metrics_state(document_uri)
             properties = etree.Element("properties")
             for name, value in state.submission_properties(datetime.now(UTC)).items():
-                etree.SubElement(properties, name).text = value.isoformat()
+                etree.SubElement(properties, name).text = value.isoformat() if value is not None else ""
             vars["properties"] = etree.tostring(properties).decode()
             vars["expected_state"] = state.signature
 
@@ -665,7 +665,7 @@ class MarklogicApiClient:
         if annotation.version_type == VersionType.SUBMISSION:
             updates = MetricsState.for_new_document().submission_properties(datetime.now(UTC))
             for name, value in updates.items():
-                etree.SubElement(properties, name).text = value.isoformat()
+                etree.SubElement(properties, name).text = value.isoformat() if value is not None else ""
 
         vars: query_dicts.InsertDocumentDict = {
             "uri": uri,
@@ -1086,7 +1086,7 @@ class MarklogicApiClient:
         properties = etree.Element("properties")
         etree.SubElement(properties, "published").text = "true"
         for name, value in state.publication_dates(now).items():
-            etree.SubElement(properties, name).text = value.isoformat()
+            etree.SubElement(properties, name).text = value.isoformat() if value is not None else ""
         properties.append(state.publication_metrics(now).as_etree)
         etree.SubElement(properties, SUBMISSION_AFTER_PUBLICATION_PROPERTY)
         vars: query_dicts.PublishDocumentDict = {

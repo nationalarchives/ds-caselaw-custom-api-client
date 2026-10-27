@@ -60,14 +60,15 @@ def test_submission_times_and_first_publication(marklogic_api_client, metrics_do
         submit(client, uri, body, version_type)
     assert client.get_datetime_property(uri, "latest_submission_datetime") == latest
 
-    # The legacy TDR timestamp must have no effect on reporting durations.
-    client.set_property(uri, "transfer-received-at", "1900-01-01T00:00:00Z")
+    # Reporting duration uses TDR receipt time, while submission timestamps retain ingestion time.
+    received = first.replace(hour=0, minute=0, second=0, microsecond=0)
+    client.set_property(uri, "transfer-received-at", received.isoformat())
     client.publish_document(uri)
     published = client.get_datetime_property(uri, "first_published_datetime")
     metrics = load_metrics(client, uri)
     assert metrics.submissions_before_first_publish.value == 2
-    assert metrics.tdr_to_first_publish.value == int((published - first).total_seconds())
-    assert metrics.tdr_to_latest_publish.value == metrics.tdr_to_first_publish.value
+    assert metrics.tdr_to_first_publish.value == int((published - received).total_seconds())
+    assert metrics.tdr_to_latest_publish.value == int((published - received).total_seconds())
     assert client.get_datetime_property(uri, "latest_published_datetime") == published
     assert client.get_published(uri)
 
@@ -79,6 +80,9 @@ def test_republication_freezes_first_metrics_and_clears_submission_date(marklogi
     first_metrics = load_metrics(client, uri)
     first_published = client.get_datetime_property(uri, "first_published_datetime")
     client.set_published(uri, False)
+    previous_submission = client.get_datetime_property(uri, "latest_submission_datetime")
+    assert previous_submission is not None
+    client.set_property(uri, "transfer-received-at", previous_submission.isoformat())
     submit(client, uri, body)
     first_resubmission = client.get_datetime_property(uri, "first_submission_after_latest_publication_datetime")
     assert first_resubmission is not None
@@ -88,7 +92,11 @@ def test_republication_freezes_first_metrics_and_clears_submission_date(marklogi
     client.publish_document(uri)
     metrics = load_metrics(client, uri)
     latest_published = client.get_datetime_property(uri, "latest_published_datetime")
-    assert metrics.tdr_to_latest_publish.value == int((latest_published - first_resubmission).total_seconds())
+    tdr_resubmission = client.get_datetime_property(
+        uri, "first_submission_after_latest_publication_tdr_receipt_datetime"
+    )
+    assert tdr_resubmission is not None
+    assert metrics.tdr_to_latest_publish.value == int((latest_published - tdr_resubmission).total_seconds())
     assert metrics.tdr_to_first_publish.value == first_metrics.tdr_to_first_publish.value
     assert metrics.submissions_before_first_publish.value == first_metrics.submissions_before_first_publish.value
     assert client.get_datetime_property(uri, "first_published_datetime") == first_published

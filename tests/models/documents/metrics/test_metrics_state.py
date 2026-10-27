@@ -7,8 +7,10 @@ from caselawclient.models.documents.metrics import DocumentMetrics
 from caselawclient.models.documents.metrics.metrics_state import (
     DLS_NAMESPACE,
     FIRST_SUBMISSION_PROPERTY,
+    FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY,
     LATEST_SUBMISSION_PROPERTY,
     SUBMISSION_AFTER_PUBLICATION_PROPERTY,
+    SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY,
     MetricsState,
 )
 from caselawclient.models.documents.versions import VersionType
@@ -29,6 +31,12 @@ def test_initial_submission_sets_first_and_latest():
     assert updates[FIRST_SUBMISSION_PROPERTY] == NOW
     assert updates[LATEST_SUBMISSION_PROPERTY] == NOW
     assert SUBMISSION_AFTER_PUBLICATION_PROPERTY not in updates
+
+
+def test_initial_submission_records_tdr_receipt_when_available():
+    state = make_state({"transfer-received-at": EARLIER}, version_types=[])
+    updates = state.submission_properties(NOW)
+    assert updates[FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY] == datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
 
 
 def test_existing_first_submission_is_not_overwritten():
@@ -65,18 +73,63 @@ def test_first_submission_after_publication_is_recorded_once(properties):
     assert SUBMISSION_AFTER_PUBLICATION_PROPERTY not in state.submission_properties(NOW)
 
 
+def test_first_submission_after_publication_records_tdr_receipt():
+    state = make_state({"published": "true", "transfer-received-at": EARLIER})
+    updates = state.submission_properties(NOW)
+    assert updates[SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY] == datetime.datetime(
+        2026, 1, 1, tzinfo=datetime.UTC
+    )
+
+
+def test_new_post_publication_submission_replaces_stale_tdr_receipt():
+    state = make_state(
+        {
+            "published": "true",
+            "transfer-received-at": "2026-01-02T00:00:00Z",
+            SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY: EARLIER,
+        }
+    )
+    updates = state.submission_properties(NOW)
+    assert updates[SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY] == datetime.datetime(
+        2026, 1, 2, tzinfo=datetime.UTC
+    )
+
+
+def test_new_post_publication_submission_clears_stale_tdr_receipt_when_missing():
+    state = make_state({"published": "true", SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY: EARLIER})
+    updates = state.submission_properties(NOW)
+    assert SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY in updates
+    assert updates[SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY] is None
+
+
+@pytest.mark.parametrize("value", ["not-a-date", "2026-01-01T00:00:00"])
+def test_invalid_tdr_receipt_is_not_recorded(value):
+    state = make_state({"transfer-received-at": value}, version_types=[])
+    assert FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY not in state.submission_properties(NOW)
+
+
 def test_first_publication_calculates_durations_and_counts_submissions_only():
     state = make_state(
-        {FIRST_SUBMISSION_PROPERTY: EARLIER, "transfer-received-at": "1900-01-01T00:00:00Z"},
+        {FIRST_SUBMISSION_PROPERTY: EARLIER, "transfer-received-at": "2025-12-31T00:00:00Z"},
         [VersionType.SUBMISSION, VersionType.EDIT, VersionType.ENRICHMENT, VersionType.RESTORE, VersionType.SUBMISSION],
     )
     dates = state.publication_dates(NOW)
     metrics = state.publication_metrics(NOW)
-    assert metrics.tdr_to_first_publish.value == 86400
-    assert metrics.tdr_to_latest_publish.value == 86400
+    assert metrics.tdr_to_first_publish.value == 172800
+    assert metrics.tdr_to_latest_publish.value == 172800
     assert metrics.submissions_before_first_publish.value == 2
     assert dates["first_published_datetime"] == NOW
     assert dates["latest_published_datetime"] == NOW
+    assert dates[FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY] == datetime.datetime(2025, 12, 31, tzinfo=datetime.UTC)
+
+
+def test_first_publication_without_submission_does_not_record_receipt_or_duration():
+    state = make_state({"transfer-received-at": EARLIER}, version_types=[VersionType.EDIT])
+    dates = state.publication_dates(NOW)
+    metrics = state.publication_metrics(NOW)
+    assert FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY not in dates
+    assert metrics.tdr_to_first_publish.value is None
+    assert metrics.tdr_to_latest_publish.value is None
 
 
 def test_republication_preserves_first_metrics_and_uses_first_submission_after_publication():
@@ -85,6 +138,7 @@ def test_republication_preserves_first_metrics_and_uses_first_submission_after_p
             FIRST_SUBMISSION_PROPERTY: "2025-01-01T00:00:00Z",
             "first_published_datetime": "2025-02-01T00:00:00Z",
             SUBMISSION_AFTER_PUBLICATION_PROPERTY: EARLIER,
+            SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY: EARLIER,
         },
         [VersionType.SUBMISSION] * 5,
     )
@@ -101,11 +155,62 @@ def test_republication_preserves_first_metrics_and_uses_first_submission_after_p
 
 
 def test_republication_without_submission_clears_latest_metric():
-    state = make_state({"first_published_datetime": EARLIER})
+    state = make_state(
+        {
+            "first_published_datetime": EARLIER,
+            SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY: EARLIER,
+        }
+    )
     stored = DocumentMetrics()
     stored.tdr_to_latest_publish.value = 60
     state.properties.append(stored.as_etree)
     assert state.publication_metrics(NOW).tdr_to_latest_publish.value is None
+
+
+def test_republication_captures_receipt_for_legacy_submission_after_publication():
+    state = make_state(
+        {
+            "first_published_datetime": EARLIER,
+            SUBMISSION_AFTER_PUBLICATION_PROPERTY: EARLIER,
+            "transfer-received-at": "2026-01-01T00:00:00Z",
+        }
+    )
+    dates = state.publication_dates(NOW)
+    assert dates[SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY] == datetime.datetime(
+        2026, 1, 1, tzinfo=datetime.UTC
+    )
+
+
+def test_republication_backfills_empty_receipt_marker_from_transfer_metadata():
+    state = make_state(
+        {
+            "first_published_datetime": EARLIER,
+            SUBMISSION_AFTER_PUBLICATION_PROPERTY: EARLIER,
+            SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY: "",
+            "transfer-received-at": "2026-01-01T00:00:00Z",
+        }
+    )
+    dates = state.publication_dates(NOW)
+    metrics = state.publication_metrics(NOW)
+    assert dates[SUBMISSION_AFTER_PUBLICATION_TDR_RECEIPT_PROPERTY] == datetime.datetime(
+        2026, 1, 1, tzinfo=datetime.UTC
+    )
+    assert metrics.tdr_to_latest_publish.value == 86400
+
+
+def test_first_publication_backfills_empty_receipt_marker_from_transfer_metadata():
+    state = make_state(
+        {
+            FIRST_SUBMISSION_PROPERTY: EARLIER,
+            FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY: "",
+            "transfer-received-at": "2026-01-01T00:00:00Z",
+        },
+        [VersionType.SUBMISSION],
+    )
+    dates = state.publication_dates(NOW)
+    metrics = state.publication_metrics(NOW)
+    assert dates[FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY] == datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
+    assert metrics.tdr_to_first_publish.value == 86400
 
 
 def test_empty_first_publication_timestamp_is_set():
@@ -135,7 +240,9 @@ def test_legacy_sentinel_is_preserved_without_inventing_first_metrics():
     ],
 )
 def test_duration_from_submission_date(start, expected):
-    metrics = make_state({FIRST_SUBMISSION_PROPERTY: start}).publication_metrics(NOW)
+    metrics = make_state(
+        {FIRST_SUBMISSION_PROPERTY: start, FIRST_SUBMISSION_TDR_RECEIPT_PROPERTY: start}
+    ).publication_metrics(NOW)
     assert metrics.tdr_to_first_publish.value == expected
     assert metrics.tdr_to_latest_publish.value == expected
 
