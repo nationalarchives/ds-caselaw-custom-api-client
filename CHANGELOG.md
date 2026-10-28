@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Fix
 
+- **metrics**: calculate publication durations from TDR receipt timestamps while retaining the legacy submission timestamps as ingestion times
 - **AWS**: deleting S3 objects raises when a successful `delete_objects` response still lists per-key errors
 - **AWS**: align signed-link test expectations with region-aware S3 hostnames
 - **AWS**: deleting a document's assets (including `Document.delete()`) now covers every object under the prefix, listing all pages and deleting in batches of at most 1,000 keys, rather than only the first 1,000
