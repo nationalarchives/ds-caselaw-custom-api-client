@@ -133,6 +133,41 @@ def add_editor_title(document, title: str) -> None:
     )
 
 
+def add_editor_judge(document, name: str) -> None:
+    document.metadata_fields.add(
+        MetadataField(
+            name="judges",
+            value=MetadataStringValue(name),
+            source=MetadataSource.EDITOR,
+            id=str(uuid4()),
+            timestamp=datetime(2025, 1, 1, tzinfo=UTC),
+        )
+    )
+
+
+def judgment_body_with_valid_identification_and_judges(
+    *,
+    title: str | None = "Original title",
+    judges: tuple[str, ...] = ("Original Judge",),
+) -> DocumentBody:
+    """Judgment body with valid identification and header judges."""
+    root = etree.fromstring(read_fixture("valid_frbr_identification_judgment.xml"))
+    judgment = root.xpath("//akn:judgment", namespaces=DEFAULT_NAMESPACES)[0]
+    header = etree.SubElement(judgment, f"{{{AKN_NS}}}header")
+    for judge_name in judges:
+        paragraph = etree.SubElement(header, f"{{{AKN_NS}}}p")
+        judge_element = etree.SubElement(paragraph, f"{{{AKN_NS}}}judge")
+        judge_element.text = judge_name
+    etree.SubElement(judgment, f"{{{AKN_NS}}}judgmentBody")
+    if title is not None:
+        work = root.xpath("//akn:FRBRWork", namespaces=DEFAULT_NAMESPACES)[0]
+        name_element = work.find(f"{{{AKN_NS}}}FRBRname")
+        if name_element is None:
+            name_element = etree.SubElement(work, f"{{{AKN_NS}}}FRBRname")
+        name_element.set("value", title)
+    return DocumentBody(etree.tostring(root))
+
+
 def akn_child_local_names(element: etree._Element) -> list[str]:
     return [
         etree.QName(child).localname

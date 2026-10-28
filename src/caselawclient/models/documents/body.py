@@ -161,6 +161,15 @@ class DocumentBody:
             return False
         return frbr_identification_validation_failure(identification_nodes[0]) is None
 
+    @property
+    def supports_header_judges_write_back(self) -> bool:
+        """True when save can write resolved judge names into ``header`` judge elements."""
+        from caselawclient.models.documents.body_metadata import writable_akn_document_root_xpath
+
+        if self.failed_to_parse:
+            return False
+        return writable_akn_document_root_xpath(self._xml) is not None
+
     def _invalidate_cached_properties(self, *property_names: str) -> None:
         for name in {*property_names, "content_as_xml"}:
             self.__dict__.pop(name, None)

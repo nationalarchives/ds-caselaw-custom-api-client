@@ -6,7 +6,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from caselawclient.factories import JudgmentFactory
-from caselawclient.models.documents.body import FRBR_WORK_XPATH, NAME_XPATH, DocumentBody
+from caselawclient.models.documents.body import FRBR_WORK_XPATH, JUDGES_XPATH, NAME_XPATH, DocumentBody
 from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
 from caselawclient.models.documents.metadata.fields.field import (
     MetadataDateValue,
@@ -16,11 +16,14 @@ from caselawclient.models.documents.metadata.fields.field import (
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 from tests.models.documents.body_metadata.fixtures import (
+    AKN_NS,
     FRBRWORK_NAME_VALUE_XPATH,
+    add_editor_judge,
     add_editor_title,
     akn_child_local_names,
     doc_press_summary_body,
     judgment_body_with_valid_identification,
+    judgment_body_with_valid_identification_and_judges,
     judgment_with_identification,
     valid_frbr_triple_inner,
 )
@@ -301,3 +304,107 @@ class TestMetadataWriteBackSupport:
 
         _assert_write_back_noops(document)
         assert body.content_as_xml == original_xml
+
+
+class TestWriteResolvedJudgesToBody:
+    def test_write_resolved_judges_updates_header(self, mock_api_client):
+        body = judgment_body_with_valid_identification_and_judges(judges=("Original Judge",))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_judge(document, "Resolved Judge")
+
+        assert BodyMetadataWriteBack().sync(document) is True
+
+        assert document.body.judges == ["Resolved Judge"]
+        assert document.body.get_xpath_match_strings(f"{JUDGES_XPATH}/text()") == ["Resolved Judge"]
+
+    def test_suppressed_judges_claims_remove_header_judges(self, mock_api_client):
+        body = judgment_body_with_valid_identification_and_judges(judges=("Original Judge",))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        document.metadata_fields.add(
+            MetadataField(
+                name="judges",
+                value=MetadataStringValue("Editor Judge"),
+                source=MetadataSource.EDITOR,
+                id=str(uuid4()),
+                timestamp=datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                rejected=True,
+            )
+        )
+
+        assert BodyMetadataWriteBack().sync(document) is True
+        assert document.body.get_xpath_nodes(JUDGES_XPATH) == []
+        assert document.body.judges == []
+
+    def test_body_judges_are_not_written_back_without_judges_claims(self, mock_api_client):
+        body = judgment_body_with_valid_identification_and_judges(judges=("Body-only Judge",))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+
+        assert BodyMetadataWriteBack().sync(document) is False
+        assert document.body.judges == ["Body-only Judge"]
+
+    def test_judges_write_back_when_frbr_write_back_ineligible(self, mock_api_client):
+        from lxml import etree
+
+        body = doc_press_summary_body()
+        assert body.supports_metadata_write_back is False
+        assert body.supports_header_judges_write_back is True
+        doc = body.content_as_xml_tree.xpath("//akn:doc", namespaces=DEFAULT_NAMESPACES)[0]
+        header = etree.SubElement(doc, f"{{{AKN_NS}}}header")
+        paragraph = etree.SubElement(header, f"{{{AKN_NS}}}p")
+        judge = etree.SubElement(paragraph, f"{{{AKN_NS}}}judge")
+        judge.text = "Original Judge"
+        document = JudgmentFactory.build(
+            api_client=mock_api_client,
+            body=DocumentBody(etree.tostring(body.content_as_xml_tree)),
+        )
+        add_editor_judge(document, "Press Summary Judge")
+
+        assert BodyMetadataWriteBack().sync(document) is True
+        assert document.body.judges == ["Press Summary Judge"]
+
+    def test_judges_write_back_leaves_judgment_body_judges_unchanged(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Header Judge</judge></p></header>
+                    <judgmentBody>
+                        <decision><p>As <judge>Body Judge</judge> noted...</p></decision>
+                    </judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_judge(document, "Resolved Header Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert document.body.judges == ["Resolved Header Judge"]
+        assert (
+            document.body.get_xpath_match_string("/akn:akomaNtoso/akn:*/akn:judgmentBody//akn:judge/text()")
+            == "Body Judge"
+        )
+
+    def test_save_writes_resolved_judges_into_xml(self, mock_api_client):
+        body = judgment_body_with_valid_identification()
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_judge(document, "Saved Judge")
+
+        with patch.object(document.api_client, "document_exists", return_value=True):
+            document.save(message="Sync judges to XML")
+
+        xml_tree = mock_api_client.update_locked_document_xml.call_args[0][1]
+        judge_names = xml_tree.xpath(f"{JUDGES_XPATH}/text()", namespaces=DEFAULT_NAMESPACES)
+        assert judge_names == ["Saved Judge"]
+
+    def test_content_as_xml_updates_after_judges_write_back(self, mock_api_client):
+        body = judgment_body_with_valid_identification_and_judges(judges=("Original Judge",))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        _ = document.body.content_as_xml
+        add_editor_judge(document, "Updated Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert "Updated Judge" in document.body.content_as_xml
+        assert "Original Judge" not in document.body.content_as_xml
