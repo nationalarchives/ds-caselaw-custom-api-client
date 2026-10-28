@@ -5,7 +5,7 @@ from datetime import UTC
 from unittest.mock import patch
 from uuid import uuid4
 
-from caselawclient.content_hash import get_hash_from_document, get_hashable_judgment_body_text, get_hashable_text
+from caselawclient.content_hash import get_hash_from_document, get_hashable_narrative_text
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents.body import FRBR_WORK_XPATH, JUDGES_XPATH, NAME_XPATH, DocumentBody
 from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
@@ -40,6 +40,26 @@ def _assert_write_back_noops(document) -> None:
 
 def _document_xml_bytes(document) -> bytes:
     return document.body.content_as_xml.encode()
+
+
+def _judgment_body_xml(document) -> bytes:
+    from lxml import etree
+
+    bodies = document.body.content_as_xml_tree.xpath("//akn:judgmentBody", namespaces=DEFAULT_NAMESPACES)
+    assert len(bodies) == 1
+    return etree.tostring(bodies[0])
+
+
+def _document_xml_without_headers(document) -> bytes:
+    from copy import deepcopy
+    from lxml import etree
+
+    tree = deepcopy(document.body.content_as_xml_tree)
+    for header in tree.xpath("//akn:header", namespaces=DEFAULT_NAMESPACES):
+        parent = header.getparent()
+        if parent is not None:
+            parent.remove(header)
+    return etree.tostring(tree)
 
 
 class TestWriteResolvedTitleToBody:
@@ -348,24 +368,16 @@ class TestWriteResolvedJudgesToBody:
         assert document.body.judges == ["Body-only Judge"]
 
     def test_judges_write_back_when_frbr_write_back_ineligible(self, mock_api_client):
-        from lxml import etree
-
         body = doc_press_summary_body()
         assert body.supports_metadata_write_back is False
         assert body.supports_header_judges_write_back is True
-        doc = body.content_as_xml_tree.xpath("//akn:doc", namespaces=DEFAULT_NAMESPACES)[0]
-        header = etree.SubElement(doc, f"{{{AKN_NS}}}header")
-        paragraph = etree.SubElement(header, f"{{{AKN_NS}}}p")
-        judge = etree.SubElement(paragraph, f"{{{AKN_NS}}}judge")
-        judge.text = "Original Judge"
-        document = JudgmentFactory.build(
-            api_client=mock_api_client,
-            body=DocumentBody(etree.tostring(body.content_as_xml_tree)),
-        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        without_header_before = _document_xml_without_headers(document)
         add_editor_judge(document, "Press Summary Judge")
 
         assert BodyMetadataWriteBack().sync(document) is True
         assert document.body.judges == ["Press Summary Judge"]
+        assert _document_xml_without_headers(document) == without_header_before
 
     def test_judges_write_back_leaves_judgment_body_judges_unchanged(self, mock_api_client):
         body = DocumentBody(
@@ -456,7 +468,9 @@ class TestWriteResolvedJudgesToBody:
         assert "Before" in document.body.content_as_xml
 
 
-class TestMetadataWriteBackPreservesContentHash:
+class TestMetadataWriteBackPreservesDocumentText:
+    """Metadata write-back may change ``meta`` / header judges; narrative text must not."""
+
     def test_title_write_back_does_not_change_content_hash(self, mock_api_client):
         body = judgment_body_with_valid_identification(title="Original title")
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
@@ -467,26 +481,7 @@ class TestMetadataWriteBackPreservesContentHash:
 
         assert get_hash_from_document(_document_xml_bytes(document)) == content_hash_before
 
-    def test_judges_write_back_does_not_change_judgment_body_hashable_text(self, mock_api_client):
-        body = DocumentBody(
-            b"""
-            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-                <judgment>
-                    <header><p><judge>Header Judge</judge></p></header>
-                    <judgmentBody><decision><p>Unique judgment body text.</p></decision></judgmentBody>
-                </judgment>
-            </akomaNtoso>
-        """
-        )
-        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        judgment_body_hash_before = get_hashable_judgment_body_text(_document_xml_bytes(document))
-        add_editor_judge(document, "Resolved Header Judge")
-
-        BodyMetadataWriteBack().sync(document)
-
-        assert get_hashable_judgment_body_text(_document_xml_bytes(document)) == judgment_body_hash_before
-
-    def test_judges_write_back_preserves_non_judge_header_text_in_content_hash(self, mock_api_client):
+    def test_judges_write_back_does_not_change_narrative_text(self, mock_api_client):
         body = DocumentBody(
             b"""
             <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
@@ -500,12 +495,38 @@ class TestMetadataWriteBackPreservesContentHash:
         """
         )
         document = JudgmentFactory.build(api_client=mock_api_client, body=body)
-        hashable_before = get_hashable_text(_document_xml_bytes(document))
-        add_editor_judge(document, "Old Judge")
+        narrative_before = get_hashable_narrative_text(_document_xml_bytes(document))
+        add_editor_judge(document, "Completely Different Judge")
 
         BodyMetadataWriteBack().sync(document)
 
-        hashable_after = get_hashable_text(_document_xml_bytes(document))
-        assert hashable_after == hashable_before
-        assert b"sittingon1January" in hashable_after
-        assert b"Before" in hashable_after
+        assert get_hashable_narrative_text(_document_xml_bytes(document)) == narrative_before
+
+    def test_judges_write_back_leaves_judgment_body_xml_unchanged(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Header Judge</judge></p></header>
+                    <judgmentBody><decision><p>Exact narrative markup must stay.</p></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        judgment_body_before = _judgment_body_xml(document)
+        add_editor_judge(document, "Different Header Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert _judgment_body_xml(document) == judgment_body_before
+
+    def test_judges_write_back_leaves_non_header_document_xml_unchanged(self, mock_api_client):
+        body = judgment_body_with_valid_identification_and_judges(judges=("Original Judge",))
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        without_header_before = _document_xml_without_headers(document)
+        add_editor_judge(document, "Resolved Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert _document_xml_without_headers(document) == without_header_before

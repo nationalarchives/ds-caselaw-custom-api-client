@@ -1,4 +1,9 @@
-"""Sync resolved judge metadata into ``akn:header`` judge elements."""
+"""Sync resolved judge metadata into ``akn:header`` judge elements.
+
+Only ``akn:judge`` nodes under ``akn:header`` are created, updated, or removed.
+Surrounding header markup (including paragraph text and tails) and the rest of
+the document (``judgmentBody``, ``meta``, etc) are not rewritten.
+"""
 
 from __future__ import annotations
 
@@ -83,10 +88,7 @@ def _apply_resolved_judges(xml: XML, root_xpath: str, names: list[str]) -> None:
             _append_judge_element(header, name)
 
     for judge in existing_judges[len(names) :]:
-        parent = judge.getparent()
-        _remove_element_preserving_tail(judge)
-        if parent is not None:
-            _remove_empty_paragraph_if_present(parent)
+        _remove_judge_element(judge)
 
 
 def _set_judge_element_name(judge_element: Element, name: str) -> None:
@@ -96,6 +98,7 @@ def _set_judge_element_name(judge_element: Element, name: str) -> None:
 
 
 def _append_judge_element(header: Element, name: str) -> None:
+    """Add a new header judge (minimal ``p`` wrapper when no inline slot exists)."""
     qname_p = etree.QName(AKN_NS, "p")
     qname_judge = etree.QName(AKN_NS, "judge")
     paragraph = etree.SubElement(header, qname_p)
@@ -103,32 +106,19 @@ def _append_judge_element(header: Element, name: str) -> None:
     judge_element.text = name
 
 
-def _remove_element_preserving_tail(element: Element) -> None:
-    parent = element.getparent()
+def _remove_judge_element(judge_element: Element) -> None:
+    """Remove a ``judge`` element only, preserving sibling/parent text via tail merge."""
+    parent = judge_element.getparent()
     if parent is None:
         return
-    tail = element.tail
-    element.tail = None
-    previous = element.getprevious()
+    tail = judge_element.tail
+    judge_element.tail = None
+    previous = judge_element.getprevious()
     if previous is not None:
         previous.tail = (previous.tail or "") + (tail or "")
     else:
         parent.text = (parent.text or "") + (tail or "")
-    parent.remove(element)
-
-
-def _remove_empty_paragraph_if_present(element: Element) -> None:
-    if not _is_empty_paragraph(element):
-        return
-    _remove_element_preserving_tail(element)
-
-
-def _is_empty_paragraph(element: Element) -> bool:
-    if etree.QName(element).localname != "p":
-        return False
-    if len(element) > 0:
-        return False
-    return not (element.text or "").strip()
+    parent.remove(judge_element)
 
 
 def _resolve_header_element(xml: XML, root_xpath: str) -> Element:

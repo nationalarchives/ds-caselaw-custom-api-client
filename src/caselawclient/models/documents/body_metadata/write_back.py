@@ -1,7 +1,9 @@
 """Orchestrate syncing resolved metadata claims into document body XML.
 
-Title write-back is implemented via ``FrbrIdentificationWriter``; judge names via
-``HeaderJudgesWriter``. Other metadata fields will add dedicated writers as they
+Title write-back is implemented via ``FrbrIdentificationWriter`` (``meta``);
+judge names via ``HeaderJudgesWriter`` (``header`` ``judge`` elements only).
+These writers must not modify the document narrative (``judgmentBody`` /
+``mainBody`` text). Other metadata fields will add dedicated writers as they
 are implemented; there is no per-field ``write_resolved_to_body()`` hook on
 metadata types today.
 """

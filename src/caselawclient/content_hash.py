@@ -36,11 +36,11 @@ def get_hashable_text(doc: bytes) -> bytes:
     return spaceless.encode("utf-8")
 
 
-def get_hashable_judgment_body_text(doc: bytes) -> bytes:
-    """Extract spaceless UTF-8 text from ``akn:judgmentBody`` nodes (meta excluded from content hash)."""
+def get_hashable_narrative_text(doc: bytes) -> bytes:
+    """Spaceless UTF-8 text from ``judgmentBody`` / ``mainBody`` — the document narrative, not metadata."""
     root = lxml.etree.fromstring(doc)
-    judgment_bodies = root.xpath("//akn:judgmentBody", namespaces=_AKN_NAMESPACES)
-    return _spaceless_itext(judgment_bodies)
+    narrative_nodes = root.xpath("//akn:judgmentBody | //akn:mainBody", namespaces=_AKN_NAMESPACES)
+    return _spaceless_itext(narrative_nodes)
 
 
 def get_hash_from_document(doc: bytes) -> str:

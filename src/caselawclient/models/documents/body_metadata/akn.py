@@ -64,6 +64,7 @@ DOC_ROOT_CHILDREN_ORDER = (
     "coverPage",
     "preface",
     "preamble",
+    "header",
     "mainBody",
     "conclusions",
     "attachments",
