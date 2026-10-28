@@ -408,3 +408,22 @@ class TestWriteResolvedJudgesToBody:
 
         assert "Updated Judge" in document.body.content_as_xml
         assert "Original Judge" not in document.body.content_as_xml
+
+    def test_judges_write_back_noops_without_deleting_when_header_invalid(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>First Header Judge</judge></p></header>
+                    <header><p><judge>Second Header Judge</judge></p></header>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_judge(document, "Resolved Judge")
+        original_xml = body.content_as_xml
+
+        assert BodyMetadataWriteBack().sync(document) is False
+        assert body.content_as_xml == original_xml
+        assert document.body.judges == ["First Header Judge", "Second Header Judge"]

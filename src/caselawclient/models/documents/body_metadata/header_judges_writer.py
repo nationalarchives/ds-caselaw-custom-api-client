@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 from typing import TYPE_CHECKING
 
@@ -44,6 +45,18 @@ class HeaderJudgesWriter:
 
         names = judge_names_from_field_values(resolved.values)
         live_xml = body._xml  # noqa: SLF001
+        trial_tree = copy.deepcopy(live_xml.xml_as_tree)
+        trial_xml = XML(etree.tostring(trial_tree))
+
+        try:
+            _apply_resolved_judges(trial_xml, root_xpath, names)
+        except ValueError as exc:
+            logger.warning(
+                "Skipping header judges write-back for %s: %s",
+                document.uri,
+                exc,
+            )
+            return False
 
         try:
             _apply_resolved_judges(live_xml, root_xpath, names)
@@ -60,11 +73,11 @@ class HeaderJudgesWriter:
 
 
 def _apply_resolved_judges(xml: XML, root_xpath: str, names: list[str]) -> None:
+    header = _resolve_header_element(xml, root_xpath)
     _remove_header_judge_nodes(xml)
     if not names:
         return
 
-    header = _ensure_header_element(xml, root_xpath)
     qname_p = etree.QName(AKN_NS, "p")
     qname_judge = etree.QName(AKN_NS, "judge")
     for name in names:
@@ -92,7 +105,7 @@ def _is_empty_paragraph(element: Element) -> bool:
     return not (element.text or "").strip()
 
 
-def _ensure_header_element(xml: XML, root_xpath: str) -> Element:
+def _resolve_header_element(xml: XML, root_xpath: str) -> Element:
     header_xpath = f"{root_xpath}/akn:header"
     existing = xml.get_xpath_nodes(header_xpath)
     if len(existing) > 1:
