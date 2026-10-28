@@ -16,18 +16,31 @@ import lxml.etree
 from .errors import InvalidContentHashError
 
 
+_AKN_NS = "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+_AKN_NAMESPACES = {"akn": _AKN_NS}
+
+
+def _spaceless_itext(elements: list[lxml.etree._Element]) -> bytes:
+    text = "".join("".join(element.itertext()) for element in elements)
+    return re.sub(r"\s", "", text).encode("utf-8")
+
+
 def get_hashable_text(doc: bytes) -> bytes:
     """Extract the text (as UTF-8 bytes) that would be hashed"""
     root = lxml.etree.fromstring(doc)
-    metadatas = root.xpath(
-        "//akn:meta",
-        namespaces={"akn": "http://docs.oasis-open.org/legaldocml/ns/akn/3.0"},
-    )
+    metadatas = root.xpath("//akn:meta", namespaces=_AKN_NAMESPACES)
     for metadata in metadatas:  # there should be no more than one, but handle zero case gracefully
         metadata.getparent().remove(metadata)
     text = "".join(root.itertext())
     spaceless = re.sub(r"\s", "", text)
     return spaceless.encode("utf-8")
+
+
+def get_hashable_judgment_body_text(doc: bytes) -> bytes:
+    """Extract spaceless UTF-8 text from ``akn:judgmentBody`` nodes (meta excluded from content hash)."""
+    root = lxml.etree.fromstring(doc)
+    judgment_bodies = root.xpath("//akn:judgmentBody", namespaces=_AKN_NAMESPACES)
+    return _spaceless_itext(judgment_bodies)
 
 
 def get_hash_from_document(doc: bytes) -> str:

@@ -74,27 +74,53 @@ class HeaderJudgesWriter:
 
 def _apply_resolved_judges(xml: XML, root_xpath: str, names: list[str]) -> None:
     header = _resolve_header_element(xml, root_xpath)
-    _remove_header_judge_nodes(xml)
-    if not names:
-        return
+    existing_judges = xml.get_xpath_nodes(HEADER_JUDGES_XPATH)
 
+    for index, name in enumerate(names):
+        if index < len(existing_judges):
+            _set_judge_element_name(existing_judges[index], name)
+        else:
+            _append_judge_element(header, name)
+
+    for judge in existing_judges[len(names) :]:
+        parent = judge.getparent()
+        _remove_element_preserving_tail(judge)
+        if parent is not None:
+            _remove_empty_paragraph_if_present(parent)
+
+
+def _set_judge_element_name(judge_element: Element, name: str) -> None:
+    for child in list(judge_element):
+        judge_element.remove(child)
+    judge_element.text = name
+
+
+def _append_judge_element(header: Element, name: str) -> None:
     qname_p = etree.QName(AKN_NS, "p")
     qname_judge = etree.QName(AKN_NS, "judge")
-    for name in names:
-        paragraph = etree.SubElement(header, qname_p)
-        judge_element = etree.SubElement(paragraph, qname_judge)
-        judge_element.text = name
+    paragraph = etree.SubElement(header, qname_p)
+    judge_element = etree.SubElement(paragraph, qname_judge)
+    judge_element.text = name
 
 
-def _remove_header_judge_nodes(xml: XML) -> None:
-    for judge in list(xml.get_xpath_nodes(HEADER_JUDGES_XPATH)):
-        parent = judge.getparent()
-        if parent is not None:
-            parent.remove(judge)
-            if _is_empty_paragraph(parent):
-                grandparent = parent.getparent()
-                if grandparent is not None:
-                    grandparent.remove(parent)
+def _remove_element_preserving_tail(element: Element) -> None:
+    parent = element.getparent()
+    if parent is None:
+        return
+    tail = element.tail
+    element.tail = None
+    previous = element.getprevious()
+    if previous is not None:
+        previous.tail = (previous.tail or "") + (tail or "")
+    else:
+        parent.text = (parent.text or "") + (tail or "")
+    parent.remove(element)
+
+
+def _remove_empty_paragraph_if_present(element: Element) -> None:
+    if not _is_empty_paragraph(element):
+        return
+    _remove_element_preserving_tail(element)
 
 
 def _is_empty_paragraph(element: Element) -> bool:

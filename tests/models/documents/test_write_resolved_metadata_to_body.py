@@ -5,6 +5,7 @@ from datetime import UTC
 from unittest.mock import patch
 from uuid import uuid4
 
+from caselawclient.content_hash import get_hash_from_document, get_hashable_judgment_body_text, get_hashable_text
 from caselawclient.factories import JudgmentFactory
 from caselawclient.models.documents.body import FRBR_WORK_XPATH, JUDGES_XPATH, NAME_XPATH, DocumentBody
 from caselawclient.models.documents.body_metadata import BodyMetadataWriteBack
@@ -35,6 +36,10 @@ def _sync_resolved_metadata_to_body(document) -> None:
 
 def _assert_write_back_noops(document) -> None:
     assert BodyMetadataWriteBack().sync(document) is False
+
+
+def _document_xml_bytes(document) -> bytes:
+    return document.body.content_as_xml.encode()
 
 
 class TestWriteResolvedTitleToBody:
@@ -427,3 +432,80 @@ class TestWriteResolvedJudgesToBody:
         assert BodyMetadataWriteBack().sync(document) is False
         assert body.content_as_xml == original_xml
         assert document.body.judges == ["First Header Judge", "Second Header Judge"]
+
+    def test_judges_write_back_preserves_inline_header_tail_text(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header>
+                        <p>Before <judge>Old Judge</judge>, sitting on 1 January</p>
+                    </header>
+                    <judgmentBody><decision><p>Main judgment text.</p></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        add_editor_judge(document, "New Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert document.body.judges == ["New Judge"]
+        assert "sitting on 1 January" in document.body.content_as_xml
+        assert "Before" in document.body.content_as_xml
+
+
+class TestMetadataWriteBackPreservesContentHash:
+    def test_title_write_back_does_not_change_content_hash(self, mock_api_client):
+        body = judgment_body_with_valid_identification(title="Original title")
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        content_hash_before = get_hash_from_document(_document_xml_bytes(document))
+        add_editor_title(document, "Resolved title")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert get_hash_from_document(_document_xml_bytes(document)) == content_hash_before
+
+    def test_judges_write_back_does_not_change_judgment_body_hashable_text(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Header Judge</judge></p></header>
+                    <judgmentBody><decision><p>Unique judgment body text.</p></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        judgment_body_hash_before = get_hashable_judgment_body_text(_document_xml_bytes(document))
+        add_editor_judge(document, "Resolved Header Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        assert get_hashable_judgment_body_text(_document_xml_bytes(document)) == judgment_body_hash_before
+
+    def test_judges_write_back_preserves_non_judge_header_text_in_content_hash(self, mock_api_client):
+        body = DocumentBody(
+            b"""
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header>
+                        <p>Before <judge>Old Judge</judge>, sitting on 1 January</p>
+                    </header>
+                    <judgmentBody><decision><p>Main judgment text.</p></decision></judgmentBody>
+                </judgment>
+            </akomaNtoso>
+        """
+        )
+        document = JudgmentFactory.build(api_client=mock_api_client, body=body)
+        hashable_before = get_hashable_text(_document_xml_bytes(document))
+        add_editor_judge(document, "Old Judge")
+
+        BodyMetadataWriteBack().sync(document)
+
+        hashable_after = get_hashable_text(_document_xml_bytes(document))
+        assert hashable_after == hashable_before
+        assert b"sittingon1January" in hashable_after
+        assert b"Before" in hashable_after

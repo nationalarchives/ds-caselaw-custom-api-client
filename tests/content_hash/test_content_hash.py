@@ -2,6 +2,7 @@ import pytest
 
 from caselawclient.content_hash import (
     get_hash_from_document,
+    get_hashable_judgment_body_text,
     get_hashable_text,
     validate_content_hash,
 )
@@ -39,6 +40,13 @@ class TestIdentifyHashableString:
 
     def test_hashable_text_invalid_doc(self):
         assert get_hashable_text(INVALID_DOC) == b"Donotusethisinvalidtext"
+
+    def test_hashable_judgment_body_text_excludes_header(self):
+        doc = VALID_DOC.replace(
+            b"</meta>",
+            b"</meta><header><p>Header text</p></header><judgmentBody><decision><p>Body text</p></decision></judgmentBody>",
+        )
+        assert get_hashable_judgment_body_text(doc) == b"Bodytext"
 
 
 class TestCorrectHashForString:
