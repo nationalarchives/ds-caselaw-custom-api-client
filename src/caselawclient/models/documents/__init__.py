@@ -49,9 +49,10 @@ from caselawclient.models.utilities.aws import (
     delete_documents_from_private_bucket,
     generate_docx_url,
     generate_pdf_url,
+    prepare_assets_from_consignment_archive,
     publish_documents,
     request_parse,
-    restore_assets_from_consignment_archive,
+    restore_prepared_assets,
     unpublish_documents,
 )
 from caselawclient.types import DocumentURIString, SuccessFailureMessageTuple, TDRMetadataDict, mint_document_uri
@@ -1197,6 +1198,9 @@ class Document:
         requester's details to payload metadata, restore the corresponding S3
         assets, and finally reload the document body and cached properties.
 
+        Required archive files are downloaded and validated before any document
+        properties or versions are written, then reused during asset restoration.
+
         Args:
             version_number: The version number to restore.
             automated: Whether to mark the restore as automated.
@@ -1210,6 +1214,8 @@ class Document:
             CannotRestoreDocumentWithoutConsignmentReference: If no TDR
                 consignment reference is available to locate the document's S3
                 assets.
+            FileNotFoundError: If the consignment archive or a required asset
+                is missing. Archive read errors also abort before any writes.
         """
         self._require_persisted()
         self._require_editing_lock()
@@ -1232,6 +1238,14 @@ class Document:
         tre_payload = tre_metadata.get("parameters", {}).get("TRE", {}).get("payload", {})
         source_filename_for_assets = tre_payload.get("filename")
         image_filenames_for_assets: list[str] = tre_payload.get("images") or []
+
+        # Read all required assets before changing properties or creating a version.
+        restore_assets = prepare_assets_from_consignment_archive(
+            self.uri,
+            consignment_reference_for_assets,
+            source_filename_for_assets,
+            image_filenames_for_assets,
+        )
 
         restore_version_annotation = restore_version_document.structured_annotation
 
@@ -1264,12 +1278,7 @@ class Document:
         self.api_client.restore_document(self.uri, version_number, annotation)
 
         # Update S3 assets:
-        restore_assets_from_consignment_archive(
-            self.uri,
-            consignment_reference_for_assets,
-            source_filename_for_assets,
-            image_filenames_for_assets,
-        )
+        restore_prepared_assets(self.uri, restore_assets)
 
         # These will have changed so remove from cache.
         self.__dict__.pop("versions", None)
