@@ -192,69 +192,40 @@ def _get_consignment_archive_key(keys: list[str], consignment_reference: str) ->
     return None
 
 
-def _restore_archive_file_to_bucket(
-    archive: tarfile.TarFile,
-    archive_entry_name: str,
-    bucket: str,
-    destination_key: str,
-    client: S3Client,
-) -> bool:
-    """Copy a single named file from an open tar archive into S3.
-
-    Args:
-        archive: The open tar archive to read from.
-        archive_entry_name: The full path of the file within the archive.
-        bucket: The destination S3 bucket.
-        destination_key: The destination S3 key.
-        client: The S3 client to use.
-
-    Returns:
-        `True` if the file was found and copied, `False` if it was not present.
-    """
-    try:
-        file_object = archive.extractfile(archive_entry_name)
-    except KeyError:
-        return False
-
-    if file_object is None:
-        return False
-
-    client.put_object(Bucket=bucket, Key=destination_key, Body=file_object.read())
-    return True
-
-
-def restore_assets_from_consignment_archive(
+def prepare_assets_from_consignment_archive(
     uri: DocumentURIString,
     consignment_reference: str,
     source_filename: str | None,
     image_filenames: list[str],
-) -> None:
-    """Restore a document's S3 assets from its consignment tarball.
+) -> dict[str, bytes]:
+    """Read restore assets without writes, returning destination S3 keys and file bytes.
 
-    Deletes the document's current (non-tarball) assets in the
-    private/unpublished bucket and repopulates them from the
-    `{consignment_reference}.tar.gz` archive. Only the private bucket is
-    touched, as consignment tarballs only exist there.
+    The declared source and images must be readable; parser.log is optional.
+    Download and extract everything before the caller changes the document or assets.
 
-    Mirrors the ingester's `save_files_to_s3`: only the source document,
-    `parser.log`, and the metadata-declared images are restored. Other files in
-    the archive (e.g. the parsed XML and consignment metadata JSON) are
-    deliberately not stored as assets. Archive entries are read from the
-    `{consignment_reference}/` directory inside the tarball.
+    Reads `{consignment_reference}.tar.gz` from the private bucket and selects
+    entries under `{consignment_reference}/`, mirroring the ingester's
+    `save_files_to_s3`: only the source document, parser.log, and metadata-declared
+    images are prepared. Parsed XML and consignment metadata JSON are excluded.
 
     Args:
-        uri: The document URI whose assets should be restored.
-        consignment_reference: The consignment reference identifying which
-            submission's tarball to restore from.
-        source_filename: The original source document filename (docx/pdf) as
-            recorded in the consignment metadata, or `None` (e.g. for reparses)
-            in which case no source document is restored.
-        image_filenames: The image filenames declared in the consignment
-            metadata to restore.
+        uri: The document URI used to locate its archive and build destination keys.
+        consignment_reference: The submission whose `{reference}.tar.gz` archive
+            should be read.
+        source_filename: The original source document filename (docx/pdf) recorded
+            in consignment metadata, or None (e.g. for reparses) to skip the source.
+        image_filenames: The image filenames declared in consignment metadata.
+
+    Returns:
+        Destination S3 keys mapped to fully read file bytes, ready for
+        restore_prepared_assets without another archive download. The source
+        document uses its canonical filename (e.g. uksc_2023_1.docx); images and
+        parser.log retain their filenames under the document's URI prefix.
 
     Raises:
-        FileNotFoundError: No matching consignment archive exists for the
-            document.
+        FileNotFoundError: The archive or a declared source file or image is missing.
+
+    S3 and archive read errors propagate to the caller before any writes occur.
     """
     bucket = env("PRIVATE_ASSET_BUCKET")
     client = create_s3_client()
@@ -267,32 +238,55 @@ def restore_assets_from_consignment_archive(
             f"No matching consignment archive found in {bucket} for {uri} and consignment {consignment_reference}"
         )
 
-    delete_non_targz_from_bucket(uri=uri, bucket=bucket)
     archive_object = client.get_object(Bucket=bucket, Key=archive_key)
-    archive_bytes = archive_object["Body"].read()
+    try:
+        archive_bytes = archive_object["Body"].read()
+    finally:
+        archive_object["Body"].close()
 
+    filenames = {name: f"{uri}/{name}" for name in image_filenames}
+    if source_filename:
+        source_extension = source_filename.rsplit(".", 1)[-1].lower()
+        filenames[source_filename] = f"{uri}/{uri.replace('/', '_')}.{source_extension}"
+    filenames.setdefault("parser.log", f"{uri}/parser.log")
+    assets = {}
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as archive:
-        # Restore the source document under its canonical key (e.g. uksc_2023_1.docx).
-        if source_filename:
-            source_extension = source_filename.rsplit(".", 1)[-1].lower()
-            source_destination_key = f"{uri}/{uri.replace('/', '_')}.{source_extension}"
-            if not _restore_archive_file_to_bucket(
-                archive, f"{consignment_reference}/{source_filename}", bucket, source_destination_key, client
-            ):
-                logger.warning("Source file %s not found in archive %s", source_filename, archive_key)
+        for filename, destination_key in filenames.items():
+            try:
+                file_object = archive.extractfile(f"{consignment_reference}/{filename}")
+            except KeyError:
+                file_object = None
+            if file_object is None:
+                if filename == "parser.log" and filename != source_filename and filename not in image_filenames:
+                    logger.warning("Parser log not found in archive %s", archive_key)
+                    continue
+                raise FileNotFoundError(f"Required file {filename} not found in archive {archive_key}")
+            with file_object:
+                assets[destination_key] = file_object.read()
+    return assets
 
-        # Restore the parser log.
-        if not _restore_archive_file_to_bucket(
-            archive, f"{consignment_reference}/parser.log", bucket, f"{uri}/parser.log", client
-        ):
-            logger.warning("Parser log not found in archive %s", archive_key)
 
-        # Restore each declared image under its original filename.
-        for image_filename in image_filenames:
-            if not _restore_archive_file_to_bucket(
-                archive, f"{consignment_reference}/{image_filename}", bucket, f"{uri}/{image_filename}", client
-            ):
-                logger.warning("Image %s not found in archive %s", image_filename, archive_key)
+def restore_prepared_assets(uri: DocumentURIString, assets: dict[str, bytes]) -> None:
+    """Restore private non-tarball assets using files already downloaded and validated.
+
+    Deletes the document's current non-tarball assets in the private/unpublished
+    bucket and replaces them with the prepared file bytes. Consignment tarballs
+    are preserved, and the public bucket is not touched. This function does not
+    download or reopen the archive.
+
+    Args:
+        uri: The document URI whose existing private assets should be removed.
+        assets: Destination S3 keys and file bytes returned by
+            prepare_assets_from_consignment_archive for this document.
+
+    S3 write errors propagate to the caller. Replacement is not transactional:
+    a failure after deletion can leave assets only partially restored.
+    """
+    bucket = env("PRIVATE_ASSET_BUCKET")
+    client = create_s3_client()
+    delete_non_targz_from_bucket(uri=uri, bucket=bucket)
+    for key, content in assets.items():
+        client.put_object(Bucket=bucket, Key=key, Body=content)
 
 
 def publish_documents(uri: DocumentURIString) -> None:
