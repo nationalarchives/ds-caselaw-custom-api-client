@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Added
+
+- **SearchResult**: ensure we return the metadata in search results so we can call `name` and have it come from updated data
+
 ## v51.0.0 (2026-10-14)
 
 ### Added

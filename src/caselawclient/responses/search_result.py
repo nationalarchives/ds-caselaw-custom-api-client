@@ -3,7 +3,7 @@ import os
 from datetime import UTC, datetime
 from enum import Enum
 from functools import cached_property
-from typing import Any
+from typing import Any, cast
 
 from dateutil import parser as dateparser
 from dateutil.parser import ParserError
@@ -12,6 +12,9 @@ from ds_caselaw_utils.types import CourtCode, JurisdictionCode
 from lxml import etree
 
 from caselawclient.Client import MarklogicApiClient
+from caselawclient.models.documents.metadata.fields.field import MetadataStringValue
+from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
+from caselawclient.models.documents.metadata.types.name import NameMetadata
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.neutral_citation import NeutralCitationNumber
 from caselawclient.models.identifiers.press_summary_ncn import PressSummaryRelatedNCNIdentifier
@@ -212,10 +215,18 @@ class SearchResult:
     @property
     def name(self) -> str:
         """
-        :return: The title of the search result's document
+        :return: The resolved metadata title, falling back to XML when no title claims exist.
         """
 
-        return self._get_xpath_match_string("search:extracted/akn:FRBRname/@value")
+        fields = unpack_all_metadata_fields_from_etree(self.metadata.node.find(".//metadata_fields"))
+        resolved = fields.resolve(NameMetadata.key)
+        if not resolved.has_any_claims:
+            return self._get_xpath_match_string("search:extracted/akn:FRBRname/@value")
+        value = resolved.value
+        if value is None:
+            return ""
+        NameMetadata.validate_value(value)
+        return cast(MetadataStringValue, value).value
 
     @property
     def court(
@@ -307,8 +318,12 @@ class SearchResult:
         :return: A `SearchResultMetadata` instance representing the metadata of this result
         """
         response_text = self.client.get_properties_for_search_results([self.uri])
-        last_modified = self.client.get_last_modified(self.uri)
-        root = etree.fromstring(response_text)
+        root = etree.fromstring(
+            response_text,
+            parser=etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False),
+        )
+        properties = root.find("property-result")
+        last_modified = properties.get("last-modified", "") if properties is not None else ""
         return SearchResultMetadata(root, last_modified)
 
     def _get_xpath_match_string(self, path: str) -> str:
