@@ -38,8 +38,9 @@ class TestSearchResult:
             ) as mock_get_properties_for_search_results,
             patch.object(self.client, "get_last_modified") as mock_get_last_modified,
         ):
-            mock_get_properties_for_search_results.return_value = "<foo/>"
-            mock_get_last_modified.return_value = "bar"
+            mock_get_properties_for_search_results.return_value = (
+                '<property-results><property-result uri="/a/c/2015/20.xml" last-modified="bar"/></property-results>'
+            )
 
             node = etree.fromstring(valid_search_result_xml)
             search_result = SearchResult(node, self.client)
@@ -55,12 +56,43 @@ class TestSearchResult:
             )
             assert search_result.content_hash == "test_content_hash"
             assert search_result.transformation_date == "2023-04-09T18:05:45"
-            assert etree.tostring(search_result.metadata.node).decode() == "<foo/>"
+            assert (
+                etree.tostring(search_result.metadata.node).decode()
+                == mock_get_properties_for_search_results.return_value
+            )
             assert search_result.metadata.last_modified == "bar"
             assert (
                 str(search_result)
                 == "<SearchResult a/c/2015/20 uksc/2015/123 Another made up case name 2017-08-08 00:00:00>"
             )
+            mock_get_properties_for_search_results.assert_called_once_with(["a/c/2015/20"])
+            mock_get_last_modified.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("claims", "expected"),
+        [
+            (
+                (
+                    '<metadata name="title" source="document">Original title</metadata>'
+                    '<metadata name="title" source="editor">Edited title</metadata>'
+                ),
+                "Edited title",
+            ),
+            ('<metadata name="title" source="editor" rejected="true">Hidden title</metadata>', ""),
+            ("", "Another made up case name"),
+        ],
+    )
+    def test_name_resolves_metadata_title(self, valid_search_result_xml, claims, expected):
+        fields = etree.fromstring(f"<metadata_fields>{claims}</metadata_fields>")
+        for index, claim in enumerate(fields):
+            claim.set("id", f"00000000-0000-0000-0000-{index:012d}")
+            claim.set("timestamp", "2026-01-01T00:00:00Z")
+        properties = etree.Element("property-results")
+        result_properties = etree.SubElement(properties, "property-result", uri="/a/c/2015/20.xml")
+        result_properties.append(fields)
+        with patch.object(self.client, "get_properties_for_search_results", return_value=etree.tostring(properties)):
+            result = SearchResult(etree.fromstring(valid_search_result_xml), self.client)
+            assert result.name == expected
 
     def test_create_from_node_with_unparsable_date(self):
         """
@@ -160,6 +192,11 @@ class TestSearchResult:
 
 
 class TestSearchResultIdentifierHandling:
+    @pytest.fixture(autouse=True)
+    def mock_metadata_requests(self):
+        with patch.object(MarklogicApiClient, "get_properties_for_search_results", return_value="<property-results/>"):
+            yield
+
     def setup_method(self):
         self.client = MarklogicApiClient(
             host="",
