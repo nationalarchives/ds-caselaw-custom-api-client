@@ -44,3 +44,7 @@ class DocumentMergeNotPossibleError(Exception):
     def __init__(self, messages: list[str]) -> None:
         self.messages = messages
         super().__init__("; ".join(messages))
+
+
+class UnparsableDecisionDateError(Exception):
+    """Save cannot rewrite body XML while the work decision date is present but unparsable."""

@@ -20,7 +20,7 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
     key = "date"
     title = "Date"
     description = "The date of the document."
-    LOGIC_VERSION = 2
+    LOGIC_VERSION = 3
 
     @property
     def value(self) -> datetime.date | None:
@@ -37,6 +37,8 @@ class DateMetadata(SingleMetadata[datetime.date | None]):
         return date_as_string_from_value(self.value)
 
     def materialise_body_claims(self) -> None:
+        if self._resolve_claims().has_any_claims:
+            return
         document_date = self.document.body.document_date_as_date
         if document_date is None:
             return
