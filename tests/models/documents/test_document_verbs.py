@@ -786,8 +786,36 @@ class TestAssertIsRestorable:
 class TestDocumentRestoreVersion:
     @pytest.fixture(autouse=True)
     def mock_restore_assets(self):
-        with patch("caselawclient.models.documents.restore_assets_from_consignment_archive") as restore_assets:
+        with patch("caselawclient.models.documents.restore_prepared_assets") as restore_assets:
             yield restore_assets
+
+    @pytest.fixture(autouse=True)
+    def mock_prepare_assets(self):
+        with patch("caselawclient.models.documents.prepare_assets_from_consignment_archive") as prepare_assets:
+            prepare_assets.return_value = {"test/1234/source.docx": b"source"}
+            yield prepare_assets
+
+    @pytest.mark.parametrize("error", [FileNotFoundError("archive missing"), OSError("download failed")])
+    def test_restore_version_aborts_before_writes_if_assets_unavailable(
+        self, mock_api_client, mock_prepare_assets, mock_restore_assets, error
+    ):
+        document = Document(DocumentURIString("test/1234"), mock_api_client)
+        mock_prepare_assets.side_effect = error
+        with (
+            patch.object(
+                Document,
+                "versions_as_documents",
+                new_callable=PropertyMock,
+                return_value=[_make_version_document(3, payload=_standard_tdr_payload())],
+            ),
+            patch.object(document, "_set_tdr_metadata") as set_metadata,
+            pytest.raises(type(error)),
+        ):
+            document.restore_version(3, automated=False)
+        set_metadata.assert_not_called()
+        mock_api_client.restore_document.assert_not_called()
+        mock_api_client.set_property.assert_not_called()
+        mock_restore_assets.assert_not_called()
 
     @pytest.fixture(autouse=True)
     def unpublished_document(self, mock_api_client):
@@ -1138,7 +1166,7 @@ class TestDocumentRestoreVersion:
         }
 
     def test_restore_version_restores_s3_assets_using_tdr_consignment_reference(
-        self, mock_api_client, mock_restore_assets
+        self, mock_api_client, mock_restore_assets, mock_prepare_assets
     ):
         mock_api_client.user_agent = "marklogic-api-client-test"
         document = Document(DocumentURIString("test/1234"), mock_api_client)
@@ -1167,7 +1195,8 @@ class TestDocumentRestoreVersion:
         ):
             document.restore_version(3, automated=False)
 
-        mock_restore_assets.assert_called_once_with("test/1234", "TDR-12345", "source.docx", ["image1.png"])
+        mock_prepare_assets.assert_called_once_with("test/1234", "TDR-12345", "source.docx", ["image1.png"])
+        mock_restore_assets.assert_called_once_with("test/1234", mock_prepare_assets.return_value)
 
     def test_restore_version_aborts_without_consignment_reference(self, mock_api_client, mock_restore_assets):
         mock_api_client.user_agent = "marklogic-api-client-test"
