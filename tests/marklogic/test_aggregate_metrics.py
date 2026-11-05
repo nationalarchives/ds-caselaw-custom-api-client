@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime
+from statistics import mean, median, pstdev
 from uuid import uuid4
 
 import pytest
@@ -54,6 +55,22 @@ def report(client, keyword, metric="tdr_to_first_publish", bucketing="monthly", 
     )
 
 
+def expected_statistics(values, *, duration=True):
+    over = [value for value in values if value > 86400] if duration else []
+    return {
+        "count": len(values),
+        "sum": sum(values),
+        "mean": pytest.approx(mean(values)) if values else None,
+        "median": median(values) if values else None,
+        "within_24_hours_count": len(values) - len(over) if duration else None,
+        "over_24_hours_count": len(over) if duration else None,
+        "over_24_hours_mean": pytest.approx(mean(over)) if over else None,
+        "minimum": min(values) if values else None,
+        "maximum": max(values) if values else None,
+        "standard_deviation": pytest.approx(pstdev(values)) if values else None,
+    }
+
+
 def test_aggregates_weight_repeated_values_and_exclude_missing_metrics(marklogic_api_client, reporting_documents):
     client = marklogic_api_client
     keyword, create = reporting_documents
@@ -63,8 +80,8 @@ def test_aggregates_weight_repeated_values_and_exclude_missing_metrics(marklogic
     create(999, published_at="1970-01-01T00:00:00Z")
     monthly = report(client, keyword)
     assert monthly == {
-        "2026-01": {"count": 5, "sum": 320, "mean": 64, "median": 10},
-        "2026-02": {"count": 0, "sum": 0, "mean": None, "median": None},
+        "2026-01": expected_statistics([0, 10, 10, 100, 200]),
+        "2026-02": expected_statistics([]),
     }
     daily = report(client, keyword, bucketing="daily")
     assert daily["2026-01-01"] == monthly["2026-01"]
@@ -89,8 +106,9 @@ def test_metric_uses_its_publication_date(marklogic_api_client, reporting_docume
     create(4)
     result = report(marklogic_api_client, keyword, metric=metric)
     month = "2026-02" if metric == "tdr_to_latest_publish" else "2026-01"
-    assert result[month] == {"count": 2, "sum": 7, "mean": 3.5, "median": 3.5}
-    assert result["2026-01" if month == "2026-02" else "2026-02"]["count"] == 0
+    duration = metric != "submissions_before_first_publish"
+    assert result[month] == expected_statistics([3, 4], duration=duration)
+    assert result["2026-01" if month == "2026-02" else "2026-02"] == expected_statistics([], duration=duration)
 
 
 @pytest.mark.parametrize(
@@ -133,4 +151,28 @@ def test_historical_versions_do_not_contribute(marklogic_api_client, reporting_d
         metrics = DocumentMetrics()
         metrics.tdr_to_first_publish.value = 10
         client.set_property_as_node(uri, "metrics", metrics.as_etree)
-    assert report(client, keyword)["2026-01"] == {"count": 1, "sum": 10, "mean": 10, "median": 10}
+    assert report(client, keyword)["2026-01"] == expected_statistics([10])
+
+
+@pytest.mark.parametrize("metric", ["tdr_to_first_publish", "tdr_to_latest_publish"])
+@pytest.mark.parametrize("bucketing", ["daily", "monthly"])
+def test_duration_threshold_statistics(marklogic_api_client, reporting_documents, metric, bucketing):
+    keyword, create = reporting_documents
+    values = [0, 86399, 86400, 86401, 172800, 172800]
+    for value in values:
+        create(value)
+    create(None)
+    create(999999, court="ukftt/credit")
+    create(999999, published=False)
+    result = report(marklogic_api_client, keyword, metric=metric, bucketing=bucketing, court="uksc")
+    month = "2026-02" if metric == "tdr_to_latest_publish" else "2026-01"
+    label = month + "-01" if bucketing == "daily" else month
+    assert result[label] == expected_statistics(values)
+    assert result[label]["within_24_hours_count"] == 3
+    assert result[label]["over_24_hours_count"] == 3
+
+
+def test_all_values_over_threshold(marklogic_api_client, reporting_documents):
+    keyword, create = reporting_documents
+    create(86401)
+    assert report(marklogic_api_client, keyword)["2026-01"] == expected_statistics([86401])
