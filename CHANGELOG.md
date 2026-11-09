@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Added
+
+- **Client**: `get_metrics()` now includes minimum, maximum, population standard deviation, and duration counts within and over 24 hours plus the over-24-hour mean.
+
 ## v51.0.1 (2026-10-30)
 
 ### Added

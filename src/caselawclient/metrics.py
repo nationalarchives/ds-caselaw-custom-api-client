@@ -17,6 +17,12 @@ class MetricStatistics(TypedDict):
     sum: int
     mean: float | None
     median: float | None
+    within_24_hours_count: int | None
+    over_24_hours_count: int | None
+    over_24_hours_mean: float | None
+    minimum: int | None
+    maximum: int | None
+    standard_deviation: float | None
 
 
 class MetricBucket(TypedDict):

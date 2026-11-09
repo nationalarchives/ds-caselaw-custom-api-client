@@ -50,7 +50,21 @@ def test_metrics_reuses_search_parameters_without_mutating_them(metric, date_pro
     client = MarklogicApiClient("", "", "", False)
     parameters = SearchParameters(court="EWHC/QB", date_from="2020-01-01", show_unpublished=True, page=3, order="date")
     original = parameters.as_marklogic_payload()
-    expected = {"2026-01": {"count": 2, "sum": 3, "mean": 1.5, "median": 1.5}}
+    duration = metric != "submissions_before_first_publish"
+    expected = {
+        "2026-01": {
+            "count": 2,
+            "sum": 3,
+            "mean": 1.5,
+            "median": 1.5,
+            "within_24_hours_count": 2 if duration else None,
+            "over_24_hours_count": 0 if duration else None,
+            "over_24_hours_mean": None,
+            "minimum": 1,
+            "maximum": 2,
+            "standard_deviation": 0.5,
+        }
+    }
     with (
         patch.object(client, "_eval_and_decode", return_value=json.dumps(expected)) as evaluate,
         patch.object(client, "user_can_view_unpublished_judgments", return_value=False),
