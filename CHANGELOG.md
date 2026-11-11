@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
-## Unreleased
+## v51.0.2 (2026-11-11)
 
 ### Fix
 
