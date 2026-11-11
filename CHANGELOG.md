@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ## Unreleased
 
+### Fix
+
+- **Document**: Ensure the files are available to restore before attempting the full restore steps so we don't add a new version in the database before restoring the files.
+
 ### Added
 
 - **Client**: `get_metrics()` now includes minimum, maximum, population standard deviation, and duration counts within and over 24 hours plus the over-24-hour mean.
