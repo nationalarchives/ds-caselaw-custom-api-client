@@ -190,6 +190,10 @@ def _check_decision_frbrdate_values(label: str, children_by_name: dict[str, list
     decision_dates = [
         node for node in children_by_name.get("FRBRdate", []) if (node.get("name") or "") in DECISION_FRBRDATE_NAMES
     ]
+    if not decision_dates and label == "FRBRWork":
+        unnamed_dates = [node for node in children_by_name.get("FRBRdate", []) if (node.get("name") or "") == ""]
+        if len(unnamed_dates) == 1:
+            decision_dates = unnamed_dates
     if not decision_dates:
         return f"{label} is missing a decision FRBRdate"
     for node in decision_dates:
