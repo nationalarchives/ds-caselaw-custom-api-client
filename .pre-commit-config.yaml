@@ -68,7 +68,7 @@ repos:
           - scss
           - javascript
     repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.10
+    rev: v3.10.1
   - hooks:
       - id: commitizen
       - id: commitizen-branch
