@@ -8,7 +8,10 @@ declare variable $buckets as xs:string external;
 declare variable $search_parameters as xs:string external;
 
 let $document-query := filters:build-search-query(xdmp:from-json-string($search_parameters))
-let $reference := cts:element-reference(fn:QName("", $metric), "type=long")
+let $publication-count := $metric = "first_publication_count"
+let $reference := if ($publication-count)
+    then cts:element-reference(fn:QName("", $date_property), "type=dateTime")
+    else cts:element-reference(fn:QName("", $metric), "type=long")
 let $date-name := fn:QName("", $date_property)
 let $options := ("properties", "fragment-frequency")
 let $is-duration := $metric = ("tdr_to_first_publish", "tdr_to_latest_publish")
@@ -23,6 +26,9 @@ let $_ :=
         cts:not-query(cts:element-range-query($date-name, "=", xs:dateTime("1970-01-01T00:00:00Z")))
     ))
     let $count := cts:count-aggregate($reference, $options, $query)
+    return if ($publication-count) then
+        map:put($result, map:get($bucket, "label"), map:map() => map:with("count", $count))
+    else
     let $over-query := cts:and-query((
         $query,
         cts:element-range-query(fn:QName("", $metric), ">", xs:long(86400))
@@ -37,6 +43,10 @@ let $_ :=
         => map:with("within_24_hours_count", if ($is-duration) then $count - $over-count else null-node {})
         => map:with("over_24_hours_count", if ($is-duration) then $over-count else null-node {})
         => map:with("over_24_hours_mean", if ($over-count = 0) then null-node {} else cts:avg-aggregate($reference, $options, $over-query))
+        => map:with("over_24_hours_median", if ($over-count = 0) then null-node {} else cts:median(cts:values($reference, (), $options, $over-query)))
+        => map:with("over_24_hours_minimum", if ($over-count = 0) then null-node {} else cts:min($reference, $options, $over-query))
+        => map:with("over_24_hours_maximum", if ($over-count = 0) then null-node {} else cts:max($reference, $options, $over-query))
+        => map:with("over_24_hours_standard_deviation", if ($over-count = 0) then null-node {} else cts:stddev-p($reference, $options, $over-query))
         => map:with("minimum", if ($count = 0) then null-node {} else cts:min($reference, $options, $query))
         => map:with("maximum", if ($count = 0) then null-node {} else cts:max($reference, $options, $query))
         => map:with("standard_deviation", if ($count = 0) then null-node {} else cts:stddev-p($reference, $options, $query))

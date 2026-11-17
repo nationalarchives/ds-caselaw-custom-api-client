@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### Added
+
+- **Client**: `get_metrics()` includes median, minimum, maximum and population standard deviation for journeys over 24 hours. Optional `include_total=True` adds whole-period statistics.
+- **Client**: `get_publication_counts()` returns daily or monthly first-publication document counts, with the same search filters and optional whole-period total, independently of journey metric availability.
+
 ## v51.0.2 (2026-11-11)
 
 ### Fix

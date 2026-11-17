@@ -20,6 +20,10 @@ class MetricStatistics(TypedDict):
     within_24_hours_count: int | None
     over_24_hours_count: int | None
     over_24_hours_mean: float | None
+    over_24_hours_median: float | None
+    over_24_hours_minimum: int | None
+    over_24_hours_maximum: int | None
+    over_24_hours_standard_deviation: float | None
     minimum: int | None
     maximum: int | None
     standard_deviation: float | None
