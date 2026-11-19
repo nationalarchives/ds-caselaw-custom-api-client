@@ -1,0 +1,29 @@
+<akomaNtoso
+  xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0"
+  xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">
+  <judgment name="judgment">
+    <meta>
+      <identification source="#tna">
+        <FRBRWork>
+          <FRBRthis value="https://caselaw.nationalarchives.gov.uk/id/test/search_unpublished"/>
+          <FRBRuri value="https://caselaw.nationalarchives.gov.uk/id/test/search_unpublished"/>
+          <FRBRdate date="1001-01-04" name="judgment"/>
+          <FRBRname value="search fixture unpublished"/>
+        </FRBRWork>
+        <FRBRExpression>
+          <FRBRdate date="1001-01-04" name="judgment"/>
+        </FRBRExpression>
+      </identification>
+      <references source="#tna"/>
+      <proprietary source="#">
+        <uk:court>uksc</uk:court>
+      </proprietary>
+    </meta>
+    <header>
+      <p></p>
+    </header>
+    <judgmentBody>
+      <p>searchfixturetoken</p>
+    </judgmentBody>
+  </judgment>
+</akomaNtoso>
