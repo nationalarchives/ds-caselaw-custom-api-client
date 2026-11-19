@@ -870,14 +870,69 @@ class MarklogicApiClient:
         start_date: date,
         end_date: date,
         search_parameters: SearchParameters | None = None,
+        include_total: bool = False,
     ) -> dict[str, MetricStatistics]:
         """Aggregate a lifecycle metric over daily or monthly buckets.
 
-        The start date is inclusive and the end date is exclusive. Search parameters can be passed in to filter metrics scope.
+        The start date is inclusive and the end date is exclusive. ``include_total``
+        adds whole-period statistics calculated from the underlying values.
         """
         if metric not in METRIC_DATE_PROPERTIES:
             raise ValueError(f"Unknown lifecycle metric: {metric}")
+        result: dict[str, MetricStatistics] = json.loads(
+            self._get_report_response(
+                metric=metric,
+                date_property=METRIC_DATE_PROPERTIES[metric],
+                bucketing=bucketing,
+                start_date=start_date,
+                end_date=end_date,
+                search_parameters=search_parameters,
+                include_total=include_total,
+            )
+        )
+        return result
+
+    def get_publication_counts(
+        self,
+        *,
+        bucketing: MetricBucketing,
+        start_date: date,
+        end_date: date,
+        search_parameters: SearchParameters | None = None,
+        include_total: bool = False,
+    ) -> dict[str, int]:
+        """Count documents by first-publication date in daily or monthly buckets.
+
+        The start date is inclusive and the end date is exclusive. Missing and
+        unknown dates are excluded, and each document is counted once.
+        """
+        result: dict[str, dict[str, int]] = json.loads(
+            self._get_report_response(
+                metric="first_publication_count",
+                date_property="first_published_datetime",
+                bucketing=bucketing,
+                start_date=start_date,
+                end_date=end_date,
+                search_parameters=search_parameters,
+                include_total=include_total,
+            )
+        )
+        return {label: statistics["count"] for label, statistics in result.items()}
+
+    def _get_report_response(
+        self,
+        *,
+        metric: str,
+        date_property: str,
+        bucketing: MetricBucketing,
+        start_date: date,
+        end_date: date,
+        search_parameters: SearchParameters | None,
+        include_total: bool,
+    ) -> str:
         buckets = get_metric_buckets(start_date, end_date, bucketing)
+        if include_total:
+            buckets.append({"label": "total", "start": buckets[0]["start"], "end": buckets[-1]["end"]})
         parameters = replace(search_parameters or SearchParameters(), page=1, page_size=10, order=None)
         can_show_unpublished = self.verify_show_unpublished(parameters.show_unpublished or parameters.only_unpublished)
         if parameters.only_unpublished and not can_show_unpublished:
@@ -885,12 +940,11 @@ class MarklogicApiClient:
         parameters.show_unpublished = can_show_unpublished
         vars: query_dicts.GetMetricsDict = {
             "metric": metric,
-            "date_property": METRIC_DATE_PROPERTIES[metric],
+            "date_property": date_property,
             "buckets": json.dumps(buckets),
             "search_parameters": json.dumps(parameters.as_marklogic_payload()),
         }
-        result: dict[str, MetricStatistics] = json.loads(self._eval_and_decode(vars, "get_metrics.xqy"))
-        return result
+        return self._eval_and_decode(vars, "get_metrics.xqy")
 
     def eval_xslt(
         self,

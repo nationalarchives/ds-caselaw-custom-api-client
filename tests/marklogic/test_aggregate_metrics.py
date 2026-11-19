@@ -45,13 +45,14 @@ def reporting_documents(marklogic_api_client):
             client.delete_judgment(uri)
 
 
-def report(client, keyword, metric="tdr_to_first_publish", bucketing="monthly", **filters):
+def report(client, keyword, metric="tdr_to_first_publish", bucketing="monthly", include_total=False, **filters):
     return client.get_metrics(
         metric=metric,
         bucketing=bucketing,
         start_date=date(2026, 1, 1),
         end_date=date(2026, 3, 1),
         search_parameters=SearchParameters(specific_keyword=keyword, **filters),
+        include_total=include_total,
     )
 
 
@@ -65,6 +66,10 @@ def expected_statistics(values, *, duration=True):
         "within_24_hours_count": len(values) - len(over) if duration else None,
         "over_24_hours_count": len(over) if duration else None,
         "over_24_hours_mean": pytest.approx(mean(over)) if over else None,
+        "over_24_hours_median": median(over) if over else None,
+        "over_24_hours_minimum": min(over) if over else None,
+        "over_24_hours_maximum": max(over) if over else None,
+        "over_24_hours_standard_deviation": pytest.approx(pstdev(over)) if over else None,
         "minimum": min(values) if values else None,
         "maximum": max(values) if values else None,
         "standard_deviation": pytest.approx(pstdev(values)) if values else None,
@@ -176,3 +181,44 @@ def test_all_values_over_threshold(marklogic_api_client, reporting_documents):
     keyword, create = reporting_documents
     create(86401)
     assert report(marklogic_api_client, keyword)["2026-01"] == expected_statistics([86401])
+
+
+@pytest.mark.parametrize("bucketing", ["daily", "monthly"])
+def test_whole_period_statistics(marklogic_api_client, reporting_documents, bucketing):
+    keyword, create = reporting_documents
+    for value in [0, 86400, 100000]:
+        create(value)
+    create(300000, published_at="2026-02-01T00:00:00Z")
+    result = report(marklogic_api_client, keyword, bucketing=bucketing, include_total=True)
+    assert result["total"] == expected_statistics([0, 86400, 100000, 300000])
+    assert result["total"]["count"] == sum(value["count"] for key, value in result.items() if key != "total")
+
+
+@pytest.mark.parametrize("bucketing", ["daily", "monthly"])
+def test_publication_counts_include_documents_without_metrics(marklogic_api_client, reporting_documents, bucketing):
+    client = marklogic_api_client
+    keyword, create = reporting_documents
+    uri, body = create(None, published_at="2026-01-15T00:00:00Z")
+    # A later version must not count as another first publication.
+    with Judgment(uri, client).editing_session():
+        client.update_locked_document_xml(
+            uri, body.content_as_xml_tree, VersionAnnotation(VersionType.EDIT, True), validate_hash=False
+        )
+    create(100, published_at="2026-02-01T00:00:00Z")
+    create(None, published_at="2026-02-01T00:00:00Z", published=False)
+    create(None, published_at="2026-02-01T00:00:00Z", court="ukftt/credit")
+    create(None, published_at="2026-03-01T00:00:00Z")
+    create(None, published_at="1970-01-01T00:00:00Z")
+    result = client.get_publication_counts(
+        bucketing=bucketing,
+        start_date=date(2026, 1, 15),
+        end_date=date(2026, 3, 1),
+        search_parameters=SearchParameters(specific_keyword=keyword, court="uksc"),
+        include_total=True,
+    )
+    assert result["total"] == 2
+    assert result["2026-01-15" if bucketing == "daily" else "2026-01"] == 1
+    assert result["2026-02-01" if bucketing == "daily" else "2026-02"] == 1
+    assert sum(value for key, value in result.items() if key != "total") == 2
+    if bucketing == "daily":
+        assert result["2026-01-16"] == 0

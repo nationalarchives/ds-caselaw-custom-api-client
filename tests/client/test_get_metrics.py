@@ -60,6 +60,10 @@ def test_metrics_reuses_search_parameters_without_mutating_them(metric, date_pro
             "within_24_hours_count": 2 if duration else None,
             "over_24_hours_count": 0 if duration else None,
             "over_24_hours_mean": None,
+            "over_24_hours_median": None,
+            "over_24_hours_minimum": None,
+            "over_24_hours_maximum": None,
+            "over_24_hours_standard_deviation": None,
             "minimum": 1,
             "maximum": 2,
             "standard_deviation": 0.5,
@@ -132,3 +136,40 @@ def test_only_unpublished_requires_permission():
             search_parameters=SearchParameters(only_unpublished=True),
         )
     evaluate.assert_not_called()
+
+
+def test_metrics_include_whole_period_statistics():
+    client = MarklogicApiClient("", "", "", False)
+    response = {"2026-01": {"count": 2}, "2026-02": {"count": 1}, "total": {"count": 3}}
+    with patch.object(client, "_eval_and_decode", return_value=json.dumps(response)) as evaluate:
+        result = client.get_metrics(
+            metric="tdr_to_first_publish",
+            bucketing="monthly",
+            start_date=date(2026, 1, 15),
+            end_date=date(2026, 2, 10),
+            include_total=True,
+        )
+    assert result == response
+    evaluate.assert_called_once()
+    variables = evaluate.call_args.args[0]
+    buckets = json.loads(variables["buckets"])
+    assert buckets[-1] == {
+        "label": "total",
+        "start": "2026-01-15T00:00:00+00:00",
+        "end": "2026-02-10T00:00:00+00:00",
+    }
+
+
+def test_publication_counts_return_counts_from_the_report():
+    client = MarklogicApiClient("", "", "", False)
+    response = {"2026-01": {"count": 2}}
+    with patch.object(client, "_eval_and_decode", return_value=json.dumps(response)) as evaluate:
+        result = client.get_publication_counts(
+            bucketing="monthly",
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+        )
+    assert result == {"2026-01": 2}
+    variables = evaluate.call_args.args[0]
+    assert variables["metric"] == "first_publication_count"
+    assert variables["date_property"] == "first_published_datetime"
