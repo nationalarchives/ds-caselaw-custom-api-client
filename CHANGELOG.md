@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 ### Added
 
+- **test**: MarkLogic corpus fixtures covering judge, decision-date, and publication search
 - **Client**: `get_metrics()` includes median, minimum, maximum and population standard deviation for journeys over 24 hours. Optional `include_total=True` adds whole-period statistics.
 - **Client**: `get_publication_counts()` returns daily or monthly first-publication document counts, with the same search filters and optional whole-period total, independently of journey metric availability.
 
