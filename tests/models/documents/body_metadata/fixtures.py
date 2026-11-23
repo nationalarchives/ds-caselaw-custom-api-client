@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from uuid import uuid4
 
 from lxml import etree
 
 from caselawclient.models.documents.body import DocumentBody
-from caselawclient.models.documents.metadata.fields.field import MetadataField, MetadataStringValue
+from caselawclient.models.documents.metadata.fields.field import MetadataDateValue, MetadataField, MetadataStringValue
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.xml_helpers import DEFAULT_NAMESPACES
 
@@ -21,6 +21,14 @@ AKN_NS_URI = AKN_NS
 FIXTURES_DIR = Path(__file__).parent / "fixture_xml"
 
 FRBRWORK_NAME_VALUE_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/akn:FRBRname/@value"
+WORK_DECISION_FRBRDATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRWork/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
+EXPRESSION_DECISION_FRBRDATE_XPATH = (
+    "/akn:akomaNtoso/akn:*/akn:meta/akn:identification/akn:FRBRExpression/"
+    "akn:FRBRdate[(@name='judgment' or @name='decision')]/@date"
+)
 IDENTIFICATION_XPATH = "/akn:akomaNtoso/akn:*/akn:meta/akn:identification"
 
 
@@ -42,6 +50,35 @@ def fresh_valid_identification() -> etree._Element:
 def valid_frbr_triple_inner() -> str:
     identification = _identification_from_root(etree.fromstring(read_fixture("valid_frbr_identification_judgment.xml")))
     return "".join(etree.tostring(child, encoding="unicode") for child in identification if isinstance(child.tag, str))
+
+
+def valid_expression_and_manifestation_inner() -> str:
+    identification = _identification_from_root(etree.fromstring(read_fixture("valid_frbr_identification_judgment.xml")))
+    parts: list[str] = []
+    for local_name in ("FRBRExpression", "FRBRManifestation"):
+        element = identification.find(f"{{{AKN_NS}}}{local_name}")
+        assert element is not None
+        parts.append(etree.tostring(element, encoding="unicode"))
+    return "".join(parts)
+
+
+def judgment_body_with_custom_work(
+    *,
+    work_inner: str,
+    judgment_name: str = "judgment",
+    expression_manifestation_inner: str | None = None,
+) -> DocumentBody:
+    """Validator-complete judgment body with a custom ``FRBRWork`` subtree."""
+    tail = (
+        expression_manifestation_inner
+        if expression_manifestation_inner is not None
+        else valid_expression_and_manifestation_inner()
+    )
+    triple_inner = f"""<FRBRWork>
+{work_inner}
+    </FRBRWork>
+    {tail}"""
+    return DocumentBody(judgment_with_identification(judgment_name=judgment_name, triple_inner=triple_inner))
 
 
 def judgment_body_with_valid_identification(*, title: str | None = "Original title") -> DocumentBody:
@@ -126,6 +163,18 @@ def add_editor_title(document, title: str) -> None:
         MetadataField(
             name="title",
             value=MetadataStringValue(title),
+            source=MetadataSource.EDITOR,
+            id=str(uuid4()),
+            timestamp=datetime(2025, 1, 1, tzinfo=UTC),
+        )
+    )
+
+
+def add_editor_date(document, decision_date: date) -> None:
+    document.metadata_fields.add(
+        MetadataField(
+            name="date",
+            value=MetadataDateValue(decision_date),
             source=MetadataSource.EDITOR,
             id=str(uuid4()),
             timestamp=datetime(2025, 1, 1, tzinfo=UTC),
