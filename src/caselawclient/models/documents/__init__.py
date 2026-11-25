@@ -67,6 +67,7 @@ from .exceptions import (
     DocumentEditingSessionAlreadyActiveError,
     DocumentNotLockedForEditingError,
     DocumentNotPersistedError,
+    DocumentNotReparseable,
     DocumentNotSafeForDeletion,
 )
 from .merge import DocumentMerge
@@ -1331,25 +1332,39 @@ class Document:
             parser_instructions=parser_instructions,
         )
 
-    def reparse(self) -> bool:
+    def reparse(self) -> None:
         self._require_persisted()
         self._require_editing_lock()
         # note that we set 'last_sent_to_parser' even if we can't send it to the parser
         # it means 'last tried to reparse' much more consistently.
         now = datetime.datetime.now(datetime.UTC)
         self.api_client.set_property(self.uri, "last_sent_to_parser", now.isoformat())
-        if self.can_reparse:
-            self.force_reparse()
-            return True
-        return False
+
+        can_reparse, messages = self.can_reparse
+        if not can_reparse:
+            raise DocumentNotReparseable(", ".join(messages))
+
+        self.force_reparse()
 
     @cached_property
-    def can_reparse(self) -> bool:
+    def can_reparse(self) -> SuccessFailureMessageTuple:
         """
         Is it sensible to reparse this document?
         """
         self._require_persisted()
-        return self.docx_exists() and not self.body.has_external_data
+
+        success = True
+        messages = []
+
+        if not self.docx_exists():
+            success = False
+            messages.append("This document does not have a .docx file available")
+
+        if self.body.has_external_data:
+            success = False
+            messages.append("This document has external metadata which may be lost during a reparse")
+
+        return SuccessFailureMessageTuple(success, messages)
 
     @cached_property
     def can_enrich(self) -> bool:

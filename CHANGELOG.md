@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.0.0].
 
+## Unreleased
+
+### BREAKING CHANGE
+
+- Changes to method signatures around reparsing
+
+### Feat
+
+- **Document**: change reparse behaviours to return SuccessFailureMessageTuple
+
 ## v51.0.3 (2026-11-19)
 
 ### Added

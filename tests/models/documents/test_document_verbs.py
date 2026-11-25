@@ -7,7 +7,7 @@ import pytest
 import time_machine
 
 from caselawclient.errors import MarklogicResourceVersionInvalidError
-from caselawclient.factories import JudgmentFactory
+from caselawclient.factories import DocumentBodyFactory, JudgmentFactory
 from caselawclient.models.documents import (
     CannotEnrichUnenrichableDocument,
     CannotPublishUnpublishableDocument,
@@ -17,7 +17,11 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
-from caselawclient.models.documents.exceptions import DocumentNotLockedForEditingError
+from caselawclient.models.documents.exceptions import (
+    DocumentNotLockedForEditingError,
+    DocumentNotPersistedError,
+    DocumentNotReparseable,
+)
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -441,6 +445,61 @@ class TestDocumentMove:
 
 
 class TestReparse:
+    @pytest.mark.parametrize(
+        ("docx_exists", "has_external_data", "expected"),
+        [
+            pytest.param(True, False, SuccessFailureMessageTuple(True, []), id="reparseable"),
+            pytest.param(
+                False,
+                False,
+                SuccessFailureMessageTuple(False, ["This document does not have a .docx file available"]),
+                id="missing-docx",
+            ),
+            pytest.param(
+                True,
+                True,
+                SuccessFailureMessageTuple(
+                    False, ["This document has external metadata which may be lost during a reparse"]
+                ),
+                id="external-metadata",
+            ),
+            pytest.param(
+                False,
+                True,
+                SuccessFailureMessageTuple(
+                    False,
+                    [
+                        "This document does not have a .docx file available",
+                        "This document has external metadata which may be lost during a reparse",
+                    ],
+                ),
+                id="missing-docx-and-external-metadata",
+            ),
+        ],
+    )
+    def test_can_reparse(self, mock_api_client, docx_exists, has_external_data, expected):
+        document = JudgmentFactory().build(api_client=mock_api_client)
+        party = '<uk:party type="example">someone</uk:party>' if has_external_data else ""
+        document.body = DocumentBodyFactory.build(
+            f'<akomaNtoso xmlns:uk="https://caselaw.nationalarchives.gov.uk/akn">{party}</akomaNtoso>'
+        )
+
+        with patch.object(Document, "docx_exists", return_value=docx_exists) as check_docx:
+            result = document.can_reparse
+
+        assert isinstance(result, SuccessFailureMessageTuple)
+        assert result == expected
+        check_docx.assert_called_once_with()
+
+    def test_can_reparse_requires_persisted_document(self, mock_api_client):
+        mock_api_client.document_exists.return_value = False
+        document = Judgment.from_xml(DocumentBodyFactory.build(), mock_api_client)
+
+        with patch.object(Document, "docx_exists") as check_docx:
+            with pytest.raises(DocumentNotPersistedError):
+                _ = document.can_reparse
+            check_docx.assert_not_called()
+
     @time_machine.travel(datetime.datetime(1955, 11, 5, 6, tzinfo=datetime.UTC))
     @patch("caselawclient.models.utilities.aws.create_sns_client")
     @patch.dict(os.environ, {"PRIVATE_ASSET_BUCKET": "MY_BUCKET"})
@@ -607,8 +666,11 @@ class TestReparse:
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_no_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
-        document.can_reparse = False
-        assert document.reparse() is False
+        document.can_reparse = SuccessFailureMessageTuple(False, ["Missing DOCX"])
+        with patch.object(Document, "force_reparse") as force_reparse:
+            with pytest.raises(DocumentNotReparseable, match="Missing DOCX"):
+                document.reparse()
+            force_reparse.assert_not_called()
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
             "last_sent_to_parser",
@@ -618,11 +680,12 @@ class TestReparse:
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
-        document.can_reparse = True
+        document.can_reparse = SuccessFailureMessageTuple(True, [])
 
         # Patch force_reparse so we don't actually try to call boto here
-        with patch.object(Document, "force_reparse"):
-            assert document.reparse() is True
+        with patch.object(Document, "force_reparse") as force_reparse:
+            document.reparse()
+            force_reparse.assert_called_once_with()
 
         # set_property is only called once because document.force_reparse isn't real
         mock_api_client.set_property.assert_called_once_with(
