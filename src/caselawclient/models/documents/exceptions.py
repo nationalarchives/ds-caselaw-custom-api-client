@@ -22,6 +22,10 @@ class DocumentNotSafeForDeletion(Exception):
     """A document which is not safe for deletion cannot be deleted."""
 
 
+class DocumentNotReparseable(Exception):
+    """A document which isn't reparseable cannot be reparsed."""
+
+
 class DocumentNotPersistedError(Exception):
     """A document constructed with from_xml must be saved before MarkLogic-backed operations are available."""
 

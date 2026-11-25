@@ -17,7 +17,7 @@ from caselawclient.models.documents import (
     DocumentNotSafeForDeletion,
     DocumentURIString,
 )
-from caselawclient.models.documents.exceptions import DocumentNotLockedForEditingError
+from caselawclient.models.documents.exceptions import DocumentNotLockedForEditingError, DocumentNotReparseable
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.collection import IdentifiersCollection
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
@@ -607,8 +607,11 @@ class TestReparse:
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_no_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
-        document.can_reparse = False
-        assert document.reparse() is False
+        document.can_reparse = SuccessFailureMessageTuple(False, ["This document does not have a .docx file available"])
+        with patch.object(Document, "force_reparse") as force_reparse:
+            with pytest.raises(DocumentNotReparseable, match="This document does not have a .docx file available"):
+                document.reparse()
+            force_reparse.assert_not_called()
         mock_api_client.set_property.assert_called_once_with(
             "test/2023/123",
             "last_sent_to_parser",
@@ -618,11 +621,12 @@ class TestReparse:
     @time_machine.travel(datetime.datetime(2015, 10, 21, 16, 29, tzinfo=datetime.UTC))
     def test_reparse_sets_last_sent_if_docx(self, mock_api_client):
         document = JudgmentFactory().build(api_client=mock_api_client)
-        document.can_reparse = True
+        document.can_reparse = SuccessFailureMessageTuple(True, [])
 
         # Patch force_reparse so we don't actually try to call boto here
-        with patch.object(Document, "force_reparse"):
-            assert document.reparse() is True
+        with patch.object(Document, "force_reparse") as force_reparse:
+            document.reparse()
+            force_reparse.assert_called_once_with()
 
         # set_property is only called once because document.force_reparse isn't real
         mock_api_client.set_property.assert_called_once_with(
