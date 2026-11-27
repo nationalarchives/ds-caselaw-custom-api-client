@@ -16,6 +16,7 @@ from caselawclient.models.documents.metadata.materialisation import (
     CURRENT_METADATA_MATERIALISATION_VERSION,
     LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,
 )
+from caselawclient.models.documents.metadata.searchable import SEARCHABLE_METADATA_PROPERTY
 from caselawclient.models.documents.versions import VersionAnnotation, VersionType
 from caselawclient.models.identifiers.exceptions import IdentifierValidationException
 from caselawclient.models.judgments import Judgment
@@ -133,6 +134,7 @@ class TestDocumentSave:
 
         mock_api_client.set_property_as_node.assert_any_call(document.uri, "identifiers", ANY)
         mock_api_client.set_property_as_node.assert_any_call(document.uri, "metadata_fields", ANY)
+        mock_api_client.set_property_as_node.assert_any_call(document.uri, SEARCHABLE_METADATA_PROPERTY, ANY)
         mock_api_client.set_property.assert_any_call(
             document.uri,
             LATEST_METADATA_MATERIALISATION_VERSION_PROPERTY,

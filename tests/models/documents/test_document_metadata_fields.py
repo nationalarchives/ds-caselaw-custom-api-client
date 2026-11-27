@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from lxml import etree
 
-from caselawclient.factories import DocumentFactory
+from caselawclient.factories import DocumentBodyFactory, DocumentFactory
 from caselawclient.models.documents.metadata.fields.field import (
     MetadataCategoryValue,
     MetadataDateValue,
@@ -13,6 +13,8 @@ from caselawclient.models.documents.metadata.fields.field import (
 )
 from caselawclient.models.documents.metadata.fields.source import MetadataSource
 from caselawclient.models.documents.metadata.fields.unpacker import unpack_all_metadata_fields_from_etree
+from caselawclient.models.documents.metadata.searchable import SEARCHABLE_METADATA_PROPERTY
+from caselawclient.xml_helpers import Element
 
 TIMESTAMP = datetime(2025, 12, 17, 18, 0, 0, tzinfo=UTC)
 
@@ -20,6 +22,13 @@ TIMESTAMP = datetime(2025, 12, 17, 18, 0, 0, tzinfo=UTC)
 def _id() -> str:
     """Generate a claim id for tests where the specific value does not matter."""
     return str(uuid4())
+
+
+def _property_written(mock_api_client, name: str) -> Element:
+    for call in mock_api_client.set_property_as_node.call_args_list:
+        if call.args[1] == name:
+            return call.args[2]
+    raise AssertionError(f"Property {name!r} was not written")
 
 
 class TestDocumentMetadataFieldsLoadSave:
@@ -64,11 +73,34 @@ class TestDocumentMetadataFieldsLoadSave:
 
         document.save_metadata_fields()
 
-        mock_api_client.set_property_as_node.assert_called_once()
-        uri, property_name, tree = mock_api_client.set_property_as_node.call_args.args
-        assert uri == document.uri
-        assert property_name == "metadata_fields"
+        tree = _property_written(mock_api_client, "metadata_fields")
         assert unpack_all_metadata_fields_from_etree(tree).resolve("title").value == MetadataStringValue("Saved title")
+
+    def test_save_metadata_fields_writes_resolved_judges_to_searchable_metadata(self, mock_api_client):
+        document = DocumentFactory.build(api_client=mock_api_client)
+        document.metadata.judges.add_editor_judge("Lord Reed")
+
+        document.save_metadata_fields()
+
+        searchable = _property_written(mock_api_client, SEARCHABLE_METADATA_PROPERTY)
+        assert [judge.text for judge in searchable] == ["Lord Reed"]
+
+    def test_searchable_metadata_falls_back_to_body_judges_when_there_are_no_claims(self, mock_api_client):
+        body = DocumentBodyFactory.build(
+            """
+            <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
+                <judgment>
+                    <header><p><judge>Body Judge</judge></p></header>
+                </judgment>
+            </akomaNtoso>
+            """
+        )
+        document = DocumentFactory.build(api_client=mock_api_client, body=body)
+
+        document.save_metadata_fields()
+
+        searchable = _property_written(mock_api_client, SEARCHABLE_METADATA_PROPERTY)
+        assert [judge.text for judge in searchable] == ["Body Judge"]
 
 
 class TestDocumentMetadataFacadePrefersFields:
