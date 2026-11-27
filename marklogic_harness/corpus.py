@@ -25,6 +25,20 @@ TEST_NOT_MATCHING_SCHEMA_URI = DocumentURIString("test/not_matching_schema")
 TEST_PRESS_SUMMARY_PARENT_URI = DocumentURIString("test/press_summary_parent")
 TEST_PRESS_SUMMARY_URI = DocumentURIString("test/press_summary")
 
+SEARCH_FIXTURE_KEYWORD = "searchfixturetoken"
+SEARCH_DATE_FIXTURE_KEYWORD = "searchfixturedatetoken"
+SEARCH_JUDGE_ALPHA = "Searchfixturealpha"
+SEARCH_JUDGE_BETA = "Searchfixturebeta"
+SEARCH_JUDGE_PROSE = "Searchfixtureprose"
+
+SEARCH_JUDGES_BOTH_URI = DocumentURIString("test/search_judges_both")
+SEARCH_JUDGES_ALPHA_URI = DocumentURIString("test/search_judges_alpha")
+SEARCH_JUDGES_GAMMA_URI = DocumentURIString("test/search_judges_gamma")
+SEARCH_JUDGE_PROSE_URI = DocumentURIString("test/search_judge_prose")
+SEARCH_JUDGE_TAGGED_URI = DocumentURIString("test/search_judge_tagged")
+SEARCH_PUBLISHED_URI = DocumentURIString("test/search_published")
+SEARCH_UNPUBLISHED_URI = DocumentURIString("test/search_unpublished")
+
 MERGE_TEST_ANNOTATION = "Merged merge test corpus integration test"
 
 MERGE_TARGET_BODY = "The applcant succeeded in their claim."
@@ -83,6 +97,18 @@ def merge_test_expectations_for(uri: DocumentURIString) -> MergeTestExpectations
     raise ValueError(f"Not a merge test corpus URI: {uri}")
 
 
+SEARCH_TEST_DOCUMENTS: tuple[TestCorpusDocument, ...] = (
+    TestCorpusDocument(SEARCH_JUDGES_BOTH_URI, "search_judges_both.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_JUDGES_ALPHA_URI, "search_judges_alpha.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_JUDGES_GAMMA_URI, "search_judges_gamma.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_JUDGE_PROSE_URI, "search_judge_prose.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_JUDGE_TAGGED_URI, "search_judge_tagged.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_PUBLISHED_URI, "search_published.xml", "judgment", "search fixture"),
+    TestCorpusDocument(SEARCH_UNPUBLISHED_URI, "search_unpublished.xml", "judgment", "search fixture"),
+)
+
+SEARCH_FIXTURE_URIS = tuple(document.uri for document in SEARCH_TEST_DOCUMENTS)
+
 TEST_CORPUS_DOCUMENTS: tuple[TestCorpusDocument, ...] = (
     TestCorpusDocument(
         SMOKETEST_URI,
@@ -112,12 +138,19 @@ TEST_CORPUS_DOCUMENTS: tuple[TestCorpusDocument, ...] = (
         "judgment",
         "merge demo source fixture",
     ),
+    *SEARCH_TEST_DOCUMENTS,
 )
 
 
 def load_test_corpus(client: MarklogicApiClient) -> None:
     for document in TEST_CORPUS_DOCUMENTS:
         _insert_managed_document(client, document)
+    configure_search_test_documents(client)
+
+
+def configure_search_test_documents(client: MarklogicApiClient) -> None:
+    """Mark the published search fixture as published. The other search fixtures stay unpublished."""
+    client.set_published(SEARCH_PUBLISHED_URI, True)
 
 
 def reload_corpus_documents(client: MarklogicApiClient, documents: tuple[TestCorpusDocument, ...]) -> None:
