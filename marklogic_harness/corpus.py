@@ -31,6 +31,11 @@ SEARCH_JUDGE_ALPHA = "Searchfixturealpha"
 SEARCH_JUDGE_BETA = "Searchfixturebeta"
 SEARCH_JUDGE_PROSE = "Searchfixtureprose"
 
+SEARCH_ACCEPTANCE_KEYWORD = "searchacceptancetoken"
+SEARCH_ACCEPTANCE_BODY_JUDGE = "Searchacceptancebody"
+SEARCH_ACCEPTANCE_EDITOR_JUDGE = "Searchacceptanceeditor"
+SEARCH_ACCEPTANCE_URI = DocumentURIString("test/search_acceptance")
+
 SEARCH_JUDGES_BOTH_URI = DocumentURIString("test/search_judges_both")
 SEARCH_JUDGES_ALPHA_URI = DocumentURIString("test/search_judges_alpha")
 SEARCH_JUDGES_GAMMA_URI = DocumentURIString("test/search_judges_gamma")
@@ -108,6 +113,10 @@ SEARCH_TEST_DOCUMENTS: tuple[TestCorpusDocument, ...] = (
 )
 
 SEARCH_FIXTURE_URIS = tuple(document.uri for document in SEARCH_TEST_DOCUMENTS)
+
+SEARCH_ACCEPTANCE_DOCUMENT = TestCorpusDocument(
+    SEARCH_ACCEPTANCE_URI, "search_acceptance.xml", "judgment", "search acceptance fixture"
+)
 
 TEST_CORPUS_DOCUMENTS: tuple[TestCorpusDocument, ...] = (
     TestCorpusDocument(

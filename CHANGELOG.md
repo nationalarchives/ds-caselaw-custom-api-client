@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog 1.0.0].
 
 - **test**: MarkLogic corpus fixtures covering judge, decision-date, and publication search
 - **test**: MarkLogic acceptance tests proving the resolved judges are stored in `searchable-metadata` when metadata is saved
+- **test**: MarkLogic acceptance tests for judge search after judges are added or suppressed in the metadata store
 - **Client**: Saving metadata also writes the resolved judge names to a `searchable-metadata` property. Search does not read it yet.
 
 ## v51.0.3 (2026-11-19)
