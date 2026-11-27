@@ -32,6 +32,10 @@ from caselawclient.models.documents.metadata.registry import (
     METADATA_FIELD_CLASSES,
     DocumentMetadata,
 )
+from caselawclient.models.documents.metadata.searchable import (
+    SEARCHABLE_METADATA_PROPERTY,
+    build_searchable_metadata_etree,
+)
 from caselawclient.models.documents.metrics import DocumentMetrics
 from caselawclient.models.documents.versions import AnnotationDataDict, VersionAnnotation, VersionType
 from caselawclient.models.identifiers import Identifier
@@ -1380,6 +1384,11 @@ class Document:
 
     def _save_metadata_fields(self) -> None:
         self.api_client.set_property_as_node(self.uri, "metadata_fields", self.metadata_fields.as_etree)
+        self.api_client.set_property_as_node(
+            self.uri,
+            SEARCHABLE_METADATA_PROPERTY,
+            build_searchable_metadata_etree(self.metadata.judges.values),
+        )
 
     _METADATA_DEPRECATED_ATTRS: ClassVar[dict[str, tuple[str, str]]] = {
         "name": ("title", "value"),
